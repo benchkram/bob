@@ -1,0 +1,94 @@
+[
+	{
+		"Path": "./files/deeplynested/a/b/c/d/f_d_one",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/deeplynested/a/b/c/d/f_d_two",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/deeplynested/a/b/c/d/f_one",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/deeplynested/a/b/c/d/f_three",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/deeplynested/a/b/c/d/f_two",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/deeplynested/a/b/c/f_c_one",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/deeplynested/a/b/c/f_c_two",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/deeplynested/a/b/f_b_one",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/deeplynested/a/b/f_b_two",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/deeplynested/a/f_a_one",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/regulars/f_one",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/regulars/f_three",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/regulars/f_two",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/b/c/d/f_1",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/b/c/d/f_2",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/b/c/d/f_3",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/b/c/d/f_d_1",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/b/c/d/f_d_2",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/b/c/f_c_1",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/b/c/f_c_2",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/b/f_b_1",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/b/f_b_2",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	},
+	{
+		"Path": "./files/wildcards/a/f_a_1",
+		"Hash": "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"
+	}
+]

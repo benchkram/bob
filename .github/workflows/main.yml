@@ -1,0 +1,52 @@
+name: Verify
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Using one job to for validation to save computing time.
+# Linting and Unittest can reuse go dependencies which save costs.
+
+jobs:
+  # Verify, lint and run tests
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.7
+
+
+      # Check if there are any changes for 'go mod tidy'
+      # TODO: Not sure why this fails from time to time
+      - name: Check 'go mod tidy'
+        run: |
+          go mod tidy
+      #     git diff --exit-code go.mod
+
+      - name: Install golangci-lint
+        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.41.1
+
+      - name: Lint code
+        run: make lint
+
+      - name: Build
+        run: make build
+
+      - name: Install ginkgo
+        run: go get -u github.com/onsi/ginkgo/ginkgo
+
+      - name: Set Git author name and email address
+        run: git config --global user.name "Bob The Builder" && git config --global user.email "bob@thebuilder.com"
+
+      - name: Run tests
+        run: | 
+          go get github.com/jbenet/go-context/io@v0.0.0-20150711004518-d14ea06fba99
+          go get github.com/go-git/go-git/v5/plumbing/transport/ssh@v5.4.2
+          ginkgo -v ./...

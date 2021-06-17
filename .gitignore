@@ -1,0 +1,9 @@
+/.bob
+/bobrun
+/Bobfile
+vendor/
+
+.vscode
+.idea
+
+dist/
