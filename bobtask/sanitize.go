@@ -1,9 +1,11 @@
-package build
+package bobtask
 
 import (
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/Benchkram/bob/bobtask/export"
 )
 
 func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {
@@ -50,8 +52,8 @@ func (t *Task) sanitizeTarget(targetPaths []string) ([]string, error) {
 	return targetPaths, nil
 }
 
-func (t *Task) sanitizeExports(exports ExportMap) (ExportMap, error) {
-	sanitizedExports := make(ExportMap)
+func (t *Task) sanitizeExports(exports export.Map) (export.Map, error) {
+	sanitizedExports := make(export.Map)
 	for name, export := range exports {
 		if strings.Contains(string(export), "..") {
 			return nil, fmt.Errorf("'..' not allowed in file path %q", string(export))

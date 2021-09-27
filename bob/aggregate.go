@@ -6,7 +6,7 @@ import (
 
 	"github.com/Benchkram/errz"
 
-	"github.com/Benchkram/bob/bob/build"
+	"github.com/Benchkram/bob/bob/bobfile"
 	"github.com/Benchkram/bob/pkg/filepathutil"
 )
 
@@ -18,7 +18,7 @@ func (b *B) find() (bobfiles []string, err error) {
 	errz.Fatal(err)
 
 	for _, file := range list {
-		if build.IsBobfile(file) {
+		if bobfile.IsBobfile(file) {
 			bobfiles = append(bobfiles, file)
 		}
 	}
@@ -26,17 +26,19 @@ func (b *B) find() (bobfiles []string, err error) {
 }
 
 // Aggregate determine and read Bobfiles recursively into memory
-// and returns a single Boblet containing all tasks.
-func (b *B) Aggregate() (aggregate *build.Bobfile, err error) {
+// and returns a single Bobfile containing all tasks & runs.
+func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)
 
 	bobfiles, err := b.find()
 	errz.Fatal(err)
 
+	// TODO: Aggregate Runs
+
 	// Read & Find Bobfiles
-	bobs := []*build.Bobfile{}
-	for _, bobfile := range bobfiles {
-		boblet, err := build.BobfileRead(filepath.Dir(bobfile))
+	bobs := []*bobfile.Bobfile{}
+	for _, bf := range bobfiles {
+		boblet, err := bobfile.BobfileRead(filepath.Dir(bf))
 		errz.Fatal(err)
 
 		if boblet.Dir() == b.dir {
@@ -85,6 +87,34 @@ func (b *B) Aggregate() (aggregate *build.Bobfile, err error) {
 			task.DependsOn = dependsOn
 
 			aggregate.Tasks[taskname] = task
+		}
+	}
+
+	// Merge runs into one Bobfile
+	for _, bobfile := range bobs {
+		// Skip the aggregate
+		if bobfile.Dir() == aggregate.Dir() {
+			continue
+		}
+
+		for runname, run := range bobfile.Runs {
+			dir := bobfile.Dir()
+
+			// Use a relative path as task prefix.
+			prefix := strings.TrimPrefix(dir, b.dir)
+			name := addTaskPrefix(prefix, runname)
+
+			// Alter the runname.
+			run.SetName(name)
+
+			// Rewrite dependents to global scope.
+			dependsOn := []string{}
+			for _, dependent := range run.DependsOn {
+				dependsOn = append(dependsOn, addTaskPrefix(prefix, dependent))
+			}
+			run.DependsOn = dependsOn
+
+			aggregate.Runs[name] = run
 		}
 	}
 

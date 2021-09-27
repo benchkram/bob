@@ -1,8 +1,7 @@
-package build
+package bobtask
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -38,10 +37,6 @@ func (t *Task) Run(ctx context.Context) (err error) {
 		errz.Fatal(err)
 
 		err = r.Run(ctx, p)
-		if errors.Is(err, context.Canceled) {
-			// Bail out early if the context was cancelled
-			return err
-		}
 		errz.Fatal(err)
 
 		// fmt.Printf("%s succeded \n", t.name)

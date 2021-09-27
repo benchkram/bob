@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/Benchkram/bob/bob/build"
+	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/bob/pkg/filepathutil"
 
 	. "github.com/onsi/ginkgo"
@@ -31,7 +31,7 @@ var _ = Describe("Test hash-related functions", func() {
 			list, err := filepathutil.ListRecursive(dir)
 			Expect(err).NotTo(HaveOccurred())
 
-			fhs := build.HashFiles(list)
+			fhs := hash.HashFiles(list)
 			stripFileHashBase(fhs)
 			// data, err := json.MarshalIndent(fhs, "", "\t")
 			// Expect(err).NotTo(HaveOccurred())
@@ -40,11 +40,11 @@ var _ = Describe("Test hash-related functions", func() {
 			fhsFixtureRaw, err := ioutil.ReadFile(hashesFile)
 			Expect(err).NotTo(HaveOccurred())
 
-			var fhsFixture []build.FileHash
+			var fhsFixture []hash.H
 			err = json.Unmarshal(fhsFixtureRaw, &fhsFixture)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = build.FileHashesDiffer(fhsFixture, fhs)
+			err = hash.FileHashesDiffer(fhsFixture, fhs)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -54,7 +54,7 @@ func stripBase(path string) string {
 	return strings.Replace(path, dir, ".", 1)
 }
 
-func stripFileHashBase(fhs []build.FileHash) {
+func stripFileHashBase(fhs []hash.H) {
 	for i, fh := range fhs {
 		fhs[i].Path = stripBase(fh.Path)
 	}

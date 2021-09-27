@@ -1,37 +1,19 @@
-package build
+package bobtask
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/logrusorgru/aurora"
-	"github.com/mholt/archiver/v3"
-
+	"github.com/Benchkram/bob/bob/global"
+	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/file"
 	"github.com/Benchkram/errz"
+	"github.com/logrusorgru/aurora"
+	"github.com/mholt/archiver/v3"
 )
 
-type Target struct {
-	Paths []string
-	Type  TargetType
-}
-
-func MakeTarget() Target {
-	return Target{
-		Paths: []string{},
-		Type:  File,
-	}
-}
-
-type TargetType string
-
-const (
-	File   TargetType = "file"
-	Docker TargetType = "docker"
-)
-
-func (t *Task) Target() (target *Target) {
+func (t *Task) Target() *target.T {
 	return &t.target
 }
 
@@ -79,7 +61,7 @@ func (t *Task) Pack(hash string) (err error) {
 		paths = append(paths, filepath.Join(t.dir, path))
 	}
 
-	archive := filepath.Join(t.dir, BobCacheDir, hash+".tar.br")
+	archive := filepath.Join(t.dir, global.BobCacheDir, hash+".tar.br")
 	err = os.RemoveAll(archive)
 	errz.Fatal(err)
 	err = archiver.Archive(paths, archive)

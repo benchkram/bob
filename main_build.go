@@ -8,7 +8,8 @@ import (
 	"syscall"
 
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/bob/build"
+	"github.com/Benchkram/bob/bob/bobfile"
+	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/errz"
 
 	"github.com/spf13/cobra"
@@ -23,7 +24,7 @@ var buildCmd = &cobra.Command{
 		dummy, err := strconv.ParseBool(cmd.Flag("dummy").Value.String())
 		errz.Fatal(err)
 
-		taskname := build.DefaultBuildTask
+		taskname := global.DefaultBuildTask
 		if len(args) > 0 {
 			taskname = args[0]
 		}
@@ -53,7 +54,7 @@ func runBuild(dummy bool, taskname string) {
 	if dummy {
 		wd, err := os.Getwd()
 		errz.Fatal(err)
-		err = build.CreateDummyBobfile(wd, false)
+		err = bobfile.CreateDummyBobfile(wd, false)
 		errz.Fatal(err)
 		os.Exit(0)
 	}

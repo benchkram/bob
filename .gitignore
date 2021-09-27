@@ -1,5 +1,4 @@
 /.bob
-/bobrun
 /Bobfile
 vendor/
 
@@ -7,3 +6,5 @@ vendor/
 .idea
 
 dist/
+
+run

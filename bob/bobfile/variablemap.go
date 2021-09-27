@@ -1,3 +1,3 @@
-package build
+package bobfile
 
 type VariableMap map[string]string

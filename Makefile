@@ -6,11 +6,11 @@ help:
 
 .PHONY: run
 run: build # build and run the tool
-	@./bobrun $(filter-out $@,$(MAKECMDGOALS))
+	@./run $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: build
 build: # build the tool
-	@go build -o ./bobrun
+	@go build -o ./run
 
 .PHONY: install
 install: # install the tool

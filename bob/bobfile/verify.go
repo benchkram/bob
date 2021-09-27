@@ -1,4 +1,4 @@
-package build
+package bobfile
 
 import (
 	"github.com/Benchkram/errz"
@@ -24,7 +24,7 @@ func (b *Bobfile) verifyBefore() (err error) {
 	defer errz.Recover(&err)
 
 	for _, task := range b.Tasks {
-		err = task.verifyBefore()
+		err = task.VerifyBefore()
 		errz.Fatal(err)
 	}
 
@@ -36,7 +36,7 @@ func (b *Bobfile) verifyAfter() (err error) {
 	defer errz.Recover(&err)
 
 	for _, task := range b.Tasks {
-		err = task.verifyAfter()
+		err = task.VerifyAfter()
 		errz.Fatal(err)
 	}
 

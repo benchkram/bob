@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bob/build"
+	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/bob/pkg/file"
 	"github.com/Benchkram/bob/test/repo/setup"
 
@@ -58,7 +58,7 @@ var _ = Describe("Test bob clone", func() {
 			_, err := b.CloneRepo(fmt.Sprintf("file://%s", playgroundRepo))
 			Expect(err).NotTo(HaveOccurred())
 
-			f := filepath.Join(playgroundRepo, "second-level", "third-level", build.BobFileName)
+			f := filepath.Join(playgroundRepo, "second-level", "third-level", global.BobFileName)
 			Expect(file.Exists(f)).To(BeTrue(), fmt.Sprintf("%s doesn't exist", f))
 		})
 

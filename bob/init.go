@@ -6,6 +6,7 @@ import (
 
 	"github.com/Benchkram/errz"
 
+	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/bob/pkg/file"
 )
 
@@ -17,7 +18,7 @@ func (b *B) Init() (err error) {
 func (b *B) init() (err error) {
 	defer errz.Recover(&err)
 
-	dir := filepath.Join(b.dir, BuildToolDir)
+	dir := filepath.Join(b.dir, global.BuildToolDir)
 
 	if file.Exists(dir) {
 		return ErrBuildToolAlreadyInitialised

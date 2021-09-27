@@ -1,17 +1,20 @@
-package build
+package bobtask
 
 import (
 	"bytes"
 	"fmt"
 	"path/filepath"
 	"sort"
+
+	"github.com/Benchkram/bob/pkg/multilinecmd"
+	"github.com/Benchkram/errz"
 )
 
-type TaskMap map[string]Task
+type Map map[string]Task
 
 // walk the task tree starting at root. Following dependend tasks.
 // dependencies are expressed in local scope, level is used to resolve the taskname in global scope.
-func (tm TaskMap) walk(root string, parentLevel string, fn func(taskname string, _ Task, _ error) error) error {
+func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ Task, _ error) error) error {
 	taskname := root //filepath.Join(parentLevel, root)
 	//fmt.Printf("Walk started on root %s with parentLevel: %s using taskname:%s\n", root, parentLevel, taskname)
 
@@ -30,7 +33,7 @@ func (tm TaskMap) walk(root string, parentLevel string, fn func(taskname string,
 		level = ""
 	}
 	for _, relTaskname := range task.DependsOn {
-		err = tm.walk(relTaskname, level, fn)
+		err = tm.Walk(relTaskname, level, fn)
 		if err != nil {
 			return err
 		}
@@ -39,7 +42,30 @@ func (tm TaskMap) walk(root string, parentLevel string, fn func(taskname string,
 	return nil
 }
 
-func (tm TaskMap) String() string {
+// Sanitize task map and write filtered & sanitized
+// propertys from dirty members to plain (e.g. dirtyInputs -> filter&sanitize -> inputs)
+func (tm Map) Sanitize() {
+	for key, task := range tm {
+		inputs, err := task.filteredInputs()
+		errz.Fatal(err)
+		task.inputs = inputs
+
+		sanitizedExports, err := task.sanitizeExports(task.Exports)
+		errz.Fatal(err)
+		task.Exports = sanitizedExports
+
+		sanitizedTargetPaths, err := task.sanitizeTarget(task.TargetDirty.Paths)
+		errz.Fatal(err)
+		task.target.Paths = sanitizedTargetPaths
+		task.target.Type = task.TargetDirty.Type
+
+		task.cmds = multilinecmd.Split(task.CmdDirty)
+
+		tm[key] = task
+	}
+}
+
+func (tm Map) String() string {
 	description := bytes.NewBufferString("")
 
 	fmt.Fprint(description, "TaskMap:\n")

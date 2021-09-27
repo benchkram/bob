@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Benchkram/bob/bob/build"
+	"github.com/Benchkram/bob/bob/playbook"
+	"github.com/Benchkram/bob/bobtask"
 	"github.com/Benchkram/errz"
 )
 
@@ -20,16 +21,17 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 	aggregate, err := b.Aggregate()
 	errz.Fatal(err)
 	println(aggregate.Tasks.String())
+	println(aggregate.Runs.String())
 
-	playbook, err := aggregate.BuildPlaybook(taskname)
+	playbook, err := aggregate.Playbook(taskname)
 	errz.Fatal(err)
 	println(playbook.String())
 
-	return b.RunTask(ctx, taskname, playbook)
+	return b.BuildTask(ctx, taskname, playbook)
 }
 
-// Run a task and it childs in a playbook.
-func (b *B) RunTask(ctx context.Context, taskname string, playbook *build.Playbook) (err error) {
+// BuildTask and its childs in a playbook.
+func (b *B) BuildTask(ctx context.Context, taskname string, playbook *playbook.Playbook) (err error) {
 	done := make(chan error)
 
 	go func() {
@@ -38,7 +40,7 @@ func (b *B) RunTask(ctx context.Context, taskname string, playbook *build.Playbo
 
 		c := playbook.TaskChannel()
 		for task := range c {
-			err := b.runSingleTask(ctx, taskname, task, playbook)
+			err := b.buildSingleTask(ctx, taskname, task, playbook)
 			if errors.Is(err, context.Canceled) {
 				done <- err
 				break
@@ -56,7 +58,7 @@ func (b *B) RunTask(ctx context.Context, taskname string, playbook *build.Playbo
 }
 
 // Run a single task (of potentially a parent) in a playbook.
-func (b *B) runSingleTask(ctx context.Context, taskname string, task build.Task, playbook *build.Playbook) (err error) {
+func (b *B) buildSingleTask(ctx context.Context, taskname string, task bobtask.Task, playbook *playbook.Playbook) (err error) {
 	// TODO: Run a worker pool so that multiple tasks can run in parallel.
 	// https://stackoverflow.com/questions/25306073/always-have-x-number-of-goroutines-running-at-any-time
 

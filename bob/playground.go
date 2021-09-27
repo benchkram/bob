@@ -10,7 +10,12 @@ import (
 
 	"github.com/Benchkram/errz"
 
-	"github.com/Benchkram/bob/bob/build"
+	"github.com/Benchkram/bob/bob/bobfile"
+	"github.com/Benchkram/bob/bob/global"
+	"github.com/Benchkram/bob/bobrun"
+	"github.com/Benchkram/bob/bobtask"
+	"github.com/Benchkram/bob/bobtask/export"
+	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/bob/pkg/file"
 )
@@ -212,43 +217,43 @@ func CreatePlayground(dir string) error {
 
 func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	// Prevent accidential bobfile override
-	if file.Exists(build.BobFileName) && !overwrite {
-		return build.ErrBobfileExists
+	if file.Exists(global.BobFileName) && !overwrite {
+		return bobfile.ErrBobfileExists
 	}
 
-	bobfile := build.NewBobfile()
+	bobfile := bobfile.NewBobfile()
 
 	bobfile.Variables["helloworld"] = "Hello World!"
 
-	bobfile.Tasks[build.DefaultBuildTask] = build.Task{
-		InputDirty: build.Input{
+	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
+		InputDirty: bobtask.Input{
 			Inputs: []string{"./main1.go", "go.mod"},
 			Ignore: []string{},
 		},
 		CmdDirty: "go build -o run",
-		TargetDirty: build.Target{
+		TargetDirty: target.T{
 			Paths: []string{"run"},
-			Type:  build.File,
+			Type:  target.File,
 		},
 	}
 
-	bobfile.Tasks[BuildAllTargetName] = build.Task{
-		InputDirty: build.Input{
+	bobfile.Tasks[BuildAllTargetName] = bobtask.Task{
+		InputDirty: bobtask.Input{
 			Inputs: []string{"./main1.go"},
 			Ignore: []string{},
 		},
 		CmdDirty: "go build -o run",
 		DependsOn: []string{
-			filepath.Join(SecondLevelDir, fmt.Sprintf("%s2", build.DefaultBuildTask)),
+			filepath.Join(SecondLevelDir, fmt.Sprintf("%s2", global.DefaultBuildTask)),
 		},
-		TargetDirty: build.Target{
+		TargetDirty: target.T{
 			Paths: []string{"run"},
-			Type:  build.File,
+			Type:  target.File,
 		},
 	}
 
-	bobfile.Tasks["generate"] = build.Task{
-		InputDirty: build.Input{
+	bobfile.Tasks["generate"] = bobtask.Task{
+		InputDirty: bobtask.Input{
 			Inputs: []string{"openapi.yaml"},
 			Ignore: []string{},
 		},
@@ -261,34 +266,49 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		DependsOn: []string{
 			filepath.Join(SecondLevelOpenapiProviderDir, "openapi"),
 		},
-		TargetDirty: build.Target{
+		TargetDirty: target.T{
 			Paths: []string{
 				"rest-server/generated/server.gen.go",
 				"rest-server/generated/types.gen.go",
 				"rest-server/generated/client.gen.go",
 			},
-			Type: build.File,
+			Type: target.File,
 		},
 	}
 
-	bobfile.Tasks["slow"] = build.Task{
+	bobfile.Tasks["slow"] = bobtask.Task{
 		CmdDirty: strings.Join([]string{
 			"sleep 2",
 			"touch slowdone",
 		}, "\n"),
-		TargetDirty: build.Target{
+		TargetDirty: target.T{
 			Paths: []string{
 				"slowdone",
 			},
-			Type: build.File,
+			Type: target.File,
 		},
 	}
 
-	bobfile.Tasks["print"] = build.Task{
+	// A run command to run a environment from a compose file
+	bobfile.Runs["runenvrionment"] = &bobrun.Run{
+		Type: bobrun.RunTypeCompose,
+	}
+
+	// A run command to run a binary
+	bobfile.Runs["runbinary"] = &bobrun.Run{
+		Type: bobrun.RunTypeBinary,
+		Path: "./run",
+		DependsOn: []string{
+			"all",
+			//"runenvrionment",
+		},
+	}
+
+	bobfile.Tasks["print"] = bobtask.Task{
 		CmdDirty: "echo ${HELLOWORLD}",
 	}
 
-	bobfile.Tasks["multilinetouch"] = build.Task{
+	bobfile.Tasks["multilinetouch"] = bobtask.Task{
 		CmdDirty: strings.Join([]string{
 			"mkdir -p \\\nmultilinetouch",
 			"touch \\\n\tmultilinefile1 \\\n\tmultilinefile2 \\\n\t\tmultilinefile3 \\\n        multilinefile4",
@@ -301,16 +321,16 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 
 func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite bool) (err error) {
 	// Prevent accidential bobfile override
-	if file.Exists(build.BobFileName) && !overwrite {
-		return build.ErrBobfileExists
+	if file.Exists(global.BobFileName) && !overwrite {
+		return bobfile.ErrBobfileExists
 	}
 
-	bobfile := build.NewBobfile()
+	bobfile := bobfile.NewBobfile()
 
-	exports := make(build.ExportMap)
-	exports["openapi"] = build.Export("openapi.yaml")
-	exports["openapi2"] = build.Export("openapi2.yaml")
-	bobfile.Tasks["openapi"] = build.Task{
+	exports := make(export.Map)
+	exports["openapi"] = export.E("openapi.yaml")
+	exports["openapi2"] = export.E("openapi2.yaml")
+	bobfile.Tasks["openapi"] = bobtask.Task{
 		Exports: exports,
 	}
 	return bobfile.BobfileSave(dir)
@@ -318,24 +338,24 @@ func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite boo
 
 func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) {
 	// Prevent accidential bobfile override
-	if file.Exists(build.BobFileName) && !overwrite {
-		return build.ErrBobfileExists
+	if file.Exists(global.BobFileName) && !overwrite {
+		return bobfile.ErrBobfileExists
 	}
 
-	bobfile := build.NewBobfile()
+	bobfile := bobfile.NewBobfile()
 
-	bobfile.Tasks[fmt.Sprintf("%s2", build.DefaultBuildTask)] = build.Task{
-		InputDirty: build.Input{
+	bobfile.Tasks[fmt.Sprintf("%s2", global.DefaultBuildTask)] = bobtask.Task{
+		InputDirty: bobtask.Input{
 			Inputs: []string{"./main2.go"},
 			Ignore: []string{},
 		},
 		DependsOn: []string{
-			filepath.Join(ThirdLevelDir, fmt.Sprintf("%s3", build.DefaultBuildTask)),
+			filepath.Join(ThirdLevelDir, fmt.Sprintf("%s3", global.DefaultBuildTask)),
 		},
 		CmdDirty: "go build -o runsecondlevel",
-		TargetDirty: build.Target{
+		TargetDirty: target.T{
 			Paths: []string{"runsecondlevel"},
-			Type:  build.File,
+			Type:  target.File,
 		},
 	}
 	return bobfile.BobfileSave(dir)
@@ -343,21 +363,21 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) 
 
 func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
 	// Prevent accidential bobfile override
-	if file.Exists(build.BobFileName) && !overwrite {
-		return build.ErrBobfileExists
+	if file.Exists(global.BobFileName) && !overwrite {
+		return bobfile.ErrBobfileExists
 	}
 
-	bobfile := build.NewBobfile()
+	bobfile := bobfile.NewBobfile()
 
-	bobfile.Tasks[fmt.Sprintf("%s3", build.DefaultBuildTask)] = build.Task{
-		InputDirty: build.Input{
+	bobfile.Tasks[fmt.Sprintf("%s3", global.DefaultBuildTask)] = bobtask.Task{
+		InputDirty: bobtask.Input{
 			Inputs: []string{"./main3.go"},
 			Ignore: []string{},
 		},
 		CmdDirty: "go build -o runthirdlevel",
-		TargetDirty: build.Target{
+		TargetDirty: target.T{
 			Paths: []string{"runthirdlevel"},
-			Type:  build.File,
+			Type:  target.File,
 		},
 	}
 	return bobfile.BobfileSave(dir)

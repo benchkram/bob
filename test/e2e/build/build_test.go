@@ -2,6 +2,7 @@ package buildtest
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/pkg/file"
@@ -19,7 +20,10 @@ var _ = Describe("Test bob build", func() {
 		It("runs a slow build and cancelles the context", func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			cancel()
-			Expect(b.Build(ctx, "slow")).To(Equal(context.Canceled))
+
+			err := b.Build(ctx, "slow")
+			Expect(err).NotTo(BeNil())
+			Expect(errors.Is(err, context.Canceled)).To(BeTrue())
 
 			Expect(file.Exists("slowdone")).To(BeFalse(), "slowdone file shouldn't exist")
 		})

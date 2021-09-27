@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main ]
 
-# Using one job to for validation to save computing time.
+# Using one job for validation to save computing time.
 # Linting and Unittest can reuse go dependencies which save costs.
 
 jobs:

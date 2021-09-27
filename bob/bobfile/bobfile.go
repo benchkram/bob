@@ -1,6 +1,7 @@
-package build
+package bobfile
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -10,35 +11,37 @@ import (
 
 	"github.com/Benchkram/errz"
 
+	"github.com/Benchkram/bob/bob/global"
+	"github.com/Benchkram/bob/bobrun"
+	"github.com/Benchkram/bob/bobtask"
+	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/file"
-	"github.com/Benchkram/bob/pkg/multilinecmd"
-)
-
-const (
-	BobFileName = "bob.yaml"
-
-	DefaultBuildTask = "build"
 )
 
 var (
 	defaultIgnores = []string{
-		filepath.Join(".bob", "*"), // TODO: Use bob.BuildToolDir
-		filepath.Join(BobCacheDir, "*"),
+		filepath.Join(global.BuildToolDir, "*"),
+		filepath.Join(global.BobCacheDir, "*"),
 	}
 )
 
 var (
+	ErrNotImplemented         = fmt.Errorf("Not implemented")
 	ErrBobfileNotFound        = fmt.Errorf("Could not find a Bobfile")
 	ErrHashesFileDoesNotExist = fmt.Errorf("Hashes file does not exist")
 	ErrTaskHashDoesNotExist   = fmt.Errorf("Task hash does not exist")
 	ErrBobfileExists          = fmt.Errorf("Bobfile exists")
 	ErrTaskDoesNotExist       = fmt.Errorf("Task does not exist")
+
+	ErrInvalidRunType = fmt.Errorf("Invalid run type")
 )
 
 type Bobfile struct {
 	Variables VariableMap
 
-	Tasks TaskMap
+	Tasks bobtask.Map
+
+	Runs bobrun.RunMap
 
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
@@ -48,7 +51,8 @@ type Bobfile struct {
 func NewBobfile() *Bobfile {
 	b := &Bobfile{
 		Variables: make(VariableMap),
-		Tasks:     make(TaskMap),
+		Tasks:     make(bobtask.Map),
+		Runs:      make(bobrun.RunMap),
 	}
 	return b
 }
@@ -57,7 +61,7 @@ func NewBobfile() *Bobfile {
 func bobfileRead(dir string) (_ *Bobfile, err error) {
 	defer errz.Recover(&err)
 
-	bobfilePath := filepath.Join(dir, BobFileName)
+	bobfilePath := filepath.Join(dir, global.BobFileName)
 
 	if !file.Exists(bobfilePath) {
 		return nil, ErrBobfileNotFound
@@ -71,18 +75,26 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	err = yaml.Unmarshal(bin, bobfile)
 	errz.Fatal(err)
 
-	// Inject dir & taskname into each task.
+	// Assure tasks are initialized with their defaults
 	for key, task := range bobfile.Tasks {
-		task.dir = bobfile.dir
-		task.name = key
+		task.SetDir(bobfile.dir)
+		task.SetName(key)
 		task.InputDirty.Ignore = append(task.InputDirty.Ignore, defaultIgnores...)
 
 		// Make sure a task is correctly initialised.
 		// TODO: All unitialised must be initialised or get default values.
 		// This mean switching to pointer types for most members.
-		task.env = []string{}
+		task.SetEnv([]string{})
 
 		bobfile.Tasks[key] = task
+	}
+
+	// Assure runs are initialized with their defaults
+	for key, run := range bobfile.Runs {
+		run.SetDir(bobfile.dir)
+		run.SetName(key)
+
+		bobfile.Runs[key] = run
 	}
 
 	return bobfile, nil
@@ -95,35 +107,24 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 	b, err := bobfileRead(dir)
 	errz.Fatal(err)
 
-	// sanitize
-	for key, task := range b.Tasks {
-		inputs, err := task.filteredInputs()
-		errz.Fatal(err)
-		task.inputs = inputs
-
-		sanitizedExports, err := task.sanitizeExports(task.Exports)
-		errz.Fatal(err)
-		task.Exports = sanitizedExports
-
-		sanitizedTargetPaths, err := task.sanitizeTarget(task.TargetDirty.Paths)
-		errz.Fatal(err)
-		task.target.Paths = sanitizedTargetPaths
-		task.target.Type = task.TargetDirty.Type
-
-		task.cmds = multilinecmd.Split(task.CmdDirty)
-
-		b.Tasks[key] = task
-	}
+	b.Tasks.Sanitize()
 
 	return b, nil
 }
 
 func (b *Bobfile) BobfileSave(dir string) (err error) {
 	defer errz.Recover(&err)
-	bin, err := yaml.Marshal(b)
+
+	buf := bytes.NewBuffer([]byte{})
+
+	encoder := yaml.NewEncoder(buf)
+	encoder.SetIndent(2)
+	defer encoder.Close()
+
+	err = encoder.Encode(b)
 	errz.Fatal(err)
 
-	return ioutil.WriteFile(filepath.Join(dir, BobFileName), bin, 0664)
+	return ioutil.WriteFile(filepath.Join(dir, global.BobFileName), buf.Bytes(), 0664)
 }
 
 func (b *Bobfile) Dir() string {
@@ -132,26 +133,26 @@ func (b *Bobfile) Dir() string {
 
 func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 	// Prevent accidential bobfile override
-	if file.Exists(BobFileName) && !overwrite {
+	if file.Exists(global.BobFileName) && !overwrite {
 		return ErrBobfileExists
 	}
 
 	bobfile := NewBobfile()
 
-	bobfile.Tasks[DefaultBuildTask] = Task{
-		InputDirty: Input{
+	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
+		InputDirty: bobtask.Input{
 			Inputs: []string{"./main.go"},
 			Ignore: []string{},
 		},
 		CmdDirty: "go build -o run",
-		TargetDirty: Target{
+		TargetDirty: target.T{
 			Paths: []string{"run"},
-			Type:  File,
+			Type:  target.File,
 		},
 	}
 	return bobfile.BobfileSave(dir)
 }
 
 func IsBobfile(file string) bool {
-	return strings.Contains(filepath.Base(file), BobFileName)
+	return strings.Contains(filepath.Base(file), global.BobFileName)
 }

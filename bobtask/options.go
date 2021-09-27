@@ -1,4 +1,4 @@
-package build
+package bobtask
 
 type TaskOption func(t *Task)
 

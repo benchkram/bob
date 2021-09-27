@@ -1,4 +1,4 @@
-package build
+package bobtask
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ func (t *Task) NeedsRebuild() (rebuildRequired bool, err error) {
 	hash, err := t.Hash()
 	errz.Fatal(err)
 
-	storedHashes, err := ReadHashes(t)
+	storedHashes, err := t.ReadHashes()
 	if err != nil {
 		if errors.Is(err, ErrHashesFileDoesNotExist) {
 			return true, nil

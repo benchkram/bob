@@ -1,4 +1,4 @@
-package build
+package playbook
 
 import (
 	"bytes"
@@ -8,29 +8,33 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Benchkram/bob/bobtask"
 	"github.com/Benchkram/errz"
 )
 
 // The playbook defines the order in which tasks are allowed to run.
 // Also determines the possibility to run tasks in parallel.
 
+var ErrTaskDoesNotExist = fmt.Errorf("Task does not exist")
+
 type Playbook struct {
 	// taskChannel is closed when the root
 	// task completes.
-	taskChannel chan Task
+	taskChannel chan bobtask.Task
 
 	// errorChannel to transport errors to the caller
 	errorChannel chan error
 
-	root  string
-	tasks TaskStatusMap
+	root string
+
+	Tasks TaskStatusMap
 }
 
-func NewPlaybook(root string) *Playbook {
+func New(root string) *Playbook {
 	p := &Playbook{
-		taskChannel:  make(chan Task, 10),
+		taskChannel:  make(chan bobtask.Task, 10),
 		errorChannel: make(chan error),
-		tasks:        make(TaskStatusMap),
+		Tasks:        make(TaskStatusMap),
 		root:         root,
 	}
 	return p
@@ -39,7 +43,7 @@ func NewPlaybook(root string) *Playbook {
 // TaskNeedsRebuild check if a tasks need a rebuild by looking at it's hash value
 // and it's child tasks.
 func (p *Playbook) TaskNeedsRebuild(taskname string) (bool, error) {
-	ts, ok := p.tasks[taskname]
+	ts, ok := p.Tasks[taskname]
 	if !ok {
 		return true, ErrTaskDoesNotExist
 	}
@@ -53,7 +57,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (bool, error) {
 
 	var Done = fmt.Errorf("done")
 	// Check if task needs a rebuild due to its dependencies changing
-	err = p.tasks.walk(task.Name(), func(tn string, t *TaskStatus, err error) error {
+	err = p.Tasks.walk(task.Name(), func(tn string, t *TaskStatus, err error) error {
 		if err != nil {
 			return err
 		}
@@ -86,7 +90,7 @@ func (p *Playbook) Play() {
 
 func (p *Playbook) play() {
 	var Done = fmt.Errorf("done")
-	err := p.tasks.walk(p.root, func(taskname string, task *TaskStatus, err error) error {
+	err := p.Tasks.walk(p.root, func(taskname string, task *TaskStatus, err error) error {
 		if err != nil {
 			return err
 		}
@@ -97,7 +101,7 @@ func (p *Playbook) play() {
 		case StatePending:
 			// Check if all dependent tasks are completed
 			for _, dependentTaskName := range task.Task.DependsOn {
-				t, ok := p.tasks[dependentTaskName]
+				t, ok := p.Tasks[dependentTaskName]
 				if !ok {
 					//fmt.Printf("Task %s does not exist", dependentTaskName)
 					return ErrTaskDoesNotExist
@@ -129,7 +133,7 @@ func (p *Playbook) play() {
 }
 
 // TaskChannel returns the next task
-func (p *Playbook) TaskChannel() <-chan Task {
+func (p *Playbook) TaskChannel() <-chan bobtask.Task {
 	return p.taskChannel
 }
 
@@ -138,7 +142,7 @@ func (p *Playbook) ErrorChannel() <-chan error {
 }
 
 func (p *Playbook) setTaskState(taskname, state string) error {
-	task, ok := p.tasks[taskname]
+	task, ok := p.Tasks[taskname]
 	if !ok {
 		return ErrTaskDoesNotExist
 	}
@@ -149,12 +153,12 @@ func (p *Playbook) setTaskState(taskname, state string) error {
 		task.End = time.Now()
 	}
 
-	p.tasks[taskname] = task
+	p.Tasks[taskname] = task
 	return nil
 }
 
 func (p *Playbook) pack(taskname string, hash string) error {
-	task, ok := p.tasks[taskname]
+	task, ok := p.Tasks[taskname]
 	if !ok {
 		return ErrTaskDoesNotExist
 	}
@@ -162,12 +166,12 @@ func (p *Playbook) pack(taskname string, hash string) error {
 }
 
 func (p *Playbook) storeHash(taskname string, hash string) error {
-	task, ok := p.tasks[taskname]
+	task, ok := p.Tasks[taskname]
 	if !ok {
 		return ErrTaskDoesNotExist
 	}
 
-	return StoreHash(&task.Task, hash)
+	return task.Task.StoreHash(hash)
 }
 
 func (p *Playbook) next(taskname string) {
@@ -183,7 +187,7 @@ func (p *Playbook) next(taskname string) {
 func (p *Playbook) ExecutionTime() time.Duration {
 	var start, end *TaskStatus
 
-	for _, task := range p.tasks {
+	for _, task := range p.Tasks {
 		if start == nil || start.Start.After(task.Start) {
 			start = task
 		}
@@ -196,7 +200,7 @@ func (p *Playbook) ExecutionTime() time.Duration {
 }
 
 func (p *Playbook) TaskStatus(taskname string) (ts *TaskStatus, _ error) {
-	status, ok := p.tasks[taskname]
+	status, ok := p.Tasks[taskname]
 	if !ok {
 		return ts, ErrTaskDoesNotExist
 	}
@@ -208,7 +212,7 @@ func (p *Playbook) TaskStatus(taskname string) (ts *TaskStatus, _ error) {
 func (p *Playbook) TaskCompleted(taskname string) (err error) {
 	defer errz.Recover(&err)
 
-	task, ok := p.tasks[taskname]
+	task, ok := p.Tasks[taskname]
 	if !ok {
 		return ErrTaskDoesNotExist
 	}
@@ -272,8 +276,8 @@ func (p *Playbook) TaskCanceled(taskname string) (err error) {
 func (p *Playbook) List() (err error) {
 	defer errz.Recover(&err)
 
-	keys := make([]string, 0, len(p.tasks))
-	for k := range p.tasks {
+	keys := make([]string, 0, len(p.Tasks))
+	for k := range p.Tasks {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -290,28 +294,36 @@ func (p *Playbook) String() string {
 
 	fmt.Fprint(description, "Playbook:\n")
 
-	keys := make([]string, 0, len(p.tasks))
-	for k := range p.tasks {
+	keys := make([]string, 0, len(p.Tasks))
+	for k := range p.Tasks {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		task := p.tasks[k]
-		fmt.Fprintf(description, "  %s(%s): %s\n", k, task.Task.name, task.State())
+		task := p.Tasks[k]
+		fmt.Fprintf(description, "  %s(%s): %s\n", k, task.Task.Name(), task.State())
 	}
 
 	return description.String()
 }
 
 type TaskStatus struct {
-	Task Task
+	Task bobtask.Task
 
 	stateMu sync.RWMutex
 	state   string
 
 	Start time.Time
 	End   time.Time
+}
+
+func NewTaskStatus(task bobtask.Task) *TaskStatus {
+	return &TaskStatus{
+		Task:  task,
+		state: StatePending,
+		Start: time.Now(),
+	}
 }
 
 func (ts *TaskStatus) State() string {

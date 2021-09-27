@@ -1,4 +1,4 @@
-package build
+package bobtask
 
 import (
 	"bytes"
@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Benchkram/bob/bobtask/export"
+	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/filehash"
 
 	"gopkg.in/yaml.v3"
@@ -55,11 +57,11 @@ type Task struct {
 	// Parent tasks can take the files and copy them
 	// to a place they like to
 	// ???
-	TargetDirty Target `yaml:"target"`
-	target      Target
+	TargetDirty target.T `yaml:"target"`
+	target      target.T
 
 	// Exports other tasks can reuse.
-	Exports ExportMap
+	Exports export.Map `yaml:"exports"`
 
 	// name is the name of the task
 	name string
@@ -74,10 +76,10 @@ type Task struct {
 func Make(opts ...TaskOption) Task {
 	t := Task{
 		InputDirty:  MakeInput(),
-		TargetDirty: MakeTarget(),
+		TargetDirty: target.Make(),
 
 		DependsOn: []string{},
-		Exports:   make(ExportMap),
+		Exports:   make(export.Map),
 		env:       []string{},
 	}
 
@@ -103,12 +105,20 @@ func (t *Task) Env() []string {
 	return t.env
 }
 
-func (t *Task) GetExports() ExportMap {
+func (t *Task) GetExports() export.Map {
 	return t.Exports
+}
+
+func (t *Task) SetDir(dir string) {
+	t.dir = dir
 }
 
 func (t *Task) SetName(name string) {
 	t.name = name
+}
+
+func (t *Task) SetEnv(env []string) {
+	t.env = env
 }
 
 const EnvironSeparator = "="
@@ -117,8 +127,8 @@ func (t *Task) AddEnvironment(key, value string) {
 	t.env = append(t.env, strings.Join([]string{key, value}, EnvironSeparator))
 }
 func (t *Task) AddExportPrefix(prefix string) {
-	for i, export := range t.Exports {
-		t.Exports[i] = Export(filepath.Join(prefix, string(export)))
+	for i, e := range t.Exports {
+		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))
 	}
 }
 

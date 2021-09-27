@@ -24,6 +24,10 @@ func init() {
 	rootCmd.AddCommand(CmdAdd)
 	rootCmd.AddCommand(CmdClone)
 
+	// runCmd
+	runCmd.AddCommand(runListCmd)
+	rootCmd.AddCommand(runCmd)
+
 	// playgroundCmd
 	playgroundCmd.Flags().Bool("clean", false, "Delete directory content before creating the playground")
 	rootCmd.AddCommand(playgroundCmd)

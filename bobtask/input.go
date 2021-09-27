@@ -1,4 +1,4 @@
-package build
+package bobtask
 
 import (
 	"fmt"

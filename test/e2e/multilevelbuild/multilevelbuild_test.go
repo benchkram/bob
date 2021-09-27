@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/bob/build"
+	"github.com/Benchkram/bob/bob/playbook"
 	"github.com/Benchkram/bob/pkg/file"
 
 	. "github.com/onsi/ginkgo"
@@ -196,16 +196,16 @@ var _ = Describe("Test bob multilevel build", func() {
 func requiresRebuildMustMatchFixtures(b *bob.B, fixtures []requiresRebuildFixture) {
 	aggregate, err := b.Aggregate()
 	Expect(err).NotTo(HaveOccurred())
-	playbook, err := aggregate.BuildPlaybook(bob.BuildAllTargetName)
+	pb, err := aggregate.Playbook(bob.BuildAllTargetName)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = b.RunTask(context.Background(), bob.BuildAllTargetName, playbook)
+	err = b.BuildTask(context.Background(), bob.BuildAllTargetName, pb)
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, f := range fixtures {
-		ts, err := playbook.TaskStatus(f.taskname)
+		ts, err := pb.TaskStatus(f.taskname)
 		Expect(err).NotTo(HaveOccurred())
-		requiresRebuild := ts.State() != build.StateNoRebuildRequired
+		requiresRebuild := ts.State() != playbook.StateNoRebuildRequired
 
 		Expect(f.requiresRebuild).To(Equal(requiresRebuild), fmt.Sprintf("task's %q rebuild requirement differ, got: %t, want: %t", f.taskname, requiresRebuild, f.requiresRebuild))
 	}

@@ -2,13 +2,10 @@ package bob
 
 import (
 	"path/filepath"
-)
 
-const (
-	BuildToolDir = ".bob"
-	ConfigFile   = "config"
+	"github.com/Benchkram/bob/bob/global"
 )
 
 func (b B) ConfigFilePath() string {
-	return filepath.Join(b.dir, BuildToolDir, ConfigFile)
+	return filepath.Join(b.dir, global.BuildToolDir, global.ConfigFile)
 }
