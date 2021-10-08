@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/Benchkram/errz v0.0.0-20180520163740-571a80a661f2
 	github.com/cli/cli v1.12.1
+	github.com/cli/safeexec v1.0.0
 	github.com/compose-spec/compose-go v0.0.0-20210722130045-6e1e1c2b26de
 	github.com/docker/cli v20.10.7+incompatible
 	github.com/docker/compose-cli v1.0.18-0.20210726150244-2edd8c216bb8
