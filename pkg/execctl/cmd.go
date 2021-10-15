@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+
+	"github.com/Benchkram/bob/pkg/ctl"
 )
 
 var (
@@ -14,51 +16,132 @@ var (
 )
 
 // Command allows to execute a command and interact with it in real-time
-type Command interface {
-	Start() error
-	Stop() error
-	Restart() error
-	Wait() error
-	Stdout() io.Reader
-	Stderr() io.Reader
-	Stdin() io.Writer
-}
+// type Command interface {
+// 	Start() error
+// 	Stop() error
+// 	Restart() error
+
+// 	Shutdown() error
+// 	Done() <-chan struct{}
+
+// 	Stdout() io.Reader
+// 	Stderr() io.Reader
+// 	Stdin() io.Writer
+// }
 
 // assert Cmd implements the Command interface
-var _ Command = (*Cmd)(nil)
+var _ ctl.Command = (*Cmd)(nil)
 
 // Cmd allows to control a process started through os.Exec with additional start, stop and restart capabilities, and
 // provides readers/writers for the command's outputs and input, respectively.
 type Cmd struct {
-	mux     sync.Mutex
-	cmd     *exec.Cmd
-	exe     string
-	args    []string
-	stdout  pipe
-	stderr  pipe
-	stdin   pipe
-	running bool
-	err     chan error
-	lastErr error
+	mux         sync.Mutex
+	cmd         *exec.Cmd
+	name        string
+	exe         string
+	args        []string
+	stdout      pipe
+	stderr      pipe
+	stdin       pipe
+	running     bool
+	interrupted bool
+	err         chan error
+	lastErr     error
 }
 
 type pipe struct {
-	w *os.File
 	r *os.File
+	w *os.File
 }
 
 // NewCmd creates a new Cmd, ready to be started
-func NewCmd(exe string, args ...string) (*Cmd, error) {
-	return &Cmd{
+func NewCmd(name string, exe string, args ...string) (c *Cmd, err error) {
+	c = &Cmd{
+		name: name,
 		exe:  exe,
 		args: args,
-	}, nil
+		err:  make(chan error, 1),
+		//TODO
+	}
+
+	// create pipes for stdout, stderr and stdin
+	c.stdout.r, c.stdout.w, err = os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	c.stderr.r, c.stderr.w, err = os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	c.stdin.r, c.stdin.w, err = os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
-// Start starts the command if it's not already running. It will return ErrCmdAlreadyStarted if it is.
-func (c *Cmd) Start() error {
-	return c.start()
+func (c *Cmd) Name() string {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	return c.name
 }
+
+func (c *Cmd) Running() bool {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	return c.running
+}
+
+
+// Start starts the command if it's not already running. It will be a noop if it is.
+// It also spins up a goroutine that will receive any error occurred during the command's exit.
+func (c *Cmd) Start() error {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	if c.running {
+		return nil
+	}
+
+	c.running = true
+	c.interrupted = false
+	c.lastErr = nil
+
+	// create the command with the found executable and the its args
+	cmd := exec.Command(c.exe, c.args...)
+	c.cmd = cmd
+
+	// assign the pipes to the command
+	c.cmd.Stdout = c.stdout.w
+	c.cmd.Stderr = c.stderr.w
+	c.cmd.Stdin = c.stdin.r
+
+	// start the command
+	err := c.cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err = cmd.Wait()
+
+		c.err <- err
+
+		c.mux.Lock()
+
+		c.running = false
+
+		c.mux.Unlock()
+	}()
+
+	return nil
+}
+
 
 // Stop stops the running command with an os.Interrupt signal. It does not return an error if the command has
 // already exited gracefully.
@@ -83,7 +166,7 @@ func (c *Cmd) Restart() error {
 		return err
 	}
 
-	return c.start()
+	return c.Start()
 }
 
 // Stdout returns a reader to the command's stdout. The reader will return an io.EOF error if the command exits.
@@ -120,6 +203,7 @@ func (c *Cmd) Wait() error {
 	running := c.running
 	errChan := c.err
 	lastErr := c.lastErr
+	interrupted := c.interrupted
 
 	if !running {
 		c.mux.Unlock()
@@ -133,78 +217,15 @@ func (c *Cmd) Wait() error {
 
 	c.mux.Lock()
 
-	c.lastErr = err
+	if err != nil && interrupted && strings.Contains(err.Error(), "signal: interrupt") {
+		err = nil
+	} else if err != nil {
+		c.lastErr = err
+	}
 
 	c.mux.Unlock()
 
 	return err
-}
-
-// start creates the command and starts executing it. It also spins up a goroutine that will receive any error occurred
-// during the command's exit.
-func (c *Cmd) start() error {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-
-	if c.running {
-		return ErrCmdAlreadyStarted
-	}
-
-	c.running = true
-	c.lastErr = nil
-
-	c.err = make(chan error, 1)
-
-	// create the command with the found executable and the its args
-	cmd := exec.Command(c.exe, c.args...)
-	c.cmd = cmd
-
-	// create pipes for stdout, stderr and stdin
-	var err error
-	c.stdout.r, c.stdout.w, err = os.Pipe()
-	if err != nil {
-		return err
-	}
-
-	c.stderr.r, c.stderr.w, err = os.Pipe()
-	if err != nil {
-		return err
-	}
-
-	c.stdin.r, c.stdin.w, err = os.Pipe()
-	if err != nil {
-		return err
-	}
-
-	// assign the pipes to the command
-	c.cmd.Stdout = c.stdout.w
-	c.cmd.Stderr = c.stderr.w
-	c.cmd.Stdin = c.stdin.r
-
-	// start the command
-	err = c.cmd.Start()
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		err = cmd.Wait()
-
-		c.err <- err
-
-		c.mux.Lock()
-
-		c.running = false
-		_ = c.stdout.w.Close()
-		_ = c.stderr.w.Close()
-		_ = c.stdin.w.Close()
-
-		close(c.err)
-
-		c.mux.Unlock()
-	}()
-
-	return nil
 }
 
 // stop requests for the command to stop, if it has already started.
@@ -213,6 +234,7 @@ func (c *Cmd) stop() error {
 
 	running := c.running
 	cmd := c.cmd
+	c.interrupted = true
 
 	c.mux.Unlock()
 
@@ -227,4 +249,18 @@ func (c *Cmd) stop() error {
 	}
 
 	return nil
+}
+
+// Shutdown stops the cmd
+func (c *Cmd) Shutdown() error {
+	return c.Stop()
+}
+
+func (c *Cmd) Done() <-chan struct{} {
+	done := make(chan struct{})
+	go func() {
+		_ = c.Wait()
+		close(done)
+	}()
+	return done
 }

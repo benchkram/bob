@@ -16,6 +16,8 @@ import (
 // Also determines the possibility to run tasks in parallel.
 
 var ErrTaskDoesNotExist = fmt.Errorf("Task does not exist")
+var ErrDone = fmt.Errorf("playbook is done")
+var ErrFailed = fmt.Errorf("playbook failed")
 
 type Playbook struct {
 	// taskChannel is closed when the root
@@ -28,6 +30,8 @@ type Playbook struct {
 	root string
 
 	Tasks TaskStatusMap
+
+	done bool
 }
 
 func New(root string) *Playbook {
@@ -84,12 +88,27 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (bool, error) {
 	return rebuildRequired, err
 }
 
-func (p *Playbook) Play() {
-	p.play()
+func (p *Playbook) Play() (err error) {
+	return p.play()
 }
 
-func (p *Playbook) play() {
-	var Done = fmt.Errorf("done")
+func (p *Playbook) play() error {
+
+	if p.done {
+		return ErrDone
+	}
+
+	playbookDone := func() {
+		close(p.taskChannel)
+		p.done = true
+	}
+
+	// Walk the task chain and determine the next build task. Send it to the task channel.
+	// Returns `taskQueued` when a task has been send to the taskChannel.
+	// Returns `taskFailed` when a task has failed.
+	// Once it returns `nil` the playbook is usually done with it's work.
+	var taskQueued = fmt.Errorf("task queued")
+	var taskFailed = fmt.Errorf("task failed")
 	err := p.Tasks.walk(p.root, func(taskname string, task *TaskStatus, err error) error {
 		if err != nil {
 			return err
@@ -115,21 +134,38 @@ func (p *Playbook) play() {
 					return nil
 				}
 			}
+		case StateFailed:
+			return taskFailed
 		case StateNoRebuildRequired:
+			return nil
+		case StateCompleted:
 			return nil
 		default:
 		}
 
 		// fmt.Printf("sending task %s to channel\n", task.Task.Name())
 		p.taskChannel <- task.Task
-		return Done
+		return taskQueued
 	})
 
+	// taskQueued => return nil (happy path)
+	// taskFailed => return PlaybookFailed
+	// default    => return err
 	if err != nil {
-		if !errors.Is(err, Done) {
-			errz.Log(err)
+		if errors.Is(err, taskQueued) {
+			return nil
 		}
+		if errors.Is(err, taskFailed) {
+			return ErrFailed
+		}
+		return err
 	}
+
+	// no work done, usually happens when
+	// no task needs a rebuild.
+	playbookDone()
+
+	return nil
 }
 
 // TaskChannel returns the next task
@@ -172,16 +208,6 @@ func (p *Playbook) storeHash(taskname string, hash string) error {
 	}
 
 	return task.Task.StoreHash(hash)
-}
-
-func (p *Playbook) next(taskname string) {
-	if taskname == p.root {
-		// Playbook is complete
-		close(p.taskChannel)
-		return
-	}
-
-	p.play()
 }
 
 func (p *Playbook) ExecutionTime() time.Duration {
@@ -231,7 +257,12 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 	err = p.setTaskState(taskname, StateCompleted)
 	errz.Fatal(err)
 
-	p.next(taskname)
+	err = p.play()
+	if err != nil {
+		if !errors.Is(err, ErrDone) {
+			errz.Fatal(err)
+		}
+	}
 
 	return nil
 }
@@ -242,7 +273,13 @@ func (p *Playbook) TaskNoRebuildRequired(taskname string) (err error) {
 
 	err = p.setTaskState(taskname, StateNoRebuildRequired)
 	errz.Fatal(err)
-	p.next(taskname)
+
+	err = p.play()
+	if err != nil {
+		if !errors.Is(err, ErrDone) {
+			errz.Fatal(err)
+		}
+	}
 
 	return nil
 }
@@ -255,7 +292,15 @@ func (p *Playbook) TaskFailed(taskname string) (err error) {
 	errz.Fatal(err)
 
 	// p.errorChannel <- fmt.Errorf("Task %s failed", taskname)
-	close(p.taskChannel)
+
+	// give the playbook the chance to set
+	// the state to done.
+	err = p.play()
+	if err != nil {
+		if !errors.Is(err, ErrDone) {
+			errz.Fatal(err)
+		}
+	}
 
 	return nil
 }
@@ -268,7 +313,6 @@ func (p *Playbook) TaskCanceled(taskname string) (err error) {
 	errz.Fatal(err)
 
 	// p.errorChannel <- fmt.Errorf("Task %s cancelled", taskname)
-	close(p.taskChannel)
 
 	return nil
 }

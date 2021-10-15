@@ -1,16 +1,11 @@
-package execctl_test
+package execctl
 
 import (
 	"bufio"
-	"io"
-	"os"
-	"testing"
-	"time"
-
-	"github.com/Benchkram/bob/pkg/execctl"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"os"
+	"testing"
 )
 
 var (
@@ -72,21 +67,15 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	err := os.RemoveAll(tmpDir)
 	Expect(err).NotTo(HaveOccurred())
-
-	err = os.Remove(scriptErrPath)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = os.Remove(scriptEchoErrPath)
-	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = Describe("Test command start and wait", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 	var r *bufio.Reader
 
 	It("command started", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -106,19 +95,16 @@ var _ = Describe("Test command start and wait", func() {
 		l, err = readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("exited"))
-
-		_, err = readLine(r)
-		Expect(err).To(Equal(io.EOF))
 	})
 })
 
 var _ = Describe("Test command stop", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 	var r *bufio.Reader
 
 	It("command started", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -143,19 +129,16 @@ var _ = Describe("Test command stop", func() {
 		l, err = readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("exited"))
-
-		_, err = readLine(r)
-		Expect(err).To(Equal(io.EOF))
 	})
 })
 
 var _ = Describe("Test command stop when already exited gracefully", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 	var r *bufio.Reader
 
 	It("command started", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -174,21 +157,18 @@ var _ = Describe("Test command stop when already exited gracefully", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("exited"))
 
-		_, err = readLine(r)
-		Expect(err).To(Equal(io.EOF))
-
 		err = cmd.Stop()
 		Expect(err).NotTo(HaveOccurred())
 	})
 })
 
 var _ = Describe("Test command manual restart", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 	var r *bufio.Reader
 
 	It("command started", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -199,14 +179,12 @@ var _ = Describe("Test command manual restart", func() {
 
 	It("command interrupted", func() {
 		// don't give the command enough time to exit gracefully
-		time.Sleep(1 * time.Second)
-
-		err := cmd.Stop()
-		Expect(err).NotTo(HaveOccurred())
-
 		l, err := readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("running"))
+
+		err = cmd.Stop()
+		Expect(err).NotTo(HaveOccurred())
 
 		l, err = readLine(r)
 		Expect(err).NotTo(HaveOccurred())
@@ -215,17 +193,11 @@ var _ = Describe("Test command manual restart", func() {
 		l, err = readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("exited"))
-
-		_, err = readLine(r)
-		Expect(err).To(Equal(io.EOF))
 	})
 
 	It("command started again and exited gracefully", func() {
 		err := cmd.Start()
 		Expect(err).NotTo(HaveOccurred())
-
-		// we have to recreate the reader since the stdout of the last run will be closed (EOF)
-		r = bufio.NewReader(cmd.Stdout())
 
 		err = cmd.Wait()
 		Expect(err).NotTo(HaveOccurred())
@@ -237,19 +209,16 @@ var _ = Describe("Test command manual restart", func() {
 		l, err = readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("exited"))
-
-		_, err = readLine(r)
-		Expect(err).To(Equal(io.EOF))
 	})
 })
 
 var _ = Describe("Test command restart", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 	var r *bufio.Reader
 
 	It("command started", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -260,14 +229,12 @@ var _ = Describe("Test command restart", func() {
 
 	It("command is restarted (interrupted and then started and exits gracefully)", func() {
 		// interrupt the command with a restart
-		time.Sleep(1 * time.Second)
-
-		err := cmd.Restart()
-		Expect(err).NotTo(HaveOccurred())
-
 		l, err := readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("running"))
+
+		err = cmd.Restart()
+		Expect(err).NotTo(HaveOccurred())
 
 		l, err = readLine(r)
 		Expect(err).NotTo(HaveOccurred())
@@ -276,12 +243,6 @@ var _ = Describe("Test command restart", func() {
 		l, err = readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("exited"))
-
-		_, err = readLine(r)
-		Expect(err).To(Equal(io.EOF))
-
-		// recreate the reader
-		r = bufio.NewReader(cmd.Stdout())
 
 		err = cmd.Wait()
 		Expect(err).NotTo(HaveOccurred())
@@ -293,19 +254,16 @@ var _ = Describe("Test command restart", func() {
 		l, err = readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("exited"))
-
-		_, err = readLine(r)
-		Expect(err).To(Equal(io.EOF))
 	})
 })
 
 var _ = Describe("Test Wait() called multiple times on command that succeeded", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 	var r *bufio.Reader
 
 	It("command started", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -328,18 +286,15 @@ var _ = Describe("Test Wait() called multiple times on command that succeeded", 
 		l, err = readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal("exited"))
-
-		_, err = readLine(r)
-		Expect(err).To(Equal(io.EOF))
 	})
 })
 
 var _ = Describe("Test Wait() called multiple times on command that returned error", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 
 	It("command started", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptErrPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptErrPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -356,11 +311,11 @@ var _ = Describe("Test Wait() called multiple times on command that returned err
 })
 
 var _ = Describe("Test Stop() called multiple times on command that returned error", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 
 	It("command started", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptErrPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptErrPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -368,8 +323,11 @@ var _ = Describe("Test Stop() called multiple times on command that returned err
 	})
 
 	It("command stopped multiple times and returned an error on all", func() {
-		err := cmd.Stop()
-		Expect(err).To(HaveOccurred()) // original interrupt error
+		err := cmd.Wait()
+		Expect(err).To(HaveOccurred()) // original exit error
+
+		err = cmd.Stop()
+		Expect(err).To(HaveOccurred()) // from cmd.lastErr
 
 		err = cmd.Stop()
 		Expect(err).To(HaveOccurred()) // from cmd.lastErr
@@ -377,28 +335,28 @@ var _ = Describe("Test Stop() called multiple times on command that returned err
 })
 
 var _ = Describe("Test Start() called multiple times", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 
 	It("command started multiple times", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptErrPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptErrPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
-		Expect(err).To(Equal(execctl.ErrCmdAlreadyStarted))
+		Expect(err).NotTo(HaveOccurred())
 	})
 })
 
 var _ = Describe("Test Stdin() and Stderr()", func() {
-	var cmd *execctl.Cmd
+	var cmd *Cmd
 	var r *bufio.Reader
 
 	It("command started multiple times", func() {
 		var err error
-		cmd, err = execctl.NewCmd("/bin/bash", "-c", scriptEchoErrPath)
+		cmd, err = NewCmd("test", "/bin/bash", "-c", scriptEchoErrPath)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -420,9 +378,6 @@ var _ = Describe("Test Stdin() and Stderr()", func() {
 		l, err := readLine(r)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(l).To(Equal(in))
-
-		_, err = readLine(r)
-		Expect(err).To(Equal(io.EOF))
 	})
 })
 
@@ -432,7 +387,7 @@ func TestExecctl(t *testing.T) {
 }
 
 func createTempScript(dir string, b []byte) (string, error) {
-	f, err := os.CreateTemp("", "shell-*.sh")
+	f, err := os.CreateTemp(dir, "shell-*.sh")
 	if err != nil {
 		return "", err
 	}

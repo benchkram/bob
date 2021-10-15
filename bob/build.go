@@ -31,17 +31,17 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 }
 
 // BuildTask and its childs in a playbook.
-func (b *B) BuildTask(ctx context.Context, taskname string, playbook *playbook.Playbook) (err error) {
+func (b *B) BuildTask(ctx context.Context, taskname string, pb *playbook.Playbook) (err error) {
 	done := make(chan error)
 
 	go func() {
 		// TODO: Run a worker pool so that multiple tasks can run in parallel.
 		// https://stackoverflow.com/questions/25306073/always-have-x-number-of-goroutines-running-at-any-time
 
-		c := playbook.TaskChannel()
+		c := pb.TaskChannel()
 		for task := range c {
-			err := b.buildSingleTask(ctx, taskname, task, playbook)
-			if errors.Is(err, context.Canceled) {
+			err := b.buildSingleTask(ctx, taskname, task, pb)
+			if errors.Is(err, context.Canceled) || errors.Is(err, playbook.ErrFailed) {
 				done <- err
 				break
 			}
@@ -51,14 +51,14 @@ func (b *B) BuildTask(ctx context.Context, taskname string, playbook *playbook.P
 		close(done)
 	}()
 
-	playbook.Play()
+	_ = pb.Play()
 	err = <-done
-	fmt.Printf("\n\nDone running playbook in %s\n", playbook.ExecutionTime())
+	fmt.Printf("\n\nDone running playbook in %s\n", pb.ExecutionTime())
 	return err
 }
 
 // Run a single task (of potentially a parent) in a playbook.
-func (b *B) buildSingleTask(ctx context.Context, taskname string, task bobtask.Task, playbook *playbook.Playbook) (err error) {
+func (b *B) buildSingleTask(ctx context.Context, taskname string, task bobtask.Task, pb *playbook.Playbook) (err error) {
 	// TODO: Run a worker pool so that multiple tasks can run in parallel.
 	// https://stackoverflow.com/questions/25306073/always-have-x-number-of-goroutines-running-at-any-time
 
@@ -70,7 +70,7 @@ func (b *B) buildSingleTask(ctx context.Context, taskname string, task bobtask.T
 		case <-done:
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.Canceled) {
-				err := playbook.TaskCanceled(task.Name())
+				err := pb.TaskCanceled(task.Name())
 				killOnError(err)
 				fmt.Printf("Task %q was canceled\n", task.Name())
 			}
@@ -81,11 +81,11 @@ func (b *B) buildSingleTask(ctx context.Context, taskname string, task bobtask.T
 	println()
 	fmt.Printf("Beginning to run task: %q\n", task.Name())
 
-	rebuildRequired, err := playbook.TaskNeedsRebuild(task.Name())
+	rebuildRequired, err := pb.TaskNeedsRebuild(task.Name())
 	killOnError(err)
 
 	if !rebuildRequired {
-		err = playbook.TaskNoRebuildRequired(task.Name())
+		err = pb.TaskNoRebuildRequired(task.Name())
 		killOnError(err)
 		fmt.Printf("Task %q doesn't need to be rebuilt\n", task.Name())
 		return nil
@@ -109,11 +109,11 @@ func (b *B) buildSingleTask(ctx context.Context, taskname string, task bobtask.T
 	// -> task.Target
 	succeeded, failedTargets := task.DidSucceede()
 	if succeeded {
-		err = playbook.TaskCompleted(task.Name())
+		err = pb.TaskCompleted(task.Name())
 		if err != nil {
 			errz.Log(err)
 		}
-		taskStatus, err := playbook.TaskStatus(task.Name())
+		taskStatus, err := pb.TaskStatus(task.Name())
 		if err != nil {
 			errz.Log(err)
 		}
@@ -122,7 +122,12 @@ func (b *B) buildSingleTask(ctx context.Context, taskname string, task bobtask.T
 		for _, target := range failedTargets {
 			fmt.Printf("Target %q does not exist", target)
 		}
-		err = playbook.TaskFailed(task.Name())
+		err = pb.TaskFailed(task.Name())
+		if err != nil {
+			if errors.Is(err, playbook.ErrFailed) {
+				return err
+			}
+		}
 		killOnError(err)
 
 		fmt.Printf("Task %q failed\n", taskname)

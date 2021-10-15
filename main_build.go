@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"strconv"
@@ -74,10 +75,9 @@ func runBuild(dummy bool, taskname string) {
 	}()
 
 	err = b.Build(ctx, taskname)
-	switch err {
-	case bob.ErrNoRebuildRequired:
-	case context.Canceled:
-	default:
+	if !(errors.Is(err, bob.ErrNoRebuildRequired) ||
+		errors.Is(err, context.Canceled)) {
+
 		errz.Log(err)
 	}
 }

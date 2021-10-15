@@ -4,8 +4,10 @@ go 1.16
 
 require (
 	github.com/Benchkram/errz v0.0.0-20180520163740-571a80a661f2
+	github.com/charmbracelet/bubbles v0.9.0
+	github.com/charmbracelet/bubbletea v0.17.0
+	github.com/charmbracelet/lipgloss v0.3.0
 	github.com/cli/cli v1.12.1
-	github.com/cli/safeexec v1.0.0
 	github.com/compose-spec/compose-go v0.0.0-20210722130045-6e1e1c2b26de
 	github.com/docker/cli v20.10.7+incompatible
 	github.com/docker/compose-cli v1.0.18-0.20210726150244-2edd8c216bb8
@@ -23,8 +25,10 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/whilp/git-urls v1.0.0
+	github.com/xlab/treeprint v1.1.0
 	github.com/yargevad/filepathx v1.0.0
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

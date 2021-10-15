@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -52,9 +53,12 @@ func run(taskname string) {
 	}
 
 	// go func() {
-	// 	time.Sleep(10 * time.Second)
-	// 	println("Sending compose restart signal")
-	// 	ctl <- bobfile.RestartSignal
+	// 	time.Sleep(5 * time.Second)
+	// 	for {
+	// 		// println("Sending compose restart signal")
+	// 		ctl.Restart()
+	// 		time.Sleep(1 * time.Second)
+	// 	}
 	// }()
 
 	// Wait for Ctrl-C or the cmd's stop channel to close.
@@ -62,11 +66,12 @@ func run(taskname string) {
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	select {
 	case <-signalChannel:
-	case <-ctl.Stopped():
+	case <-ctl.Done():
 	}
 
 	cancel()
-	<-ctl.Stopped()
+	<-ctl.Done()
+	fmt.Printf("%s stopped\n", ctl.Name())
 }
 
 func getRuns() ([]string, error) {

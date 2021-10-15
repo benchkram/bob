@@ -27,10 +27,20 @@ const (
 func maingo(ver int) []byte {
 	return []byte(fmt.Sprintf(`package main
 
+import (
+	"os"
+	"os/signal"
+)
+
 func main() {
         println("Hello Playground v%d")
+
+		signalChannel := make(chan os.Signal, 1)
+		signal.Notify(signalChannel, os.Interrupt)
+		<-signalChannel
+        println("Byebye Playground v%d")
 }
-`, ver))
+`, ver, ver))
 }
 
 var gomod = []byte(`module example.com/m
@@ -99,6 +109,8 @@ func CreatePlayground(dir string) error {
 	err = ioutil.WriteFile("openapi.yaml", openapi, 0644)
 	errz.Fatal(err)
 	err = ioutil.WriteFile("docker-compose.yml", dockercompose, 0644)
+	errz.Fatal(err)
+	err = ioutil.WriteFile("docker-compose.whoami.yml", dockercomposewhoami, 0644)
 	errz.Fatal(err)
 
 	err = createPlaygroundBobfile(".", true)
@@ -290,17 +302,26 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	}
 
 	// A run command to run a environment from a compose file
-	bobfile.Runs["runenvrionment"] = &bobrun.Run{
+	bobfile.Runs["envrionment"] = &bobrun.Run{
 		Type: bobrun.RunTypeCompose,
 	}
 
+	bobfile.Runs["whoami"] = &bobrun.Run{
+		Type: bobrun.RunTypeCompose,
+		Path: "docker-compose.whoami.yml",
+		DependsOn: []string{
+			"all",
+			"envrionment",
+		},
+	}
+
 	// A run command to run a binary
-	bobfile.Runs["runbinary"] = &bobrun.Run{
+	bobfile.Runs["binary"] = &bobrun.Run{
 		Type: bobrun.RunTypeBinary,
 		Path: "./run",
 		DependsOn: []string{
 			"all",
-			//"runenvrionment",
+			"envrionment",
 		},
 	}
 

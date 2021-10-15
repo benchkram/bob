@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/Benchkram/errz"
-
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/config/configfile"
@@ -21,7 +20,6 @@ var (
 )
 
 type ComposeController struct {
-	ctx     context.Context
 	project *types.Project
 	service api.Service
 	stdout  *bytes.Buffer
@@ -29,7 +27,7 @@ type ComposeController struct {
 	logger  *logger
 }
 
-func New(ctx context.Context) (*ComposeController, error) {
+func New() (*ComposeController, error) {
 	stdout, stderr := new(bytes.Buffer), new(bytes.Buffer)
 
 	cli, err := command.NewDockerCli(
@@ -48,14 +46,13 @@ func New(ctx context.Context) (*ComposeController, error) {
 	service := compose.NewComposeService(cli.Client(), &configfile.ConfigFile{})
 
 	return &ComposeController{
-		ctx:     ctx,
 		service: service,
 		stdout:  stdout,
 		stderr:  stderr,
 	}, nil
 }
 
-func (ctl *ComposeController) Up(project *types.Project) error {
+func (ctl *ComposeController) Up(ctx context.Context, project *types.Project) error {
 	project.Name = "bob"
 	ctl.project = project
 
@@ -66,13 +63,13 @@ func (ctl *ComposeController) Up(project *types.Project) error {
 	}
 	ctl.logger = logger
 
-	err = ctl.service.Up(ctl.ctx, project, api.UpOptions{})
+	err = ctl.service.Up(ctx, project, api.UpOptions{})
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		err := ctl.service.Logs(ctl.ctx, ctl.project.Name, ctl.logger, api.LogOptions{
+		err := ctl.service.Logs(ctx, ctl.project.Name, ctl.logger, api.LogOptions{
 			Services:   nil,
 			Tail:       "",
 			Since:      "",
@@ -88,12 +85,12 @@ func (ctl *ComposeController) Up(project *types.Project) error {
 	return nil
 }
 
-func (ctl *ComposeController) Down() error {
+func (ctl *ComposeController) Down(ctx context.Context) error {
 	if ctl.project == nil {
 		return ErrInvalidProject
 	}
 
-	err := ctl.service.Down(ctl.ctx, ctl.project.Name, api.DownOptions{
+	err := ctl.service.Down(ctx, ctl.project.Name, api.DownOptions{
 		Project: ctl.project,
 	})
 	if err != nil {

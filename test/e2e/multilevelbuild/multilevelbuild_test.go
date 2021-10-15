@@ -5,8 +5,10 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/bob/playbook"
@@ -39,15 +41,15 @@ var _ = Describe("Test bob multilevel build", func() {
 		binaries := []binaryOutputFixture{
 			{
 				path:   filepath.Join(dir, "run"),
-				output: "Hello Playground v1\n",
+				output: "Hello Playground v1\nByebye Playground v1\n",
 			},
 			{
 				path:   filepath.Join(dir, bob.SecondLevelDir, "runsecondlevel"),
-				output: "Hello Playground v2\n",
+				output: "Hello Playground v2\nByebye Playground v2\n",
 			},
 			{
 				path:   filepath.Join(dir, bob.SecondLevelDir, bob.ThirdLevelDir, "runthirdlevel"),
-				output: "Hello Playground v3\n",
+				output: "Hello Playground v3\nByebye Playground v3\n",
 			},
 		}
 
@@ -63,6 +65,12 @@ var _ = Describe("Test bob multilevel build", func() {
 				var stdout, stderr bytes.Buffer
 				cmd.Stdout = &stdout
 				cmd.Stderr = &stderr
+
+				go func() {
+					time.Sleep(10 * time.Millisecond)
+					err := cmd.Process.Signal(os.Interrupt)
+					Expect(err).NotTo(HaveOccurred())
+				}()
 
 				err := cmd.Run()
 				Expect(err).NotTo(HaveOccurred())

@@ -52,20 +52,20 @@ var dockerCmd = &cobra.Command{
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			ctl, err := composectl.New(ctx)
+			ctl, err := composectl.New()
 			if err != nil {
 				errz.Fatal(err)
 			}
 
 			fmt.Println()
-			err = ctl.Up(p)
+			err = ctl.Up(ctx, p)
 			if err != nil {
 				errz.Fatal(err)
 			}
 
 			defer func() {
 				fmt.Print("\n\n")
-				err := ctl.Down()
+				err := ctl.Down(context.Background())
 				if err != nil {
 					errz.Log(err)
 				}

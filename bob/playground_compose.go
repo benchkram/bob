@@ -3,7 +3,8 @@ package bob
 // TODO: make this a valid compose file without port clashes.
 // If you want to simulate port clashes add a test which assures
 // that some ports are blocked.
-var dockercompose = []byte(`services:
+var dockercompose = []byte(`version: '3'
+services:
   adminer:
     image: adminer
     restart: always
@@ -31,4 +32,10 @@ var dockercompose = []byte(`services:
       - 9090-9091:8080-8081 # weird case
       - 6379:6379 # conflict with local env
       - 5555:5558/udp # different container port, but host collides
+`)
+
+var dockercomposewhoami = []byte(`version: '3'
+services:
+  whoami:
+    image: containous/whoami
 `)
