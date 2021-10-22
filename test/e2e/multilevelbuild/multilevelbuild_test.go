@@ -35,7 +35,9 @@ var _ = Describe("Test bob multilevel build", func() {
 		})
 
 		It("runs build all", func() {
-			Expect(b.Build(context.Background(), bob.BuildAllTargetName)).NotTo(HaveOccurred())
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+			Expect(b.Build(ctx, bob.BuildAllTargetName)).NotTo(HaveOccurred())
+			cancel()
 		})
 
 		binaries := []binaryOutputFixture{
@@ -80,7 +82,9 @@ var _ = Describe("Test bob multilevel build", func() {
 		})
 
 		It("runs build multilinetouch", func() {
-			Expect(b.Build(context.Background(), "multilinetouch")).NotTo(HaveOccurred())
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+			Expect(b.Build(ctx, "multilinetouch")).NotTo(HaveOccurred())
+			cancel()
 		})
 
 		It("checks that the touched files really exist", func() {
@@ -147,7 +151,9 @@ var _ = Describe("Test bob multilevel build", func() {
 		})
 
 		It("runs build all again", func() {
-			Expect(b.Build(context.Background(), bob.BuildAllTargetName)).NotTo(HaveOccurred())
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+			Expect(b.Build(ctx, bob.BuildAllTargetName)).NotTo(HaveOccurred())
+			cancel()
 		})
 
 		It("checks that we do not require a rebuild of any of the levels", func() {
