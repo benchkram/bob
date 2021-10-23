@@ -204,7 +204,7 @@ func (b *B) buildDependentTasks(ctx context.Context, runname string, aggregate *
 			errz.Fatal(err)
 		}
 
-		err = b.BuildTask(ctx, child, playbook)
+		err = playbook.BuildTask(ctx, child)
 		errz.Fatal(err)
 	}
 

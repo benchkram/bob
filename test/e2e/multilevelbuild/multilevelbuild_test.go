@@ -213,7 +213,7 @@ func requiresRebuildMustMatchFixtures(b *bob.B, fixtures []requiresRebuildFixtur
 	pb, err := aggregate.Playbook(bob.BuildAllTargetName)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = b.BuildTask(context.Background(), bob.BuildAllTargetName, pb)
+	err = pb.BuildTask(context.Background(), bob.BuildAllTargetName)
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, f := range fixtures {
