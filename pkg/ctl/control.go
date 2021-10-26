@@ -1,14 +1,11 @@
-package runctl
+package ctl
 
 import (
-	"bytes"
 	"io"
-
-	"github.com/Benchkram/bob/pkg/ctl"
 )
 
 type Control interface {
-	ctl.Command
+	Command
 
 	Control() <-chan Signal
 
@@ -20,11 +17,15 @@ type Control interface {
 }
 
 // assert control implements the Command & Control interface
-var _ ctl.Command = (*control)(nil)
+var _ Command = (*control)(nil)
 var _ Control = (*control)(nil)
 
 type control struct {
 	name string
+
+	stdout io.Reader
+	stderr io.Reader
+	stdin  io.Writer
 
 	ctl       chan Signal
 	done      chan struct{}
@@ -35,15 +36,22 @@ type control struct {
 }
 
 func (c *control) Running() bool {
-	panic("implement me")
+	// TODO: @Tasos that needs to be somehow implemented for the TUI
+	//panic("implement me")
+	return true
+
 }
 
 // New takes the size of the control channel.
 // Usually this should be 0 so that signals are ignored as long
 // as a start/stop is in progress.
-func New(name string, bufferedctl int) Control {
+func New(name string, bufferedctl int, stdout, stderr io.Reader, stdin io.Writer) Control {
 	return &control{
 		name: name,
+
+		stdout: stdout,
+		stderr: stderr,
+		stdin:  stdin,
 
 		// ctl recives external signals
 		ctl: make(chan Signal, bufferedctl),
@@ -139,7 +147,6 @@ func (c *control) EmitDone() {
 func (c *control) EmitStarted() {
 	select {
 	case c.started <- struct{}{}:
-		println("emitting started")
 	default:
 	}
 }
@@ -169,17 +176,14 @@ func (c *control) EmitError(err error) {
 	}
 }
 
-// TODO: Implement Me
 func (c *control) Stdout() io.Reader {
-	return bytes.NewBuffer(nil)
+	return c.stdout
 }
 
-// TODO: Implement Me
 func (c *control) Stderr() io.Reader {
-	return bytes.NewBuffer(nil)
+	return c.stderr
 }
 
-// TODO: Implement Me
 func (c *control) Stdin() io.Writer {
-	return bytes.NewBuffer(nil)
+	return c.stdin
 }

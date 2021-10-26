@@ -23,15 +23,15 @@ type PortConfig struct {
 	Port     uint32
 }
 
-// PrintNewPortMappings prints any modified port mappings
-func PrintNewPortMappings(resolved map[string][]*PortConfig) {
+// GetNewPortMappings returns any modified port mappings
+func GetNewPortMappings(resolved map[string][]*PortConfig) string {
 	ports := make([]string, 0, len(resolved))
 	for port := range resolved {
 		ports = append(ports, port)
 	}
 	sort.Strings(ports)
 
-	fmt.Print("\nResolved host port mappings:\n")
+	mappings := "\nResolved host port mappings:\n"
 	for _, port := range ports {
 		services := resolved[port]
 		for _, srv := range services {
@@ -41,7 +41,7 @@ func PrintNewPortMappings(resolved map[string][]*PortConfig) {
 					continue
 				}
 
-				fmt.Printf(
+				mappings += fmt.Sprintf(
 					" - %-9s -> %-9s\t [ %s ]\n",
 					port, res,
 					*srv.Service,
@@ -49,6 +49,8 @@ func PrintNewPortMappings(resolved map[string][]*PortConfig) {
 			}
 		}
 	}
+
+	return mappings
 }
 
 // ResolvePortConflicts mutates the project and returns the port configs with any conflicting ports
@@ -125,15 +127,15 @@ func ResolvePortConflicts(project *types.Project, configs map[string][]*PortConf
 	return configs, nil
 }
 
-// PrintPortConflicts prints all the conflicting ports along with the services they were declared in
-func PrintPortConflicts(configs map[string][]*PortConfig) {
+// GetPortConflicts returns all the conflicting ports along with the services they were declared in
+func GetPortConflicts(configs map[string][]*PortConfig) string {
 	ports := make([]string, 0, len(configs))
 	for port := range configs {
 		ports = append(ports, port)
 	}
 	sort.Strings(ports)
 
-	fmt.Println("\nConflicting ports detected:")
+	conflicts := "\nConflicting ports detected:"
 	for _, port := range ports {
 		services := configs[port]
 
@@ -149,13 +151,15 @@ func PrintPortConflicts(configs map[string][]*PortConfig) {
 				}
 			}
 
-			fmt.Printf(
+			conflicts += fmt.Sprintf(
 				" - %-9s\t [ %s ]\n",
 				port,
 				strings.Join(serviceNames, ", "),
 			)
 		}
 	}
+
+	return conflicts
 }
 
 // HasPortConflicts returns true if there are two services using the same host port
@@ -212,12 +216,22 @@ func ProjectFromConfig(path string) (p *types.Project, err error) {
 		return nil, err
 	}
 
-	return loader.Load(types.ConfigDetails{
+	p, err = loader.Load(types.ConfigDetails{
 		WorkingDir: filepath.Dir(path),
 		ConfigFiles: []types.ConfigFile{
 			{Filename: path, Content: b},
 		},
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if p.Name == "" {
+		p.Name = path
+	}
+
+	return p, nil
 }
 
 // PortAvailable returns true if the port is not currently in use by the host

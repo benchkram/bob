@@ -32,7 +32,7 @@ func (p *Playbook) BuildTask(ctx context.Context, taskname string) (err error) {
 
 	_ = p.Play()
 	err = <-done
-	fmt.Printf("\n\nDone running playbook in %s\n", p.ExecutionTime())
+	// fmt.Printf("\n\nDone running playbook in %s\n", p.ExecutionTime())
 	return err
 }
 
@@ -56,9 +56,9 @@ func (p *Playbook) buildSingleTask(ctx context.Context, taskname string, task bo
 		}
 	}()
 
-	println()
-	println()
-	fmt.Printf("Beginning to run task: %q\n", task.Name())
+	// println()
+	// println()
+	// fmt.Printf("Beginning to run task: %q\n", task.Name())
 
 	rebuildRequired, err := p.TaskNeedsRebuild(task.Name())
 	killOnError(err)
@@ -66,7 +66,7 @@ func (p *Playbook) buildSingleTask(ctx context.Context, taskname string, task bo
 	if !rebuildRequired {
 		err = p.TaskNoRebuildRequired(task.Name())
 		killOnError(err)
-		fmt.Printf("Task %q doesn't need to be rebuilt\n", task.Name())
+		// fmt.Printf("Task %q doesn't need to be rebuilt\n", task.Name())
 		return nil
 	}
 

@@ -38,27 +38,29 @@ var dockerCmd = &cobra.Command{
 
 			hasPortConflict := composeutil.HasPortConflicts(configs)
 
+			mappings := ""
+			conflicts := ""
 			if hasPortConflict {
-				composeutil.PrintPortConflicts(configs)
+				conflicts = composeutil.GetPortConflicts(configs)
 
 				resolved, err := composeutil.ResolvePortConflicts(p, configs)
 				if err != nil {
 					errz.Fatal(err)
 				}
 
-				composeutil.PrintNewPortMappings(resolved)
+				mappings = composeutil.GetNewPortMappings(resolved)
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			ctl, err := composectl.New()
+			ctl, err := composectl.New(p, conflicts, mappings)
 			if err != nil {
 				errz.Fatal(err)
 			}
 
 			fmt.Println()
-			err = ctl.Up(ctx, p)
+			err = ctl.Up(ctx)
 			if err != nil {
 				errz.Fatal(err)
 			}

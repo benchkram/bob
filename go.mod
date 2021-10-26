@@ -8,9 +8,9 @@ require (
 	github.com/charmbracelet/bubbletea v0.17.0
 	github.com/charmbracelet/lipgloss v0.3.0
 	github.com/cli/cli v1.12.1
-	github.com/compose-spec/compose-go v0.0.0-20210722130045-6e1e1c2b26de
+	github.com/compose-spec/compose-go v1.0.2
 	github.com/docker/cli v20.10.7+incompatible
-	github.com/docker/compose-cli v1.0.18-0.20210726150244-2edd8c216bb8
+	github.com/docker/compose/v2 v2.0.1
 	github.com/fatih/structs v1.1.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golang/snappy v0.0.4 // indirect
@@ -20,6 +20,7 @@ require (
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
 	github.com/sanity-io/litter v1.5.0
+	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0

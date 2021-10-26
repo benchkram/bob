@@ -2,18 +2,13 @@ package execctl
 
 import (
 	"context"
+
 	"github.com/Benchkram/bob/pkg/ctl"
 	"golang.org/x/sync/errgroup"
 )
 
-type CommandTree interface {
-	ctl.Command
-
-	Subcommands() []CommandTree
-}
-
 // assert cmdTree implements the CommandTree interface
-var _ CommandTree = (*cmdTree)(nil)
+var _ ctl.CommandTree = (*cmdTree)(nil)
 
 type cmdTree struct {
 	*Cmd
@@ -31,11 +26,11 @@ func NewCmdTree(root *Cmd, subcommands ...*Cmd) *cmdTree {
 	return &cmdTree{Cmd: root, subcommands: cmds}
 }
 
-func (c *cmdTree) Subcommands() []CommandTree {
-	subs := make([]CommandTree, 0)
+func (c *cmdTree) Subcommands() []ctl.Command {
+	subs := make([]ctl.Command, 0)
 
 	for _, cmd := range c.subcommands {
-		subs = append(subs, CommandTree(cmd))
+		subs = append(subs, cmd)
 	}
 
 	return subs

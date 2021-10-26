@@ -1,45 +1,42 @@
 package composectl
 
 import (
-	"errors"
-	"log"
-	"os"
+	"fmt"
+	"io"
 
-	"github.com/docker/compose-cli/pkg/api"
+	"github.com/docker/compose/v2/pkg/api"
 )
 
 type logger struct {
-	*log.Logger
+	writer io.Writer
 }
 
 var _ api.LogConsumer = (*logger)(nil)
 
-func NewLogger() (*logger, error) {
-	// TODO: replace file logger with TUI
-	err := os.Mkdir("logs", os.ModePerm)
-	if err != nil && !errors.Is(err, os.ErrExist) {
-		return nil, err
-	}
-	logfile, err := os.OpenFile(
-		"logs/debug.log",
-		os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666,
-	)
-	if err != nil {
-		return nil, err
-	}
+func NewLogger(w io.Writer) (*logger, error) {
 	return &logger{
-		log.New(logfile, "", 0),
+		writer: w,
 	}, nil
 }
 
 func (l *logger) Log(service, container, message string) {
-	l.Logger.Println("Log", service, container, message)
+	_, err := l.writer.Write([]byte(fmt.Sprintln("Log", service, container, message)))
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (l *logger) Status(container, msg string) {
-	l.Logger.Println("Status", container, msg)
+	_, err := l.writer.Write([]byte(fmt.Sprintln("Status", container, msg)))
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (l *logger) Register(container string) {
-	l.Logger.Println("Register", container)
+	_, err := l.writer.Write([]byte(fmt.Sprintln("Register", container)))
+	if err != nil {
+		panic(err)
+	}
+
 }

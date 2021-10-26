@@ -59,11 +59,11 @@ func New() *Run {
 // Run creates run cmds and return a channel to ctl it.
 // To shutdown a Run() use a cancable context.
 func (r *Run) Run(ctx context.Context) (rc ctl.Command, _ error) {
-	fmt.Printf("Creating control for run task [%s]\n", r.name)
+	// fmt.Printf("Creating control for run task [%s]\n", r.name)
 
 	switch r.Type {
 	case RunTypeBinary:
-		return execctl.NewCmd(r.Path, r.Path)
+		return execctl.NewCmd(r.name, r.Path)
 	case RunTypeCompose:
 		return r.composeCommand(ctx)
 	default:

@@ -1,4 +1,4 @@
-package runctl
+package ctl
 
 import "fmt"
 

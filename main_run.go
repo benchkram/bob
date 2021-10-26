@@ -2,10 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
+
+	"github.com/Benchkram/bob/tui"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/bob/global"
@@ -42,7 +41,7 @@ func run(taskname string) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	ctl, err := b.Run(ctx, taskname)
+	commander, err := b.Run(ctx, taskname)
 	if err != nil {
 		switch err {
 		case bob.ErrNoRebuildRequired:
@@ -52,26 +51,15 @@ func run(taskname string) {
 		}
 	}
 
-	// go func() {
-	// 	time.Sleep(5 * time.Second)
-	// 	for {
-	// 		// println("Sending compose restart signal")
-	// 		ctl.Restart()
-	// 		time.Sleep(1 * time.Second)
-	// 	}
-	// }()
-
-	// Wait for Ctrl-C or the cmd's stop channel to close.
-	signalChannel := make(chan os.Signal, 1)
-	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
-	select {
-	case <-signalChannel:
-	case <-ctl.Done():
+	t, err := tui.New(commander)
+	if err != nil {
+		panic(err)
 	}
 
+	t.Start()
+
 	cancel()
-	<-ctl.Done()
-	fmt.Printf("%s stopped\n", ctl.Name())
+	<-commander.Done()
 }
 
 func getRuns() ([]string, error) {

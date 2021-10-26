@@ -1,17 +1,17 @@
 package composectl
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"os"
 
-	"github.com/Benchkram/errz"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/flags"
-	"github.com/docker/compose-cli/pkg/api"
-	"github.com/docker/compose-cli/pkg/compose"
+	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/compose/v2/pkg/compose"
 )
 
 var (
@@ -22,48 +22,95 @@ var (
 type ComposeController struct {
 	project *types.Project
 	service api.Service
-	stdout  *bytes.Buffer
-	stderr  *bytes.Buffer
-	logger  *logger
+
+	stdout pipe
+	stderr pipe
+	stdin  pipe
+
+	logger *logger
 }
 
-func New() (*ComposeController, error) {
-	stdout, stderr := new(bytes.Buffer), new(bytes.Buffer)
+type pipe struct {
+	r *os.File
+	w *os.File
+}
 
-	cli, err := command.NewDockerCli(
-		command.WithOutputStream(stdout),
-		command.WithErrorStream(stderr),
+func New(project *types.Project, conflicts, mappings string) (*ComposeController, error) {
+	if project == nil || project.Name == "" {
+		return nil, ErrInvalidProject
+	}
+
+	c := &ComposeController{
+		project: project,
+	}
+
+	// create pipes for stdout, stderr and stdin
+	var err error
+	c.stdout.r, c.stdout.w, err = os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	c.stderr.r, c.stderr.w, err = os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	c.stdin.r, c.stdin.w, err = os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	if conflicts != "" {
+		_, err = c.stdout.w.Write([]byte(conflicts))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if mappings != "" {
+		_, err = c.stdout.w.Write([]byte(mappings))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	logger, err := NewLogger(c.stdout.w)
+	if err != nil {
+		return nil, err
+	}
+	c.logger = logger
+
+	dockerCli, err := command.NewDockerCli(
+		command.WithCombinedStreams(nil),
+		command.WithOutputStream(nil),
+		command.WithErrorStream(nil),
+		command.WithInputStream(nil),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	err = cli.Initialize(flags.NewClientOptions())
+	err = dockerCli.Initialize(flags.NewClientOptions())
 	if err != nil {
 		return nil, err
 	}
 
-	service := compose.NewComposeService(cli.Client(), &configfile.ConfigFile{})
+	c.service = compose.NewComposeService(dockerCli.Client(), &configfile.ConfigFile{})
 
-	return &ComposeController{
-		service: service,
-		stdout:  stdout,
-		stderr:  stderr,
-	}, nil
+	return c, nil
 }
 
-func (ctl *ComposeController) Up(ctx context.Context, project *types.Project) error {
-	project.Name = "bob"
-	ctl.project = project
+func (ctl *ComposeController) Up(ctx context.Context) error {
 
-	ctl.logger = new(logger)
-	logger, err := NewLogger()
-	if err != nil {
-		return err
-	}
-	ctl.logger = logger
-
-	err = ctl.service.Up(ctx, project, api.UpOptions{})
+	err := ctl.service.Up(ctx, ctl.project, api.UpOptions{
+		//Start: api.StartOptions{
+		//	Attach :      ctl.logger,
+		//},
+		//Create: api.CreateOptions{
+		//	QuietPull:            true,
+		//},
+	})
 	if err != nil {
 		return err
 	}
@@ -78,7 +125,7 @@ func (ctl *ComposeController) Up(ctx context.Context, project *types.Project) er
 			Timestamps: true,
 		})
 		if err != nil {
-			errz.Log(err)
+			panic(err)
 		}
 	}()
 
@@ -97,17 +144,21 @@ func (ctl *ComposeController) Down(ctx context.Context) error {
 		return err
 	}
 
-	if ctl.stderr.String() != "" {
-		return ErrComposeError
-	}
+	//if ctl.stderr.String() != "" {
+	//	return ErrComposeError
+	//}
 
 	return nil
 }
 
-func (ctl *ComposeController) Stdout() string {
-	return ctl.stdout.String()
+func (ctl *ComposeController) Stdout() io.Reader {
+	return ctl.stdout.r
 }
 
-func (ctl *ComposeController) Stderr() string {
-	return ctl.stderr.String()
+func (ctl *ComposeController) Stderr() io.Reader {
+	return ctl.stderr.r
+}
+
+func (ctl *ComposeController) Stdin() io.Writer {
+	return ctl.stdin.w
 }

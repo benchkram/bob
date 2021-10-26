@@ -61,7 +61,6 @@ func NewCmd(name string, exe string, args ...string) (c *Cmd, err error) {
 		exe:  exe,
 		args: args,
 		err:  make(chan error, 1),
-		//TODO
 	}
 
 	// create pipes for stdout, stderr and stdin

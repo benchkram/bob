@@ -4,8 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/Benchkram/bob/pkg/ctl"
-	"github.com/Benchkram/bob/pkg/execctl"
+	"github.com/Benchkram/errz"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -13,9 +18,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/logrusorgru/aurora"
 	"github.com/xlab/treeprint"
-	"io"
-	"strings"
-	"time"
 )
 
 func init() {
@@ -62,9 +64,10 @@ var keys = keyMap{
 }
 
 type model struct {
+	stdout     *os.File
 	keys       keyMap
 	events     chan interface{}
-	tree       execctl.CommandTree
+	cmder      ctl.Commander
 	tabs       []tab
 	currentTab int
 	starting   bool
@@ -80,43 +83,37 @@ type tab struct {
 	output *bytes.Buffer
 }
 
-func newModel(tree execctl.CommandTree, evts chan interface{}) *model {
-	tabs := make([]tab, 0)
-
-	tabs = append(tabs, tab{
-		name:   "status",
-		output: new(bytes.Buffer),
-	})
+func newModel(cmder ctl.Commander, evts chan interface{}, output *os.File, actualOutput *os.File) *model {
+	tabs := []tab{}
 
 	buf := new(bytes.Buffer)
 
 	tabs = append(tabs, tab{
-		name:   tree.Name(),
+		name:   "status",
 		output: buf,
 	})
 
-	mr := io.MultiReader(tree.Stdout(), tree.Stderr())
-
-	s := bufio.NewScanner(mr)
-	s.Split(bufio.ScanLines)
+	sglobal := bufio.NewScanner(output)
+	sglobal.Split(bufio.ScanRunes)
 
 	go func() {
-		for s.Scan() {
-			_, err := buf.Write(s.Bytes())
+		for sglobal.Scan() {
+			err := sglobal.Err()
+			if err != nil {
+				return
+			}
+
+			_, err = buf.Write(sglobal.Bytes())
 			if err != nil {
 				// TODO: error handling
 				fmt.Println(err)
 			}
-			_, err = buf.Write([]byte("\n"))
-			if err != nil {
-				// TODO: error handling
-				fmt.Println(err)
-			}
+
 			evts <- Update{}
 		}
 	}()
 
-	for _, cmd := range tree.Subcommands() {
+	for _, cmd := range cmder.Subcommands() {
 		buf := new(bytes.Buffer)
 
 		tabs = append(tabs, tab{
@@ -124,20 +121,36 @@ func newModel(tree execctl.CommandTree, evts chan interface{}) *model {
 			output: buf,
 		})
 
-		mr := io.MultiReader(cmd.Stdout(), cmd.Stderr())
+		sout := bufio.NewScanner(cmd.Stdout())
+		sout.Split(bufio.ScanRunes)
 
-		s := bufio.NewScanner(mr)
-		s.Split(bufio.ScanLines)
+		serr := bufio.NewScanner(cmd.Stderr())
+		serr.Split(bufio.ScanRunes)
 
 		go func() {
-			for s.Scan() {
+			for sout.Scan() {
+				err := sglobal.Err()
+				if err != nil {
+					return
+				}
 
-				_, err := buf.Write(s.Bytes())
+				_, err = buf.Write(sout.Bytes())
 				if err != nil {
 					// TODO: error handling
 					fmt.Println(err)
 				}
-				_, err = buf.Write([]byte("\n"))
+				evts <- Update{}
+			}
+		}()
+
+		go func() {
+			for serr.Scan() {
+				err := sglobal.Err()
+				if err != nil {
+					return
+				}
+
+				_, err = buf.Write(serr.Bytes())
 				if err != nil {
 					// TODO: error handling
 					fmt.Println(err)
@@ -148,11 +161,13 @@ func newModel(tree execctl.CommandTree, evts chan interface{}) *model {
 	}
 
 	return &model{
-		tree:       tree,
+		stdout:     actualOutput,
+		cmder:      cmder,
 		currentTab: 0,
-		tabs:       tabs,
-		events:     evts,
-		keys:       keys,
+		//currentLine: currentLine,
+		tabs:   tabs,
+		events: evts,
+		keys:   keys,
 		footer: help.Model{
 			ShowAll:        false,
 			ShortSeparator: " · ",
@@ -187,6 +202,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.NextTab):
 			m.currentTab = (m.currentTab + 1) % len(m.tabs)
+
+			m.content.SetContent(m.tabs[m.currentTab].output.String())
 			m.content.GotoBottom()
 
 		case key.Matches(msg, m.keys.FollowOutput):
@@ -217,7 +234,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case Update:
 		// trigger an update of the viewport from whatever tab buffer is currently active
 		m.content.SetContent(m.tabs[m.currentTab].output.String())
-
 		// listen for the next update event
 		cmds = append(cmds, nextEvent(m.events))
 	}
@@ -235,11 +251,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	} else {
 		status = fmt.Sprintf("%-*s", 10, "running")
 		status = aurora.Colorize(status, aurora.GreenFg|aurora.BoldFm).String()
-	}
-
-	if m.currentTab == 0 {
-		tree := fmtCmdTree(m.tree)
-		m.content.SetContent(tree)
 	}
 
 	tabs := make([]string, len(m.tabs))
@@ -296,7 +307,7 @@ func (m *model) View() string {
 
 func tick() tea.Cmd {
 	return tea.Tick(
-		1*time.Second, func(t time.Time) tea.Msg {
+		100*time.Millisecond, func(t time.Time) tea.Msg {
 			return t
 		},
 	)
@@ -306,11 +317,9 @@ func start(m *model) tea.Cmd {
 	m.starting = true
 
 	return func() tea.Msg {
-		err := m.tree.Start()
-		if err != nil {
-			// TODO: error handling
-			fmt.Println(err)
-		}
+		err := m.cmder.Start()
+		// TODO: error handling
+		errz.Log(err)
 
 		return Started{}
 	}
@@ -320,8 +329,7 @@ func restart(m *model) tea.Cmd {
 	m.restarting = true
 
 	return func() tea.Msg {
-
-		err := m.tree.Restart()
+		err := m.cmder.Restart()
 		if err != nil {
 			// TODO: error handling
 			fmt.Println(err)
@@ -335,7 +343,7 @@ func stop(m *model) tea.Cmd {
 	m.stopping = true
 
 	return func() tea.Msg {
-		err := m.tree.Stop()
+		err := m.cmder.Stop()
 		if err != nil {
 			// TODO: error handling
 			fmt.Println(err)
@@ -351,25 +359,34 @@ func nextEvent(evts chan interface{}) tea.Cmd {
 	}
 }
 
-func fmtCmdTree(tree execctl.CommandTree) string {
-	root := treeprint.New()
+//func fmtCmds(cmds []ctl.Command) string {
+//	out := ""
+//	for _, cmd := range cmds {
+//		status := fmtCmd(cmd)
+//		out += fmt.Sprintf("- %s\n", status)
+//	}
+//	return out
+//}
 
-	status := fmtCmd(tree)
-	root.SetValue(status)
+//func fmtCmdTree(tree ctl.CommandTree) string {
+//	root := treeprint.New()
+//
+//	status := fmtCmd(tree)
+//	root.SetValue(status)
+//
+//	for _, cmd := range tree.Subcommands() {
+//		status := fmtCmd(cmd)
+//		root.AddNode(status)
+//	}
+//
+//	return root.String()
+//}
 
-	for _, cmd := range tree.Subcommands() {
-		status := fmtCmd(cmd)
-		root.AddNode(status)
-	}
-
-	return root.String()
-}
-
-func fmtCmd(cmd ctl.Command) string {
-	running := aurora.Colorize("stopped", aurora.RedFg).String()
-	if cmd.Running() {
-		running = aurora.Colorize("running", aurora.GreenFg).String()
-	}
-
-	return fmt.Sprintf("%s (%s)", cmd.Name(), running)
-}
+//func fmtCmd(cmd ctl.Command) string {
+//	running := aurora.Colorize("stopped", aurora.RedFg).String()
+//	if cmd.Running() {
+//		running = aurora.Colorize("running", aurora.GreenFg).String()
+//	}
+//
+//	return fmt.Sprintf("%s (%s)", cmd.Name(), running)
+//}
