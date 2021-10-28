@@ -238,11 +238,8 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	bobfile.Variables["helloworld"] = "Hello World!"
 
 	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
-		InputDirty: bobtask.Input{
-			Inputs: []string{"./main1.go", "go.mod"},
-			Ignore: []string{},
-		},
-		CmdDirty: "go build -o run",
+		InputDirty: "./main1.go" + "\n" + "go.mod",
+		CmdDirty:   "go build -o run",
 		TargetDirty: target.T{
 			Paths: []string{"run"},
 			Type:  target.File,
@@ -250,11 +247,8 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	}
 
 	bobfile.Tasks[BuildAllTargetName] = bobtask.Task{
-		InputDirty: bobtask.Input{
-			Inputs: []string{"./main1.go"},
-			Ignore: []string{},
-		},
-		CmdDirty: "go build -o run",
+		InputDirty: "./main1.go",
+		CmdDirty:   "go build -o run",
 		DependsOn: []string{
 			filepath.Join(SecondLevelDir, fmt.Sprintf("%s2", global.DefaultBuildTask)),
 		},
@@ -265,10 +259,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	}
 
 	bobfile.Tasks["generate"] = bobtask.Task{
-		InputDirty: bobtask.Input{
-			Inputs: []string{"openapi.yaml"},
-			Ignore: []string{},
-		},
+		InputDirty: "openapi.yaml",
 		CmdDirty: strings.Join([]string{
 			"mkdir -p rest-server/generated",
 			"oapi-codegen -package generated -generate server \\\n\t${OPENAPI_PROVIDER_PROJECT_OPENAPI_OPENAPI} \\\n\t\t> rest-server/generated/server.gen.go",
@@ -337,6 +328,11 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		}, "\n"),
 	}
 
+	bobfile.Tasks["ignoredInputs"] = bobtask.Task{
+		InputDirty: "fileToWatch" + "\n" + "!fileToIgnore",
+		CmdDirty:   "echo \"Hello from ignored inputs task\"",
+	}
+
 	return bobfile.BobfileSave(dir)
 }
 
@@ -366,10 +362,7 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) 
 	bobfile := bobfile.NewBobfile()
 
 	bobfile.Tasks[fmt.Sprintf("%s2", global.DefaultBuildTask)] = bobtask.Task{
-		InputDirty: bobtask.Input{
-			Inputs: []string{"./main2.go"},
-			Ignore: []string{},
-		},
+		InputDirty: "./main2.go",
 		DependsOn: []string{
 			filepath.Join(ThirdLevelDir, fmt.Sprintf("%s3", global.DefaultBuildTask)),
 		},
@@ -391,11 +384,8 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
 	bobfile := bobfile.NewBobfile()
 
 	bobfile.Tasks[fmt.Sprintf("%s3", global.DefaultBuildTask)] = bobtask.Task{
-		InputDirty: bobtask.Input{
-			Inputs: []string{"./main3.go"},
-			Ignore: []string{},
-		},
-		CmdDirty: "go build -o runthirdlevel",
+		InputDirty: "./main3.go",
+		CmdDirty:   "go build -o runthirdlevel",
 		TargetDirty: target.T{
 			Paths: []string{"runthirdlevel"},
 			Type:  target.File,

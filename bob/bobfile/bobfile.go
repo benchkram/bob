@@ -19,10 +19,10 @@ import (
 )
 
 var (
-	defaultIgnores = []string{
+	defaultIgnores = fmt.Sprintf("!%s\n!%s",
 		filepath.Join(global.BuildToolDir, "*"),
 		filepath.Join(global.BobCacheDir, "*"),
-	}
+	)
 )
 
 var (
@@ -79,7 +79,8 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	for key, task := range bobfile.Tasks {
 		task.SetDir(bobfile.dir)
 		task.SetName(key)
-		task.InputDirty.Ignore = append(task.InputDirty.Ignore, defaultIgnores...)
+
+		task.InputDirty = fmt.Sprintf("%s\n%s", task.InputDirty, defaultIgnores)
 
 		// Make sure a task is correctly initialised.
 		// TODO: All unitialised must be initialised or get default values.
@@ -140,11 +141,8 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 	bobfile := NewBobfile()
 
 	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
-		InputDirty: bobtask.Input{
-			Inputs: []string{"./main.go"},
-			Ignore: []string{},
-		},
-		CmdDirty: "go build -o run",
+		InputDirty: "./main.go",
+		CmdDirty:   "go build -o run",
 		TargetDirty: target.T{
 			Paths: []string{"run"},
 			Type:  target.File,

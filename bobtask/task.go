@@ -25,7 +25,7 @@ type Task struct {
 	// the task monitors for a rebuild.
 
 	// InputDirty is the representation read from a bobfile.
-	InputDirty Input `yaml:"input"`
+	InputDirty string `yaml:"input"`
 	// inputs is filtered by ignored & sanitized
 	inputs []string
 
@@ -75,7 +75,6 @@ type Task struct {
 
 func Make(opts ...TaskOption) Task {
 	t := Task{
-		InputDirty:  MakeInput(),
 		TargetDirty: target.Make(),
 
 		DependsOn: []string{},

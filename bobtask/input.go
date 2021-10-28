@@ -5,21 +5,10 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/Benchkram/bob/pkg/filepathutil"
 )
-
-type Input struct {
-	Inputs []string
-	Ignore []string
-}
-
-func MakeInput() Input {
-	return Input{
-		Inputs: []string{},
-		Ignore: []string{},
-	}
-}
 
 func (t *Task) Inputs() []string {
 	return t.inputs
@@ -41,28 +30,32 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}()
 
-	// Determine inputs
+	inputDirty := split(t.InputDirty)
+
+	// Determine inputs and files to be ignored
 	var inputs []string
-	for _, input := range unique(t.InputDirty.Inputs) {
+	var ignores []string
+	for _, input := range unique(inputDirty) {
+		// Ignore starts with !
+		if strings.HasPrefix(input, "!") {
+			input = strings.TrimPrefix(input, "!")
+
+			list, err := filepathutil.ListRecursive(input)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list input: %w", err)
+			}
+
+			ignores = append(ignores, list...)
+			continue
+		}
+
 		list, err := filepathutil.ListRecursive(input)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
 		}
-
 		inputs = append(inputs, list...)
 	}
 	inputs = unique(inputs)
-
-	// Determine files to be ignored
-	var ignores []string
-	for _, ignore := range unique(t.InputDirty.Ignore) {
-		list, err := filepathutil.ListRecursive(ignore)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list ignore: %w", err)
-		}
-
-		ignores = append(ignores, list...)
-	}
 	ignores = unique(ignores)
 
 	// Filter
@@ -110,4 +103,36 @@ func unique(ss []string) []string {
 	}
 
 	return unique
+}
+
+// Split splits a single-line "input" to a slice of inputs.
+//
+// It currently supports the following syntaxes:
+//  Input: |-
+//    main1.go
+//    someotherfile
+//  Output:
+//    [ "./main1.go", "!someotherfile" ]
+func split(inputDirty string) []string {
+
+	// Replace leading and trailing spaces for clarity.
+	inputDirty = strings.TrimSpace(inputDirty)
+
+	lines := strings.Split(inputDirty, "\n")
+	if len(lines) == 1 && len(lines[0]) == 0 {
+		return []string{}
+	}
+
+	inputs := []string{}
+
+	// Remove possible trailing spaces
+	for _, line := range lines {
+		// Remove commented and empty lines
+		if strings.HasPrefix(line, "#") || strings.TrimSpace(line) == "" {
+			continue
+		}
+		inputs = append(inputs, strings.TrimSpace(line))
+	}
+
+	return inputs
 }

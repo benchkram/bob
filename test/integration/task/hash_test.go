@@ -31,7 +31,7 @@ var _ = Describe("Test task-related functionality", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			t2 := bobtask.Make()
-			t2.InputDirty.Inputs = []string{shouldInfluenceText}
+			t2.InputDirty = shouldInfluenceText
 			t2h, err := t2.Hash()
 			Expect(err).NotTo(HaveOccurred())
 
