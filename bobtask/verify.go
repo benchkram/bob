@@ -43,5 +43,6 @@ func (t *Task) verifyAfter() (err error) {
 			return fmt.Errorf("%s exports %s but the path does not exist.", t.name, export)
 		}
 	}
+
 	return nil
 }

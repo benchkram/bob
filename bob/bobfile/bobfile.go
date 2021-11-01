@@ -87,6 +87,10 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		// This mean switching to pointer types for most members.
 		task.SetEnv([]string{})
 
+		// if task.TargetDirty.Type == "" {
+		// 	task.T
+		// }
+
 		bobfile.Tasks[key] = task
 	}
 

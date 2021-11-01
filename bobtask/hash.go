@@ -14,6 +14,20 @@ import (
 	"github.com/Benchkram/errz"
 )
 
+func (t *Task) ReadHash() (taskHashs hash.Task, err error) {
+	defer errz.Recover(&err)
+
+	hashes, err := t.ReadHashes()
+	errz.Fatal(err)
+
+	hash, ok := hashes[t.name]
+	if !ok {
+		return taskHashs, ErrTaskHashDoesNotExist
+	}
+
+	return hash, nil
+}
+
 func (t *Task) ReadHashes() (taskHashs hash.Hashes, _ error) {
 	hashesFile := filepath.Join(t.dir, global.TaskHashesFileName)
 
@@ -33,7 +47,7 @@ func (t *Task) ReadHashes() (taskHashs hash.Hashes, _ error) {
 	return taskHashs, nil
 }
 
-func (t *Task) StoreHash(hashstr string) (err error) {
+func (t *Task) StoreHash(hashTask *hash.Task) (err error) {
 	defer errz.Recover(&err)
 
 	hashes, err := t.ReadHashes()
@@ -47,7 +61,7 @@ func (t *Task) StoreHash(hashstr string) (err error) {
 		hashes = make(hash.Hashes)
 	}
 
-	hashes[t.name] = hashstr
+	hashes[t.name] = *hashTask
 
 	return WriteHashes(t, hashes)
 }

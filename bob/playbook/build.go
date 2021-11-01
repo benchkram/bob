@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/Benchkram/bob/bobtask"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
 )
 
-func (p *Playbook) BuildTask(ctx context.Context, taskname string) (err error) {
+// Build the playbook starting at root.
+func (p *Playbook) Build(ctx context.Context) (err error) {
 	done := make(chan error)
 
 	go func() {
@@ -19,12 +20,12 @@ func (p *Playbook) BuildTask(ctx context.Context, taskname string) (err error) {
 
 		c := p.TaskChannel()
 		for task := range c {
-			err := p.buildSingleTask(ctx, taskname, task)
-			if errors.Is(err, context.Canceled) || errors.Is(err, ErrFailed) {
+			err := p.build(ctx, task)
+			if err != nil {
+				//if errors.Is(err, context.Canceled) || errors.Is(err, ErrFailed) {
 				done <- err
 				break
 			}
-			killOnError(err)
 		}
 
 		close(done)
@@ -36,10 +37,14 @@ func (p *Playbook) BuildTask(ctx context.Context, taskname string) (err error) {
 	return err
 }
 
-// Run a single task (of potentially a parent) in a playbook.
-func (p *Playbook) buildSingleTask(ctx context.Context, taskname string, task bobtask.Task) (err error) {
+// build a single task and update the playbook state after completion.
+func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
+	defer errz.Recover(&err)
+
 	// TODO: Run a worker pool so that multiple tasks can run in parallel.
 	// https://stackoverflow.com/questions/25306073/always-have-x-number-of-goroutines-running-at-any-time
+
+	boblog.Log.V(2).Info(fmt.Sprintf("Building [task: %s]", task.Name()))
 
 	done := make(chan struct{})
 	defer close(done)
@@ -49,75 +54,54 @@ func (p *Playbook) buildSingleTask(ctx context.Context, taskname string, task bo
 		case <-done:
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.Canceled) {
-				err := p.TaskCanceled(task.Name())
-				killOnError(err)
-				fmt.Printf("Task %q was canceled\n", task.Name())
+				boblog.Log.V(2).Info(fmt.Sprintf("Task %q was canceled", task.Name()))
+				_ = p.TaskCanceled(task.Name())
 			}
 		}
 	}()
 
-	// println()
-	// println()
-	// fmt.Printf("Beginning to run task: %q\n", task.Name())
-
 	rebuildRequired, err := p.TaskNeedsRebuild(task.Name())
-	killOnError(err)
+	errz.Fatal(err)
 
 	if !rebuildRequired {
-		err = p.TaskNoRebuildRequired(task.Name())
-		killOnError(err)
-		// fmt.Printf("Task %q doesn't need to be rebuilt\n", task.Name())
-		return nil
+		boblog.Log.V(2).Info(fmt.Sprintf("Task %q doesn't need to be rebuilt", task.Name()))
+		return p.TaskNoRebuildRequired(task.Name())
 	}
 
 	err = task.Clean()
-	killOnError(err)
+	errz.Fatal(err)
 
 	err = task.Run(ctx)
-	if errors.Is(err, context.Canceled) {
-		return err
-	}
-	killOnError(err)
+	errz.Fatal(err)
 
 	err = task.VerifyAfter()
-	killOnError(err)
+	errz.Fatal(err)
 
-	// 3: Check whether output is created correctly.
-	//    Might be a build error or a configuration
-	//    error when the output does not exist.
-	// -> task.Target
-	succeeded, failedTargets := task.DidSucceede()
-	if succeeded {
-		err = p.TaskCompleted(task.Name())
-		if err != nil {
-			errz.Log(err)
-		}
-		taskStatus, err := p.TaskStatus(task.Name())
-		if err != nil {
-			errz.Log(err)
-		}
-		fmt.Printf("Task %q completed in %s\n", task.Name(), taskStatus.ExecutionTime())
-	} else {
-		for _, target := range failedTargets {
-			fmt.Printf("Target %q does not exist", target)
-		}
-		err = p.TaskFailed(task.Name())
-		if err != nil {
-			if errors.Is(err, ErrFailed) {
-				return err
+	target, err := task.Target()
+	if err != nil {
+		errz.Fatal(err)
+	}
+
+	// Check targets are created correctly.
+	// On success the target hash is computed
+	// inside TaskCompleted().
+	if target != nil {
+		if !target.Exists() {
+			boblog.Log.V(2).Info(fmt.Sprintf("Task %q failed due to invalid targets", task.Name()))
+			err = p.TaskFailed(task.Name())
+			if err != nil {
+				if errors.Is(err, ErrFailed) {
+					return err
+				}
 			}
 		}
-		killOnError(err)
-
-		fmt.Printf("Task %q failed\n", taskname)
 	}
+
+	err = p.TaskCompleted(task.Name())
+	errz.Fatal(err)
+	taskStatus, err := p.TaskStatus(task.Name())
+	errz.Fatal(err)
+	boblog.Log.V(2).Info(fmt.Sprintf("Task %q completed in %s", task.Name(), taskStatus.ExecutionTime()))
 
 	return nil
-}
-
-func killOnError(err error) {
-	if err != nil {
-		errz.Log(err)
-		os.Exit(1)
-	}
 }

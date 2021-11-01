@@ -8,11 +8,23 @@ import (
 	"github.com/Benchkram/bob/pkg/filehash"
 )
 
-type Hashes map[string]string
-
+type Hashes map[string]Task
+type Targets map[string]string
 type H struct {
 	Path string
 	Hash string
+}
+
+// Task is a context aware object to
+// handle hashes of a task
+type Task struct {
+	// Input holds a hash  related to the input
+	// files, task description and environment
+	Input string
+
+	// Targets hold hash values on all related
+	// targets in the build chain.
+	Targets Targets
 }
 
 func HashFiles(files []string) []H {

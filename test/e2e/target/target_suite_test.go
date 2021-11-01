@@ -1,4 +1,4 @@
-package exporttest
+package targettest
 
 import (
 	"io/ioutil"
@@ -18,7 +18,7 @@ var (
 )
 
 var _ = BeforeSuite(func() {
-	testDir, err := ioutil.TempDir("", "bob-test-export-*")
+	testDir, err := ioutil.TempDir("", "bob-test-target-*")
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
 
@@ -36,5 +36,5 @@ var _ = AfterSuite(func() {
 
 func TestStatus(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "export-build suite")
+	RunSpecs(t, "target-build suite")
 }

@@ -13,6 +13,7 @@ var zsh bool
 
 func init() {
 	configInit()
+	logInit()
 
 	// completionCmd
 	completionCmd.Flags().BoolVarP(&zsh, "zsh", "z",

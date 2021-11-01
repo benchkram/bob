@@ -4,15 +4,29 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/errz"
 )
 
+type RebuildOptions struct {
+	Hash *hash.Task
+}
+
 // NeedsRebuild
-func (t *Task) NeedsRebuild() (rebuildRequired bool, err error) {
+func (t *Task) NeedsRebuild(options *RebuildOptions) (rebuildRequired bool, err error) {
 	defer errz.Recover(&err)
 
-	hash, err := t.Hash()
-	errz.Fatal(err)
+	var hash *hash.Task
+	if options != nil {
+		if options.Hash != nil {
+			hash = options.Hash
+		}
+	}
+
+	if hash == nil {
+		hash, err = t.Hash()
+		errz.Fatal(err)
+	}
 
 	storedHashes, err := t.ReadHashes()
 	if err != nil {
@@ -29,7 +43,7 @@ func (t *Task) NeedsRebuild() (rebuildRequired bool, err error) {
 
 	storedHash, ok := storedHashes[t.name]
 	if ok {
-		rebuildRequired = hash != storedHash
+		rebuildRequired = hash.Input != storedHash.Input
 	}
 
 	return rebuildRequired, nil

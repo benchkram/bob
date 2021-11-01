@@ -23,5 +23,5 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 	errz.Fatal(err)
 	println(playbook.String())
 
-	return playbook.BuildTask(ctx, taskname)
+	return playbook.Build(ctx)
 }

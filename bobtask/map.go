@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/multilinecmd"
 	"github.com/Benchkram/errz"
 )
@@ -54,10 +55,17 @@ func (tm Map) Sanitize() {
 		errz.Fatal(err)
 		task.Exports = sanitizedExports
 
-		sanitizedTargetPaths, err := task.sanitizeTarget(task.TargetDirty.Paths)
-		errz.Fatal(err)
-		task.target.Paths = sanitizedTargetPaths
-		task.target.Type = task.TargetDirty.Type
+		if task.TargetDirty.Valid() {
+			sanitizedTargetPaths, err := task.sanitizeTarget(task.TargetDirty.Paths)
+			errz.Fatal(err)
+
+			task.target = target.New()
+			task.target.Paths = sanitizedTargetPaths
+			task.target.Type = task.TargetDirty.Type
+			if task.target.Type == "" {
+				task.target.Type = target.File
+			}
+		}
 
 		task.cmds = multilinecmd.Split(task.CmdDirty)
 

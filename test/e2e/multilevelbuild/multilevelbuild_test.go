@@ -13,6 +13,7 @@ import (
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/bob/playbook"
 	"github.com/Benchkram/bob/pkg/file"
+	"github.com/Benchkram/errz"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -213,7 +214,8 @@ func requiresRebuildMustMatchFixtures(b *bob.B, fixtures []requiresRebuildFixtur
 	pb, err := aggregate.Playbook(bob.BuildAllTargetName)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = pb.BuildTask(context.Background(), bob.BuildAllTargetName)
+	err = pb.Build(context.Background())
+	errz.Log(err)
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, f := range fixtures {

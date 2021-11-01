@@ -5,19 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/Benchkram/bob/bobtask"
+	"github.com/Benchkram/bob/bobtask/hash"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
 )
 
 // The playbook defines the order in which tasks are allowed to run.
 // Also determines the possibility to run tasks in parallel.
 
-var ErrTaskDoesNotExist = fmt.Errorf("Task does not exist")
+var ErrTaskDoesNotExist = fmt.Errorf("task does not exist")
 var ErrDone = fmt.Errorf("playbook is done")
 var ErrFailed = fmt.Errorf("playbook failed")
+var ErrUnexpectedTaskState = fmt.Errorf("task state is unsexpected")
 
 type Playbook struct {
 	// taskChannel is closed when the root
@@ -27,9 +29,10 @@ type Playbook struct {
 	// errorChannel to transport errors to the caller
 	errorChannel chan error
 
+	// root task
 	root string
 
-	Tasks TaskStatusMap
+	Tasks StatusMap
 
 	done bool
 }
@@ -38,7 +41,7 @@ func New(root string) *Playbook {
 	p := &Playbook{
 		taskChannel:  make(chan bobtask.Task, 10),
 		errorChannel: make(chan error),
-		Tasks:        make(TaskStatusMap),
+		Tasks:        make(StatusMap),
 		root:         root,
 	}
 	return p
@@ -53,15 +56,23 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (bool, error) {
 	}
 	task := ts.Task
 
-	// Check if task itself needs a rebuild
-	rebuildRequired, err := task.NeedsRebuild()
+	hash, err := task.Hash()
 	if err != nil {
+		return true, err
+	}
+
+	// Check if task itself needs a rebuild
+	rebuildRequired, err := task.NeedsRebuild(&bobtask.RebuildOptions{Hash: hash})
+	if err != nil {
+		if rebuildRequired {
+			boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] rebuild required: input changed", taskname))
+		}
 		return rebuildRequired, err
 	}
 
 	var Done = fmt.Errorf("done")
 	// Check if task needs a rebuild due to its dependencies changing
-	err = p.Tasks.walk(task.Name(), func(tn string, t *TaskStatus, err error) error {
+	err = p.Tasks.walk(task.Name(), func(tn string, t *Status, err error) error {
 		if err != nil {
 			return err
 		}
@@ -73,6 +84,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (bool, error) {
 
 		// Require a rebuild if the dependend task did require a rebuild
 		if t.State() != StateNoRebuildRequired {
+			boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] rebuild required: dependecy changed", taskname))
 			rebuildRequired = true
 			// Bail out early
 			return Done
@@ -80,6 +92,28 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (bool, error) {
 
 		return nil
 	})
+
+	if !rebuildRequired {
+		target, err := task.Target()
+		if err != nil {
+			return true, err
+		}
+
+		if target != nil {
+			// On a invalid traget a rebuild is required
+			rebuildRequired = !target.Verify()
+			if rebuildRequired {
+				boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] rebuild required: targets are invalid", taskname))
+			}
+		}
+
+		// TODO: check for validity of targets
+		// and also sync with a remote artifact provider
+		//
+		// As a starting point its enough to check validity
+		// based on the targets hash stored in the filename
+		// (see .bobcache)
+	}
 
 	if errors.Is(err, Done) {
 		return rebuildRequired, nil
@@ -109,7 +143,7 @@ func (p *Playbook) play() error {
 	// Once it returns `nil` the playbook is usually done with it's work.
 	var taskQueued = fmt.Errorf("task queued")
 	var taskFailed = fmt.Errorf("task failed")
-	err := p.Tasks.walk(p.root, func(taskname string, task *TaskStatus, err error) error {
+	err := p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
 		if err != nil {
 			return err
 		}
@@ -201,7 +235,7 @@ func (p *Playbook) pack(taskname string, hash string) error {
 	return task.Task.Pack(hash)
 }
 
-func (p *Playbook) storeHash(taskname string, hash string) error {
+func (p *Playbook) storeHash(taskname string, hash *hash.Task) error {
 	task, ok := p.Tasks[taskname]
 	if !ok {
 		return ErrTaskDoesNotExist
@@ -211,7 +245,7 @@ func (p *Playbook) storeHash(taskname string, hash string) error {
 }
 
 func (p *Playbook) ExecutionTime() time.Duration {
-	var start, end *TaskStatus
+	var start, end *Status
 
 	for _, task := range p.Tasks {
 		if start == nil || start.Start.After(task.Start) {
@@ -225,12 +259,12 @@ func (p *Playbook) ExecutionTime() time.Duration {
 	return end.End.Sub(start.Start)
 }
 
-func (p *Playbook) TaskStatus(taskname string) (ts *TaskStatus, _ error) {
+// TaskStatus returns the current state of a task
+func (p *Playbook) TaskStatus(taskname string) (ts *Status, _ error) {
 	status, ok := p.Tasks[taskname]
 	if !ok {
 		return ts, ErrTaskDoesNotExist
 	}
-
 	return status, nil
 }
 
@@ -243,15 +277,64 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 		return ErrTaskDoesNotExist
 	}
 
+	// compute input hash & target hash
 	hash, err := task.Task.Hash()
 	if err != nil {
 		return err
 	}
 
+	target, err := task.Task.Target()
+	if err != nil {
+		return err
+	}
+
+	if target != nil {
+		targetHash, err := target.Hash()
+		if err != nil {
+			return err
+		}
+		hash.Targets[taskname] = targetHash
+
+		// gather target hashes of dependent tasks
+		err = p.Tasks.walk(taskname, func(tn string, task *Status, err error) error {
+			if err != nil {
+				return err
+			}
+			if taskname == tn {
+				return nil
+			}
+
+			target, err := task.Target()
+			if err != nil {
+				return err
+			}
+			if target == nil {
+				return nil
+			}
+
+			switch task.State() {
+			case StateCompleted:
+				fallthrough
+			case StateNoRebuildRequired:
+				h, err := target.Hash()
+				if err != nil {
+					return err
+				}
+				hash.Targets[task.Task.Name()] = h
+			default:
+				return ErrUnexpectedTaskState
+			}
+
+			return nil
+		})
+		errz.Fatal(err)
+	}
+
 	err = p.storeHash(taskname, hash)
 	errz.Fatal(err)
 
-	err = p.pack(taskname, hash)
+	// TODO: use target hash?
+	err = p.pack(taskname, hash.Input)
 	errz.Fatal(err)
 
 	err = p.setTaskState(taskname, StateCompleted)
@@ -350,63 +433,6 @@ func (p *Playbook) String() string {
 	}
 
 	return description.String()
-}
-
-type TaskStatus struct {
-	Task bobtask.Task
-
-	stateMu sync.RWMutex
-	state   string
-
-	Start time.Time
-	End   time.Time
-}
-
-func NewTaskStatus(task bobtask.Task) *TaskStatus {
-	return &TaskStatus{
-		Task:  task,
-		state: StatePending,
-		Start: time.Now(),
-	}
-}
-
-func (ts *TaskStatus) State() string {
-	ts.stateMu.RLock()
-	defer ts.stateMu.RUnlock()
-	return ts.state
-}
-
-func (ts *TaskStatus) SetState(s string) {
-	ts.stateMu.Lock()
-	defer ts.stateMu.Unlock()
-	ts.state = s
-}
-
-func (ts *TaskStatus) ExecutionTime() time.Duration {
-	return ts.End.Sub(ts.Start)
-}
-
-type TaskStatusMap map[string]*TaskStatus
-
-// walk the task tree starting at root. Following dependend tasks.
-func (tsm TaskStatusMap) walk(root string, fn func(taskname string, _ *TaskStatus, _ error) error) error {
-	task, ok := tsm[root]
-	if !ok {
-		return ErrTaskDoesNotExist
-	}
-
-	err := fn(root, task, nil)
-	if err != nil {
-		return err
-	}
-	for _, dependentTaskName := range task.Task.DependsOn {
-		err = tsm.walk(dependentTaskName, fn)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 const (

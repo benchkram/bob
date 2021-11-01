@@ -156,7 +156,7 @@ func buildNonInteractive(ctx context.Context, runname string, aggregate *bobfile
 			errz.Fatal(err)
 		}
 
-		err = playbook.BuildTask(ctx, child)
+		err = playbook.Build(ctx)
 		errz.Fatal(err)
 	}
 

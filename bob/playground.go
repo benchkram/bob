@@ -251,6 +251,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		CmdDirty:   "go build -o run",
 		DependsOn: []string{
 			filepath.Join(SecondLevelDir, fmt.Sprintf("%s2", global.DefaultBuildTask)),
+			filepath.Join(SecondLevelDir, ThirdLevelDir, "print"),
 		},
 		TargetDirty: target.T{
 			Paths: []string{"run"},
@@ -391,5 +392,10 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
 			Type:  target.File,
 		},
 	}
+
+	bobfile.Tasks["print"] = bobtask.Task{
+		CmdDirty: "echo hello-third-level",
+	}
+
 	return bobfile.BobfileSave(dir)
 }

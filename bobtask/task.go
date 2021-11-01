@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Benchkram/bob/bobtask/export"
+	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/filehash"
 
@@ -58,7 +59,7 @@ type Task struct {
 	// to a place they like to
 	// ???
 	TargetDirty target.T `yaml:"target"`
-	target      target.T
+	target      *target.T
 
 	// Exports other tasks can reuse.
 	Exports export.Map `yaml:"exports"`
@@ -132,34 +133,34 @@ func (t *Task) AddExportPrefix(prefix string) {
 }
 
 // Hash computes a aggregated hash of all input files.
-func (t *Task) Hash() (string, error) {
+func (t *Task) Hash() (computedhash *hash.Task, _ error) {
 	aggregatedHashes := bytes.NewBuffer([]byte{})
 
 	// Hash input files
 	for _, f := range t.inputs {
 		h, err := filehash.Hash(f)
 		if err != nil {
-			return "", fmt.Errorf("failed to hash file %q: %w", f, err)
+			return computedhash, fmt.Errorf("failed to hash file %q: %w", f, err)
 		}
 
 		_, err = aggregatedHashes.Write(h)
 		if err != nil {
-			return "", fmt.Errorf("failed to write file hash to aggregated hash %q: %w", f, err)
+			return computedhash, fmt.Errorf("failed to write file hash to aggregated hash %q: %w", f, err)
 		}
 	}
 
 	// Hash the public task description
 	description, err := yaml.Marshal(t)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal task: %w", err)
+		return computedhash, fmt.Errorf("failed to marshal task: %w", err)
 	}
 	descriptionHash, err := filehash.HashBytes(bytes.NewBuffer(description))
 	if err != nil {
-		return "", fmt.Errorf("failed to write description hash: %w", err)
+		return computedhash, fmt.Errorf("failed to write description hash: %w", err)
 	}
 	_, err = aggregatedHashes.Write(descriptionHash)
 	if err != nil {
-		return "", fmt.Errorf("failed to write task description to aggregated hash: %w", err)
+		return computedhash, fmt.Errorf("failed to write task description to aggregated hash: %w", err)
 	}
 
 	// Hash the environment
@@ -167,17 +168,17 @@ func (t *Task) Hash() (string, error) {
 	environment := strings.Join(t.env, ",")
 	environmentHash, err := filehash.HashBytes(bytes.NewBufferString(environment))
 	if err != nil {
-		return "", fmt.Errorf("failed to write description hash: %w", err)
+		return computedhash, fmt.Errorf("failed to write description hash: %w", err)
 	}
 	_, err = aggregatedHashes.Write(environmentHash)
 	if err != nil {
-		return "", fmt.Errorf("failed to write task environment to aggregated hash: %w", err)
+		return computedhash, fmt.Errorf("failed to write task environment to aggregated hash: %w", err)
 	}
 
+	// Summarize
 	h, err := filehash.HashBytes(aggregatedHashes)
 	if err != nil {
-		return "", fmt.Errorf("failed to write aggregated hash: %w", err)
+		return computedhash, fmt.Errorf("failed to write aggregated hash: %w", err)
 	}
-
-	return hex.EncodeToString(h), nil
+	return &hash.Task{Input: hex.EncodeToString(h), Targets: make(hash.Targets)}, nil
 }

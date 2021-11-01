@@ -38,7 +38,7 @@ var _ = Describe("Test bob build", func() {
 		})
 
 		It("needs no rebuild after that", func() {
-			checkTaksState(b, taskname, playbook.StateNoRebuildRequired)
+			checkTaskState(b, taskname, playbook.StateNoRebuildRequired)
 		})
 
 		It("change of ignored file doesn't need rebuild", func() {
@@ -47,7 +47,7 @@ var _ = Describe("Test bob build", func() {
 			err := os.WriteFile(ignorefile, someText, fs.ModeAppend)
 			Expect(err).NotTo(HaveOccurred())
 
-			checkTaksState(b, taskname, playbook.StateNoRebuildRequired)
+			checkTaskState(b, taskname, playbook.StateNoRebuildRequired)
 		})
 
 		It("change of input file requires rebuild", func() {
@@ -58,18 +58,18 @@ var _ = Describe("Test bob build", func() {
 
 			// Check for completed since this function will call rerun
 			// Therefor this task will be in state completed afterwards
-			checkTaksState(b, taskname, playbook.StateCompleted)
+			checkTaskState(b, taskname, playbook.StateCompleted)
 		})
 	})
 })
 
-func checkTaksState(b *bob.B, taskname, expectedState string) {
+func checkTaskState(b *bob.B, taskname, expectedState string) {
 	aggregate, err := b.Aggregate()
 	Expect(err).NotTo(HaveOccurred())
 	pb, err := aggregate.Playbook(taskname)
 	Expect(err).NotTo(HaveOccurred())
 
-	err = pb.BuildTask(context.Background(), taskname)
+	err = pb.Build(context.Background())
 	Expect(err).NotTo(HaveOccurred())
 
 	ts, err := pb.TaskStatus(taskname)
