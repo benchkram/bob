@@ -4,25 +4,63 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"time"
 
 	"github.com/Benchkram/bob/bobtask"
 	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
+	"github.com/logrusorgru/aurora"
 )
+
+var colorPool = []aurora.Color{
+	1,
+	aurora.BlueFg,
+	aurora.GreenFg,
+	aurora.CyanFg,
+	aurora.MagentaFg,
+	aurora.YellowFg,
+	aurora.RedFg,
+}
+var round = 10 * time.Millisecond
 
 // Build the playbook starting at root.
 func (p *Playbook) Build(ctx context.Context) (err error) {
 	done := make(chan error)
 
+	tasks := []string{}
+	for _, t := range p.Tasks {
+		tasks = append(tasks, t.Name())
+	}
+	sort.Strings(tasks)
+
+	// Adjust padding of first column based on the taskname length.
+	// Also assign fixed color to the tasks.
+	p.namePad = 0
+	for i, name := range tasks {
+		if len(name) > p.namePad {
+			p.namePad = len(name)
+		}
+		color := colorPool[i%len(colorPool)]
+		p.Tasks[name].Task.Color = color
+	}
+	p.namePad += 14
+
+	dependencies := len(tasks) - 1
+	rootName := p.Tasks[p.root].ColoredName()
+	boblog.Log.V(1).Info(fmt.Sprintf("Running task %s with %d dependencies", rootName, dependencies))
+
+	tasks = []string{}
+
 	go func() {
 		// TODO: Run a worker pool so that multiple tasks can run in parallel.
-		// https://stackoverflow.com/questions/25306073/always-have-x-number-of-goroutines-running-at-any-time
 
 		c := p.TaskChannel()
 		for task := range c {
+			tasks = append(tasks, task.Name())
+
 			err := p.build(ctx, task)
 			if err != nil {
-				//if errors.Is(err, context.Canceled) || errors.Is(err, ErrFailed) {
 				done <- err
 				break
 			}
@@ -33,18 +71,45 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	_ = p.Play()
 	err = <-done
-	// fmt.Printf("\n\nDone running playbook in %s\n", p.ExecutionTime())
+	if err != nil {
+		p.Done()
+	}
+
+	// summary
+	boblog.Log.V(1).Info("")
+	boblog.Log.V(1).Info(aurora.Bold("● ● ● ●").BrightGreen().String())
+	t := fmt.Sprintf("Ran %d tasks in %s ", len(tasks), p.ExecutionTime().Round(round))
+	boblog.Log.V(1).Info(aurora.Bold(t).BrightGreen().String())
+	for _, t := range tasks {
+		stat, err := p.TaskStatus(t)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		execTime := ""
+		status := stat.State()
+		if status != StateNoRebuildRequired {
+			execTime = fmt.Sprintf("\t(%s)", stat.ExecutionTime().Round(round))
+		}
+
+		taskName := p.Tasks[t].Name()
+		boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, status.Summary(), execTime))
+	}
+	boblog.Log.V(1).Info("")
+
 	return err
 }
+
+// didWriteBuildOutput assures that a new line is added
+// before writing state or logs of a task to stdout.
+var didWriteBuildOutput bool
 
 // build a single task and update the playbook state after completion.
 func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 	defer errz.Recover(&err)
 
-	// TODO: Run a worker pool so that multiple tasks can run in parallel.
-	// https://stackoverflow.com/questions/25306073/always-have-x-number-of-goroutines-running-at-any-time
-
-	boblog.Log.V(2).Info(fmt.Sprintf("Building [task: %s]", task.Name()))
+	coloredName := task.ColoredName()
 
 	done := make(chan struct{})
 	defer close(done)
@@ -54,7 +119,7 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 		case <-done:
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.Canceled) {
-				boblog.Log.V(2).Info(fmt.Sprintf("Task %q was canceled", task.Name()))
+				boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, StateCanceled))
 				_ = p.TaskCanceled(task.Name())
 			}
 		}
@@ -64,14 +129,21 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 	errz.Fatal(err)
 
 	if !rebuildRequired {
-		boblog.Log.V(2).Info(fmt.Sprintf("Task %q doesn't need to be rebuilt", task.Name()))
+		status := StateNoRebuildRequired
+		boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, status.Short()))
 		return p.TaskNoRebuildRequired(task.Name())
 	}
+
+	if !didWriteBuildOutput {
+		boblog.Log.V(1).Info("")
+		didWriteBuildOutput = true
+	}
+	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\trunning task...", p.namePad, coloredName))
 
 	err = task.Clean()
 	errz.Fatal(err)
 
-	err = task.Run(ctx)
+	err = task.Run(ctx, p.namePad)
 	errz.Fatal(err)
 
 	err = task.VerifyAfter()
@@ -87,7 +159,7 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 	// inside TaskCompleted().
 	if target != nil {
 		if !target.Exists() {
-			boblog.Log.V(2).Info(fmt.Sprintf("Task %q failed due to invalid targets", task.Name()))
+			boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s\t(invalid targets)", p.namePad, coloredName, StateFailed))
 			err = p.TaskFailed(task.Name())
 			if err != nil {
 				if errors.Is(err, ErrFailed) {
@@ -99,9 +171,12 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 
 	err = p.TaskCompleted(task.Name())
 	errz.Fatal(err)
+
 	taskStatus, err := p.TaskStatus(task.Name())
 	errz.Fatal(err)
-	boblog.Log.V(2).Info(fmt.Sprintf("Task %q completed in %s", task.Name(), taskStatus.ExecutionTime()))
+
+	state := taskStatus.State()
+	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, "..."+state.Short()))
 
 	return nil
 }

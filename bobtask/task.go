@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/logrusorgru/aurora"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -71,7 +72,10 @@ type Task struct {
 
 	// env holds key=value pairs passed to the environement
 	// when the task is executed.
-	env []string
+	env   []string
+
+	// Color is used to color the task's name on the terminal
+	Color aurora.Color
 }
 
 func Make(opts ...TaskOption) Task {
@@ -99,6 +103,15 @@ func (t *Task) Dir() string {
 
 func (t *Task) Name() string {
 	return t.name
+}
+
+func (t *Task) ShortName() string {
+	_, name := filepath.Split(t.name)
+	return name
+}
+
+func (t *Task) ColoredName() string {
+	return aurora.Colorize(t.Name(), t.Color).String()
 }
 
 func (t *Task) Env() []string {

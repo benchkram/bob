@@ -63,7 +63,7 @@ var _ = Describe("Test bob build", func() {
 	})
 })
 
-func checkTaskState(b *bob.B, taskname, expectedState string) {
+func checkTaskState(b *bob.B, taskname string, expectedState playbook.State) {
 	aggregate, err := b.Aggregate()
 	Expect(err).NotTo(HaveOccurred())
 	pb, err := aggregate.Playbook(taskname)

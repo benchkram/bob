@@ -70,7 +70,7 @@ var _ = Describe("Test bob multilevel build", func() {
 				cmd.Stderr = &stderr
 
 				go func() {
-					time.Sleep(10 * time.Millisecond)
+					time.Sleep(500 * time.Millisecond)
 					err := cmd.Process.Signal(os.Interrupt)
 					Expect(err).NotTo(HaveOccurred())
 				}()

@@ -16,12 +16,9 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 
 	aggregate, err := b.Aggregate()
 	errz.Fatal(err)
-	println(aggregate.Tasks.String())
-	println(aggregate.Runs.String())
 
 	playbook, err := aggregate.Playbook(taskname)
 	errz.Fatal(err)
-	println(playbook.String())
 
 	return playbook.Build(ctx)
 }

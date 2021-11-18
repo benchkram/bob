@@ -11,6 +11,7 @@ import (
 	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
+	"github.com/logrusorgru/aurora"
 )
 
 // The playbook defines the order in which tasks are allowed to run.
@@ -34,7 +35,14 @@ type Playbook struct {
 
 	Tasks StatusMap
 
+	namePad int
+
 	done bool
+
+	// start is the point in time the playbook started
+	start time.Time
+	// end is the point in time the playbook ended
+	end time.Time
 }
 
 func New(root string) *Playbook {
@@ -49,23 +57,25 @@ func New(root string) *Playbook {
 
 // TaskNeedsRebuild check if a tasks need a rebuild by looking at it's hash value
 // and it's child tasks.
-func (p *Playbook) TaskNeedsRebuild(taskname string) (bool, error) {
+func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, err error) {
 	ts, ok := p.Tasks[taskname]
 	if !ok {
 		return true, ErrTaskDoesNotExist
 	}
 	task := ts.Task
 
+	coloredName := task.ColoredName()
+
+	// check rebuild due to invalidated inputs
 	hash, err := task.Hash()
 	if err != nil {
 		return true, err
 	}
-
 	// Check if task itself needs a rebuild
-	rebuildRequired, err := task.NeedsRebuild(&bobtask.RebuildOptions{Hash: hash})
+	rebuildRequired, err = task.NeedsRebuild(&bobtask.RebuildOptions{Hash: hash})
 	if err != nil {
 		if rebuildRequired {
-			boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] rebuild required: input changed", taskname))
+			boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
 		}
 		return rebuildRequired, err
 	}
@@ -84,7 +94,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (bool, error) {
 
 		// Require a rebuild if the dependend task did require a rebuild
 		if t.State() != StateNoRebuildRequired {
-			boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] rebuild required: dependecy changed", taskname))
+			boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(dependecy changed)", p.namePad, coloredName))
 			rebuildRequired = true
 			// Bail out early
 			return Done
@@ -93,30 +103,24 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (bool, error) {
 		return nil
 	})
 
+	if errors.Is(err, Done) {
+		return rebuildRequired, nil
+	}
+
 	if !rebuildRequired {
+
+		// check rebuild due to invalidated targets
 		target, err := task.Target()
 		if err != nil {
 			return true, err
 		}
-
 		if target != nil {
 			// On a invalid traget a rebuild is required
 			rebuildRequired = !target.Verify()
 			if rebuildRequired {
-				boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] rebuild required: targets are invalid", taskname))
+				boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(invalid targets)", p.namePad, coloredName))
 			}
 		}
-
-		// TODO: check for validity of targets
-		// and also sync with a remote artifact provider
-		//
-		// As a starting point its enough to check validity
-		// based on the targets hash stored in the filename
-		// (see .bobcache)
-	}
-
-	if errors.Is(err, Done) {
-		return rebuildRequired, nil
 	}
 
 	return rebuildRequired, err
@@ -132,15 +136,14 @@ func (p *Playbook) play() error {
 		return ErrDone
 	}
 
-	playbookDone := func() {
-		close(p.taskChannel)
-		p.done = true
+	if p.start.IsZero() {
+		p.start = time.Now()
 	}
 
 	// Walk the task chain and determine the next build task. Send it to the task channel.
 	// Returns `taskQueued` when a task has been send to the taskChannel.
 	// Returns `taskFailed` when a task has failed.
-	// Once it returns `nil` the playbook is usually done with it's work.
+	// Once it returns `nil` the playbook is done with it's work.
 	var taskQueued = fmt.Errorf("task queued")
 	var taskFailed = fmt.Errorf("task failed")
 	err := p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
@@ -197,9 +200,17 @@ func (p *Playbook) play() error {
 
 	// no work done, usually happens when
 	// no task needs a rebuild.
-	playbookDone()
+	p.Done()
 
 	return nil
+}
+
+func (p *Playbook) Done() {
+	if !p.done {
+		p.done = true
+		p.end = time.Now()
+		close(p.taskChannel)
+	}
 }
 
 // TaskChannel returns the next task
@@ -211,7 +222,7 @@ func (p *Playbook) ErrorChannel() <-chan error {
 	return p.errorChannel
 }
 
-func (p *Playbook) setTaskState(taskname, state string) error {
+func (p *Playbook) setTaskState(taskname string, state State) error {
 	task, ok := p.Tasks[taskname]
 	if !ok {
 		return ErrTaskDoesNotExist
@@ -245,18 +256,7 @@ func (p *Playbook) storeHash(taskname string, hash *hash.Task) error {
 }
 
 func (p *Playbook) ExecutionTime() time.Duration {
-	var start, end *Status
-
-	for _, task := range p.Tasks {
-		if start == nil || start.Start.After(task.Start) {
-			start = task
-		}
-		if end == nil || end.End.Before(task.End) {
-			end = task
-		}
-	}
-
-	return end.End.Sub(start.Start)
+	return p.end.Sub(p.start)
 }
 
 // TaskStatus returns the current state of a task
@@ -435,10 +435,48 @@ func (p *Playbook) String() string {
 	return description.String()
 }
 
+type State string
+
+// Summary state indicators.
+// The nbsp are intended to align on the cli.
+func (s *State) Summary() string {
+	switch *s {
+	case StatePending:
+		return "⌛       "
+	case StateCompleted:
+		return aurora.Green("✔").Bold().String() + "       "
+	case StateNoRebuildRequired:
+		return aurora.Green("cached").String() + "  "
+	case StateFailed:
+		return aurora.Red("failed").String() + "  "
+	case StateCanceled:
+		return aurora.Faint("canceled").String()
+	default:
+		return ""
+	}
+}
+
+func (s *State) Short() string {
+	switch *s {
+	case StatePending:
+		return "pending"
+	case StateCompleted:
+		return "done"
+	case StateNoRebuildRequired:
+		return "cached"
+	case StateFailed:
+		return "failed"
+	case StateCanceled:
+		return "canceled"
+	default:
+		return ""
+	}
+}
+
 const (
-	StatePending           string = "pending"
-	StateCompleted         string = "completed-built"
-	StateNoRebuildRequired string = "no-rebuild-required"
-	StateFailed            string = "failed"
-	StateCanceled          string = "canceled"
+	StatePending           State = "PENDING"
+	StateCompleted         State = "COMPLETED"
+	StateNoRebuildRequired State = "CACHED"
+	StateFailed            State = "FAILED"
+	StateCanceled          State = "CANCELED"
 )

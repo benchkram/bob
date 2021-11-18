@@ -13,7 +13,7 @@ type Status struct {
 	bobtask.Task
 
 	stateMu sync.RWMutex
-	state   string
+	state   State
 
 	Start time.Time
 	End   time.Time
@@ -27,13 +27,13 @@ func NewStatus(task bobtask.Task) *Status {
 	}
 }
 
-func (ts *Status) State() string {
+func (ts *Status) State() State {
 	ts.stateMu.RLock()
 	defer ts.stateMu.RUnlock()
 	return ts.state
 }
 
-func (ts *Status) SetState(s string) {
+func (ts *Status) SetState(s State) {
 	ts.stateMu.Lock()
 	defer ts.stateMu.Unlock()
 	ts.state = s

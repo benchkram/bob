@@ -2,14 +2,12 @@ package bobtask
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/errz"
-	"github.com/logrusorgru/aurora"
 	"github.com/mholt/archiver/v3"
 )
 
@@ -50,13 +48,13 @@ func (t *Task) Clean() error {
 				panic("Root cleanup is permitted")
 			}
 
-			fmt.Printf("Cleaning %s ", p)
+			//fmt.Printf("Cleaning %s ", p)
 			err := os.RemoveAll(p)
 			if err != nil {
-				fmt.Printf("%s\n", aurora.Red("failed"))
+				//fmt.Printf("%s\n", aurora.Red("failed"))
 				return err
 			}
-			fmt.Printf("%s\n", aurora.Green("done"))
+			//fmt.Printf("%s\n", aurora.Green("done"))
 		}
 	}
 
