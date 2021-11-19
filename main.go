@@ -11,9 +11,16 @@ import (
 
 var zsh bool
 
+var _stopProfiling func()
+
+func stopProfiling() {
+	if _stopProfiling != nil {
+		_stopProfiling()
+	}
+}
+
 func init() {
 	configInit()
-	logInit(1)
 
 	// completionCmd
 	completionCmd.Flags().BoolVarP(&zsh, "zsh", "z",
@@ -54,8 +61,16 @@ var rootCmd = &cobra.Command{
 	Use:   "bob",
 	Short: "cli to run bob - the build tool",
 	Long:  `TODO`,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		readGlobalConfig()
+		logInit(GlobalConfig.Verbosity)
+		_stopProfiling = profiling(
+			GlobalConfig.CPUProfile,
+			GlobalConfig.MEMProfile,
+		)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		err := cmd.Help()
@@ -112,8 +127,12 @@ var completionCmd = &cobra.Command{
 }
 
 func main() {
+	var exitCode int
+	defer func() { os.Exit(exitCode) }()
+	defer stopProfiling()
+
 	if err := rootCmd.Execute(); err != nil {
 		errz.Log(err)
-		os.Exit(1)
+		exitCode = 1
 	}
 }

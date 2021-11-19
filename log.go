@@ -8,7 +8,7 @@ func logInit(level int) {
 	// 1 - info logs..
 	// 2 - debug logs..
 	// 3 - debug logs with hints why a task is beeing rebuild
-	// 5 - debug logs timing/tracing
+	// 5 - debug logs TBD
 
 	boblog.SetLogLevel(level)
 }

@@ -22,6 +22,7 @@ func (b *B) find() (bobfiles []string, err error) {
 			bobfiles = append(bobfiles, file)
 		}
 	}
+
 	return bobfiles, nil
 }
 
@@ -32,8 +33,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 	bobfiles, err := b.find()
 	errz.Fatal(err)
-
-	// TODO: Aggregate Runs
 
 	// Read & Find Bobfiles
 	bobs := []*bobfile.Bobfile{}

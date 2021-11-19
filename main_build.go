@@ -21,6 +21,9 @@ var buildCmd = &cobra.Command{
 	Short: "Build the project",
 	Args:  cobra.MinimumNArgs(0),
 	Long:  ``,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		dummy, err := strconv.ParseBool(cmd.Flag("dummy").Value.String())
 		errz.Fatal(err)

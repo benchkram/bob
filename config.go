@@ -10,50 +10,24 @@ import (
 	"github.com/spf13/viper"
 )
 
-// handle global configuration through a config file, environment vars  cli parameters.
+// global configuration through a config file, environment vars  cli parameters.
 
 //  Config the global config object
 var GlobalConfig *config // nolint:varcheck, unused
-
-func readGlobalConfig() {
-	// Priority of configuration options
-	// 1: CLI Parameters
-	// 2: environment
-	// 2: config.yaml
-	// 3: defaults
-	config, err := readConfig(defaultConfig.AsMap())
-	if err != nil {
-		panic(err.Error())
-	}
-	//config.Print()
-
-	// Set config object for main package
-	GlobalConfig = config
-}
-
-var defaultConfig = &config{
-	Host: "",
-}
-
-// configInit must be called from the packages init() func
-func configInit() {
-	// Keep cli parameters in sync with the config struct
-	rootCmd.PersistentFlags().String("host", "", "hostname to listen to")
-
-	// CLI PARMETERS
-	err := viper.BindPFlag("host", rootCmd.PersistentFlags().Lookup("host"))
-	errz.Fatal(err)
-
-	// ENVIRONMENT VARS
-	err = viper.BindEnv("host", "HOST")
-	errz.Fatal(err)
-}
 
 // Create private data struct to hold config options.
 // `mapstructure` => viper tags
 // `struct` => fatih structs tag
 type config struct {
-	Host string `mapstructure:"host" structs:"host"`
+	Verbosity  int  `mapstructure:"verbosity" structs:"verbosity"`
+	CPUProfile bool `mapstructure:"cpuprofile" structs:"cpuprofile"`
+	MEMProfile bool `mapstructure:"memprofile" structs:"memprofile"`
+}
+
+var defaultConfig = &config{
+	Verbosity:  1,
+	CPUProfile: false,
+	MEMProfile: false,
 }
 
 func (c *config) AsMap() map[string]interface{} {
@@ -62,6 +36,29 @@ func (c *config) AsMap() map[string]interface{} {
 
 func (c *config) Print() {
 	litter.Dump(c)
+}
+
+// configInit must be called from the packages init() func
+func configInit() {
+	flags()
+	bind()
+	env()
+}
+
+func flags() {
+	rootCmd.PersistentFlags().IntP("verbosity", "v", defaultConfig.Verbosity, "write cpu profile to file")
+	rootCmd.PersistentFlags().Bool("cpuprofile", defaultConfig.CPUProfile, "write cpu profile to file")
+	rootCmd.PersistentFlags().Bool("memprofile", defaultConfig.MEMProfile, "write memory profile to file")
+}
+func bind() {
+	errz.Fatal(viper.BindPFlag("verbosity", rootCmd.PersistentFlags().Lookup("verbosity")))
+	errz.Fatal(viper.BindPFlag("cpuprofile", rootCmd.PersistentFlags().Lookup("cpuprofile")))
+	errz.Fatal(viper.BindPFlag("memprofile", rootCmd.PersistentFlags().Lookup("memprofile")))
+}
+func env() {
+	errz.Fatal(viper.BindEnv("verbosity", "BOB_VERBOSITY"))
+	errz.Fatal(viper.BindEnv("cpuprofile", "BOB_CPU_PROFILE"))
+	errz.Fatal(viper.BindEnv("memprofile", "BOB_MEM_PROFILE"))
 }
 
 // readConfig a helper to read default from a default config object.
@@ -87,4 +84,17 @@ func readConfig(defaults map[string]interface{}) (*config, error) {
 		return nil, err
 	}
 	return c, nil
+}
+
+func readGlobalConfig() {
+	// Priority of configuration options
+	// 1: CLI Parameters
+	// 2: environment
+	// 2: config.yaml
+	// 3: defaults
+	config, err := readConfig(defaultConfig.AsMap())
+	if err != nil {
+		panic(err.Error())
+	}
+	GlobalConfig = config
 }

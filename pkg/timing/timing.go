@@ -20,15 +20,20 @@ type Measurement struct {
 	// lastStart last time Start() was called
 	lastStart time.Time
 
-	// cucles ins the number of Start()/Stop() cycles
+	// cycles is the number of Start()/Stop() cycles
 	cycles uint
 }
 
 func NewMeasurement(name string) *Measurement {
 	return &Measurement{
-		name:      name,
-		lastStart: time.Now(),
+		name: name,
 	}
+}
+
+func NewStartedMeasurement(name string) *Measurement {
+	m := NewMeasurement(name)
+	m.Start()
+	return m
 }
 
 func (m *Measurement) Start() {
@@ -43,5 +48,5 @@ func (m *Measurement) Stop() {
 }
 
 func (m *Measurement) String() string {
-	return fmt.Sprintf("%s ran %d times for a total of %s\n", m.name, m.cycles, m.sum)
+	return fmt.Sprintf("%s ran %d times for a total of %s", m.name, m.cycles, m.sum)
 }

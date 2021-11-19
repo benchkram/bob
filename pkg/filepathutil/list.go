@@ -2,16 +2,29 @@ package filepathutil
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
+	"github.com/Benchkram/errz"
 	"github.com/yargevad/filepathx"
 )
 
-func ListRecursive(inp string) ([]string, error) {
-	var all []string
+// DefaultIgnores
+var (
+	DefaultIgnores = map[string]bool{
+		"node_modules": true,
+		".git":         true,
+	}
+)
 
+func ListRecursive(inp string) (all []string, err error) {
+	defer errz.Recover(&err)
+
+	// TODO: possibly ignore here too, before calling listDir
 	if s, err := os.Stat(inp); err != nil || !s.IsDir() {
+		// File
+
 		// Use glob for unknowns (wildcard-paths) and existing files (non-dirs)
 		matches, err := filepathx.Glob(inp)
 		if err != nil {
@@ -19,13 +32,16 @@ func ListRecursive(inp string) ([]string, error) {
 		}
 
 		for _, m := range matches {
-			if s, err := os.Stat(m); err == nil && !s.IsDir() {
+			s, err := os.Stat(m)
+			if err == nil && !s.IsDir() {
+
 				// Existing file
 				all = append(all, m)
 			} else {
 				// Directory
 				files, err := listDir(m)
 				if err != nil {
+					errz.Log(err)
 					return nil, fmt.Errorf("failed to list dir: %w", err)
 				}
 
@@ -45,11 +61,22 @@ func ListRecursive(inp string) ([]string, error) {
 	return all, nil
 }
 
+var WalkedDirs = map[string]int{}
+
 func listDir(path string) ([]string, error) {
+
+	times := WalkedDirs[path]
+	WalkedDirs[path] = times + 1
+
 	var all []string
-	if err := filepath.Walk(path, func(p string, fi os.FileInfo, err error) error {
+	if err := filepath.WalkDir(path, func(p string, fi fs.DirEntry, err error) error {
 		if err != nil {
 			return err
+		}
+
+		// Skip default ignored
+		if fi.IsDir() && ignored(fi.Name()) {
+			return fs.SkipDir
 		}
 
 		// Skip dirs
@@ -63,4 +90,8 @@ func listDir(path string) ([]string, error) {
 	}
 
 	return all, nil
+}
+
+func ignored(fileName string) bool {
+	return DefaultIgnores[fileName]
 }

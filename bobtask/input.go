@@ -17,6 +17,7 @@ func (t *Task) Inputs() []string {
 // filteredInputs returns inputs filtered by ignores.
 // Calls sanitize on the result.
 func (t *Task) filteredInputs() ([]string, error) {
+
 	owd, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current working directory: %w", err)
