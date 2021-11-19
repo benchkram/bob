@@ -2,8 +2,12 @@ package bobtask
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"path/filepath"
 	"strings"
+
+	"errors"
 
 	"github.com/Benchkram/bob/bobtask/export"
 )
@@ -23,10 +27,10 @@ func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {
 
 		resolvedPath, err := resolve(f)
 		if err != nil {
-			// if errors.Is(err, os.ErrNotExist) {
-			// 	log.Printf("failed to resolve %q: %v, ignoring\n", f, err)
-			// 	continue
-			// }
+			if errors.Is(err, os.ErrNotExist) {
+				log.Printf("failed to resolve %q: %v, ignoring\n", f, err)
+				continue
+			}
 			return nil, fmt.Errorf("failed to resolve %q: %w", f, err)
 		}
 
