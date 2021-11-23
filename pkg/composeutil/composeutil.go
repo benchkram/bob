@@ -31,7 +31,7 @@ func GetNewPortMappings(resolved map[string][]*PortConfig) string {
 	}
 	sort.Strings(ports)
 
-	mappings := "\nResolved host port mappings:\n"
+	mappings := "Resolved host port mappings:\n"
 	for _, port := range ports {
 		services := resolved[port]
 		for _, srv := range services {
@@ -135,7 +135,7 @@ func GetPortConflicts(configs map[string][]*PortConfig) string {
 	}
 	sort.Strings(ports)
 
-	conflicts := "\nConflicting ports detected:"
+	conflicts := "Conflicting ports detected:"
 	for _, port := range ports {
 		services := configs[port]
 

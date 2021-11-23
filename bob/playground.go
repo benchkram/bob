@@ -294,7 +294,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	}
 
 	// A run command to run a environment from a compose file
-	bobfile.Runs["envrionment"] = &bobrun.Run{
+	bobfile.Runs["environment"] = &bobrun.Run{
 		Type: bobrun.RunTypeCompose,
 	}
 
@@ -303,7 +303,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		Path: "docker-compose.whoami.yml",
 		DependsOn: []string{
 			"all",
-			"envrionment",
+			"environment",
 		},
 	}
 
@@ -313,7 +313,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		Path: "./run",
 		DependsOn: []string{
 			"all",
-			"envrionment",
+			"environment",
 		},
 	}
 

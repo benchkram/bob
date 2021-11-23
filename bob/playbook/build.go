@@ -41,6 +41,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		if len(name) > p.namePad {
 			p.namePad = len(name)
 		}
+
 		color := colorPool[i%len(colorPool)]
 		p.Tasks[name].Task.Color = color
 	}

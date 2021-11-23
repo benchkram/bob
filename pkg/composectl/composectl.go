@@ -16,7 +16,6 @@ import (
 
 var (
 	ErrInvalidProject = fmt.Errorf("invalid project")
-	ErrComposeError   = fmt.Errorf("compose error")
 )
 
 type ComposeController struct {
@@ -75,7 +74,7 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 		}
 	}
 
-	logger, err := NewLogger(c.stdout.w)
+	logger, err := NewLogConsumer(c.stdout.w)
 	if err != nil {
 		return nil, err
 	}
@@ -103,14 +102,7 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 
 func (ctl *ComposeController) Up(ctx context.Context) error {
 
-	err := ctl.service.Up(ctx, ctl.project, api.UpOptions{
-		//Start: api.StartOptions{
-		//	Attach :      ctl.logger,
-		//},
-		//Create: api.CreateOptions{
-		//	QuietPull:            true,
-		//},
-	})
+	err := ctl.service.Up(ctx, ctl.project, api.UpOptions{})
 	if err != nil {
 		return err
 	}
@@ -122,7 +114,7 @@ func (ctl *ComposeController) Up(ctx context.Context) error {
 			Since:      "",
 			Until:      "",
 			Follow:     true,
-			Timestamps: true,
+			Timestamps: false,
 		})
 		if err != nil {
 			panic(err)

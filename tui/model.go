@@ -73,6 +73,8 @@ type model struct {
 	starting   bool
 	restarting bool
 	stopping   bool
+	width      int
+	height     int
 	content    viewport.Model
 	header     viewport.Model
 	footer     help.Model
@@ -164,10 +166,9 @@ func newModel(cmder ctl.Commander, evts chan interface{}, output *os.File, actua
 		stdout:     actualOutput,
 		cmder:      cmder,
 		currentTab: 0,
-		//currentLine: currentLine,
-		tabs:   tabs,
-		events: evts,
-		keys:   keys,
+		tabs:       tabs,
+		events:     evts,
+		keys:       keys,
 		footer: help.Model{
 			ShowAll:        false,
 			ShortSeparator: " · ",
@@ -188,6 +189,23 @@ func (m *model) Init() tea.Cmd {
 		nextEvent(m.events),
 	)
 }
+
+// TODO: becomes EXTREMELY slow real quick. Solution: refactor TUI's buffer so that it only wraps visible viewport,
+// a.k.a. use bubbletea viewport's high performance renderer.
+//func (m *model) softWrappedOutput() string {
+//	output := m.tabs[m.currentTab].output.String()
+//
+//	wrapped := new(bytes.Buffer)
+//
+//	for _, s := range strings.Split(output, "\n") {
+//		ws := wordwrap.WrapString(s, uint(m.width))
+//
+//		wrapped.WriteString(ws)
+//		wrapped.WriteString("\n")
+//	}
+//
+//	return wrapped.String()
+//}
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
@@ -210,9 +228,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.content.GotoBottom()
 
 		case key.Matches(msg, m.keys.Restart):
+			m.content.GotoBottom()
+
 			cmds = append(cmds, restart(m))
 
 		case key.Matches(msg, m.keys.Quit):
+			m.content.GotoBottom()
+
 			cmds = append(cmds, stop(m))
 		}
 
@@ -220,7 +242,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, tick())
 
 	case tea.WindowSizeMsg:
-		m.updateViewports(msg.Width, msg.Height)
+		m.width = msg.Width
+		m.height = msg.Height
+
+		m.updateViewports()
+
+		m.content.SetContent(m.tabs[m.currentTab].output.String())
 
 	case Quit:
 		cmds = append(cmds, tea.Quit)
@@ -280,17 +307,17 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *model) updateViewports(width, height int) {
-	if width == 0 || height == 0 {
+func (m *model) updateViewports() {
+	if m.width == 0 || m.height == 0 {
 		return
 	}
 
-	m.header.Width = width
-	m.content.Width = width
-	m.footer.Width = width
+	m.header.Width = m.width
+	m.content.Width = m.width
+	m.footer.Width = m.width
 
 	m.header.Height = 2
-	m.content.Height = height - 4
+	m.content.Height = m.height - 4
 }
 
 func (m *model) View() string {
