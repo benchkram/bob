@@ -31,6 +31,8 @@ func init() {
 	rootCmd.AddCommand(CmdInit)
 	rootCmd.AddCommand(CmdAdd)
 	rootCmd.AddCommand(CmdClone)
+	rootCmd.AddCommand(cleanCmd)
+	rootCmd.AddCommand(dockerCmd)
 
 	// runCmd
 	runCmd.AddCommand(runListCmd)
@@ -53,8 +55,6 @@ func init() {
 	// gitCmd
 	CmdGit.AddCommand(CmdGitStatus)
 	rootCmd.AddCommand(CmdGit)
-
-	rootCmd.AddCommand(dockerCmd)
 }
 
 var rootCmd = &cobra.Command{

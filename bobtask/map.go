@@ -47,9 +47,6 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 // propertys from dirty members to plain (e.g. dirtyInputs -> filter&sanitize -> inputs)
 func (tm Map) Sanitize() {
 	for key, task := range tm {
-		inputs, err := task.filteredInputs()
-		errz.Fatal(err)
-		task.inputs = inputs
 
 		sanitizedExports, err := task.sanitizeExports(task.Exports)
 		errz.Fatal(err)
@@ -66,6 +63,10 @@ func (tm Map) Sanitize() {
 				task.target.Type = target.File
 			}
 		}
+
+		inputs, err := task.filteredInputs()
+		errz.Fatal(err)
+		task.inputs = inputs
 
 		task.cmds = multilinecmd.Split(task.CmdDirty)
 

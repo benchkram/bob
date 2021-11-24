@@ -7,7 +7,7 @@ import (
 
 	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/bob/pkg/file"
-	"github.com/Benchkram/bob/test/repo/setup"
+	"github.com/Benchkram/bob/test/setup/reposetup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -42,16 +42,16 @@ var _ = Describe("Test bob clone", func() {
 			Expect(b.Clone()).NotTo(HaveOccurred())
 
 			// Children
-			for _, child := range setup.Childs {
+			for _, child := range reposetup.Childs {
 				Expect(file.Exists(filepath.Join(top, child))).To(BeTrue())
 			}
 
 			// Recursive
-			Expect(file.Exists(filepath.Join(top, setup.ChildRecursive))).To(BeTrue())
+			Expect(file.Exists(filepath.Join(top, reposetup.ChildRecursive))).To(BeTrue())
 			// Delete HTTPS repo afterwards as it is reused later
 			Expect(os.RemoveAll(filepath.Join(top, "errors"))).NotTo(HaveOccurred())
 			// Delete recursive repo afterwards as it is reused later
-			Expect(os.RemoveAll(filepath.Join(top, setup.ChildRecursive))).NotTo(HaveOccurred())
+			Expect(os.RemoveAll(filepath.Join(top, reposetup.ChildRecursive))).NotTo(HaveOccurred())
 		})
 
 		It("runs bob clone to clone a bob repo", func() {
@@ -66,7 +66,7 @@ var _ = Describe("Test bob clone", func() {
 			_, err := b.CloneRepo(fmt.Sprintf("file://%s", recursiveRepo))
 			Expect(err).NotTo(HaveOccurred())
 
-			childProjectGit := filepath.Join(top, setup.ChildRecursive, "errors", ".git")
+			childProjectGit := filepath.Join(top, reposetup.ChildRecursive, "errors", ".git")
 			// Make sure to not directly rely on a file in the repo
 			// just assure that it's cloned correctly.
 			Expect(file.Exists(childProjectGit)).To(BeTrue())

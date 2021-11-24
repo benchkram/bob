@@ -6,7 +6,10 @@ import (
 )
 
 func (b *Bobfile) Playbook(taskname string) (*playbook.Playbook, error) {
-	pb := playbook.New(taskname)
+	pb := playbook.New(
+		taskname,
+	)
+
 	err := b.Tasks.Walk(taskname, "", func(tn string, task bobtask.Task, err error) error {
 		if err != nil {
 			return err

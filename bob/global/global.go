@@ -3,14 +3,17 @@ package global
 import "path/filepath"
 
 const (
-	BobCacheDir      = ".bobcache"
 	BobFileName      = "bob.yaml"
 	BuildToolDir     = ".bob"
 	ConfigFile       = "config"
 	DefaultBuildTask = "build"
 )
 
+// Cache directory
+const BobCacheDir = ".bobcache"
+
 var (
-	FileHashesFileName = filepath.Join(BobCacheDir, "filehashes")
-	TaskHashesFileName = filepath.Join(BobCacheDir, "hashes")
+	BobCacheBuildinfoDir       = filepath.Join(BobCacheDir, "buildinfos")
+	BobCacheTaskHashesFileName = filepath.Join(BobCacheDir, "hashes")
+	BobCacheArtifactsDir       = filepath.Join(BobCacheDir, "artifacts")
 )

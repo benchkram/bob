@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/Benchkram/bob/bobtask"
+	"github.com/Benchkram/bob/bobtask/buildinfo"
 	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/Benchkram/bob/pkg/buildinfostore"
 	"github.com/Benchkram/errz"
 	"github.com/logrusorgru/aurora"
 )
@@ -52,32 +54,42 @@ func New(root string) *Playbook {
 		Tasks:        make(StatusMap),
 		root:         root,
 	}
+
 	return p
 }
 
+type RebuildCause string
+
+func (rc *RebuildCause) String() string {
+	return string(*rc)
+}
+
+const (
+	TaskInputChanged  RebuildCause = "input-changed"
+	DependencyChanged RebuildCause = "dependency-changed"
+	TargetInvalid     RebuildCause = "target-invalid"
+)
+
 // TaskNeedsRebuild check if a tasks need a rebuild by looking at it's hash value
 // and it's child tasks.
-func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, err error) {
+func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildRequired bool, cause RebuildCause, err error) {
 	ts, ok := p.Tasks[taskname]
 	if !ok {
-		return true, ErrTaskDoesNotExist
+		return false, "", ErrTaskDoesNotExist
 	}
 	task := ts.Task
-
 	coloredName := task.ColoredName()
 
-	// check rebuild due to invalidated inputs
-	hash, err := task.Hash()
-	if err != nil {
-		return true, err
-	}
 	// Check if task itself needs a rebuild
-	rebuildRequired, err = task.NeedsRebuild(&bobtask.RebuildOptions{Hash: hash})
-	if err != nil {
-		if rebuildRequired {
-			boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
-		}
-		return rebuildRequired, err
+	// println("taskname:" + task.Name())
+	// println("hashin:" + hashIn)
+	// println("task dir:" + task.Dir())
+
+	rebuildRequired, err = task.NeedsRebuild(&bobtask.RebuildOptions{HashIn: &hashIn})
+	errz.Fatal(err)
+	if rebuildRequired {
+		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
+		return true, TaskInputChanged, nil
 	}
 
 	var Done = fmt.Errorf("done")
@@ -86,6 +98,9 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, err 
 		if err != nil {
 			return err
 		}
+
+		// TODO: In case the task does not exist check if a artifact can be used?
+		//       Part of no-permission-workflow.
 
 		// Ignore the task itself
 		if task.Name() == tn {
@@ -104,7 +119,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, err 
 	})
 
 	if errors.Is(err, Done) {
-		return rebuildRequired, nil
+		return true, DependencyChanged, nil
 	}
 
 	if !rebuildRequired {
@@ -112,18 +127,38 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, err 
 		// check rebuild due to invalidated targets
 		target, err := task.Target()
 		if err != nil {
-			return true, err
+			return true, "", err
 		}
 		if target != nil {
 			// On a invalid traget a rebuild is required
 			rebuildRequired = !target.Verify()
+
+			// Try to load a target from the store when a rebuild is required.
+			// If not assure the artifact exists in the store.
+			if rebuildRequired {
+				boblog.Log.V(2).Info(fmt.Sprintf("[task:%s] trying to get target from store", taskname))
+				ok, err := task.ArtifactUnpack(hashIn)
+				errz.Log(err)
+
+				if ok {
+					rebuildRequired = false
+				} else {
+					boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] failed to get target from store", taskname))
+				}
+			} else {
+				if !task.ArtifactExists(hashIn) {
+					err = task.ArtifactPack(hashIn)
+					errz.Log(err)
+				}
+			}
+
 			if rebuildRequired {
 				boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(invalid targets)", p.namePad, coloredName))
 			}
 		}
 	}
 
-	return rebuildRequired, err
+	return rebuildRequired, TargetInvalid, err
 }
 
 func (p *Playbook) Play() (err error) {
@@ -238,21 +273,21 @@ func (p *Playbook) setTaskState(taskname string, state State) error {
 	return nil
 }
 
-func (p *Playbook) pack(taskname string, hash string) error {
+func (p *Playbook) pack(taskname string, hash hash.In) error {
 	task, ok := p.Tasks[taskname]
 	if !ok {
 		return ErrTaskDoesNotExist
 	}
-	return task.Task.Pack(hash)
+	return task.Task.ArtifactPack(hash)
 }
 
-func (p *Playbook) storeHash(taskname string, hash *hash.Task) error {
+func (p *Playbook) storeHash(taskname string, buildinfo *buildinfo.I) error {
 	task, ok := p.Tasks[taskname]
 	if !ok {
 		return ErrTaskDoesNotExist
 	}
 
-	return task.Task.StoreHash(hash)
+	return task.Task.WriteBuildinfo(buildinfo)
 }
 
 func (p *Playbook) ExecutionTime() time.Duration {
@@ -277,23 +312,30 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 		return ErrTaskDoesNotExist
 	}
 
-	// compute input hash & target hash
-	hash, err := task.Task.Hash()
+	// compute input hash
+	hashIn, err := task.Task.HashIn()
+	errz.Fatal(err)
+
+	buildInfo, err := task.ReadBuildinfo()
 	if err != nil {
-		return err
+		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
+			// assure buildinfo is initialized correctly
+			buildInfo = buildinfo.New()
+		} else {
+			errz.Fatal(err)
+		}
 	}
+	buildInfo.Info.Taskname = task.Name()
 
 	target, err := task.Task.Target()
-	if err != nil {
-		return err
-	}
+	errz.Fatal(err)
 
 	if target != nil {
 		targetHash, err := target.Hash()
 		if err != nil {
 			return err
 		}
-		hash.Targets[taskname] = targetHash
+		buildInfo.Targets[hashIn] = targetHash
 
 		// gather target hashes of dependent tasks
 		err = p.Tasks.walk(taskname, func(tn string, task *Status, err error) error {
@@ -320,7 +362,11 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 				if err != nil {
 					return err
 				}
-				hash.Targets[task.Task.Name()] = h
+				hashIn, err := task.HashIn()
+				if err != nil {
+					return err
+				}
+				buildInfo.Targets[hashIn] = h
 			default:
 				return ErrUnexpectedTaskState
 			}
@@ -330,11 +376,11 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 		errz.Fatal(err)
 	}
 
-	err = p.storeHash(taskname, hash)
+	err = p.storeHash(taskname, buildInfo)
 	errz.Fatal(err)
 
 	// TODO: use target hash?
-	err = p.pack(taskname, hash.Input)
+	err = p.pack(taskname, hashIn)
 	errz.Fatal(err)
 
 	err = p.setTaskState(taskname, StateCompleted)

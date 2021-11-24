@@ -8,7 +8,9 @@ import (
 
 	"github.com/Benchkram/errz"
 
+	"github.com/Benchkram/bob/pkg/buildinfostore"
 	"github.com/Benchkram/bob/pkg/file"
+	"github.com/Benchkram/bob/pkg/store"
 )
 
 type B struct {
@@ -22,28 +24,55 @@ type B struct {
 	// dir is bob's working directory.
 	dir string
 
+	// local the place to store artifacts localy
+	local store.Store
+	// TODO: add a remote store
+	// remotestore cas.Store
+
+	buildInfoStore buildinfostore.Store
+
 	// readConfig some commands need a fully initialised bob.
 	// When this is true a `.bob/config` file must exist,
 	// usually done by calling `bob init`
 	readConfig bool
 }
 
-func new() *B {
+func new(opts ...Option) *B {
 	wd, err := os.Getwd()
 	if err != nil {
 		errz.Fatal(err)
 	}
 
-	c := &B{
+	b := &B{
 		DefaultCloneSchema: SSH,
-
-		dir: wd,
+		dir:                wd,
 	}
-	return c
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(b)
+	}
+
+	return b
 }
 
-func Bob(opts ...Option) (*B, error) {
-	bob := new()
+// BobWithBaseStoreDir initialises stores in the given directory
+func BobWithBaseStoreDir(baseStoreDir string, opts ...Option) (*B, error) {
+	bob := new(opts...)
+
+	fs, err := Filestore(baseStoreDir)
+	if err != nil {
+		return nil, err
+	}
+	bob.local = fs
+
+	bis, err := BuildinfoStore(baseStoreDir)
+	if err != nil {
+		return nil, err
+	}
+	bob.buildInfoStore = bis
 
 	for _, opt := range opts {
 		if opt == nil {
@@ -52,11 +81,33 @@ func Bob(opts ...Option) (*B, error) {
 		opt(bob)
 	}
 
+	return bob, nil
+}
+
+func Bob(opts ...Option) (*B, error) {
+	bob := new(opts...)
+
 	if bob.readConfig {
 		err := bob.read()
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if bob.local == nil {
+		fs, err := DefaultFilestore()
+		if err != nil {
+			return nil, err
+		}
+		bob.local = fs
+	}
+
+	if bob.buildInfoStore == nil {
+		bis, err := DefaultBuildinfoStore()
+		if err != nil {
+			return nil, err
+		}
+		bob.buildInfoStore = bis
 	}
 
 	return bob, nil

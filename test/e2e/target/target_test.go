@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/bobtask"
-	"github.com/Benchkram/bob/bobtask/hash"
+	"github.com/Benchkram/bob/bobtask/buildinfo"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -21,6 +20,22 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
 		})
 
+		var hashInBeforeBuild string
+		var hashInAfterBuild string
+		It("should read input hash before build", func() {
+			aggregate, err := b.Aggregate()
+			Expect(err).NotTo(HaveOccurred())
+
+			globaltaskname := "second-level/third-level/build3"
+			task, ok := aggregate.Tasks[globaltaskname]
+			Expect(ok).To(BeTrue())
+
+			hashIn, err := task.HashIn()
+			Expect(err).NotTo(HaveOccurred())
+
+			hashInBeforeBuild = hashIn.String()
+		})
+
 		It("runs build all", func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 			err = b.Build(ctx, bob.BuildAllTargetName)
@@ -28,33 +43,44 @@ var _ = Describe("Test bob's file target handling", func() {
 			cancel()
 		})
 
-		var hashes hash.Hashes
-		var all hash.Task
-		It("hashes of task `all` must exist and be valid", func() {
-			var ok bool
-
-			task := bobtask.Make()
-			hashes, err = task.ReadHashes()
+		It("should read input hash after build", func() {
+			aggregate, err := b.Aggregate()
 			Expect(err).NotTo(HaveOccurred())
 
-			all, ok = hashes["all"]
+			globaltaskname := "second-level/third-level/build3"
+			task, ok := aggregate.Tasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
+			hashIn, err := task.HashIn()
+			Expect(err).NotTo(HaveOccurred())
+
+			hashInAfterBuild = hashIn.String()
+		})
+
+		It("input hash should be equal before and after build", func() {
+			Expect(hashInAfterBuild).To(Equal(hashInBeforeBuild))
+		})
+
+		//var hashes hash.Hashes
+		var all *buildinfo.I
+		It("hashes of task `all` must exist and be valid", func() {
+			buildinfos, err := buildinfoStore.GetBuildInfos()
+			Expect(err).NotTo(HaveOccurred())
+
+			var found bool
+			for _, bi := range buildinfos {
+				if bi.Info.Taskname == "all" {
+					all = bi
+					found = true
+					break
+				}
+			}
+			Expect(found).To(BeTrue())
+			Expect(all).NotTo(BeNil())
 		})
 
 		It("target hashes of child tasks WITH a valid target must exist ", func() {
-
-			targetall, ok := all.Targets["all"]
-			Expect(ok).To(BeTrue())
-			Expect(targetall).NotTo(BeEmpty())
-
-			secondLevelBuild, ok := all.Targets["second-level/build2"]
-			Expect(ok).To(BeTrue())
-			Expect(secondLevelBuild).NotTo(BeEmpty())
-
-			thirdLevelBuild, ok := all.Targets["second-level/third-level/build3"]
-			Expect(ok).To(BeTrue())
-			Expect(thirdLevelBuild).NotTo(BeEmpty())
+			Expect(len(all.Targets)).To(Equal(3))
 		})
 
 		It("target hashes of child tasks WITHOUT a valid target must NOT exist ", func() {
@@ -65,19 +91,21 @@ var _ = Describe("Test bob's file target handling", func() {
 
 		// ----- Check creation of hashes on child tasks -----
 
-		It("target hash of task `/second-level/third-level/buil3` must exist", func() {
-			wd, err := os.Getwd()
-			Expect(err).NotTo(HaveOccurred())
-			_ = os.Chdir("./second-level/third-level")
-			defer func() { _ = os.Chdir(wd) }()
-
-			task := bobtask.Make()
-			hashes, err = task.ReadHashes()
+		It("target hash of task `/second-level/third-level/build3` must exist and must contain one target", func() {
+			aggregate, err := b.Aggregate()
 			Expect(err).NotTo(HaveOccurred())
 
-			taskHash, ok := hashes["second-level/third-level/build3"]
+			globaltaskname := "second-level/third-level/build3"
+			task, ok := aggregate.Tasks[globaltaskname]
 			Expect(ok).To(BeTrue())
-			Expect(len(taskHash.Targets)).To(Equal(1))
+
+			hashIn, err := task.HashIn()
+			Expect(err).NotTo(HaveOccurred())
+
+			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
+			Expect(err).NotTo(HaveOccurred())
+			Expect(buildinfo).NotTo(BeNil())
+			Expect(len(buildinfo.Targets)).To(Equal(1))
 		})
 
 		It("target hash of task `/second-level/third-level/print` must NOT exist", func() {
@@ -86,13 +114,20 @@ var _ = Describe("Test bob's file target handling", func() {
 			_ = os.Chdir("./second-level/third-level")
 			defer func() { _ = os.Chdir(wd) }()
 
-			task := bobtask.Make()
-			hashes, err = task.ReadHashes()
+			aggregate, err := b.Aggregate()
 			Expect(err).NotTo(HaveOccurred())
 
-			taskHash, ok := hashes["second-level/third-level/print"]
+			globaltaskname := "second-level/third-level/print"
+			task, ok := aggregate.Tasks[globaltaskname]
 			Expect(ok).To(BeTrue())
-			Expect(len(taskHash.Targets)).To(BeZero())
+
+			hashIn, err := task.HashIn()
+			Expect(err).NotTo(HaveOccurred())
+
+			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
+			Expect(err).NotTo(HaveOccurred())
+			Expect(buildinfo).NotTo(BeNil())
+			Expect(len(buildinfo.Targets)).To(Equal(0))
 		})
 	})
 })

@@ -1,11 +1,14 @@
 package targettest
 
 import (
-	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/Benchkram/bob/bob"
+	"github.com/Benchkram/bob/bob/global"
+	"github.com/Benchkram/bob/pkg/buildinfostore"
+	"github.com/Benchkram/bob/test/setup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -14,23 +17,34 @@ import (
 var (
 	dir string
 
+	cleanup func() error
+
+	buildinfoStore buildinfostore.Store
+
 	b *bob.B
 )
 
 var _ = BeforeSuite(func() {
-	testDir, err := ioutil.TempDir("", "bob-test-target-*")
+	var err error
+	var storageDir string
+	dir, storageDir, cleanup, err = setup.TestDirs("target")
 	Expect(err).NotTo(HaveOccurred())
-	dir = testDir
 
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	b, err = bob.Bob(bob.WithDir(dir))
+	buildinfoStore = buildinfostore.New(filepath.Join(storageDir, global.BobCacheBuildinfoDir))
+	b, err = bob.BobWithBaseStoreDir(
+		storageDir,
+		bob.WithBuildinfoStore(buildinfoStore),
+		bob.WithDir(dir),
+	)
+
 	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
-	err := os.RemoveAll(dir)
+	err := cleanup()
 	Expect(err).NotTo(HaveOccurred())
 })
 

@@ -1,11 +1,11 @@
 package variablestest
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/Benchkram/bob/bob"
+	"github.com/Benchkram/bob/test/setup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -14,23 +14,26 @@ import (
 var (
 	dir string
 
+	cleanup func() error
+
 	b *bob.B
 )
 
 var _ = BeforeSuite(func() {
-	testDir, err := ioutil.TempDir("", "bob-test-variables-*")
+	var err error
+	var storageDir string
+	dir, storageDir, cleanup, err = setup.TestDirs("variables")
 	Expect(err).NotTo(HaveOccurred())
-	dir = testDir
 
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	b, err = bob.Bob(bob.WithDir(dir))
+	b, err = bob.BobWithBaseStoreDir(storageDir, bob.WithDir(dir))
 	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
-	err := os.RemoveAll(dir)
+	err := cleanup()
 	Expect(err).NotTo(HaveOccurred())
 })
 

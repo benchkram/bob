@@ -31,6 +31,7 @@ type requiresRebuildFixture struct {
 
 var _ = Describe("Test bob multilevel build", func() {
 	Context("in a fresh environment", func() {
+
 		It("initializes bob playground", func() {
 			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
 		})
@@ -69,6 +70,8 @@ var _ = Describe("Test bob multilevel build", func() {
 				cmd.Stdout = &stdout
 				cmd.Stderr = &stderr
 
+				// The binarys are waiting for a ctrl-c
+				// to shutdown.
 				go func() {
 					time.Sleep(500 * time.Millisecond)
 					err := cmd.Process.Signal(os.Interrupt)
@@ -203,6 +206,8 @@ var _ = Describe("Test bob multilevel build", func() {
 				},
 			}
 
+			err := artifactsClean()
+			Expect(err).NotTo(HaveOccurred())
 			requiresRebuildMustMatchFixtures(b, fixtures)
 		})
 	})

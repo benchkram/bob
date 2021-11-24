@@ -5,10 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/bob/bobtask/target"
-	"github.com/Benchkram/errz"
-	"github.com/mholt/archiver/v3"
+	"github.com/Benchkram/bob/pkg/buildinfostore"
 )
 
 // Target takes care of populating the targets members correctly.
@@ -18,15 +16,23 @@ func (t *Task) Target() (empty target.Target, _ error) {
 		return empty, nil
 	}
 
-	hash, err := t.ReadHash()
+	hashIn, err := t.HashIn()
 	if err != nil {
-		if errors.Is(err, ErrHashesFileDoesNotExist) || errors.Is(err, ErrTaskHashDoesNotExist) {
+		if errors.Is(err, ErrHashInDoesNotExist) {
 			return t.target.WithDir(t.dir), nil
 		}
 		return empty, err
 	}
 
-	targetHash, ok := hash.Targets[t.name]
+	hash, err := t.ReadBuildinfo()
+	if err != nil {
+		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
+			return t.target.WithDir(t.dir), nil
+		}
+		return empty, err
+	}
+
+	targetHash, ok := hash.Targets[hashIn]
 	if !ok {
 		return t.target.WithDir(t.dir), nil
 	}
@@ -34,7 +40,7 @@ func (t *Task) Target() (empty target.Target, _ error) {
 	return t.target.WithDir(t.dir).WithHash(targetHash), nil
 }
 
-// Clean the tragets defined by this task.
+// Clean the targets defined by this task.
 // This assures that we can be sure a target was correctly created
 // and has not been there before the task ran.
 func (t *Task) Clean() error {
@@ -59,33 +65,4 @@ func (t *Task) Clean() error {
 	}
 
 	return nil
-}
-
-// Pack creates a archive for a target.
-// Does nothing and returns nil is traget is undefined.
-func (t *Task) Pack(hash string) (err error) {
-	defer errz.Recover(&err)
-
-	if t.target == nil {
-		return nil
-	}
-
-	paths := []string{}
-	for _, path := range t.target.Paths {
-		paths = append(paths, filepath.Join(t.dir, path))
-	}
-
-	archive := filepath.Join(t.dir, global.BobCacheDir, hash+".tar.br")
-	err = os.RemoveAll(archive)
-	errz.Fatal(err)
-	err = archiver.Archive(paths, archive)
-	errz.Fatal(err)
-
-	return nil
-}
-
-// Unpack target from archive
-func (t *Task) Unpack(hash string) (err error) {
-	archive := filepath.Join(t.dir, global.BobCacheDir, hash+".tar.br")
-	return archiver.Unarchive(archive, t.dir)
 }

@@ -1,26 +1,17 @@
 package bobtask
 
 import (
-	"bytes"
-	"encoding/hex"
-	"fmt"
-	"github.com/logrusorgru/aurora"
 	"path/filepath"
-	"sort"
 	"strings"
+
+	"github.com/logrusorgru/aurora"
 
 	"github.com/Benchkram/bob/bobtask/export"
 	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/bob/bobtask/target"
-	"github.com/Benchkram/bob/pkg/filehash"
-
-	"gopkg.in/yaml.v3"
+	"github.com/Benchkram/bob/pkg/buildinfostore"
+	"github.com/Benchkram/bob/pkg/store"
 )
-
-type Tasker interface {
-	Pack() error
-	Unpack() error
-}
 
 type Task struct {
 	// Inputs are directorys or files
@@ -66,16 +57,26 @@ type Task struct {
 	Exports export.Map `yaml:"exports"`
 
 	// name is the name of the task
+	// TODO: Make this public to allow yaml.Marshal to add this to the task hash?!?
 	name string
 	// dir is the working directory for this task
 	dir string
 
 	// env holds key=value pairs passed to the environement
 	// when the task is executed.
-	env   []string
+	env []string
+
+	// hashIn stores the `In` has for reuse
+	hashIn *hash.In
+
+	// local store for artifacts
+	local store.Store
+
+	// buildInfoStore stores buildinfos.
+	buildInfoStore buildinfostore.Store
 
 	// Color is used to color the task's name on the terminal
-	Color aurora.Color
+	color aurora.Color
 }
 
 func Make(opts ...TaskOption) Task {
@@ -110,8 +111,12 @@ func (t *Task) ShortName() string {
 	return name
 }
 
+func (t *Task) SetColor(color aurora.Color) {
+	t.color = color
+}
+
 func (t *Task) ColoredName() string {
-	return aurora.Colorize(t.Name(), t.Color).String()
+	return aurora.Colorize(t.Name(), t.color).String()
 }
 
 func (t *Task) Env() []string {
@@ -134,6 +139,16 @@ func (t *Task) SetEnv(env []string) {
 	t.env = env
 }
 
+func (t *Task) WithLocalstore(s store.Store) *Task {
+	t.local = s
+	return t
+}
+
+func (t *Task) WithBuildinfoStore(s buildinfostore.Store) *Task {
+	t.buildInfoStore = s
+	return t
+}
+
 const EnvironSeparator = "="
 
 func (t *Task) AddEnvironment(key, value string) {
@@ -143,55 +158,4 @@ func (t *Task) AddExportPrefix(prefix string) {
 	for i, e := range t.Exports {
 		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))
 	}
-}
-
-// Hash computes a aggregated hash of all input files.
-func (t *Task) Hash() (computedhash *hash.Task, _ error) {
-	aggregatedHashes := bytes.NewBuffer([]byte{})
-
-	// Hash input files
-	for _, f := range t.inputs {
-		h, err := filehash.Hash(f)
-		if err != nil {
-			return computedhash, fmt.Errorf("failed to hash file %q: %w", f, err)
-		}
-
-		_, err = aggregatedHashes.Write(h)
-		if err != nil {
-			return computedhash, fmt.Errorf("failed to write file hash to aggregated hash %q: %w", f, err)
-		}
-	}
-
-	// Hash the public task description
-	description, err := yaml.Marshal(t)
-	if err != nil {
-		return computedhash, fmt.Errorf("failed to marshal task: %w", err)
-	}
-	descriptionHash, err := filehash.HashBytes(bytes.NewBuffer(description))
-	if err != nil {
-		return computedhash, fmt.Errorf("failed to write description hash: %w", err)
-	}
-	_, err = aggregatedHashes.Write(descriptionHash)
-	if err != nil {
-		return computedhash, fmt.Errorf("failed to write task description to aggregated hash: %w", err)
-	}
-
-	// Hash the environment
-	sort.Strings(t.env)
-	environment := strings.Join(t.env, ",")
-	environmentHash, err := filehash.HashBytes(bytes.NewBufferString(environment))
-	if err != nil {
-		return computedhash, fmt.Errorf("failed to write description hash: %w", err)
-	}
-	_, err = aggregatedHashes.Write(environmentHash)
-	if err != nil {
-		return computedhash, fmt.Errorf("failed to write task environment to aggregated hash: %w", err)
-	}
-
-	// Summarize
-	h, err := filehash.HashBytes(aggregatedHashes)
-	if err != nil {
-		return computedhash, fmt.Errorf("failed to write aggregated hash: %w", err)
-	}
-	return &hash.Task{Input: hex.EncodeToString(h), Targets: make(hash.Targets)}, nil
 }

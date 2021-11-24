@@ -385,7 +385,7 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
 	bobfile := bobfile.NewBobfile()
 
 	bobfile.Tasks[fmt.Sprintf("%s3", global.DefaultBuildTask)] = bobtask.Task{
-		InputDirty: "./main3.go",
+		InputDirty: "*",
 		CmdDirty:   "go build -o runthirdlevel",
 		TargetDirty: target.T{
 			Paths: []string{"runthirdlevel"},

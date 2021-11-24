@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/test/repo/setup"
+	"github.com/Benchkram/bob/test/setup/reposetup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,7 +28,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
 
-	t, cs, recursive, playground, err := setup.BaseTestStructure(dir)
+	t, cs, recursive, playground, err := reposetup.BaseTestStructure(dir)
 	Expect(err).NotTo(HaveOccurred())
 	top = t
 	childs = cs
@@ -37,6 +37,7 @@ var _ = BeforeSuite(func() {
 
 	err = os.Chdir(top)
 	Expect(err).NotTo(HaveOccurred())
+
 	b, err = bob.Bob(bob.WithDir(top))
 	Expect(err).NotTo(HaveOccurred())
 })

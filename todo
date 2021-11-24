@@ -1,0 +1,3 @@
+* decide where to store hashes and how to name them acros multi level bob files
+  * fix multilevel build
+  * store hashes in ~/.bobcache 

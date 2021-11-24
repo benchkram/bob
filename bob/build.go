@@ -11,6 +11,7 @@ var (
 	ErrNoRebuildRequired = errors.New("no rebuild required")
 )
 
+// Build a task and it's dependecies.
 func (b *B) Build(ctx context.Context, taskname string) (err error) {
 	defer errz.Recover(&err)
 

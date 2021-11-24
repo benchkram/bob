@@ -29,7 +29,6 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
-
 		return tasks, cobra.ShellCompDirectiveDefault
 	},
 }

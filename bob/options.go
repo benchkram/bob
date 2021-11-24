@@ -1,5 +1,10 @@
 package bob
 
+import (
+	"github.com/Benchkram/bob/pkg/buildinfostore"
+	"github.com/Benchkram/bob/pkg/store"
+)
+
 type Option func(b *B)
 
 func WithDir(dir string) Option {
@@ -13,5 +18,17 @@ func WithDir(dir string) Option {
 func WithRequireBobConfig() Option {
 	return func(b *B) {
 		b.readConfig = true
+	}
+}
+
+func WithFilestore(store store.Store) Option {
+	return func(b *B) {
+		b.local = store
+	}
+}
+
+func WithBuildinfoStore(store buildinfostore.Store) Option {
+	return func(b *B) {
+		b.buildInfoStore = store
 	}
 }

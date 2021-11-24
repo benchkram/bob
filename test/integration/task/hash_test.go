@@ -15,11 +15,11 @@ var _ = Describe("Test task-related functionality", func() {
 
 		It("should produce the same hash for two tasks with the same exported structure", func() {
 			t1 := bobtask.Make()
-			t1h, err := t1.Hash()
+			t1h, err := t1.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
 			t2 := bobtask.Make()
-			t2h, err := t2.Hash()
+			t2h, err := t2.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(t1h).To(Equal(t2h))
@@ -27,12 +27,12 @@ var _ = Describe("Test task-related functionality", func() {
 
 		It("should produce different hashes for two tasks with a different exported structure", func() {
 			t1 := bobtask.Make()
-			t1h, err := t1.Hash()
+			t1h, err := t1.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
 			t2 := bobtask.Make()
 			t2.InputDirty = shouldInfluenceText
-			t2h, err := t2.Hash()
+			t2h, err := t2.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(t1h).NotTo(Equal(t2h))
@@ -42,13 +42,13 @@ var _ = Describe("Test task-related functionality", func() {
 			t1 := bobtask.Make(bobtask.WithEnvironment([]string{
 				"PATH=/usr/bin",
 			}))
-			t1h, err := t1.Hash()
+			t1h, err := t1.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
 			t2 := bobtask.Make(bobtask.WithEnvironment([]string{
 				"PATH=/usr/bin",
 			}))
-			t2h, err := t2.Hash()
+			t2h, err := t2.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(t1h).To(Equal(t2h))
 
@@ -58,13 +58,13 @@ var _ = Describe("Test task-related functionality", func() {
 			t1 := bobtask.Make(bobtask.WithEnvironment([]string{
 				"PATH=/usr/bin",
 			}))
-			t1h, err := t1.Hash()
+			t1h, err := t1.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
 			t2 := bobtask.Make(bobtask.WithEnvironment([]string{
 				"PATH=/usr/etc",
 			}))
-			t2h, err := t2.Hash()
+			t2h, err := t2.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(t1h).NotTo(Equal(t2h))

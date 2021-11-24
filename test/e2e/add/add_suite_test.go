@@ -1,43 +1,46 @@
 package addtest
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/test/repo/setup"
+	"github.com/Benchkram/bob/test/setup"
+	"github.com/Benchkram/bob/test/setup/reposetup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var (
-	dir string
-
+	dir    string
 	childs []string
 
 	b *bob.B
+
+	cleanup func() error
 )
 
 var _ = BeforeSuite(func() {
-	testDir, err := ioutil.TempDir("", "bob-test-add-*")
+	var err error
+	var storageDir string
+
+	dir, storageDir, cleanup, err = setup.TestDirs("add")
 	Expect(err).NotTo(HaveOccurred())
-	dir = testDir
 
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	top, cs, _, _, err := setup.BaseTestStructure(dir)
+	top, cs, _, _, err := reposetup.BaseTestStructure(dir)
 	Expect(err).NotTo(HaveOccurred())
 	childs = cs
 
-	b, err = bob.Bob(bob.WithDir(top))
+	b, err = bob.BobWithBaseStoreDir(storageDir, bob.WithDir(top))
 	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
-	err := os.RemoveAll(dir)
+	err := cleanup()
 	Expect(err).NotTo(HaveOccurred())
 })
 

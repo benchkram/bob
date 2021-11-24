@@ -47,7 +47,9 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		for variable, value := range boblet.Variables {
 			for key, task := range boblet.Tasks {
 				// TODO: Create and use envvar sanitizer
+
 				task.AddEnvironment(strings.ToUpper(variable), value)
+
 				boblet.Tasks[key] = task
 			}
 		}
@@ -117,6 +119,8 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		}
 	}
 
+	// TODO: Gather missing tasks from remote  & Unpack?
+
 	// Gather environment from dependent tasks.
 	//
 	// Each export is translated into environment variables named:
@@ -125,6 +129,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	//
 	// The file is prefixed with all paths to make it relative to dir of the the top Bobfile:
 	//   `openapi.yaml => sencond-level/openapi.yaml`
+	//
+	// TODO: Exports should be part of a packed file and should be evaluated when running a playbook or at least after Unpack().
+	// Looks like this is the wrong place to presume that all child tasks are comming from child bobfiles
+	// must exist.
 	for i, task := range aggregate.Tasks {
 
 		for _, dependentTaskName := range task.DependsOn {
@@ -155,6 +163,13 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 				aggregate.Tasks[i] = task
 			}
 		}
+	}
+
+	// Assure tasks are correctly initialised.
+	for i, task := range aggregate.Tasks {
+		task.WithLocalstore(b.local)
+		task.WithBuildinfoStore(b.buildInfoStore)
+		aggregate.Tasks[i] = task
 	}
 
 	return aggregate, aggregate.Verify()

@@ -1,4 +1,4 @@
-package setup
+package reposetup
 
 import (
 	"io/ioutil"

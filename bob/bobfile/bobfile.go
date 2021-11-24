@@ -84,12 +84,8 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 
 		// Make sure a task is correctly initialised.
 		// TODO: All unitialised must be initialised or get default values.
-		// This mean switching to pointer types for most members.
+		// This means switching to pointer types for most members.
 		task.SetEnv([]string{})
-
-		// if task.TargetDirty.Type == "" {
-		// 	task.T
-		// }
 
 		bobfile.Tasks[key] = task
 	}

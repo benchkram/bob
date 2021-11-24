@@ -43,7 +43,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		}
 
 		color := colorPool[i%len(colorPool)]
-		p.Tasks[name].Task.Color = color
+		p.Tasks[name].Task.SetColor(color)
 	}
 	p.namePad += 14
 
@@ -126,8 +126,24 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 		}
 	}()
 
-	rebuildRequired, err := p.TaskNeedsRebuild(task.Name())
+	hashIn, err := task.HashIn()
+	if err != nil {
+		return err
+	}
+
+	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.Name(), hashIn)
 	errz.Fatal(err)
+
+	// task might need a rebuild due to a input change.
+	// but could still be possible to load the targets from the artifact store.
+	// If a task needs a rebuild due to a dependency change => rebuild.
+	if rebuildRequired && rebuildCause != DependencyChanged {
+		success, err := task.ArtifactUnpack(hashIn)
+		errz.Fatal(err)
+		if success {
+			rebuildRequired = false
+		}
+	}
 
 	if !rebuildRequired {
 		status := StateNoRebuildRequired

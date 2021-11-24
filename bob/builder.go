@@ -11,7 +11,7 @@ var _ ctl.Builder = (*builder)(nil)
 
 type BuildFunc func(_ context.Context, runname string, aggregate *bobfile.Bobfile) error
 
-// builder holds all dependecys to build a build task
+// builder holds all dependencys to build a build task
 type builder struct {
 	task      string
 	aggregate *bobfile.Bobfile

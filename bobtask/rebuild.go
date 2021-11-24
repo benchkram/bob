@@ -2,49 +2,53 @@ package bobtask
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/Benchkram/bob/bobtask/hash"
+	"github.com/Benchkram/bob/pkg/buildinfostore"
 	"github.com/Benchkram/errz"
 )
 
 type RebuildOptions struct {
-	Hash *hash.Task
+	HashIn *hash.In
 }
 
-// NeedsRebuild
-func (t *Task) NeedsRebuild(options *RebuildOptions) (rebuildRequired bool, err error) {
+// NeedsRebuild returns true if the `In` hash does not exist in the hash storage
+func (t *Task) NeedsRebuild(options *RebuildOptions) (_ bool, err error) {
 	defer errz.Recover(&err)
 
-	var hash *hash.Task
+	var hashIn *hash.In
 	if options != nil {
-		if options.Hash != nil {
-			hash = options.Hash
+		if options.HashIn != nil {
+			hashIn = options.HashIn
 		}
 	}
 
-	if hash == nil {
-		hash, err = t.Hash()
+	if hashIn == nil {
+		*hashIn, err = t.HashIn()
 		errz.Fatal(err)
 	}
 
-	storedHashes, err := t.ReadHashes()
+	_, err = t.buildInfoStore.GetBuildInfo(hashIn.String())
 	if err != nil {
-		if errors.Is(err, ErrHashesFileDoesNotExist) {
+		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
 			return true, nil
-		} else if errors.Is(err, ErrTaskHashDoesNotExist) {
-			return true, nil
-		} else {
-			return true, fmt.Errorf("failed to read file hashes: %w", err)
 		}
+		errz.Fatal(err)
 	}
 
-	rebuildRequired = true
+	// storedHashes, err := t.ReadHashes()
+	// if err != nil {
+	// 	if errors.Is(err, ErrHashesFileDoesNotExist) {
+	// 		return true, nil
+	// 	} else if errors.Is(err, ErrTaskHashDoesNotExist) {
+	// 		return true, nil
+	// 	} else {
+	// 		return true, fmt.Errorf("failed to read file hashes: %w", err)
+	// 	}
+	// }
 
-	storedHash, ok := storedHashes[t.name]
-	if ok {
-		rebuildRequired = hash.Input != storedHash.Input
-	}
+	// _, ok := storedHashes[*hashIn]
+	// return !ok, nil
 
-	return rebuildRequired, nil
+	return false, nil
 }

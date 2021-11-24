@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/filepathutil"
 )
 
@@ -14,7 +15,7 @@ func (t *Task) Inputs() []string {
 	return t.inputs
 }
 
-// filteredInputs returns inputs filtered by ignores.
+// filteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
 func (t *Task) filteredInputs() ([]string, error) {
 
@@ -56,6 +57,14 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 		inputs = append(inputs, list...)
 	}
+
+	// also ignore file targets stored in the same directory
+	if t.target != nil {
+		if t.target.Type == target.File {
+			ignores = append(ignores, t.target.Paths...)
+		}
+	}
+
 	inputs = unique(inputs)
 	ignores = unique(ignores)
 
