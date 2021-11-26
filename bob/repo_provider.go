@@ -11,8 +11,10 @@ import (
 	"github.com/Benchkram/errz"
 )
 
+var generalGitProvider = GitProvider{Name: "general"}
+
+// special providers with non trival to parse urls
 var azureGitProvider = GitProvider{Name: "azure", Domain: "dev.azure.com"}
-var githubGitProvider = GitProvider{Name: "github", Domain: "github.com"}
 var localGitProvider = GitProvider{Name: "file://"}
 
 var parsers = NewParsers()
@@ -37,7 +39,6 @@ type Parsers map[string]Parser
 func NewParsers() Parsers {
 	providers := make(map[string]Parser)
 	providers[azureGitProvider.Name] = ParseAzure
-	providers[githubGitProvider.Name] = ParseGithub
 	providers[localGitProvider.Name] = ParseLocal
 	return providers
 }
@@ -53,10 +54,10 @@ func Parse(rawurl string) (repo *GitRepo, err error) {
 			return repo, nil
 		}
 	}
-	return nil, fmt.Errorf("Could not parse url to a known git providers")
+	return ParseGeneral(rawurl)
 }
 
-// ParseAzure parses a it repo url and return the corresponding git & https protocol links
+// ParseAzure parses a git repo url and return the corresponding git & https protocol links
 // corresponding to azure-devops domain specifications.
 // https://xxx@dev.azure.com/xxx/Yyy/_git/zzz.zzz.zzz",
 // git@ssh.dev.azure.com:v3/xxx/Yyy/zzz.zzz.zzz",
@@ -130,18 +131,20 @@ func ParseAzure(rawurl string) (repo *GitRepo, err error) {
 	return nil, fmt.Errorf("Could not detect a valid %s url", azureGitProvider.Name)
 }
 
-// ParseGithub parses a it repo url and return the corresponding git & https protocol links
-// corresponding to azure-devops domain specifications.
+// ParseGeneral parses a git repo url and return the corresponding git & https protocol links
+// corresponding to most (github, gitlab) domain specifications.
+//
+// github
 // https://github.com/Benchkram/bob.git
 // git@github.com:Benchkram/bob.git
-func ParseGithub(rawurl string) (repo *GitRepo, err error) {
+// gitlab
+// git@gitlab.com:gitlab-org/gitlab.git
+// https://gitlab.com/gitlab-org/gitlab.git
+//
+func ParseGeneral(rawurl string) (repo *GitRepo, err error) {
 	defer errz.Recover(&err)
-	if !strings.Contains(rawurl, githubGitProvider.Name) {
-		return nil, fmt.Errorf("Could not parse %s as %s-repo", rawurl, githubGitProvider.Name)
-	}
-
 	repo = &GitRepo{
-		Provider: githubGitProvider,
+		Provider: generalGitProvider,
 	}
 
 	u, err := giturls.Parse(rawurl)
@@ -201,7 +204,7 @@ func ParseGithub(rawurl string) (repo *GitRepo, err error) {
 		return repo, nil
 	}
 
-	return nil, fmt.Errorf("Could not detect a valid %s url", githubGitProvider.Name)
+	return nil, fmt.Errorf("Could not detect a valid %s url", generalGitProvider.Name)
 }
 
 func ParseLocal(rawurl string) (repo *GitRepo, err error) {
@@ -223,21 +226,6 @@ func ParseLocal(rawurl string) (repo *GitRepo, err error) {
 
 	return repo, nil
 }
-
-// func ParseGithub(rawurl string) (*url.URL, error) {
-
-// 	return nil, nil
-// }
-
-// func ParseGitlab(rawurl string) (*url.URL, error) {
-
-// 	return nil, nil
-// }
-
-// func ParseBitbucket(rawurl string) (*url.URL, error) {
-
-// 	return nil, nil
-// }
 
 // GitURL overlays `url.URL` to handle git clone urls correctly.
 type GitURL struct {

@@ -77,7 +77,7 @@ func TestParseAzure(t *testing.T) {
 	}
 }
 
-func TestParseGithub(t *testing.T) {
+func TestParseGeneral(t *testing.T) {
 	type input struct {
 		rawurl string
 	}
@@ -110,12 +110,32 @@ func TestParseGithub(t *testing.T) {
 				ssh:   "git@github.com:Benchkram/bob.git",
 			},
 		},
+		{
+			name: "subdomain-https",
+			input: input{
+				rawurl: "https://subdomain.gitlab.de/project/repo.git",
+			},
+			result: result{
+				https: "https://subdomain.gitlab.de/project/repo.git",
+				ssh:   "git@subdomain.gitlab.de:project/repo.git",
+			},
+		},
+		{
+			name: "subdomain-ssh",
+			input: input{
+				rawurl: "git@subdomain.gitlab.de:project/repo.git",
+			},
+			result: result{
+				https: "https://subdomain.gitlab.de/project/repo.git",
+				ssh:   "git@subdomain.gitlab.de:project/repo.git",
+			},
+		},
 	}
 
 	for _, test := range tests {
 		fmt.Println(test.name)
 
-		repo, err := ParseGithub(test.input.rawurl)
+		repo, err := ParseGeneral(test.input.rawurl)
 		assert.Nil(t, err, test.name)
 
 		assert.Equal(t, test.result.https, repo.HTTPS.String())
