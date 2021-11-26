@@ -1,0 +1,33 @@
+tasks:
+  generate-api:
+    input: openapi.yaml
+    cmd: |-
+      oapi-codegen -package generated -generate types -o server/rest-api/generated/types.gen.go openapi.yaml
+      oapi-codegen -package generated -generate server -o server/rest-api/generated/server.gen.go openapi.yaml
+    target:
+      paths:
+        - server/rest-api/generated/types.gen.go
+        - server/rest-api/generated/server.gen.go
+  build:
+    input: |-
+      ./server
+      go.mod
+      go.sum
+      main.go
+    cmd: go build -o ./build/server main.go
+    dependson:
+      - generate-api
+    target:
+      paths:
+        - /build/server
+      type: file
+runs:
+  server:
+    type: binary
+    path: ./build/server
+    dependson:
+      - build
+      - database
+  database:
+    type: compose
+    path: docker-compose.yml

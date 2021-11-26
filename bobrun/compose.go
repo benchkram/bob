@@ -2,7 +2,7 @@ package bobrun
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/Benchkram/bob/pkg/composectl"
 	"github.com/Benchkram/bob/pkg/composeutil"
 	"github.com/Benchkram/bob/pkg/ctl"
@@ -30,6 +30,8 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 	conflicts := ""
 	if hasPortConflict {
 		conflicts = composeutil.GetPortConflicts(configs)
+
+		errz.Fatal(fmt.Errorf(conflicts))
 
 		resolved, err := composeutil.ResolvePortConflicts(p, configs)
 		if err != nil {

@@ -116,7 +116,7 @@ func CreatePlayground(dir string) error {
 	err = createPlaygroundBobfile(".", true)
 	errz.Fatal(err)
 
-	b := new()
+	b := newBob()
 	err = b.Init()
 	if err != nil {
 		if !errors.Is(err, ErrBuildToolAlreadyInitialised) {
@@ -146,7 +146,7 @@ func CreatePlayground(dir string) error {
 	err = ioutil.WriteFile(filepath.Join(SecondLevelDir, "main2.go"), maingo(2), 0644)
 	errz.Fatal(err)
 
-	b = new()
+	b = newBob()
 	b.dir = filepath.Join(b.dir, SecondLevelDir)
 	err = b.init()
 	if err != nil {
@@ -201,7 +201,7 @@ func CreatePlayground(dir string) error {
 	err = ioutil.WriteFile(filepath.Join(thirdDir, "main3.go"), maingo(3), 0644)
 	errz.Fatal(err)
 
-	b3 := new()
+	b3 := newBob()
 	b3.dir = filepath.Join(b3.dir, thirdDir)
 	err = b3.init()
 	if err != nil {

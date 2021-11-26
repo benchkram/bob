@@ -124,6 +124,13 @@ func (c *control) Restart() (err error) {
 	default:
 		return nil
 	}
+
+	select {
+	case <-c.restarted:
+	case e := <-c.err:
+		return e
+	}
+
 	return nil
 }
 

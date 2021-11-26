@@ -37,7 +37,7 @@ type B struct {
 	readConfig bool
 }
 
-func new(opts ...Option) *B {
+func newBob(opts ...Option) *B {
 	wd, err := os.Getwd()
 	if err != nil {
 		errz.Fatal(err)
@@ -60,7 +60,7 @@ func new(opts ...Option) *B {
 
 // BobWithBaseStoreDir initialises stores in the given directory
 func BobWithBaseStoreDir(baseStoreDir string, opts ...Option) (*B, error) {
-	bob := new(opts...)
+	bob := newBob(opts...)
 
 	fs, err := Filestore(baseStoreDir)
 	if err != nil {
@@ -85,7 +85,7 @@ func BobWithBaseStoreDir(baseStoreDir string, opts ...Option) (*B, error) {
 }
 
 func Bob(opts ...Option) (*B, error) {
-	bob := new(opts...)
+	bob := newBob(opts...)
 
 	if bob.readConfig {
 		err := bob.read()

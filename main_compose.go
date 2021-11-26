@@ -43,6 +43,8 @@ var dockerCmd = &cobra.Command{
 			if hasPortConflict {
 				conflicts = composeutil.GetPortConflicts(configs)
 
+				errz.Fatal(fmt.Errorf(conflicts))
+
 				resolved, err := composeutil.ResolvePortConflicts(p, configs)
 				if err != nil {
 					errz.Fatal(err)

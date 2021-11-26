@@ -1,0 +1,7 @@
+.idea
+.vscode
+
+.bob
+.bobcache
+
+/build

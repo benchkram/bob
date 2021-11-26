@@ -210,16 +210,16 @@ func PortConfigs(proj *types.Project) map[string][]*PortConfig {
 }
 
 // ProjectFromConfig loads a docker-compose config file into a compose Project
-func ProjectFromConfig(path string) (p *types.Project, err error) {
-	b, err := os.ReadFile(path)
+func ProjectFromConfig(composePath string) (p *types.Project, err error) {
+	b, err := os.ReadFile(composePath)
 	if err != nil {
 		return nil, err
 	}
 
 	p, err = loader.Load(types.ConfigDetails{
-		WorkingDir: filepath.Dir(path),
+		WorkingDir: filepath.Dir(composePath),
 		ConfigFiles: []types.ConfigFile{
-			{Filename: path, Content: b},
+			{Filename: composePath, Content: b},
 		},
 	})
 
@@ -228,7 +228,7 @@ func ProjectFromConfig(path string) (p *types.Project, err error) {
 	}
 
 	if p.Name == "" {
-		p.Name = path
+		p.Name = strings.ReplaceAll(composePath, "/", "-")
 	}
 
 	return p, nil

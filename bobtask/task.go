@@ -75,7 +75,7 @@ type Task struct {
 	// buildInfoStore stores buildinfos.
 	buildInfoStore buildinfostore.Store
 
-	// Color is used to color the task's name on the terminal
+	// color is used to color the task's name on the terminal
 	color aurora.Color
 }
 

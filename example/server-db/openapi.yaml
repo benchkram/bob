@@ -1,0 +1,84 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Example REST API
+  description: ''
+  termsOfService: http://example.com/terms/
+  contact:
+    name: Example API Team
+    email: apiteam@example.com
+    url: http://example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8080/api
+    description: Local development server
+paths:
+  "/api/ping":
+    get:
+      description: Returns pong!
+      operationId: Ping
+      responses:
+        '200':
+          description: Pong response
+          content:
+            application/json:
+              schema:
+                type: string
+  "/api/items":
+    post:
+      description: Creates a new item
+      operationId: CreateItemHandler
+      requestBody:
+        description: Item name
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Item response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Item"
+  "/api/item/{itemId}":
+    get:
+      description: Gets an item
+      operationId: GetItemHandler
+      parameters:
+        - name: itemId
+          in: path
+          description: unique identifier for an item
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Item"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+components:
+  schemas:
+    Item:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: integer
