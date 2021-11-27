@@ -8,7 +8,6 @@ import (
 
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
@@ -95,7 +94,7 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 		return nil, err
 	}
 
-	c.service = compose.NewComposeService(dockerCli.Client(), &configfile.ConfigFile{})
+	c.service = compose.NewComposeService(dockerCli.Client(), dockerCli.ConfigFile())
 
 	return c, nil
 }

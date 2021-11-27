@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.3.0
 	github.com/cli/cli v1.12.1
 	github.com/compose-spec/compose-go v1.0.8
-	github.com/docker/cli v20.10.7+incompatible
+	github.com/docker/cli v20.10.11+incompatible
 	github.com/docker/compose/v2 v2.2.0
 	github.com/fatih/structs v1.1.0
 	github.com/go-git/go-git/v5 v5.4.2
