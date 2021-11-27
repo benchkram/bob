@@ -1,6 +1,7 @@
 # build-tool
 Polyglot build tool with the power to view distributed repos as a monorepo
 
+![bob-tui](example/server-db/assets/bob-tui.gif?raw=true "Bob TUI")
 
 ### What we want to achieve
 * Be fast (caching strategy)
