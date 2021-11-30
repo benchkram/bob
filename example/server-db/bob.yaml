@@ -4,10 +4,9 @@ tasks:
     cmd: |-
       oapi-codegen -package generated -generate types -o server/rest-api/generated/types.gen.go openapi.yaml
       oapi-codegen -package generated -generate server -o server/rest-api/generated/server.gen.go openapi.yaml
-    target:
-      paths:
-        - server/rest-api/generated/types.gen.go
-        - server/rest-api/generated/server.gen.go
+    target: |-
+      server/rest-api/generated/types.gen.go
+      server/rest-api/generated/server.gen.go
   build:
     input: |-
       ./server
@@ -17,10 +16,7 @@ tasks:
     cmd: go build -o ./build/server main.go
     dependson:
       - generate-api
-    target:
-      paths:
-        - /build/server
-      type: file
+    target: "/build/server"
 runs:
   server:
     type: binary

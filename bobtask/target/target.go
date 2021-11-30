@@ -4,7 +4,6 @@ type Target interface {
 	Hash() (string, error)
 	Verify() bool
 	Exists() bool
-	Valid() bool
 
 	WithHash(string) Target
 	WithDir(string) Target
@@ -24,7 +23,7 @@ type T struct {
 func Make() T {
 	return T{
 		Paths: []string{},
-		Type:  File,
+		Type:  Path,
 	}
 }
 
@@ -35,15 +34,15 @@ func New() *T {
 func new() *T {
 	return &T{
 		Paths: []string{},
-		Type:  File,
+		Type:  Path,
 	}
 }
 
 type TargetType string
 
 const (
-	File   TargetType = "file"
-	Docker TargetType = "docker"
+	Path   TargetType = "path"
+	Docker TargetType = "docker-image"
 )
 
 func (t *T) clone() *T {

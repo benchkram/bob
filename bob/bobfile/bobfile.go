@@ -15,7 +15,6 @@ import (
 	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/bob/bobrun"
 	"github.com/Benchkram/bob/bobtask"
-	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/file"
 )
 
@@ -75,6 +74,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	bobfile := &Bobfile{
 		dir: dir,
 	}
+
 	err = yaml.Unmarshal(bin, bobfile)
 	errz.Fatal(err)
 
@@ -189,10 +189,7 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
 		InputDirty: "./main.go",
 		CmdDirty:   "go build -o run",
-		TargetDirty: target.T{
-			Paths: []string{"run"},
-			Type:  target.File,
-		},
+		TargetDirty: "run",
 	}
 	return bobfile.BobfileSave(dir)
 }

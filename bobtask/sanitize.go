@@ -47,15 +47,6 @@ func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {
 	return sanitized, nil
 }
 
-func (t *Task) sanitizeTarget(targetPaths []string) ([]string, error) {
-	for _, f := range targetPaths {
-		if strings.Contains(f, "..") {
-			return nil, fmt.Errorf("'..' not allowed in file path %q", f)
-		}
-	}
-	return targetPaths, nil
-}
-
 func (t *Task) sanitizeExports(exports export.Map) (export.Map, error) {
 	sanitizedExports := make(export.Map)
 	for name, export := range exports {

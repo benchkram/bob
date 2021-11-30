@@ -60,7 +60,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 
 	// also ignore file targets stored in the same directory
 	if t.target != nil {
-		if t.target.Type == target.File {
+		if t.target.Type == target.Path {
 			ignores = append(ignores, t.target.Paths...)
 		}
 	}

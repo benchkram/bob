@@ -15,7 +15,6 @@ import (
 	"github.com/Benchkram/bob/bobrun"
 	"github.com/Benchkram/bob/bobtask"
 	"github.com/Benchkram/bob/bobtask/export"
-	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/bob/pkg/file"
 )
@@ -240,10 +239,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
 		InputDirty: "./main1.go" + "\n" + "go.mod",
 		CmdDirty:   "go build -o run",
-		TargetDirty: target.T{
-			Paths: []string{"run"},
-			Type:  target.File,
-		},
+		TargetDirty: "run",
 	}
 
 	bobfile.Tasks[BuildAllTargetName] = bobtask.Task{
@@ -253,10 +249,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 			filepath.Join(SecondLevelDir, fmt.Sprintf("%s2", global.DefaultBuildTask)),
 			filepath.Join(SecondLevelDir, ThirdLevelDir, "print"),
 		},
-		TargetDirty: target.T{
-			Paths: []string{"run"},
-			Type:  target.File,
-		},
+		TargetDirty: "run",
 	}
 
 	bobfile.Tasks["generate"] = bobtask.Task{
@@ -270,14 +263,11 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		DependsOn: []string{
 			filepath.Join(SecondLevelOpenapiProviderDir, "openapi"),
 		},
-		TargetDirty: target.T{
-			Paths: []string{
-				"rest-server/generated/server.gen.go",
-				"rest-server/generated/types.gen.go",
-				"rest-server/generated/client.gen.go",
-			},
-			Type: target.File,
-		},
+		TargetDirty: strings.Join([]string{
+			"rest-server/generated/server.gen.go",
+			"rest-server/generated/types.gen.go",
+			"rest-server/generated/client.gen.go",
+		}, "\n"),
 	}
 
 	bobfile.Tasks["slow"] = bobtask.Task{
@@ -285,12 +275,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 			"sleep 2",
 			"touch slowdone",
 		}, "\n"),
-		TargetDirty: target.T{
-			Paths: []string{
-				"slowdone",
-			},
-			Type: target.File,
-		},
+		TargetDirty: "slowdone",
 	}
 
 	// A run command to run a environment from a compose file
@@ -368,10 +353,7 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) 
 			filepath.Join(ThirdLevelDir, fmt.Sprintf("%s3", global.DefaultBuildTask)),
 		},
 		CmdDirty: "go build -o runsecondlevel",
-		TargetDirty: target.T{
-			Paths: []string{"runsecondlevel"},
-			Type:  target.File,
-		},
+		TargetDirty: "runsecondlevel",
 	}
 	return bobfile.BobfileSave(dir)
 }
@@ -387,10 +369,7 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
 	bobfile.Tasks[fmt.Sprintf("%s3", global.DefaultBuildTask)] = bobtask.Task{
 		InputDirty: "*",
 		CmdDirty:   "go build -o runthirdlevel",
-		TargetDirty: target.T{
-			Paths: []string{"runthirdlevel"},
-			Type:  target.File,
-		},
+		TargetDirty: "runthirdlevel",
 	}
 
 	bobfile.Tasks["print"] = bobtask.Task{

@@ -1,6 +1,7 @@
 package bobtask
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -50,7 +51,7 @@ type Task struct {
 	// Parent tasks can take the files and copy them
 	// to a place they like to
 	// ???
-	TargetDirty target.T `yaml:"target"`
+	TargetDirty string `yaml:"target,omitempty"`
 	target      *target.T
 
 	// Exports other tasks can reuse.
@@ -81,8 +82,6 @@ type Task struct {
 
 func Make(opts ...TaskOption) Task {
 	t := Task{
-		TargetDirty: target.Make(),
-
 		DependsOn: []string{},
 		Exports:   make(export.Map),
 		env:       []string{},
@@ -158,4 +157,24 @@ func (t *Task) AddExportPrefix(prefix string) {
 	for i, e := range t.Exports {
 		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))
 	}
+}
+
+func (t *Task) parseTargets() error {
+	targetDirty := split(t.TargetDirty)
+	targets := []string{}
+
+	for _, targetPath := range unique(targetDirty) {
+		if strings.Contains(targetPath, "..") {
+			return fmt.Errorf("'..' not allowed in file path %q", targetPath)
+		}
+
+		targets = append(targets, targetPath)
+	}
+
+	if len(targets) > 0 {
+		t.target = target.New()
+		t.target.Paths = targets
+	}
+
+	return nil
 }

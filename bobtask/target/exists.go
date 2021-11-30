@@ -10,7 +10,7 @@ import (
 // validating it's integrety.
 func (t *T) Exists() bool {
 	switch t.Type {
-	case File:
+	case Path:
 		return t.existsFile()
 	case Docker:
 		return t.existsDocker()

@@ -6,7 +6,7 @@ import "github.com/Benchkram/errz"
 // Returns true when no targets defined.
 func (t *T) Verify() bool {
 	switch t.Type {
-	case File:
+	case Path:
 		return t.verifyFile(t.hash)
 	case Docker:
 		return t.verifyDocker(t.hash)
