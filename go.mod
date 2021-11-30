@@ -19,6 +19,7 @@ require (
 	github.com/mholt/archiver/v3 v3.5.0
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
+	github.com/pkg/errors v0.9.1
 	github.com/sanity-io/litter v1.5.0
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/spf13/cobra v1.2.1

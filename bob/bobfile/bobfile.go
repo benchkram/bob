@@ -3,6 +3,7 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -32,6 +33,8 @@ var (
 	ErrTaskHashDoesNotExist   = fmt.Errorf("Task hash does not exist")
 	ErrBobfileExists          = fmt.Errorf("Bobfile exists")
 	ErrTaskDoesNotExist       = fmt.Errorf("Task does not exist")
+	ErrDuplicateTaskName      = fmt.Errorf("duplicate task name")
+	ErrSelfReference          = fmt.Errorf("self reference")
 
 	ErrInvalidRunType = fmt.Errorf("Invalid run type")
 )
@@ -108,9 +111,52 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 	b, err := bobfileRead(dir)
 	errz.Fatal(err)
 
+	err = b.Validate()
+	errz.Fatal(err)
+
 	b.Tasks.Sanitize()
 
 	return b, nil
+}
+
+// Validate makes sure no task depends on itself (self-reference) or has the same name as another task
+func (b *Bobfile) Validate() (err error) {
+	// use for duplicate names validation
+	names := map[string]bool{}
+
+	for name, task := range b.Tasks {
+		// validate no duplicate name
+		if names[name] {
+			return errors.WithMessage(ErrDuplicateTaskName, name)
+		}
+
+		names[name] = true
+
+		// validate no self-reference
+		for _, dep := range task.DependsOn {
+			if name == dep {
+				return errors.WithMessage(ErrSelfReference, name)
+			}
+		}
+	}
+
+	for name, run := range b.Runs {
+		// validate no duplicate name
+		if names[name] {
+			return errors.WithMessage(ErrDuplicateTaskName, name)
+		}
+
+		names[name] = true
+
+		// validate no self-reference
+		for _, dep := range run.DependsOn {
+			if name == dep {
+				return errors.WithMessage(ErrSelfReference, name)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (b *Bobfile) BobfileSave(dir string) (err error) {
