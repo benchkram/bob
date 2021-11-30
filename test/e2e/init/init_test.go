@@ -14,7 +14,7 @@ var _ = Describe("Test bob init", func() {
 		})
 
 		It("check that .bob dir exists", func() {
-			Expect(file.Exists(".bob")).To(BeTrue())
+			Expect(file.Exists(".bob.workspace")).To(BeTrue())
 		})
 	})
 })

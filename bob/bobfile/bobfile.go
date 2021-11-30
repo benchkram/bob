@@ -20,7 +20,7 @@ import (
 
 var (
 	defaultIgnores = fmt.Sprintf("!%s\n!%s",
-		filepath.Join(global.BuildToolDir, "*"),
+		global.BobWorkspaceFile,
 		filepath.Join(global.BobCacheDir, "*"),
 	)
 )

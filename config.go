@@ -46,7 +46,7 @@ func configInit() {
 }
 
 func flags() {
-	rootCmd.PersistentFlags().IntP("verbosity", "v", defaultConfig.Verbosity, "write cpu profile to file")
+	rootCmd.PersistentFlags().IntP("verbosity", "v", defaultConfig.Verbosity, "set verbosity level")
 	rootCmd.PersistentFlags().Bool("cpuprofile", defaultConfig.CPUProfile, "write cpu profile to file")
 	rootCmd.PersistentFlags().Bool("memprofile", defaultConfig.MEMProfile, "write memory profile to file")
 }

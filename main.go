@@ -28,11 +28,14 @@ func init() {
 	rootCmd.AddCommand(completionCmd)
 
 	rootCmd.AddCommand(verifyCmd)
-	rootCmd.AddCommand(CmdInit)
-	rootCmd.AddCommand(CmdAdd)
 	rootCmd.AddCommand(CmdClone)
 	rootCmd.AddCommand(cleanCmd)
 	rootCmd.AddCommand(dockerCmd)
+
+	// workspace
+	cmdWorkspace.AddCommand(cmdWorkspaceNew)
+	cmdWorkspace.AddCommand(cmdAdd)
+	rootCmd.AddCommand(cmdWorkspace)
 
 	// runCmd
 	runCmd.AddCommand(runListCmd)

@@ -46,7 +46,8 @@ func TestStatus(t *testing.T) {
 					err := cmdutil.RunGit(dir, "init")
 					assert.Nil(t, err)
 
-					assert.Nil(t, os.MkdirAll(filepath.Join(dir, ".bob"), 0775))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 
@@ -66,7 +67,8 @@ func TestStatus(t *testing.T) {
 					err := cmdutil.RunGit(dir, "init")
 					assert.Nil(t, err)
 
-					assert.Nil(t, os.MkdirAll(filepath.Join(dir, ".bob"), 0775))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 
@@ -86,7 +88,8 @@ func TestStatus(t *testing.T) {
 					err := cmdutil.RunGit(dir, "init")
 					assert.Nil(t, err)
 
-					assert.Nil(t, os.MkdirAll(filepath.Join(dir, ".bob"), 0775))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 
@@ -105,7 +108,8 @@ func TestStatus(t *testing.T) {
 					err := cmdutil.RunGit(dir, "init")
 					assert.Nil(t, err)
 
-					assert.Nil(t, os.MkdirAll(filepath.Join(dir, ".bob"), 0775))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
@@ -126,7 +130,8 @@ func TestStatus(t *testing.T) {
 					err := cmdutil.RunGit(dir, "init")
 					assert.Nil(t, err)
 
-					assert.Nil(t, os.MkdirAll(filepath.Join(dir, ".bob"), 0775))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))

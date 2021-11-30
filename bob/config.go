@@ -6,6 +6,6 @@ import (
 	"github.com/Benchkram/bob/bob/global"
 )
 
-func (b B) ConfigFilePath() string {
-	return filepath.Join(b.dir, global.BuildToolDir, global.ConfigFile)
+func (b B) WorkspaceFilePath() string {
+	return filepath.Join(b.dir, global.BobWorkspaceFile)
 }

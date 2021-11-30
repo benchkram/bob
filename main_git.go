@@ -34,12 +34,12 @@ var CmdGitStatus = &cobra.Command{
 func runGitStatus() {
 	s, err := bobgit.Status()
 	if err != nil {
-		if errors.Is(err, bobutil.ErrCouldNotFindBobDir) {
+		if errors.Is(err, bobutil.ErrCouldNotFindBobWorkspace) {
 			fmt.Println("fatal: not a bob repository (or any of the parent directories): .bob")
 			os.Exit(1)
 		}
 		if errors.Is(err, bobgit.ErrCouldNotFindGitDir) {
-			fmt.Println("fatal: bobroot is not a git repository")
+			fmt.Println("fatal: bob workspace is not a git repository")
 			os.Exit(1)
 		}
 		errz.Fatal(err)

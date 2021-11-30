@@ -118,7 +118,7 @@ func CreatePlayground(dir string) error {
 	b := newBob()
 	err = b.Init()
 	if err != nil {
-		if !errors.Is(err, ErrBuildToolAlreadyInitialised) {
+		if !errors.Is(err, ErrWorkspaceAlreadyInitialised) {
 			errz.Fatal(err)
 		}
 	}
@@ -149,7 +149,7 @@ func CreatePlayground(dir string) error {
 	b.dir = filepath.Join(b.dir, SecondLevelDir)
 	err = b.init()
 	if err != nil {
-		if !errors.Is(err, ErrBuildToolAlreadyInitialised) {
+		if !errors.Is(err, ErrWorkspaceAlreadyInitialised) {
 			errz.Fatal(err)
 		}
 	}
@@ -204,7 +204,7 @@ func CreatePlayground(dir string) error {
 	b3.dir = filepath.Join(b3.dir, thirdDir)
 	err = b3.init()
 	if err != nil {
-		if !errors.Is(err, ErrBuildToolAlreadyInitialised) {
+		if !errors.Is(err, ErrWorkspaceAlreadyInitialised) {
 			errz.Fatal(err)
 		}
 	}

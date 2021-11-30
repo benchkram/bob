@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var CmdAdd = &cobra.Command{
+var cmdAdd = &cobra.Command{
 	Use:   "add",
-	Short: "Add repo to bob workspace",
+	Short: "Add a git repository to a workspace",
 	Args:  cobra.ExactArgs(1),
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {

@@ -7,16 +7,16 @@ import (
 	"github.com/Benchkram/errz"
 )
 
-var CmdInit = &cobra.Command{
-	Use:   "init",
-	Short: "Init a bob workspace",
+var cmdWorkspaceNew = &cobra.Command{
+	Use:   "new",
+	Short: "Create a new bob workspace",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		runInit()
+		runWorkspaceNew()
 	},
 }
 
-func runInit() {
+func runWorkspaceNew() {
 	bob, err := bob.Bob()
 	errz.Fatal(err)
 

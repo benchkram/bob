@@ -5,11 +5,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/Benchkram/bob/bob/global"
 )
 
-const bobDir = ".bob"
-
-var ErrCouldNotFindBobDir = fmt.Errorf("Could not find a .bob folder")
+var ErrCouldNotFindBobWorkspace = fmt.Errorf("Could not find a .bob.workspace file")
 
 // Hint on how git finds it top repo dir.
 // https://stackoverflow.com/questions/65499497/how-does-git-know-its-in-a-git-repo
@@ -35,7 +35,7 @@ func FindBobRoot() (string, error) {
 		}
 
 		if dir == os.Getenv("HOME") || dir == "/" {
-			return "", ErrCouldNotFindBobDir
+			return "", ErrCouldNotFindBobWorkspace
 		}
 
 		if bobRoot, err = isBobRoot(dir); err != nil {
@@ -55,7 +55,7 @@ func isBobRoot(dir string) (bool, error) {
 	}
 
 	for _, f := range files {
-		if f.Name() == bobDir {
+		if f.Name() == global.BobWorkspaceFile {
 			return true, nil
 		}
 	}

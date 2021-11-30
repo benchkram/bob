@@ -4,8 +4,8 @@ import "path/filepath"
 
 const (
 	BobFileName      = "bob.yaml"
-	BuildToolDir     = ".bob"
-	ConfigFile       = "config"
+	BobWorkspaceFile = ".bob.workspace"
+
 	DefaultBuildTask = "build"
 )
 

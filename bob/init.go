@@ -1,7 +1,6 @@
 package bob
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/Benchkram/errz"
@@ -18,14 +17,11 @@ func (b *B) Init() (err error) {
 func (b *B) init() (err error) {
 	defer errz.Recover(&err)
 
-	dir := filepath.Join(b.dir, global.BuildToolDir)
+	dir := filepath.Join(b.dir, global.BobWorkspaceFile)
 
 	if file.Exists(dir) {
-		return ErrBuildToolAlreadyInitialised
+		return ErrWorkspaceAlreadyInitialised
 	}
-
-	err = os.Mkdir(dir, 0755)
-	errz.Fatal(err)
 
 	err = b.write()
 	errz.Fatal(err)
