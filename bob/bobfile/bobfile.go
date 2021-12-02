@@ -78,6 +78,18 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	err = yaml.Unmarshal(bin, bobfile)
 	errz.Fatal(err)
 
+	if bobfile.Variables == nil {
+		bobfile.Variables = VariableMap{}
+	}
+
+	if bobfile.Tasks == nil {
+		bobfile.Tasks = bobtask.Map{}
+	}
+
+	if bobfile.Runs == nil {
+		bobfile.Runs = bobrun.RunMap{}
+	}
+
 	// Assure tasks are initialized with their defaults
 	for key, task := range bobfile.Tasks {
 		task.SetDir(bobfile.dir)
@@ -187,8 +199,8 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 	bobfile := NewBobfile()
 
 	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
-		InputDirty: "./main.go",
-		CmdDirty:   "go build -o run",
+		InputDirty:  "./main.go",
+		CmdDirty:    "go build -o run",
 		TargetDirty: "run",
 	}
 	return bobfile.BobfileSave(dir)

@@ -96,7 +96,6 @@ func (c *Cmd) Running() bool {
 	return c.running
 }
 
-
 // Start starts the command if it's not already running. It will be a noop if it is.
 // It also spins up a goroutine that will receive any error occurred during the command's exit.
 func (c *Cmd) Start() error {
@@ -140,7 +139,6 @@ func (c *Cmd) Start() error {
 
 	return nil
 }
-
 
 // Stop stops the running command with an os.Interrupt signal. It does not return an error if the command has
 // already exited gracefully.

@@ -237,8 +237,8 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	bobfile.Variables["helloworld"] = "Hello World!"
 
 	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
-		InputDirty: "./main1.go" + "\n" + "go.mod",
-		CmdDirty:   "go build -o run",
+		InputDirty:  "./main1.go" + "\n" + "go.mod",
+		CmdDirty:    "go build -o run",
 		TargetDirty: "run",
 	}
 
@@ -352,7 +352,7 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) 
 		DependsOn: []string{
 			filepath.Join(ThirdLevelDir, fmt.Sprintf("%s3", global.DefaultBuildTask)),
 		},
-		CmdDirty: "go build -o runsecondlevel",
+		CmdDirty:    "go build -o runsecondlevel",
 		TargetDirty: "runsecondlevel",
 	}
 	return bobfile.BobfileSave(dir)
@@ -367,8 +367,8 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
 	bobfile := bobfile.NewBobfile()
 
 	bobfile.Tasks[fmt.Sprintf("%s3", global.DefaultBuildTask)] = bobtask.Task{
-		InputDirty: "*",
-		CmdDirty:   "go build -o runthirdlevel",
+		InputDirty:  "*",
+		CmdDirty:    "go build -o runthirdlevel",
 		TargetDirty: "runthirdlevel",
 	}
 
