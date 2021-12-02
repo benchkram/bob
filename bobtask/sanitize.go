@@ -21,8 +21,8 @@ func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {
 	sanitized := make([]string, 0, len(inputs))
 	resolved := make(map[string]struct{})
 	for _, f := range inputs {
-		if strings.Contains(f, "..") {
-			return nil, fmt.Errorf("'..' not allowed in file path %q", f)
+		if strings.Contains(f, "../") {
+			return nil, fmt.Errorf("'../' not allowed in file path %q", f)
 		}
 
 		resolvedPath, err := resolve(f)
