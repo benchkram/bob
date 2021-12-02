@@ -2,6 +2,7 @@ package buildinfostore
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -94,6 +95,14 @@ func (s *s) GetBuildInfos() (_ []*buildinfo.I, err error) {
 }
 
 func (s *s) Clean() (err error) {
+	defer errz.Recover(&err)
+
+	homeDir, err := os.UserHomeDir()
+	errz.Fatal(err)
+	if s.dir == "/" || s.dir == homeDir {
+		return fmt.Errorf("Cleanup of %s is not allowed", s.dir)
+	}
+
 	entrys, err := os.ReadDir(s.dir)
 	errz.Fatal(err)
 
@@ -103,5 +112,6 @@ func (s *s) Clean() (err error) {
 		}
 		_ = os.Remove(filepath.Join(s.dir, entry.Name()))
 	}
+
 	return nil
 }

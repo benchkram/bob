@@ -34,7 +34,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 		})
 
 		It("clean artifacts & buildinfo", func() {
-			err := artifactsClean()
+			err := b.CleanLocalStore()
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -50,9 +50,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 		})
 
 		It("clean artifacts & buildinfo", func() {
-			err := artifactsClean()
-			Expect(err).NotTo(HaveOccurred())
-			err = b.Clean()
+			err := b.Clean()
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -67,7 +65,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 			Expect(exists).To(BeTrue())
 
 			// clean buildinfo
-			err = b.Clean()
+			err = b.CleanBuildInfoStore()
 			Expect(err).NotTo(HaveOccurred())
 
 			state, err = buildTask(b, "build")
@@ -76,9 +74,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 		})
 
 		It("clean artifacts & buildinfo", func() {
-			err := artifactsClean()
-			Expect(err).NotTo(HaveOccurred())
-			err = b.Clean()
+			err := b.Clean()
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -95,8 +91,6 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 
 		It("cleanup", func() {
 			err := b.Clean()
-			Expect(err).NotTo(HaveOccurred())
-			err = artifactsClean()
 			Expect(err).NotTo(HaveOccurred())
 			err = reset()
 			Expect(err).NotTo(HaveOccurred())

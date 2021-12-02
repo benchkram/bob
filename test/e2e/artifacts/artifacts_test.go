@@ -85,10 +85,10 @@ var _ = Describe("Test artifact and target invalidation", func() {
 		})
 
 		It("cleanup", func() {
-			err := b.Clean()
+			err := b.CleanBuildInfoStore()
 			Expect(err).NotTo(HaveOccurred())
 
-			err = artifactsClean()
+			err = b.CleanLocalStore()
 			Expect(err).NotTo(HaveOccurred())
 
 			err = reset()
@@ -130,21 +130,6 @@ func artifactExists(id string) (exist bool, _ error) {
 	}
 
 	return exist, nil
-}
-
-// artifactsClean deletes all artifacts from the store
-func artifactsClean() error {
-	fs, err := os.ReadDir(artifactDir)
-	if err != nil {
-		return err
-	}
-	for _, f := range fs {
-		err = os.Remove(filepath.Join(artifactDir, f.Name()))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // targetChanged appends a string to a target

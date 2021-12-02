@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/errz"
 	"github.com/spf13/cobra"
@@ -22,4 +24,7 @@ func runClean() {
 
 	err = b.Clean()
 	errz.Log(err)
+
+	fmt.Println("build info store cleaned")
+	fmt.Println("local artifact store cleaned")
 }
