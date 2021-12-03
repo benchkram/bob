@@ -90,6 +90,7 @@ func Status() (s *status.S, err error) {
 
 		output, err := cmdutil.GitStatus(name)
 		errz.Fatal(err)
+
 		status, err := parse(output)
 		errz.Fatal(err)
 
@@ -120,6 +121,11 @@ func Status() (s *status.S, err error) {
 			// Untracked
 			if status.Worktree == git.Untracked && status.Staging == git.Untracked {
 				s.Untracked[repoPath][localpath] = status
+			}
+
+			// Conflicts
+			if status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged {
+				s.Conflicts[repoPath][localpath] = status
 			}
 		}
 	}

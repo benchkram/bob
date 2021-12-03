@@ -17,6 +17,7 @@ type S struct {
 	Staging   MultiRepoStatus
 	Unstaged  MultiRepoStatus
 	Untracked MultiRepoStatus
+	Conflicts MultiRepoStatus
 
 	Repos []string
 }
@@ -26,6 +27,7 @@ func New() *S {
 		Staging:   make(MultiRepoStatus),
 		Unstaged:  make(MultiRepoStatus),
 		Untracked: make(MultiRepoStatus),
+		Conflicts: make(MultiRepoStatus),
 	}
 	return s
 }
@@ -35,12 +37,35 @@ func (s *S) AddRepo(repoName string) {
 	s.Staging[repoName] = make(git.Status)
 	s.Unstaged[repoName] = make(git.Status)
 	s.Untracked[repoName] = make(git.Status)
+	s.Conflicts[repoName] = make(git.Status)
 }
 
 func (s *S) String() string {
 	const spacing = "        "
 
 	buf := bytes.NewBuffer(nil)
+
+	{
+		b := bytes.NewBuffer(nil)
+		keys := sortedKeys(s.Conflicts)
+		var conflictingRepos []string
+		for _, repoName := range keys {
+			repoStatus := s.Conflicts[repoName]
+			for path, status := range repoStatus {
+				fmt.Fprint(b, spacing)
+				fprintChanges(b, repoName, path, status, aurora.Red)
+				conflictingRepos = append(conflictingRepos, repoName)
+			}
+		}
+
+		if len(conflictingRepos) > 0 {
+			fmt.Fprintln(buf, "On at least one repository")
+			fmt.Fprintln(buf, "You have unmerged paths.")
+			fmt.Fprintln(buf, "  (fix conflicts using plain git)")
+			fmt.Fprintln(buf, "\nUnmerged paths:")
+			fmt.Fprint(buf, b)
+		}
+	}
 
 	{
 		fmt.Fprintln(buf, "Changes to be committed:")
@@ -138,6 +163,9 @@ func fprintChanges(
 		fmt.Fprintln(buf, color(localPath).String())
 	} else if status.Staging == git.Deleted || status.Worktree == git.Deleted {
 		fmt.Fprint(buf, color("deleted:    "+dir+aurora.Bold(withSlash(basename)).String()).String())
+		fmt.Fprintln(buf, color(localPath).String())
+	} else if status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged {
+		fmt.Fprint(buf, color("both modified:	"+aurora.Bold(withSlash(basename)).String()).String())
 		fmt.Fprintln(buf, color(localPath).String())
 	} else {
 		fmt.Fprint(buf, color(dir).String())

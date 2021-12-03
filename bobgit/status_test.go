@@ -150,6 +150,89 @@ func TestStatus(t *testing.T) {
 			},
 			"",
 		},
+		{
+			"status_conflict",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
+
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
+
+					assert.Nil(t, cmdutil.RunGit(dir, "checkout", "-b", "target_branch"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file content changed in target branch"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content from target branch"))
+
+					assert.Nil(t, cmdutil.RunGit(dir, "checkout", "master"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file content changed in main branch"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content from target branch"))
+					assert.NotNil(t, cmdutil.RunGit(dir, "merge", "target_branch"))
+				},
+			},
+			"",
+		},
+		{
+			"status_conflict_multirepo",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
+
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
+
+					assert.Nil(t, cmdutil.RunGit(dir, "checkout", "-b", "target_branch"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file content changed in target branch"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content from target branch"))
+
+					assert.Nil(t, cmdutil.RunGit(dir, "checkout", "master"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file content changed in main branch"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content from target branch"))
+					assert.NotNil(t, cmdutil.RunGit(dir, "merge", "target_branch"))
+
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "Updated content"))
+
+					assert.Nil(t, cmdutil.RunGit(repo, "checkout", "-b", "target_branch"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file content changed in target branch"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "Updated content from target branch"))
+
+					assert.Nil(t, cmdutil.RunGit(repo, "checkout", "master"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file content changed in main branch"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "Updated content from target branch"))
+					assert.NotNil(t, cmdutil.RunGit(repo, "merge", "target_branch"))
+				},
+			},
+			"",
+		},
 	}
 
 	for _, test := range tests {
