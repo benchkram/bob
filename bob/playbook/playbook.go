@@ -216,6 +216,8 @@ func (p *Playbook) play() error {
 		}
 
 		// fmt.Printf("sending task %s to channel\n", task.Task.Name())
+		// setting the task start time before passing it to channel
+		task.Start = time.Now()
 		p.taskChannel <- task.Task
 		return taskQueued
 	})
