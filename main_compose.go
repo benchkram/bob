@@ -1,85 +1,78 @@
 package main
 
-import (
-	"context"
-	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
+// var composeCmd = &cobra.Command{
+// 	Use:   "compose",
+// 	Short: "Manage docker-compose environment",
+// 	Args:  cobra.MinimumNArgs(1),
+// 	Long:  ``,
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		defer errz.Recover()
 
-	"github.com/Benchkram/errz"
-	"github.com/spf13/cobra"
+// 		switch args[0] { // guaranteed by minimumArgs == 1
+// 		case "up":
+// 			path := "docker-compose.yml"
+// 			p, err := composeutil.ProjectFromConfig(path)
+// 			if err != nil {
+// 				errz.Fatal(err)
+// 			}
 
-	"github.com/Benchkram/bob/pkg/composectl"
-	"github.com/Benchkram/bob/pkg/composeutil"
-)
+// 			cfgs := composeutil.ProjectPortConfigs(p)
 
-var dockerCmd = &cobra.Command{
-	Use:   "compose",
-	Short: "Manage docker-compose environment",
-	Args:  cobra.MinimumNArgs(1),
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		defer errz.Recover(&err)
+// 			portConflicts := ""
+// 			portMapping := ""
+// 			if composeutil.HasPortConflicts(cfgs) {
+// 				conflicts := composeutil.PortConflicts(cfgs)
 
-		switch args[0] { // guaranteed by minimumArgs == 1
-		case "up":
-			stop := make(chan os.Signal, 1)
-			signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+// 				portConflicts = conflicts.String()
 
-			path := "docker-compose.yml"
-			p, err := composeutil.ProjectFromConfig(path)
-			if err != nil {
-				errz.Fatal(err)
-			}
+// 				fmt.Println("Conflicting ports detected:")
+// 				fmt.Println(portConflicts)
 
-			configs := composeutil.PortConfigs(p)
+// 				// TODO: disable once we also resolve binaries' ports
+// 				errz.Fatal(fmt.Errorf(fmt.Sprint("conflicting ports detected:\n", conflicts)))
 
-			hasPortConflict := composeutil.HasPortConflicts(configs)
+// 				resolved, err := composeutil.ResolvePortConflicts(conflicts)
+// 				errz.Fatal(err)
 
-			mappings := ""
-			conflicts := ""
-			if hasPortConflict {
-				conflicts = composeutil.GetPortConflicts(configs)
+// 				portMapping = resolved.String()
 
-				errz.Fatal(fmt.Errorf(conflicts))
+// 				fmt.Println("Resolved port mapping:")
+// 				fmt.Println(portMapping)
 
-				resolved, err := composeutil.ResolvePortConflicts(p, configs)
-				if err != nil {
-					errz.Fatal(err)
-				}
+// 				// update project's ports
+// 				composeutil.ApplyPortMapping(p, resolved)
+// 			}
 
-				mappings = composeutil.GetNewPortMappings(resolved)
-			}
+// 			ctx, cancel := context.WithCancel(context.Background())
+// 			defer cancel()
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+// 			ctl, err := composectl.New(p, portConflicts, portMapping)
+// 			if err != nil {
+// 				errz.Fatal(err)
+// 			}
 
-			ctl, err := composectl.New(p, conflicts, mappings)
-			if err != nil {
-				errz.Fatal(err)
-			}
+// 			fmt.Println()
+// 			err = ctl.Up(ctx)
+// 			if err != nil {
+// 				errz.Fatal(err)
+// 			}
 
-			fmt.Println()
-			err = ctl.Up(ctx)
-			if err != nil {
-				errz.Fatal(err)
-			}
+// 			defer func() {
+// 				fmt.Print("\n\n")
+// 				err := ctl.Down(context.Background())
+// 				if err != nil {
+// 					errz.Log(err)
+// 				}
+// 				fmt.Println("\nEnvironment down.")
+// 			}()
 
-			defer func() {
-				fmt.Print("\n\n")
-				err := ctl.Down(context.Background())
-				if err != nil {
-					errz.Log(err)
-				}
-				fmt.Println("\nEnvironment down.")
-			}()
+// 			fmt.Print("\nEnvironment up.")
 
-			fmt.Print("\nEnvironment up.\n\n")
+// 			stop := make(chan os.Signal, 1)
+// 			signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-			<-stop
-		}
-	},
-	ValidArgs: []string{"up"},
-}
+// 			<-stop
+// 		}
+// 	},
+// 	ValidArgs: []string{"up"},
+// }

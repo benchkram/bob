@@ -22,26 +22,28 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 	p, err := composeutil.ProjectFromConfig(path)
 	errz.Fatal(err)
 
-	configs := composeutil.PortConfigs(p)
+	cfgs := composeutil.ProjectPortConfigs(p)
 
-	hasPortConflict := composeutil.HasPortConflicts(configs)
+	portConflicts := ""
+	portMapping := ""
+	if composeutil.HasPortConflicts(cfgs) {
+		conflicts := composeutil.PortConflicts(cfgs)
 
-	mappings := ""
-	conflicts := ""
-	if hasPortConflict {
-		conflicts = composeutil.GetPortConflicts(configs)
+		portConflicts = conflicts.String()
 
-		errz.Fatal(fmt.Errorf(conflicts))
+		// TODO: disable once we also resolve binaries' ports
+		errz.Fatal(fmt.Errorf(fmt.Sprint("conflicting ports detected:\n", conflicts)))
 
-		resolved, err := composeutil.ResolvePortConflicts(p, configs)
-		if err != nil {
-			errz.Fatal(err)
-		}
+		resolved, err := composeutil.ResolvePortConflicts(conflicts)
+		errz.Fatal(err)
 
-		mappings = composeutil.GetNewPortMappings(resolved)
+		portMapping = resolved.String()
+
+		// update project's ports
+		composeutil.ApplyPortMapping(p, resolved)
 	}
 
-	ctler, err := composectl.New(p, conflicts, mappings)
+	ctler, err := composectl.New(p, portConflicts, portMapping)
 	errz.Fatal(err)
 
 	rc := ctl.New(r.name, 1, ctler.Stdout(), ctler.Stderr(), ctler.Stdin())

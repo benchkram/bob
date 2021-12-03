@@ -30,7 +30,8 @@ func init() {
 	rootCmd.AddCommand(verifyCmd)
 	rootCmd.AddCommand(CmdClone)
 	rootCmd.AddCommand(cleanCmd)
-	rootCmd.AddCommand(dockerCmd)
+	// used for debugging and not part of the cli.
+	// rootCmd.AddCommand(composeCmd)
 
 	// workspace
 	cmdWorkspace.AddCommand(cmdWorkspaceNew)

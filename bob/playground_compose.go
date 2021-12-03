@@ -21,6 +21,7 @@ services:
       MYSQL_ROOT_PASSWORD: pass
     ports:
       - 9090-9091:8080-8081 # weird case
+      - 6379:6379 # conflict with local env and mongo
   mongo:
     image: mongo
     restart: always
@@ -30,7 +31,7 @@ services:
     ports:
       - 27017:27017
       - 9090-9091:8080-8081 # weird case
-      - 6379:6379 # conflict with local env
+      - 6379:6379 # conflict with local env and mysql
       - 5555:5558/udp # different container port, but host collides
 `)
 

@@ -60,6 +60,7 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 	}
 
 	if conflicts != "" {
+		conflicts = fmt.Sprintf("%s\n%s\n", "Conflicting ports detected:", conflicts)
 		_, err = c.stdout.w.Write([]byte(conflicts))
 		if err != nil {
 			return nil, err
@@ -67,6 +68,7 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 	}
 
 	if mappings != "" {
+		mappings = fmt.Sprintf("%s\n%s\n", "Resolved port mapping:", mappings)
 		_, err = c.stdout.w.Write([]byte(mappings))
 		if err != nil {
 			return nil, err
@@ -100,7 +102,6 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 }
 
 func (ctl *ComposeController) Up(ctx context.Context) error {
-
 	err := ctl.service.Up(ctx, ctl.project, api.UpOptions{})
 	if err != nil {
 		return err

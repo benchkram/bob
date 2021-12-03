@@ -2,160 +2,121 @@ package composeutil
 
 import (
 	"fmt"
+	"github.com/compose-spec/compose-go/loader"
+	"github.com/compose-spec/compose-go/types"
+	"math"
 	"net"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/compose-spec/compose-go/loader"
-	"github.com/compose-spec/compose-go/types"
 )
 
-var (
-	ErrInvalidProtocol = fmt.Errorf("invalid protocol")
-)
+type PortConfigs []PortConfig
 
-// PortConfig holds data that are needed for port conflict resolution
-type PortConfig struct {
-	Service  *string
-	Protocol string
-	Port     uint32
-}
+func (c PortConfigs) String() string {
+	s := ""
 
-// GetNewPortMappings returns any modified port mappings
-func GetNewPortMappings(resolved map[string][]*PortConfig) string {
-	ports := make([]string, 0, len(resolved))
-	for port := range resolved {
-		ports = append(ports, port)
-	}
-	sort.Strings(ports)
-
-	mappings := "Resolved host port mappings:\n"
-	for _, port := range ports {
-		services := resolved[port]
-		for _, srv := range services {
-			res := fmt.Sprintf("%d/%s", srv.Port, srv.Protocol)
-			if port != res {
-				if srv.Service == nil {
-					continue
-				}
-
-				mappings += fmt.Sprintf(
-					" - %-9s -> %-9s\t [ %s ]\n",
-					port, res,
-					*srv.Service,
-				)
-			}
-		}
+	for _, cfg := range c {
+		s += fmt.Sprintf(
+			" %5d/%s\t%s\n",
+			cfg.Port,
+			cfg.Protocol,
+			strings.Join(cfg.Services, ", "),
+		)
 	}
 
-	return mappings
+	return s
 }
 
 // ResolvePortConflicts mutates the project and returns the port configs with any conflicting ports
 // remapped
-func ResolvePortConflicts(project *types.Project, configs map[string][]*PortConfig) (resolved map[string][]*PortConfig, err error) {
-	// find in-use ports
-	reserved := make([]string, 0, len(configs))
-	for port := range configs {
-		reserved = append(reserved, port)
+func ResolvePortConflicts(conflicts PortConfigs) (PortConfigs, error) {
+	// indexes reserved ports for easier lookup
+	protoPortCfgs := map[string]bool{}
+	for _, cfg := range conflicts {
+		protoPortCfgs[protoPort(cfg.Port, cfg.Protocol)] = true
 	}
 
-	// sort conflicting ports for deterministic resolution
-	ports := make([]string, 0, len(configs))
-	for port := range configs {
-		ports = append(ports, port)
-	}
-	sort.Strings(ports)
+	resolved := []PortConfig{}
 
-	for _, port := range ports {
-		services := configs[port]
-		last := port
-
-		for i, srv := range services {
-			if srv.Service == nil || i == 0 {
-				continue
+	for _, cfg := range conflicts {
+		for i, service := range cfg.Services {
+			// skip the first service, as it's either the host or we want to keep this service's ports and change
+			// the ports of the other services
+			if i == 0 {
+				resolved = append(resolved, PortConfig{
+					Port:         cfg.Port,
+					OriginalPort: cfg.Port,
+					Protocol:     cfg.Protocol,
+					Services:     []string{service},
+				})
 			}
 
-			var conflict uint32
-			var proto string
-			_, err := fmt.Sscanf(last, "%d/%s", &conflict, &proto)
-			if err != nil {
-				return nil, err
+			// check the next port
+			port := cfg.Port + 1
+			for {
+				pp := protoPort(port, cfg.Protocol)
+
+				if _, ok := protoPortCfgs[pp]; !ok && PortAvailable(port, cfg.Protocol) {
+					// we found an available port that is not already reserved
+					protoPortCfgs[pp] = true
+					break
+				}
+
+				port += 1
+				if port == math.MaxUint16 {
+					return nil, fmt.Errorf("no ports available")
+				}
 			}
 
-			for j := conflict + 1; j < conflict+11; j++ {
-				check := fmt.Sprintf("%d/%s", j, proto)
-
-				avail, _ := PortAvailable(check)
-				if !avail {
-					continue
-				}
-
-				isReserved := false
-				for _, p := range reserved {
-					if p == check {
-						isReserved = true
-						break
-					}
-				}
-				if isReserved {
-					continue
-				}
-
-				for _, s := range project.Services {
-					if s.Name == *srv.Service {
-						for k, p := range s.Ports {
-							if p.Published == conflict && p.Protocol == proto {
-								p.Published = j
-								srv.Port = j
-								s.Ports[k] = p
-							}
-						}
-
-					}
-				}
-
-				reserved = append(reserved, check)
-
-				break
-			}
+			resolved = append(resolved, PortConfig{
+				Port:         port,
+				OriginalPort: cfg.Port,
+				Protocol:     cfg.Protocol,
+				Services:     []string{service},
+			})
 		}
 	}
 
-	return configs, nil
+	return resolved, nil
 }
 
-// GetPortConflicts returns all the conflicting ports along with the services they were declared in
-func GetPortConflicts(configs map[string][]*PortConfig) string {
-	ports := make([]string, 0, len(configs))
-	for port := range configs {
-		ports = append(ports, port)
+func protoPort(port int, proto string) string {
+	return fmt.Sprintf("%d/%s", port, proto)
+}
+
+func ApplyPortMapping(p *types.Project, mapping PortConfigs) {
+	// index that associates service with its port configs
+	servicePorts := map[string]PortConfigs{}
+	for _, cfg := range mapping {
+		service := cfg.Services[0]
+		servicePorts[service] = append(servicePorts[service], cfg)
 	}
-	sort.Strings(ports)
 
-	conflicts := "Conflicting ports detected:"
-	for _, port := range ports {
-		services := configs[port]
+	for i, service := range p.Services {
+		servicePortCfgs := servicePorts[service.Name]
 
-		if len(services) > 1 {
-			// port conflict detected
-
-			serviceNames := make([]string, len(services))
-			for i, srv := range services {
-				if srv.Service != nil {
-					serviceNames[i] = *srv.Service
-				} else {
-					serviceNames[i] = "(local)"
+		for j, port := range service.Ports {
+			for _, cfg := range servicePortCfgs {
+				if int(port.Published) == cfg.OriginalPort && port.Protocol == cfg.Protocol {
+					port.Published = uint32(cfg.Port)
+					service.Ports[j] = port
+					p.Services[i] = service
 				}
 			}
+		}
+	}
+}
 
-			conflicts += fmt.Sprintf(
-				" - %-9s\t [ %s ]\n",
-				port,
-				strings.Join(serviceNames, ", "),
-			)
+// PortConflicts returns all PortConfigs that have a port conflict
+func PortConflicts(cfgs PortConfigs) PortConfigs {
+	conflicts := []PortConfig{}
+
+	for _, cfg := range cfgs {
+		if len(cfg.Services) > 1 {
+			// port conflict detected
+			conflicts = append(conflicts, cfg)
 		}
 	}
 
@@ -163,9 +124,9 @@ func GetPortConflicts(configs map[string][]*PortConfig) string {
 }
 
 // HasPortConflicts returns true if there are two services using the same host port
-func HasPortConflicts(configs map[string][]*PortConfig) bool {
-	for _, services := range configs {
-		if len(services) > 1 {
+func HasPortConflicts(cfgs PortConfigs) bool {
+	for _, cfg := range cfgs {
+		if len(cfg.Services) > 1 {
 			// port conflict detected
 			return true
 		}
@@ -174,39 +135,61 @@ func HasPortConflicts(configs map[string][]*PortConfig) bool {
 	return false
 }
 
-// PortConfigs returns all configured ports for the given project
-func PortConfigs(proj *types.Project) map[string][]*PortConfig {
-	configs := make(map[string][]*PortConfig)
+type PortConfig struct {
+	Port         int
+	OriginalPort int
+	Protocol     string
+	Services     []string
+}
 
-	// Services' order is undefined, sort them
+// ProjectPortConfigs returns a slice of associations of port/proto to services, for a specific protocol, sorted by port
+func ProjectPortConfigs(p *types.Project) PortConfigs {
+	tcpCfg := portConfigs(p, "tcp")
+	udpCfg := portConfigs(p, "udp")
+	cfgs := append(tcpCfg, udpCfg...)
+
+	// sort ports for consistent ordering
+	sort.Slice(cfgs, func(i, j int) bool {
+		return protoPort(cfgs[i].Port, cfgs[i].Protocol) > protoPort(cfgs[j].Port, cfgs[j].Protocol)
+	})
+
+	return cfgs
+}
+
+func portConfigs(proj *types.Project, typ string) PortConfigs {
+	portServices := map[int][]string{}
+
+	// services' order is undefined, sort them
 	services := proj.Services
 	sort.Slice(services, func(i, j int) bool {
 		return services[i].Name < services[j].Name
 	})
 
 	for _, s := range services {
-		for _, portcfg := range s.Ports {
-			port := fmt.Sprintf("%d/%s", portcfg.Published, portcfg.Protocol)
+		for _, spCfg := range s.Ports {
+			port := int(spCfg.Published)
 
-			avail, _ := PortAvailable(port)
-			if !avail {
-				configs[port] = append(configs[port], &PortConfig{
-					Service:  nil,
-					Protocol: portcfg.Protocol,
-					Port:     portcfg.Published,
-				})
+			if spCfg.Protocol == typ {
+				if !PortAvailable(port, typ) && len(portServices[port]) == 0 {
+					portServices[port] = append(portServices[port], "host")
+				}
+
+				portServices[port] = append(portServices[port], s.Name)
 			}
-
-			name := s.Name
-			configs[port] = append(configs[port], &PortConfig{
-				Service:  &name,
-				Protocol: portcfg.Protocol,
-				Port:     portcfg.Published,
-			})
 		}
 	}
 
-	return configs
+	portCfgs := []PortConfig{}
+	for port, services := range portServices {
+		portCfgs = append(portCfgs, PortConfig{
+			Port:         port,
+			OriginalPort: port,
+			Protocol:     typ,
+			Services:     services,
+		})
+	}
+
+	return portCfgs
 }
 
 // ProjectFromConfig loads a docker-compose config file into a compose Project
@@ -235,30 +218,27 @@ func ProjectFromConfig(composePath string) (p *types.Project, err error) {
 }
 
 // PortAvailable returns true if the port is not currently in use by the host
-func PortAvailable(protoport string) (bool, error) {
-	var proto string
-	var port uint32
-	_, err := fmt.Sscanf(protoport, "%d/%s", &port, &proto)
-	if err != nil {
-		return false, err
-	}
-
+func PortAvailable(port int, proto string) bool {
 	switch proto {
 	case "tcp":
 		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 		if err != nil {
-			return false, err
+			return false
 		}
 
-		return true, ln.Close()
+		_ = ln.Close()
+
+		return true
 	case "udp":
 		ln, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
 		if err != nil {
-			return false, err
+			return false
 		}
 
-		return true, ln.Close()
+		_ = ln.Close()
+
+		return true
 	default:
-		return false, ErrInvalidProtocol
+		return false
 	}
 }
