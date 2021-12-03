@@ -40,6 +40,11 @@ func run(taskname string) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	t, err := tui.New()
+	if err != nil {
+		panic(err)
+	}
+
 	commander, err := b.Run(ctx, taskname)
 	if err != nil {
 		switch err {
@@ -50,12 +55,7 @@ func run(taskname string) {
 		}
 	}
 
-	t, err := tui.New(commander)
-	if err != nil {
-		panic(err)
-	}
-
-	t.Start()
+	t.Start(commander)
 
 	cancel()
 	<-commander.Done()

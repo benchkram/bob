@@ -23,10 +23,10 @@ func main() {
 
 	root := execctl.NewCmdTree(cmd1, cmd2, cmd3)
 
-	t, err := tui.New(root)
+	t, err := tui.New()
 	if err != nil {
 		panic(err)
 	}
 
-	t.Start()
+	t.Start(root)
 }

@@ -2,15 +2,15 @@ package tui
 
 import (
 	"bufio"
-	"bytes"
+	"context"
 	"fmt"
+	"github.com/Benchkram/errz"
+	"io"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/Benchkram/bob/pkg/ctl"
-	"github.com/Benchkram/errz"
-
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -32,6 +32,8 @@ type keyMap struct {
 	FollowOutput key.Binding
 	Restart      key.Binding
 	Quit         key.Binding
+	Up           key.Binding
+	Down         key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -61,114 +63,70 @@ var keys = keyMap{
 		key.WithKeys("ctrl+c"),
 		key.WithHelp("[^C]", "quit"),
 	),
+	Up: key.NewBinding(
+		key.WithKeys("up", "pgup", "wheel up"),
+	),
+	Down: key.NewBinding(
+		key.WithKeys("down", "pgdown", "wheel down"),
+	),
 }
 
 type model struct {
-	stdout     *os.File
-	keys       keyMap
-	events     chan interface{}
-	cmder      ctl.Commander
-	tabs       []tab
-	currentTab int
-	starting   bool
-	restarting bool
-	stopping   bool
-	width      int
-	height     int
-	content    viewport.Model
-	header     viewport.Model
-	footer     help.Model
+	keys          keyMap
+	events        chan interface{}
+	cmder         ctl.Commander
+	tabs          []*tab
+	currentTab    int
+	starting      bool
+	restarting    bool
+	stopping      bool
+	width         int
+	height        int
+	content       viewport.Model
+	header        viewport.Model
+	footer        help.Model
+	follow        bool
+	scrollOffset  int
+	ready         bool
 }
 
 type tab struct {
 	name   string
-	output *bytes.Buffer
+	output *LineBuffer
 }
 
-func newModel(cmder ctl.Commander, evts chan interface{}, output *os.File, actualOutput *os.File) *model {
-	tabs := []tab{}
+func newModel(cmder ctl.Commander, evts chan interface{}, output *os.File) *model {
+	tabs := []*tab{}
 
-	buf := new(bytes.Buffer)
+	buf, err := multiScanner(0, evts, output)
+	if err != nil {
+		errz.Log(err)
+	}
 
-	tabs = append(tabs, tab{
+	tabs = append(tabs, &tab{
 		name:   "status",
 		output: buf,
 	})
 
-	sglobal := bufio.NewScanner(output)
-	sglobal.Split(bufio.ScanRunes)
-
-	go func() {
-		for sglobal.Scan() {
-			err := sglobal.Err()
-			if err != nil {
-				return
-			}
-
-			_, err = buf.Write(sglobal.Bytes())
-			if err != nil {
-				// TODO: error handling
-				fmt.Println(err)
-			}
-
-			evts <- Update{}
+	for i, cmd := range cmder.Subcommands() {
+		buf, err := multiScanner(i+1, evts, cmd.Stdout(), cmd.Stderr())
+		if err != nil {
+			errz.Log(err)
 		}
-	}()
 
-	for _, cmd := range cmder.Subcommands() {
-		buf := new(bytes.Buffer)
-
-		tabs = append(tabs, tab{
+		tabs = append(tabs, &tab{
 			name:   cmd.Name(),
 			output: buf,
 		})
-
-		sout := bufio.NewScanner(cmd.Stdout())
-		sout.Split(bufio.ScanRunes)
-
-		serr := bufio.NewScanner(cmd.Stderr())
-		serr.Split(bufio.ScanRunes)
-
-		go func() {
-			for sout.Scan() {
-				err := sglobal.Err()
-				if err != nil {
-					return
-				}
-
-				_, err = buf.Write(sout.Bytes())
-				if err != nil {
-					// TODO: error handling
-					fmt.Println(err)
-				}
-				evts <- Update{}
-			}
-		}()
-
-		go func() {
-			for serr.Scan() {
-				err := sglobal.Err()
-				if err != nil {
-					return
-				}
-
-				_, err = buf.Write(serr.Bytes())
-				if err != nil {
-					// TODO: error handling
-					fmt.Println(err)
-				}
-				evts <- Update{}
-			}
-		}()
 	}
 
 	return &model{
-		stdout:     actualOutput,
 		cmder:      cmder,
 		currentTab: 0,
 		tabs:       tabs,
 		events:     evts,
 		keys:       keys,
+		follow:     true,
 		footer: help.Model{
 			ShowAll:        false,
 			ShortSeparator: " · ",
@@ -182,37 +140,44 @@ func newModel(cmder ctl.Commander, evts chan interface{}, output *os.File, actua
 	}
 }
 
-func (m *model) Init() tea.Cmd {
-	return tea.Batch(
-		tick(), // enable for more consistent rendering
-		start(m),
-		nextEvent(m.events),
-	)
+func multiScanner(tabId int, events chan interface{}, rs ...io.Reader) (*LineBuffer, error) {
+	buf := NewLineBuffer(120) // use some default width
+
+	for _, r := range rs {
+		s := bufio.NewScanner(r)
+		s.Split(bufio.ScanLines)
+
+		go func() {
+			i := 0
+			for s.Scan() {
+				err := s.Err()
+				if err != nil {
+					return
+				}
+
+				_, _ = buf.Write(s.Bytes())
+
+				i++
+				events <- Update{tab: tabId}
+			}
+		}()
+	}
+
+	return buf, nil
 }
 
-// TODO: becomes EXTREMELY slow real quick. Solution: refactor TUI's buffer so that it only wraps visible viewport,
-// a.k.a. use bubbletea viewport's high performance renderer.
-//func (m *model) softWrappedOutput() string {
-//	output := m.tabs[m.currentTab].output.String()
-//
-//	wrapped := new(bytes.Buffer)
-//
-//	for _, s := range strings.Split(output, "\n") {
-//		ws := wordwrap.WrapString(s, uint(m.width))
-//
-//		wrapped.WriteString(ws)
-//		wrapped.WriteString("\n")
-//	}
-//
-//	return wrapped.String()
-//}
+func (m *model) Init() tea.Cmd {
+	return tea.Batch(
+		start(m),
+		nextEvent(m.events),
+		tick(),
+	)
+}
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
-	// first detect if the user has reached the end of the output, if they did then resume scrolling
-	// if we query this after content is updated it's buggy
-	follow := m.content.AtBottom()
+	updateHeader := false
 
 	switch msg := msg.(type) {
 
@@ -221,103 +186,204 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.NextTab):
 			m.currentTab = (m.currentTab + 1) % len(m.tabs)
 
-			m.content.SetContent(m.tabs[m.currentTab].output.String())
-			m.content.GotoBottom()
+			m.setOffset(m.tabs[m.currentTab].output.Len())
+			m.updateContent()
+			updateHeader = true
 
 		case key.Matches(msg, m.keys.FollowOutput):
-			m.content.GotoBottom()
+			m.follow = true
+			m.setOffset(m.tabs[m.currentTab].output.Len())
+			m.updateContent()
 
 		case key.Matches(msg, m.keys.Restart):
-			m.content.GotoBottom()
+			status := fmt.Sprintf("\n%-*s\n", 10, "restarting")
+			status = aurora.Colorize(status, aurora.CyanFg|aurora.BoldFm).String()
+
+			for _, t := range m.tabs {
+				_, err := t.output.Write([]byte(status))
+				errz.Log(err)
+			}
+
+			m.follow = true
+			m.setOffset(m.tabs[m.currentTab].output.Len())
+			m.updateContent()
+			updateHeader = true
+
 
 			cmds = append(cmds, restart(m))
 
 		case key.Matches(msg, m.keys.Quit):
-			m.content.GotoBottom()
+			status := fmt.Sprintf("\n%-*s\n", 10, "stopping")
+			status = aurora.Colorize(status, aurora.RedFg|aurora.BoldFm).String()
+
+			for _, t := range m.tabs {
+				_, err := t.output.Write([]byte(status))
+				errz.Log(err)
+			}
+
+			m.follow = true
+			m.setOffset(m.tabs[m.currentTab].output.Len())
+			m.updateContent()
+			updateHeader = true
 
 			cmds = append(cmds, stop(m))
+
+		case key.Matches(msg, m.keys.Up):
+			m.follow = false
+			m.updateOffset(-1)
+			m.updateContent()
+
+		case key.Matches(msg, m.keys.Down):
+			m.updateOffset(1)
+			m.updateContent()
+		}
+
+	case tea.MouseMsg:
+		switch {
+		case msg.Type == tea.MouseWheelUp:
+			m.follow = false
+			m.updateOffset(-1)
+			m.updateContent()
+
+		case msg.Type == tea.MouseWheelDown:
+			m.updateOffset(1)
+			m.updateContent()
 		}
 
 	case time.Time:
 		cmds = append(cmds, tick())
 
 	case tea.WindowSizeMsg:
+		if !m.ready {
+			// initialize viewports
+			m.header.SetContent("\n")
+			m.updateOffset(0)
+			m.updateContent()
+			updateHeader = true
+			m.ready = true
+		}
+
 		m.width = msg.Width
 		m.height = msg.Height
 
-		m.updateViewports()
+		m.header.Width = m.width
+		m.header.Height = 2
 
-		m.content.SetContent(m.tabs[m.currentTab].output.String())
+		m.content.Width = m.width
+		m.content.Height = m.height - 4
+
+		m.footer.Width = m.width
+
+		for _, t := range m.tabs {
+			// update all lines in the buffers so that soft wrapping works nicely
+			t.output.SetWidth(m.width)
+		}
+
+		// re-render content after resize
+		m.updateContent()
 
 	case Quit:
 		cmds = append(cmds, tea.Quit)
 
 	case Started:
 		m.starting = false
+		updateHeader = true
 
 	case Restarted:
 		m.restarting = false
+		updateHeader = true
 
 	case Update:
-		// trigger an update of the viewport from whatever tab buffer is currently active
-		m.content.SetContent(m.tabs[m.currentTab].output.String())
+		// ignore updates for tabs that are not currently in view
+		if msg.tab == m.currentTab {
+			// scroll to end for the current tab if following output
+			if m.follow {
+				m.updateOffset(m.tabs[m.currentTab].output.Len())
+			}
+
+			// always re-render content if a new message is received
+			m.updateContent()
+		}
+
 		// listen for the next update event
 		cmds = append(cmds, nextEvent(m.events))
 	}
 
-	var status string
-	if m.starting {
-		status = fmt.Sprintf("%-*s", 10, "starting")
-		status = aurora.Colorize(status, aurora.BlueFg|aurora.BoldFm).String()
-	} else if m.restarting {
-		status = fmt.Sprintf("%-*s", 10, "restarting")
-		status = aurora.Colorize(status, aurora.CyanFg|aurora.BoldFm).String()
-	} else if m.stopping {
-		status = fmt.Sprintf("%-*s", 10, "stopping")
-		status = aurora.Colorize(status, aurora.RedFg|aurora.BoldFm).String()
-	} else {
-		status = fmt.Sprintf("%-*s", 10, "running")
-		status = aurora.Colorize(status, aurora.GreenFg|aurora.BoldFm).String()
-	}
-
-	tabs := make([]string, len(m.tabs))
-
-	for i, tab := range m.tabs {
-		var name string
-		if i == m.currentTab {
-			name = aurora.Colorize(tab.name, aurora.BoldFm).String()
+	// only re-render the header if necessary
+	if updateHeader {
+		// calculate header status
+		var status string
+		if m.starting {
+			status = fmt.Sprintf("%-*s", 10, "starting")
+			status = aurora.Colorize(status, aurora.BlueFg|aurora.BoldFm).String()
+		} else if m.restarting {
+			status = fmt.Sprintf("%-*s", 10, "restarting")
+			status = aurora.Colorize(status, aurora.CyanFg|aurora.BoldFm).String()
+		} else if m.stopping {
+			status = fmt.Sprintf("%-*s", 10, "stopping")
+			status = aurora.Colorize(status, aurora.RedFg|aurora.BoldFm).String()
 		} else {
-			name = aurora.Colorize(tab.name, aurora.WhiteFg).String()
+			status = fmt.Sprintf("%-*s", 10, "running")
+			status = aurora.Colorize(status, aurora.GreenFg|aurora.BoldFm).String()
 		}
 
-		tabs[i] = fmt.Sprintf("[%s]", name)
+		// create tabs
+		tabs := make([]string, len(m.tabs))
+		for i, tab := range m.tabs {
+			var name string
+			if i == m.currentTab {
+				name = aurora.Colorize(tab.name, aurora.BoldFm).String()
+			} else {
+				name = aurora.Colorize(tab.name, aurora.WhiteFg).String()
+			}
+
+			tabs[i] = fmt.Sprintf("[%s]", name)
+		}
+
+		tabsView := strings.Join(tabs, " ")
+
+		m.header.SetContent(fmt.Sprintf("%s  %s", status, tabsView))
+		m.header, _ = m.header.Update(msg)
 	}
 
-	tabsView := strings.Join(tabs, " ")
-
-	m.header.SetContent(fmt.Sprintf("%s  %s", status, tabsView))
-
-	if follow {
-		m.content.GotoBottom()
-	}
-
-	m.header, _ = m.header.Update(msg)
-	m.content, _ = m.content.Update(msg)
+	var updateCmd tea.Cmd
+	m.content, updateCmd = m.content.Update(msg)
+	cmds = append(cmds, updateCmd)
 
 	return m, tea.Batch(cmds...)
 }
 
-func (m *model) updateViewports() {
-	if m.width == 0 || m.height == 0 {
-		return
+func (m *model) updateContent() {
+	buf := m.tabs[m.currentTab].output
+	viewportHeight := m.height - 4
+	bufLen := buf.Len()
+
+	offset := m.scrollOffset
+
+	maxOffset := bufLen
+
+	from := min(offset, maxOffset)
+	to := max(offset+viewportHeight, 0)
+
+	lines := buf.Lines(from, to)
+
+	m.content.SetContent(strings.Join(lines, "\n"))
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
 	}
 
-	m.header.Width = m.width
-	m.content.Width = m.width
-	m.footer.Width = m.width
+	return b
+}
 
-	m.header.Height = 2
-	m.content.Height = m.height - 4
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+
+	return b
 }
 
 func (m *model) View() string {
@@ -332,9 +398,37 @@ func (m *model) View() string {
 	return view.String()
 }
 
+func (m *model) updateOffset(delta int) {
+	m.setOffset(m.scrollOffset + delta*3)
+}
+
+func (m *model) setOffset(offset int) {
+	viewportHeight := m.height - 4
+	buf := m.tabs[m.currentTab].output
+	bufLen := buf.Len()
+
+	maxOffset := bufLen
+
+	if maxOffset > viewportHeight {
+		maxOffset -= viewportHeight
+
+		if offset == bufLen-viewportHeight {
+			m.follow = true
+		}
+
+	} else {
+		maxOffset = 0 // do not allow scrolling if there is nothing else to see
+		m.follow = true
+	}
+
+	offset = max(min(offset, maxOffset), 0)
+
+	m.scrollOffset = offset
+}
+
 func tick() tea.Cmd {
 	return tea.Tick(
-		100*time.Millisecond, func(t time.Time) tea.Msg {
+		1000*time.Millisecond, func(t time.Time) tea.Msg {
 			return t
 		},
 	)
@@ -345,8 +439,9 @@ func start(m *model) tea.Cmd {
 
 	return func() tea.Msg {
 		err := m.cmder.Start()
-		// TODO: error handling
-		errz.Log(err)
+		if err != context.Canceled {
+			errz.Log(err)
+		}
 
 		return Started{}
 	}
@@ -357,10 +452,7 @@ func restart(m *model) tea.Cmd {
 
 	return func() tea.Msg {
 		err := m.cmder.Restart()
-		if err != nil {
-			// TODO: error handling
-			fmt.Println(err)
-		}
+		errz.Log(err)
 
 		return Restarted{}
 	}
@@ -371,10 +463,7 @@ func stop(m *model) tea.Cmd {
 
 	return func() tea.Msg {
 		err := m.cmder.Stop()
-		if err != nil {
-			// TODO: error handling
-			fmt.Println(err)
-		}
+		errz.Log(err)
 
 		return Quit{}
 	}
@@ -385,35 +474,3 @@ func nextEvent(evts chan interface{}) tea.Cmd {
 		return <-evts
 	}
 }
-
-//func fmtCmds(cmds []ctl.Command) string {
-//	out := ""
-//	for _, cmd := range cmds {
-//		status := fmtCmd(cmd)
-//		out += fmt.Sprintf("- %s\n", status)
-//	}
-//	return out
-//}
-
-//func fmtCmdTree(tree ctl.CommandTree) string {
-//	root := treeprint.New()
-//
-//	status := fmtCmd(tree)
-//	root.SetValue(status)
-//
-//	for _, cmd := range tree.Subcommands() {
-//		status := fmtCmd(cmd)
-//		root.AddNode(status)
-//	}
-//
-//	return root.String()
-//}
-
-//func fmtCmd(cmd ctl.Command) string {
-//	running := aurora.Colorize("stopped", aurora.RedFg).String()
-//	if cmd.Running() {
-//		running = aurora.Colorize("running", aurora.GreenFg).String()
-//	}
-//
-//	return fmt.Sprintf("%s (%s)", cmd.Name(), running)
-//}

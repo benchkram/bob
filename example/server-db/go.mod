@@ -3,6 +3,7 @@ module server-db
 go 1.16
 
 require (
+	github.com/charmbracelet/bubbles v0.9.0 // indirect
 	github.com/deepmap/oapi-codegen v1.9.0
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/labstack/echo/v4 v4.6.1

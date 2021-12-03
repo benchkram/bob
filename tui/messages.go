@@ -6,4 +6,6 @@ type Started struct{}
 
 type Restarted struct{}
 
-type Update struct{}
+type Update struct{
+	tab int
+}
