@@ -32,7 +32,7 @@ require (
 	github.com/whilp/git-urls v1.0.0
 	github.com/xlab/treeprint v1.1.0
 	github.com/yargevad/filepathx v1.0.0
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
+	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
