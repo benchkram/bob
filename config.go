@@ -94,7 +94,8 @@ func readGlobalConfig() {
 	// 3: defaults
 	config, err := readConfig(defaultConfig.AsMap())
 	if err != nil {
-		panic(err.Error())
+		fmt.Println(err.Error())
+		return
 	}
 	GlobalConfig = config
 }

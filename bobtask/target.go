@@ -2,6 +2,7 @@ package bobtask
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -47,11 +48,11 @@ func (t *Task) Clean() error {
 	if t.target != nil {
 		for _, f := range t.target.Paths {
 			if t.dir == "" {
-				panic("Task dir not set")
+				return fmt.Errorf("task dir not set")
 			}
 			p := filepath.Join(t.dir, f)
 			if p == "/" {
-				panic("Root cleanup is permitted")
+				return fmt.Errorf("root cleanup is not allowed")
 			}
 
 			//fmt.Printf("Cleaning %s ", p)

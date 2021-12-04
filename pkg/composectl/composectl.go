@@ -3,6 +3,7 @@ package composectl
 import (
 	"context"
 	"fmt"
+	"github.com/Benchkram/errz"
 	"io"
 	"os"
 
@@ -117,7 +118,7 @@ func (ctl *ComposeController) Up(ctx context.Context) error {
 			Timestamps: false,
 		})
 		if err != nil {
-			panic(err)
+			errz.Log(err)
 		}
 	}()
 

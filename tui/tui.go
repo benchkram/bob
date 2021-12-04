@@ -2,10 +2,9 @@ package tui
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/Benchkram/bob/pkg/ctl"
 	tea "github.com/charmbracelet/bubbletea"
+	"os"
 )
 
 type TUI struct {
@@ -40,13 +39,27 @@ func New() (*TUI, error) {
 }
 
 func (t *TUI) Start(cmder ctl.Commander) {
+	programEvts := make(chan interface{}, 1)
+
 	t.prog = tea.NewProgram(
-		newModel(cmder, t.events, t.output),
+		newModel(cmder, t.events, programEvts, t.output),
 		tea.WithAltScreen(),
+		tea.WithoutCatchPanics(),
 		tea.WithMouseAllMotion(),
 		tea.WithInput(os.Stdin),
 		tea.WithOutput(t.stdout),
 	)
+
+	go func() {
+		for e := range programEvts {
+			switch e.(type) {
+			case EnableScroll:
+				t.prog.EnableMouseAllMotion()
+			case DisableScroll:
+				t.prog.DisableMouseAllMotion()
+			}
+		}
+	}()
 
 	defer func() {
 		// restore outputs on exit of the TUI

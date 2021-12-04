@@ -39,10 +39,13 @@ func run(taskname string) {
 	errz.Fatal(err)
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	t, err := tui.New()
 	if err != nil {
-		panic(err)
+		errz.Log(err)
+
+		return
 	}
 
 	commander, err := b.Run(ctx, taskname)

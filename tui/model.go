@@ -32,17 +32,18 @@ type keyMap struct {
 	FollowOutput key.Binding
 	Restart      key.Binding
 	Quit         key.Binding
+	SelectScroll key.Binding
 	Up           key.Binding
 	Down         key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Restart, k.NextTab, k.FollowOutput, k.Quit}
+	return []key.Binding{k.Restart, k.NextTab, k.FollowOutput, k.SelectScroll, k.Quit}
 }
 
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Restart, k.NextTab, k.FollowOutput, k.Quit},
+		{k.Restart, k.NextTab, k.FollowOutput, k.SelectScroll, k.Quit},
 	}
 }
 
@@ -63,6 +64,10 @@ var keys = keyMap{
 		key.WithKeys("ctrl+c"),
 		key.WithHelp("[^C]", "quit"),
 	),
+	SelectScroll: key.NewBinding(
+		key.WithKeys("ctrl+s"),
+		key.WithHelp("[^S]", "select text"),
+	),
 	Up: key.NewBinding(
 		key.WithKeys("up", "pgup", "wheel up"),
 	),
@@ -73,7 +78,9 @@ var keys = keyMap{
 
 type model struct {
 	keys          keyMap
+	scroll        bool
 	events        chan interface{}
+	programEvents chan interface{}
 	cmder         ctl.Commander
 	tabs          []*tab
 	currentTab    int
@@ -95,7 +102,7 @@ type tab struct {
 	output *LineBuffer
 }
 
-func newModel(cmder ctl.Commander, evts chan interface{}, output *os.File) *model {
+func newModel(cmder ctl.Commander, evts, programEvts chan interface{}, output *os.File) *model {
 	tabs := []*tab{}
 
 	buf, err := multiScanner(0, evts, output)
@@ -121,12 +128,14 @@ func newModel(cmder ctl.Commander, evts chan interface{}, output *os.File) *mode
 	}
 
 	return &model{
-		cmder:      cmder,
-		currentTab: 0,
-		tabs:       tabs,
-		events:     evts,
-		keys:       keys,
-		follow:     true,
+		cmder:         cmder,
+		currentTab:    0,
+		scroll:        true,
+		tabs:          tabs,
+		events:        evts,
+		programEvents: programEvts,
+		keys:          keys,
+		follow:        true,
 		footer: help.Model{
 			ShowAll:        false,
 			ShortSeparator: " · ",
@@ -182,7 +191,14 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
+		//for _, r := range msg.Runes {
+		//	print(fmt.Sprintf("%s\n", strconv.QuoteRuneToASCII(r)))
+		//}
+
 		switch {
+		//case string(msg.Runes[0]) == "[":
+		//	errz.Log(fmt.Errorf("%#v", msg.Runes[0]))
+
 		case key.Matches(msg, m.keys.NextTab):
 			m.currentTab = (m.currentTab + 1) % len(m.tabs)
 
@@ -209,7 +225,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.updateContent()
 			updateHeader = true
 
-
 			cmds = append(cmds, restart(m))
 
 		case key.Matches(msg, m.keys.Quit):
@@ -227,6 +242,18 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			updateHeader = true
 
 			cmds = append(cmds, stop(m))
+
+		case key.Matches(msg, m.keys.SelectScroll):
+			scroll := !m.scroll
+			if scroll {
+				m.programEvents <- EnableScroll{}
+				m.keys.SelectScroll.SetHelp("[^S]", "select text")
+			} else {
+				m.programEvents <- DisableScroll{}
+				m.keys.SelectScroll.SetHelp("[^S]", "scroll text")
+			}
+
+			m.scroll = scroll
 
 		case key.Matches(msg, m.keys.Up):
 			m.follow = false
@@ -258,6 +285,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// initialize viewports
 			m.header.SetContent("\n")
 			m.updateOffset(0)
+			if m.follow {
+				m.updateOffset(m.tabs[m.currentTab].output.Len())
+			}
 			m.updateContent()
 			updateHeader = true
 			m.ready = true
@@ -279,6 +309,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.output.SetWidth(m.width)
 		}
 
+		if m.follow {
+			m.updateOffset(m.tabs[m.currentTab].output.Len())
+		}
 		// re-render content after resize
 		m.updateContent()
 
@@ -460,6 +493,7 @@ func restart(m *model) tea.Cmd {
 
 func stop(m *model) tea.Cmd {
 	m.stopping = true
+	m.programEvents <- DisableScroll{}
 
 	return func() tea.Msg {
 		err := m.cmder.Stop()

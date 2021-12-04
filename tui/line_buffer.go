@@ -96,7 +96,6 @@ func (s *LineBuffer) Len() int {
 	return len(s.lines)
 }
 
-
 func (s *LineBuffer) wrap(line string) []string {
 	wl := wordwrap.WrapString(line, uint(s.width))
 	return strings.Split(wl, "\n")
