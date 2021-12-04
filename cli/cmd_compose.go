@@ -1,4 +1,4 @@
-package main
+package cli
 
 // var composeCmd = &cobra.Command{
 // 	Use:   "compose",

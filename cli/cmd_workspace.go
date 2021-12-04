@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"github.com/spf13/cobra"
@@ -7,16 +7,16 @@ import (
 	"github.com/Benchkram/errz"
 )
 
-var cmdWorkspaceNew = &cobra.Command{
-	Use:   "new",
-	Short: "Create a new bob workspace",
+var cmdWorkspace = &cobra.Command{
+	Use:   "workspace",
+	Short: "Manage a bob workspace",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		runWorkspaceNew()
+		runInit()
 	},
 }
 
-func runWorkspaceNew() {
+func runInit() {
 	bob, err := bob.Bob()
 	errz.Fatal(err)
 
