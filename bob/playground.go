@@ -331,8 +331,8 @@ func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite boo
 	bobfile := bobfile.NewBobfile()
 
 	exports := make(export.Map)
-	exports["openapi"] = export.E("openapi.yaml")
-	exports["openapi2"] = export.E("openapi2.yaml")
+	exports["openapi"] = "openapi.yaml"
+	exports["openapi2"] = "openapi2.yaml"
 	bobfile.Tasks["openapi"] = bobtask.Task{
 		Exports: exports,
 	}
@@ -346,6 +346,7 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) 
 	}
 
 	bobfile := bobfile.NewBobfile()
+	bobfile.Version = "1.2.3"
 
 	bobfile.Tasks[fmt.Sprintf("%s2", global.DefaultBuildTask)] = bobtask.Task{
 		InputDirty: "./main2.go",
@@ -365,6 +366,7 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
 	}
 
 	bobfile := bobfile.NewBobfile()
+	bobfile.Version = "4.5.6"
 
 	bobfile.Tasks[fmt.Sprintf("%s3", global.DefaultBuildTask)] = bobtask.Task{
 		InputDirty:  "*",

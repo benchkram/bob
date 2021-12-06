@@ -15,6 +15,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.5
+	github.com/hashicorp/go-version v1.3.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mholt/archiver/v3 v3.5.0

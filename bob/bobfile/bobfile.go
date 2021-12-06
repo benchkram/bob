@@ -3,6 +3,7 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
+	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"path/filepath"
@@ -39,6 +40,8 @@ var (
 )
 
 type Bobfile struct {
+	Version string `yaml:"version,omitempty"`
+
 	Variables VariableMap
 
 	Tasks bobtask.Map
@@ -133,6 +136,13 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 
 // Validate makes sure no task depends on itself (self-reference) or has the same name as another task
 func (b *Bobfile) Validate() (err error) {
+	if b.Version != "" {
+		_, err = version.NewVersion(b.Version)
+		if err != nil {
+			return fmt.Errorf("invalid version '%s' (%s)", b.Version, b.Dir())
+		}
+	}
+
 	// use for duplicate names validation
 	names := map[string]bool{}
 

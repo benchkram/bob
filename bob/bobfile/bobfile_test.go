@@ -30,3 +30,23 @@ func TestBobfileValidateDuplicateName(t *testing.T) {
 		t.Error("Expected error, got nil")
 	}
 }
+
+func TestBobfileValidateInvalidVersion(t *testing.T) {
+	b := bobfile.NewBobfile()
+
+	b.Version = "invalid-version"
+
+	if err := b.Validate(); err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestBobfileValidateValidVersion(t *testing.T) {
+	b := bobfile.NewBobfile()
+
+	b.Version = "1.2.3"
+
+	if err := b.Validate(); err != nil {
+		t.Error("Expected nil, got error")
+	}
+}

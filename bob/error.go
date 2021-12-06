@@ -10,4 +10,5 @@ var (
 	ErrWorkspaceAlreadyInitialised = fmt.Errorf("Bob Workspace Already Initialized")
 	ErrTargetValidationFailed      = fmt.Errorf("Target validation failed")
 	ErrCouldNotFindTopLevelBobfile = fmt.Errorf("Could not find top-level Bobfile")
+	ErrInvalidVersion              = fmt.Errorf("invalid version")
 )

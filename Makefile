@@ -1,4 +1,5 @@
 SHELL := /usr/bin/env bash
+VERSION := "0.0.0"
 
 .PHONY: help
 help:
@@ -10,11 +11,11 @@ run: build # build and run the tool
 
 .PHONY: build
 build: # build the tool
-	@go build -o ./run
+	@go build -ldflags="-X 'main.Version=${VERSION}'" -o ./run
 
 .PHONY: install
 install: # install the tool
-	@go install
+	@go install -ldflags="-X 'main.Version=${VERSION}'"
 
 .PHONY: test
 test: # run tests

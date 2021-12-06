@@ -1,6 +1,8 @@
 package bob
 
 import (
+	"fmt"
+	"github.com/logrusorgru/aurora"
 	"path/filepath"
 	"strings"
 
@@ -8,6 +10,7 @@ import (
 
 	"github.com/Benchkram/bob/bob/bobfile"
 	"github.com/Benchkram/bob/pkg/filepathutil"
+	"github.com/hashicorp/go-version"
 )
 
 // find bobfiles recursively.
@@ -24,6 +27,28 @@ func (b *B) find() (bobfiles []string, err error) {
 	}
 
 	return bobfiles, nil
+}
+
+func (b *B) CheckVersionCompatibility(bobfiles []*bobfile.Bobfile) (err error) {
+	binVersion, _ := version.NewVersion(Version)
+
+	for _, boblet := range bobfiles {
+		if boblet.Version != "" {
+			bobletVersion, _ := version.NewVersion(boblet.Version)
+
+			if binVersion.Core().Segments64()[0] != bobletVersion.Core().Segments64()[0] {
+				fmt.Println(aurora.Red(fmt.Sprintf("Warning: major version mismatch: Your bobfile's major version (v%s, '%s') is different from the CLI version (v%s). This might lead to unexpected errors.", boblet.Version, boblet.Dir(), binVersion)).String())
+				continue
+			}
+
+			if binVersion.LessThan(bobletVersion) {
+				fmt.Println(aurora.Red(fmt.Sprintf("Warning: possible version incompatibility: Your bobfile's version (v%s, '%s') is higher than the CLI version (v%s). Some features might not work as expected.", boblet.Version, boblet.Dir(), binVersion)).String())
+				continue
+			}
+		}
+	}
+
+	return nil
 }
 
 // Aggregate determine and read Bobfiles recursively into memory
@@ -59,6 +84,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 	if aggregate == nil {
 		return nil, ErrCouldNotFindTopLevelBobfile
+	}
+
+	if err := b.CheckVersionCompatibility(bobs); err != nil {
+		return nil, ErrInvalidVersion
 	}
 
 	// Merge tasks into one Bobfile

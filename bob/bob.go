@@ -1,6 +1,7 @@
 package bob
 
 import (
+	"github.com/hashicorp/go-version"
 	"io/ioutil"
 	"os"
 
@@ -13,8 +14,9 @@ import (
 	"github.com/Benchkram/bob/pkg/store"
 )
 
-type B struct {
+var Version = "0.0.0"
 
+type B struct {
 	// DefaultCloneSchema used for cloning repos, `ssh` | `https`
 	DefaultCloneSchema CloneSchema
 
@@ -62,6 +64,11 @@ func newBob(opts ...Option) *B {
 func BobWithBaseStoreDir(baseStoreDir string, opts ...Option) (*B, error) {
 	bob := newBob(opts...)
 
+	_, err := version.NewVersion(Version)
+	if err != nil {
+		return nil, ErrInvalidVersion
+	}
+
 	fs, err := Filestore(baseStoreDir)
 	if err != nil {
 		return nil, err
@@ -86,6 +93,11 @@ func BobWithBaseStoreDir(baseStoreDir string, opts ...Option) (*B, error) {
 
 func Bob(opts ...Option) (*B, error) {
 	bob := newBob(opts...)
+
+	_, err := version.NewVersion(Version)
+	if err != nil {
+		return nil, ErrInvalidVersion
+	}
 
 	if bob.readConfig {
 		err := bob.read()
