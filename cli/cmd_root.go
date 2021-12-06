@@ -74,7 +74,7 @@ var rootCmd = &cobra.Command{
 				//
 				//}
 
-				fmt.Printf("bob version v%s %s/%s\n", bob.Version, runtime.GOOS, runtime.GOARCH)
+				fmt.Printf("bob version %s %s/%s\n", bob.Version, runtime.GOOS, runtime.GOARCH)
 				os.Exit(0)
 			}
 		}

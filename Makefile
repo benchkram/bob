@@ -1,5 +1,5 @@
+VERSION := "v0.0.0-development"
 SHELL := /usr/bin/env bash
-VERSION := "0.0.0"
 
 .PHONY: help
 help:

@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	dir string
+	dir     string
 	version string
 
 	stdout *os.File
-	pr *os.File
-	pw *os.File
+	pr     *os.File
+	pw     *os.File
 
 	b *bob.B
 )

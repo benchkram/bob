@@ -7,7 +7,6 @@ on:
     branches: [ main ]
 
 # Using one job for validation to save computing time.
-# Linting and Unittest can reuse go dependencies which save costs.
 
 jobs:
   # Verify, lint and run tests
@@ -16,6 +15,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      # # cache go packages, check go sum before install
+      # - name: Cache go modules
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ~/go/pkg/mod
+      #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      #     restore-keys: ${{ runner.os }}-go-
 
       - name: Set up Go
         uses: actions/setup-go@v2

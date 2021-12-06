@@ -37,12 +37,12 @@ func (b *B) CheckVersionCompatibility(bobfiles []*bobfile.Bobfile) (err error) {
 			bobletVersion, _ := version.NewVersion(boblet.Version)
 
 			if binVersion.Core().Segments64()[0] != bobletVersion.Core().Segments64()[0] {
-				fmt.Println(aurora.Red(fmt.Sprintf("Warning: major version mismatch: Your bobfile's major version (v%s, '%s') is different from the CLI version (v%s). This might lead to unexpected errors.", boblet.Version, boblet.Dir(), binVersion)).String())
+				fmt.Println(aurora.Red(fmt.Sprintf("Warning: major version mismatch: Your bobfile's major version (%s, '%s') is different from the CLI version (%s). This might lead to unexpected errors.", boblet.Version, boblet.Dir(), binVersion)).String())
 				continue
 			}
 
 			if binVersion.LessThan(bobletVersion) {
-				fmt.Println(aurora.Red(fmt.Sprintf("Warning: possible version incompatibility: Your bobfile's version (v%s, '%s') is higher than the CLI version (v%s). Some features might not work as expected.", boblet.Version, boblet.Dir(), binVersion)).String())
+				fmt.Println(aurora.Red(fmt.Sprintf("Warning: possible version incompatibility: Your bobfile's version (%s, '%s') is higher than the CLI version (%s). Some features might not work as expected.", boblet.Version, boblet.Dir(), binVersion)).String())
 				continue
 			}
 		}

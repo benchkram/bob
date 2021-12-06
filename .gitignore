@@ -1,10 +1,10 @@
 /.bob
 /Bobfile
-vendor/
+/vendor
 
 .vscode
 .idea
 
-dist/
+/dist
 
 run
