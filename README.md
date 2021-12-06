@@ -105,7 +105,7 @@ Highlighted directories indicate other git repository and therfore `bob git add`
 ⚠️ So far only `bob clone` and `bob git status` are implemented.⚠️
 
 Take a look into the [git readme](./bobgit/README.md) for the current status of `bob git`
-## Setting Up a Workspace 
+### Setting Up a Workspace 
 
 To set up a new bob workspace you first have to initialise it.
 

@@ -17,7 +17,7 @@ tasks:
     cmd: go build -o ./build/server main.go
     dependson:
       - generate-api
-    target: "/build/server"
+    target: /build/server
 runs:
   server:
     type: binary
