@@ -2,10 +2,11 @@ package cli
 
 import (
 	"fmt"
-	"github.com/Benchkram/bob/pkg/boblog"
 	"os"
 	"runtime"
 	"strconv"
+
+	"github.com/Benchkram/bob/pkg/boblog"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/spf13/cobra"
