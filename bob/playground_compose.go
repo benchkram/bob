@@ -9,9 +9,10 @@ services:
     image: adminer
     restart: always
     ports:
-      - 50001:50001
-      - 5555:5555/udp
-      - 9090-9091:8080-8081
+      - "8080:8080"
+      #- 50001:50001
+      #- 5555:5555/udp
+      #- 9090-9091:8080-8081
     depends_on:
       - mysql
   mysql:
@@ -20,8 +21,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: pass
     ports:
-      - 9090-9091:8080-8081 # weird case
-      - 6379:6379 # conflict with local env and mongo
+      - "3306:3306"
+      #- 9090-9091:8080-8081 # weird case
+      #- 6379:6379 # conflict with local env and mongo
   mongo:
     image: mongo
     restart: always
@@ -29,10 +31,10 @@ services:
       MONGO_INITDB_ROOT_USERNAME: user
       MONGO_INITDB_ROOT_PASSWORD: pass
     ports:
-      - 27017:27017
-      - 9090-9091:8080-8081 # weird case
-      - 6379:6379 # conflict with local env and mysql
-      - 5555:5558/udp # different container port, but host collides
+      - "27017:27017"
+      #- 9090-9091:8080-8081 # weird case
+      #- 6379:6379 # conflict with local env and mysql
+      #- 5555:5558/udp # different container port, but host collides
 `)
 
 var dockercomposewhoami = []byte(`version: '3'
