@@ -145,7 +145,12 @@ func fprintChanges(
 	dir, basename := splitDirAndBasename(repoPath)
 	// fmt.Printf("prefix: [%s] path: [%s]\n", dir, basename)
 
-	if status.Staging == git.Renamed {
+	// check for the conflicts first
+	if status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged {
+		conflictText := getConflictText(status)
+		fmt.Fprint(buf, color(conflictText+aurora.Bold(withSlash(basename)).String()).String())
+		fmt.Fprintln(buf, color(localPath).String())
+	} else if status.Staging == git.Renamed {
 		//fmt.Fprint(buf, color("renamed:   "+aurora.Bold(withSlash(repoName)).String()).String())
 		fmt.Fprint(buf, color("renamed:    "))
 		fmt.Fprint(buf, color(dir).String())
@@ -163,9 +168,6 @@ func fprintChanges(
 		fmt.Fprintln(buf, color(localPath).String())
 	} else if status.Staging == git.Deleted || status.Worktree == git.Deleted {
 		fmt.Fprint(buf, color("deleted:    "+dir+aurora.Bold(withSlash(basename)).String()).String())
-		fmt.Fprintln(buf, color(localPath).String())
-	} else if status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged {
-		fmt.Fprint(buf, color("both modified:	"+aurora.Bold(withSlash(basename)).String()).String())
 		fmt.Fprintln(buf, color(localPath).String())
 	} else {
 		fmt.Fprint(buf, color(dir).String())
@@ -215,4 +217,22 @@ func splitDirAndBasename(path string) (prefix, name string) {
 		}
 	}
 	return prefix, name
+}
+
+// return the merge conflict text for the file
+// depending on the conflicting status
+// on merge, delete, etc
+func getConflictText(status *git.FileStatus) string {
+	conflictText := "both modified: \t"
+
+	// fmt.Println(string(status.Staging) + " " + string(status.Worktree))
+
+	if status.Worktree == git.UpdatedButUnmerged && status.Staging == git.Deleted {
+		conflictText = "deleted by us: \t"
+	}
+	if status.Staging == git.UpdatedButUnmerged && status.Worktree == git.Deleted {
+		conflictText = "deleted by them: \t"
+	}
+
+	return conflictText
 }
