@@ -223,15 +223,15 @@ func splitDirAndBasename(path string) (prefix, name string) {
 // depending on the conflicting status
 // on merge, delete, etc
 func getConflictText(status *git.FileStatus) string {
-	conflictText := "both modified: \t"
+	conflictText := "both modified:	"
 
 	// fmt.Println(string(status.Staging) + " " + string(status.Worktree))
 
 	if status.Worktree == git.UpdatedButUnmerged && status.Staging == git.Deleted {
-		conflictText = "deleted by us: \t"
+		conflictText = "deleted by us:	"
 	}
 	if status.Staging == git.UpdatedButUnmerged && status.Worktree == git.Deleted {
-		conflictText = "deleted by them: \t"
+		conflictText = "deleted by them:	"
 	}
 
 	return conflictText
