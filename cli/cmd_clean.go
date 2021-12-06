@@ -10,7 +10,7 @@ import (
 
 var cleanCmd = &cobra.Command{
 	Use:   "clean",
-	Short: "Clean buildinfo",
+	Short: "Clean buildinfo and artifacts",
 	//Args:  cobra.ExactArgs(1),
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -25,6 +25,6 @@ func runClean() {
 	err = b.Clean()
 	errz.Log(err)
 
-	fmt.Println("build info store cleaned")
-	fmt.Println("local artifact store cleaned")
+	fmt.Println("build info cleaned")
+	fmt.Println("artifacts cleaned")
 }

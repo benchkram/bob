@@ -1,3 +1,5 @@
+// +build dev
+
 package cli
 
 import (
@@ -14,6 +16,11 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	playgroundCmd.Flags().Bool("clean", false, "Delete directory content before creating the playground")
+	rootCmd.AddCommand(playgroundCmd)
+}
 
 var playgroundCmd = &cobra.Command{
 	Use:   "playground",

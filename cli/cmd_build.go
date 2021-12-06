@@ -18,7 +18,7 @@ import (
 
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Build the project",
+	Short: "Run tasks",
 	Args:  cobra.MinimumNArgs(0),
 	Long:  ``,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{

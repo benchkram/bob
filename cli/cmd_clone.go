@@ -12,7 +12,7 @@ import (
 
 var CmdClone = &cobra.Command{
 	Use:   "clone",
-	Short: "Clone repo + child repos",
+	Short: "Clone a bob workspace and child repositorys",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		var url string

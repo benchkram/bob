@@ -1,3 +1,5 @@
+// +build dev
+
 package cli
 
 import (
@@ -9,6 +11,12 @@ import (
 	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	inspectCmd.AddCommand(envCmd)
+	inspectCmd.AddCommand(exportCmd)
+	rootCmd.AddCommand(inspectCmd)
+}
 
 var inspectCmd = &cobra.Command{
 	Use:   "inspect",

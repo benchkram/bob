@@ -12,7 +12,7 @@ import (
 
 var verifyCmd = &cobra.Command{
 	Use:   "verify",
-	Short: "Verify Bobfile",
+	Short: "Verify bob.yaml files in a workspace",
 	//Args:  cobra.ExactArgs(1),
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {

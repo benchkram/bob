@@ -2,11 +2,12 @@ package cli
 
 import (
 	"fmt"
-	"github.com/Benchkram/bob/bob"
-	"github.com/spf13/cobra"
 	"os"
 	"runtime"
 	"strconv"
+
+	"github.com/Benchkram/bob/bob"
+	"github.com/spf13/cobra"
 
 	"github.com/Benchkram/errz"
 )
@@ -26,8 +27,6 @@ func init() {
 	rootCmd.AddCommand(verifyCmd)
 	rootCmd.AddCommand(CmdClone)
 	rootCmd.AddCommand(cleanCmd)
-	// used for debugging and not part of the cli.
-	// rootCmd.AddCommand(composeCmd)
 
 	// workspace
 	cmdWorkspace.AddCommand(cmdWorkspaceNew)
@@ -37,15 +36,6 @@ func init() {
 	// runCmd
 	runCmd.AddCommand(runListCmd)
 	rootCmd.AddCommand(runCmd)
-
-	// playgroundCmd
-	playgroundCmd.Flags().Bool("clean", false, "Delete directory content before creating the playground")
-	rootCmd.AddCommand(playgroundCmd)
-
-	// inspectCmd
-	inspectCmd.AddCommand(envCmd)
-	inspectCmd.AddCommand(exportCmd)
-	rootCmd.AddCommand(inspectCmd)
 
 	// buildCmd
 	buildCmd.Flags().Bool("dummy", false, "Create a dummy bobfile")
@@ -59,8 +49,13 @@ func init() {
 
 var rootCmd = &cobra.Command{
 	Use:   "bob",
-	Short: "cli to run bob - the build tool",
-	Long:  `TODO`,
+	Short: "A build tool from space, down on earth.",
+	Long: `A build tool from space, down on earth.
+
+Commonly used cmds:
+    bob build          execute the default build task
+    bob workspace new  create a new workspace
+    bob git status     git like status for multi repositories`,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{
 		UnknownFlags: true,
 	},
