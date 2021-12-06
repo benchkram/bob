@@ -167,16 +167,7 @@ func TestStatus(t *testing.T) {
 					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
 					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
 
-					assert.Nil(t, cmdutil.RunGit(dir, "checkout", "-b", "target_branch"))
-					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file content changed in target branch"), 0664))
-					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content from target branch"))
-
-					assert.Nil(t, cmdutil.RunGit(dir, "checkout", "master"))
-					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file content changed in main branch"), 0664))
-					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content from target branch"))
-					assert.NotNil(t, cmdutil.RunGit(dir, "merge", "target_branch"))
+					assertMergeConflict(t, dir)
 				},
 			},
 			"",
@@ -293,4 +284,17 @@ func getStatus(dir string) (s *status.S, err error) {
 	defer func() { _ = os.Chdir(wd) }()
 
 	return Status()
+}
+
+func assertMergeConflict(t *testing.T, dir string) {
+	assert.Nil(t, cmdutil.RunGit(dir, "checkout", "-b", "target_branch"))
+	assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file content changed in target branch"), 0664))
+	assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+	assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content from target branch"))
+
+	assert.Nil(t, cmdutil.RunGit(dir, "checkout", "master"))
+	assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file content changed in main branch"), 0664))
+	assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+	assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content from target branch"))
+	assert.NotNil(t, cmdutil.RunGit(dir, "merge", "target_branch"))
 }

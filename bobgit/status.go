@@ -119,8 +119,6 @@ func Status() (s *status.S, err error) {
 				s.Staging[repoPath][localpath] = status
 			}
 
-			fmt.Println(string(status.Staging) + " " + string(status.Worktree))
-
 			// Unstaged aka worktree
 			if status.Worktree == git.Modified ||
 				status.Worktree == git.Deleted {
