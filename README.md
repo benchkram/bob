@@ -25,7 +25,7 @@ With bob, you can:
 - **Multi-Repo Tooling** Easily manage multi-repo setups, with bulk Git operations.
 
 
-⚠️⚠️⚠️ *Warning: Bob and its documentation is in a early stage and not yet ready for production use. Most of the
+⚠️⚠️⚠️ *Warning: Bob and its documentation is in a early stage. Most of the
 features are fully-functional and tested, but some details are yet to be ironed out.*
 
 
