@@ -149,7 +149,9 @@ func fprintChanges(
 	// fmt.Println(string(status.Staging) + " " + string(status.Worktree))
 
 	// check for the conflicts first
-	if (status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged) || (status.Staging == git.Deleted && status.Worktree == git.Deleted) {
+	if (status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged) ||
+		(status.Staging == git.Deleted && status.Worktree == git.Deleted) ||
+		(status.Staging == git.Added && status.Worktree == git.Added) {
 		conflictText := getConflictText(status)
 		fmt.Fprint(buf, color(conflictText+aurora.Bold(withSlash(basename)).String()).String())
 		fmt.Fprintln(buf, color(localPath).String())
@@ -228,8 +230,6 @@ func splitDirAndBasename(path string) (prefix, name string) {
 func getConflictText(status *git.FileStatus) string {
 	conflictText := "both modified:\t"
 
-	// fmt.Println(string(status.Staging) + " " + string(status.Worktree))
-
 	if status.Worktree == git.UpdatedButUnmerged && status.Staging == git.Deleted {
 		conflictText = "deleted by us:\t"
 	}
@@ -244,6 +244,9 @@ func getConflictText(status *git.FileStatus) string {
 	}
 	if status.Staging == git.UpdatedButUnmerged && status.Worktree == git.Added {
 		conflictText = "added by them:\t"
+	}
+	if status.Staging == git.Added && status.Worktree == git.Added {
+		conflictText = "both added:\t"
 	}
 
 	return conflictText

@@ -298,7 +298,7 @@ func TestStatus(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "new"), []byte("added some text to new from main"), 0664))
 					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
 					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "new file added"))
-					assetMergeAddedConflict(t, dir)
+					assertMergeAddedConflict(t, dir)
 
 					repo := filepath.Join(dir, "repo")
 					assert.Nil(t, os.MkdirAll(repo, 0775))
@@ -309,7 +309,36 @@ func TestStatus(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(repo, "new"), []byte("added some text to new from main"), 0664))
 					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
 					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "new file added"))
-					assetMergeAddedConflict(t, repo)
+					assertMergeAddedConflict(t, repo)
+				},
+			},
+			"",
+		},
+		{
+			"status_conflict_added_by_both",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
+
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assertMergeAddedByBothConflict(t, dir)
+
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "new"), []byte("added some text to new from main"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "new file added"))
+					assertMergeAddedByBothConflict(t, repo)
 				},
 			},
 			"",
@@ -418,7 +447,7 @@ func assertMergeDeleteConflict(t *testing.T, dir string, deletedInMain bool) {
 	assert.NotNil(t, cmdutil.RunGit(dir, "merge", "target_branch"))
 }
 
-func assetMergeAddedConflict(t *testing.T, dir string) {
+func assertMergeAddedConflict(t *testing.T, dir string) {
 	assert.Nil(t, cmdutil.RunGit(dir, "checkout", "-b", "target_branch"))
 	assert.Nil(t, os.Rename(filepath.Join(dir, "new"), filepath.Join(dir, "new1")))
 	assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
@@ -426,6 +455,19 @@ func assetMergeAddedConflict(t *testing.T, dir string) {
 
 	assert.Nil(t, cmdutil.RunGit(dir, "checkout", "master"))
 	assert.Nil(t, os.Rename(filepath.Join(dir, "new"), filepath.Join(dir, "new2")))
+	assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+	assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "File content updated in master branch"))
+	assert.NotNil(t, cmdutil.RunGit(dir, "merge", "target_branch"))
+}
+
+func assertMergeAddedByBothConflict(t *testing.T, dir string) {
+	assert.Nil(t, cmdutil.RunGit(dir, "checkout", "-b", "target_branch"))
+	assert.Nil(t, os.WriteFile(filepath.Join(dir, "new1.txt"), []byte("New file created by target branch"), 0664))
+	assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+	assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Renamed file from target branch"))
+
+	assert.Nil(t, cmdutil.RunGit(dir, "checkout", "master"))
+	assert.Nil(t, os.WriteFile(filepath.Join(dir, "new1.txt"), []byte("New file created by master branch"), 0664))
 	assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
 	assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "File content updated in master branch"))
 	assert.NotNil(t, cmdutil.RunGit(dir, "merge", "target_branch"))

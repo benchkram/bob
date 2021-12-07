@@ -1,0 +1,12 @@
+On at least one repository
+You have unmerged paths.
+  (fix conflicts using plain git)
+
+Unmerged paths:
+        [31mboth added:	[1m[0m[0m[31mnew1.txt[0m
+        [31mboth added:	[1mrepo/[0m[0m[31mnew1.txt[0m
+Changes to be committed:
+
+Changes not staged for commit:
+
+Untracked files:

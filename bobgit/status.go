@@ -110,8 +110,8 @@ func Status() (s *status.S, err error) {
 				continue
 			}
 
-			// if deleted in both, add to conflicts and skip others
-			if status.Staging == git.Deleted && status.Worktree == git.Deleted {
+			// if deleted or added in both, add to conflicts and skip others
+			if (status.Staging == git.Deleted && status.Worktree == git.Deleted) || (status.Staging == git.Added && status.Worktree == git.Added) {
 				s.Conflicts[repoPath][localpath] = status
 				continue
 			}
