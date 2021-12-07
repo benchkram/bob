@@ -110,6 +110,12 @@ func Status() (s *status.S, err error) {
 				continue
 			}
 
+			// if deleted in both, add to conflicts and skip others
+			if status.Staging == git.Deleted && status.Worktree == git.Deleted {
+				s.Conflicts[repoPath][localpath] = status
+				continue
+			}
+
 			// Staging aka index
 			if status.Staging == git.Renamed ||
 				status.Staging == git.Added ||
