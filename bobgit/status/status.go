@@ -51,9 +51,10 @@ func (s *S) String() string {
 		var conflictingRepos []string
 		for _, repoName := range keys {
 			repoStatus := s.Conflicts[repoName]
-			for path, status := range repoStatus {
+			repoStatusKeys := sortedKeysStatus(repoStatus)
+			for _, path := range repoStatusKeys {
 				fmt.Fprint(b, spacing)
-				fprintChanges(b, repoName, path, status, aurora.Red)
+				fprintChanges(b, repoName, path, repoStatus[path], aurora.Red)
 				conflictingRepos = append(conflictingRepos, repoName)
 			}
 		}
