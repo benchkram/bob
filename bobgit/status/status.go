@@ -153,7 +153,7 @@ func fprintChanges(
 		(status.Staging == git.Deleted && status.Worktree == git.Deleted) ||
 		(status.Staging == git.Added && status.Worktree == git.Added) {
 		conflictText := getConflictText(status)
-		fmt.Fprint(buf, color(conflictText+aurora.Bold(withSlash(basename)).String()).String())
+		fmt.Fprint(buf, color(conflictText+dir+aurora.Bold(withSlash(basename)).String()).String())
 		fmt.Fprintln(buf, color(localPath).String())
 	} else if status.Staging == git.Renamed {
 		//fmt.Fprint(buf, color("renamed:   "+aurora.Bold(withSlash(repoName)).String()).String())
