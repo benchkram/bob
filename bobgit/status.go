@@ -103,6 +103,19 @@ func Status() (s *status.S, err error) {
 				continue
 			}
 
+			// Conflicts
+			// skip other checks if conflict happens for a file
+			if status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged {
+				s.Conflicts[repoPath][localpath] = status
+				continue
+			}
+
+			// if deleted or added in both, add to conflicts and skip others
+			if (status.Staging == git.Deleted && status.Worktree == git.Deleted) || (status.Staging == git.Added && status.Worktree == git.Added) {
+				s.Conflicts[repoPath][localpath] = status
+				continue
+			}
+
 			// Staging aka index
 			if status.Staging == git.Renamed ||
 				status.Staging == git.Added ||
@@ -121,11 +134,6 @@ func Status() (s *status.S, err error) {
 			// Untracked
 			if status.Worktree == git.Untracked && status.Staging == git.Untracked {
 				s.Untracked[repoPath][localpath] = status
-			}
-
-			// Conflicts
-			if status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged {
-				s.Conflicts[repoPath][localpath] = status
 			}
 		}
 	}

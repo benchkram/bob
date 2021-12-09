@@ -51,9 +51,10 @@ func (s *S) String() string {
 		var conflictingRepos []string
 		for _, repoName := range keys {
 			repoStatus := s.Conflicts[repoName]
-			for path, status := range repoStatus {
+			repoStatusKeys := sortedKeysStatus(repoStatus)
+			for _, path := range repoStatusKeys {
 				fmt.Fprint(b, spacing)
-				fprintChanges(b, repoName, path, status, aurora.Red)
+				fprintChanges(b, repoName, path, repoStatus[path], aurora.Red)
 				conflictingRepos = append(conflictingRepos, repoName)
 			}
 		}
@@ -145,7 +146,16 @@ func fprintChanges(
 	dir, basename := splitDirAndBasename(repoPath)
 	// fmt.Printf("prefix: [%s] path: [%s]\n", dir, basename)
 
-	if status.Staging == git.Renamed {
+	// fmt.Println(string(status.Staging) + " " + string(status.Worktree))
+
+	// check for the conflicts first
+	if (status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged) ||
+		(status.Staging == git.Deleted && status.Worktree == git.Deleted) ||
+		(status.Staging == git.Added && status.Worktree == git.Added) {
+		conflictText := getConflictText(status)
+		fmt.Fprint(buf, color(conflictText+dir+aurora.Bold(withSlash(basename)).String()).String())
+		fmt.Fprintln(buf, color(localPath).String())
+	} else if status.Staging == git.Renamed {
 		//fmt.Fprint(buf, color("renamed:   "+aurora.Bold(withSlash(repoName)).String()).String())
 		fmt.Fprint(buf, color("renamed:    "))
 		fmt.Fprint(buf, color(dir).String())
@@ -163,9 +173,6 @@ func fprintChanges(
 		fmt.Fprintln(buf, color(localPath).String())
 	} else if status.Staging == git.Deleted || status.Worktree == git.Deleted {
 		fmt.Fprint(buf, color("deleted:    "+dir+aurora.Bold(withSlash(basename)).String()).String())
-		fmt.Fprintln(buf, color(localPath).String())
-	} else if status.Staging == git.UpdatedButUnmerged || status.Worktree == git.UpdatedButUnmerged {
-		fmt.Fprint(buf, color("both modified:	"+aurora.Bold(withSlash(basename)).String()).String())
 		fmt.Fprintln(buf, color(localPath).String())
 	} else {
 		fmt.Fprint(buf, color(dir).String())
@@ -215,4 +222,32 @@ func splitDirAndBasename(path string) (prefix, name string) {
 		}
 	}
 	return prefix, name
+}
+
+// return the merge conflict text for the file
+// depending on the conflicting status
+// on merge, delete, etc
+func getConflictText(status *git.FileStatus) string {
+	conflictText := "both modified:\t"
+
+	if status.Worktree == git.UpdatedButUnmerged && status.Staging == git.Deleted {
+		conflictText = "deleted by us:\t"
+	}
+	if status.Staging == git.UpdatedButUnmerged && status.Worktree == git.Deleted {
+		conflictText = "deleted by them:\t"
+	}
+	if status.Staging == git.Deleted && status.Worktree == git.Deleted {
+		conflictText = "both deleted:\t"
+	}
+	if status.Worktree == git.UpdatedButUnmerged && status.Staging == git.Added {
+		conflictText = "added by us:\t"
+	}
+	if status.Staging == git.UpdatedButUnmerged && status.Worktree == git.Added {
+		conflictText = "added by them:\t"
+	}
+	if status.Staging == git.Added && status.Worktree == git.Added {
+		conflictText = "both added:\t"
+	}
+
+	return conflictText
 }
