@@ -16,11 +16,6 @@ type RebuildOptions struct {
 func (t *Task) NeedsRebuild(options *RebuildOptions) (_ bool, err error) {
 	defer errz.Recover(&err)
 
-	// returns true if rebuild strategy set to `always`
-	if t.rebuild == ALWAYS {
-		return true, nil
-	}
-
 	var hashIn *hash.In
 	if options != nil {
 		if options.HashIn != nil {
