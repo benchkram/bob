@@ -65,8 +65,8 @@ func (rc *RebuildCause) String() string {
 }
 
 const (
-	TaskForcedRebuild RebuildCause = "always-rebuild"
 	TaskInputChanged  RebuildCause = "input-changed"
+	TaskForcedRebuild RebuildCause = "always-rebuild"
 	DependencyChanged RebuildCause = "dependency-changed"
 	TargetInvalid     RebuildCause = "target-invalid"
 )
@@ -87,7 +87,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 	// println("task dir:" + task.Dir())
 
 	// returns true if rebuild strategy set to `always`
-	if task.Rebuild() == bobtask.ALWAYS {
+	if task.Rebuild() == bobtask.AlwaysRebuild {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tREBUILDING\t(rebuild set to always)", p.namePad, coloredName))
 		return true, TaskForcedRebuild, nil
 	}
