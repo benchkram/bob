@@ -75,6 +75,18 @@ func resolve(path string) (string, error) {
 	return sym, nil
 }
 
+// sanitizeRebuild used to transform from dirty member to internal member
+func (t *Task) sanitizeRebuild(s string) RebuildType {
+	switch strings.ToLower(s) {
+	case string(RebuildAlways):
+		return RebuildAlways
+	case string(RebuildOnChange):
+		return RebuildOnChange
+	default:
+		return RebuildOnChange
+	}
+}
+
 func isOutsideOfProject(root, f string) bool {
 	return !strings.HasPrefix(f, root)
 }

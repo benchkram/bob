@@ -149,7 +149,7 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 	// task might need a rebuild due to a input change.
 	// but could still be possible to load the targets from the artifact store.
 	// If a task needs a rebuild due to a dependency change => rebuild.
-	if rebuildRequired && rebuildCause != DependencyChanged {
+	if rebuildRequired && rebuildCause != DependencyChanged && rebuildCause != TaskForcedRebuild {
 		success, err := task.ArtifactUnpack(hashIn)
 		errz.Fatal(err)
 		if success {

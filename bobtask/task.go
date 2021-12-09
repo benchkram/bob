@@ -17,8 +17,8 @@ import (
 type RebuildType string
 
 const (
-	AlwaysRebuild   RebuildType = "always"
-	OnChangeRebuild RebuildType = "on-change"
+	RebuildAlways   RebuildType = "always"
+	RebuildOnChange RebuildType = "on-change"
 )
 
 type Task struct {
@@ -154,10 +154,9 @@ func (t *Task) SetEnv(env []string) {
 }
 
 // Set the rebuild strategy for the task
-// default `on-change`, if rebuild property is not
-// set in bobfile task
-func (t *Task) SetRebuildStrategy() {
-	t.rebuild = t.parseRebuildDarty(t.RebuildDirty)
+// defaults to `on-change`.
+func (t *Task) SetRebuildStrategy(rebuild RebuildType) {
+	t.rebuild = rebuild
 }
 
 func (t *Task) WithLocalstore(s store.Store) *Task {
@@ -199,18 +198,4 @@ func (t *Task) parseTargets() error {
 	}
 
 	return nil
-}
-
-func (t *Task) parseRebuildDarty(s string) RebuildType {
-	rebuildType := OnChangeRebuild
-	if s == "" {
-		return rebuildType
-	}
-
-	rebuildStr := strings.ToLower(s)
-	if rebuildStr == string(AlwaysRebuild) {
-		rebuildType = AlwaysRebuild
-	}
-
-	return rebuildType
 }
