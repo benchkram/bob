@@ -11,7 +11,7 @@ Bob
         <img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc">
     </a>
     <a href="https://github.com/benchkram/bob/actions">
-        <img src="https://github.com/benchkram/bob/workflows/build/badge.svg" alt="Build Status">
+        <img src="https://github.com/benchkram/bob/workflows/main.yml/badge.svg" alt="Build Status">
     </a>
 </p>
 
