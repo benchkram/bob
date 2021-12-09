@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -19,7 +20,7 @@ func (t *T) Hash() (empty string, _ error) {
 		target := filepath.Join(t.dir, f)
 
 		if !file.Exists(target) {
-			return empty, fmt.Errorf("target doe not exist %q", f)
+			return empty, usererror.Wrapm(fmt.Errorf("target does not exist %q", f), "failed to hash target")
 		}
 		fi, err := os.Stat(target)
 		if err != nil {

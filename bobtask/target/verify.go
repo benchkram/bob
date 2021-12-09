@@ -1,6 +1,6 @@
 package target
 
-import "github.com/Benchkram/errz"
+import "github.com/Benchkram/bob/pkg/boblog"
 
 // Verify existence and integrity of targets.
 // Returns true when no targets defined.
@@ -32,7 +32,7 @@ func (t *T) verifyFile(groundTruth string) bool {
 	// check integrity by comparing hash
 	hash, err := t.Hash()
 	if err != nil {
-		errz.Log(err)
+		boblog.Log.Error(err, "Unable to create target hash")
 		return false
 	}
 

@@ -4,13 +4,16 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
+	"github.com/pkg/errors"
 	"io"
-	"os"
 	"strings"
 	"time"
 
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/ctl"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -95,6 +98,7 @@ type model struct {
 	follow        bool
 	scrollOffset  int
 	ready         bool
+	error error
 }
 
 type tab struct {
@@ -102,17 +106,12 @@ type tab struct {
 	output *LineBuffer
 }
 
-func newModel(cmder ctl.Commander, evts, programEvts chan interface{}, output *os.File) *model {
+func newModel(cmder ctl.Commander, evts, programEvts chan interface{}, buffer *LineBuffer) *model {
 	tabs := []*tab{}
-
-	buf, err := multiScanner(0, evts, output)
-	if err != nil {
-		errz.Log(err)
-	}
 
 	tabs = append(tabs, &tab{
 		name:   "status",
-		output: buf,
+		output: buffer,
 	})
 
 	for i, cmd := range cmder.Subcommands() {
@@ -167,6 +166,7 @@ func multiScanner(tabId int, events chan interface{}, rs ...io.Reader) (*LineBuf
 				_, _ = buf.Write(s.Bytes())
 
 				i++
+
 				events <- Update{tab: tabId}
 			}
 		}()
@@ -215,9 +215,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			status := fmt.Sprintf("\n%-*s\n", 10, "restarting")
 			status = aurora.Colorize(status, aurora.CyanFg|aurora.BoldFm).String()
 
-			for _, t := range m.tabs {
+			for i, t := range m.tabs {
 				_, err := t.output.Write([]byte(status))
 				errz.Log(err)
+
+				m.events <- Update{tab: i}
 			}
 
 			m.follow = true
@@ -231,9 +233,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			status := fmt.Sprintf("\n%-*s\n", 10, "stopping")
 			status = aurora.Colorize(status, aurora.RedFg|aurora.BoldFm).String()
 
-			for _, t := range m.tabs {
+			for i, t := range m.tabs {
 				_, err := t.output.Write([]byte(status))
 				errz.Log(err)
+
+				m.events <- Update{tab: i}
 			}
 
 			m.follow = true
@@ -383,6 +387,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.content, updateCmd = m.content.Update(msg)
 	cmds = append(cmds, updateCmd)
 
+	//if m.error != nil {
+	//	//cmds = append(cmds, stop(m))
+	//}
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -472,9 +480,13 @@ func start(m *model) tea.Cmd {
 
 	return func() tea.Msg {
 		err := m.cmder.Start()
-		if err != context.Canceled {
-			errz.Log(err)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else if err != nil && err != context.Canceled {
+			boblog.Log.Error(err, "Error during commander execution")
 		}
+
+		m.error = err
 
 		return Started{}
 	}

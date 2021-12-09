@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"errors"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"os"
 	"os/signal"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/bob/bobfile"
 	"github.com/Benchkram/bob/bob/global"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
 
 	"github.com/spf13/cobra"
@@ -60,7 +62,7 @@ func runBuild(dummy bool, taskname string) {
 		errz.Fatal(err)
 		err = bobfile.CreateDummyBobfile(wd, false)
 		errz.Fatal(err)
-		os.Exit(0)
+		return
 	}
 
 	b, err := bob.Bob()
@@ -78,19 +80,19 @@ func runBuild(dummy bool, taskname string) {
 	}()
 
 	err = b.Build(ctx, taskname)
-	if !(errors.Is(err, bob.ErrNoRebuildRequired) ||
-		errors.Is(err, context.Canceled)) {
-
-		errz.Log(err)
+	if errors.As(err, &usererror.Err) {
+		boblog.Log.UserError(err)
+	} else {
+		errz.Fatal(err)
 	}
 }
 
 func runBuildList() {
 	b, err := bob.Bob()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to initialize bob")
 
 	err = b.List()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to aggregate bob file")
 }
 
 func getTasks() ([]string, error) {

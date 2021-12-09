@@ -2,7 +2,7 @@ package cli
 
 import (
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/errz"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/spf13/cobra"
 )
 
@@ -17,8 +17,8 @@ var runListCmd = &cobra.Command{
 
 func runRunList() {
 	b, err := bob.Bob()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to initialize bob")
 
 	err = b.RunList()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to list tasks")
 }

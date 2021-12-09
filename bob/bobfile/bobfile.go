@@ -3,11 +3,13 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
-	"github.com/hashicorp/go-version"
-	"github.com/pkg/errors"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/hashicorp/go-version"
+	"github.com/pkg/errors"
 
 	"gopkg.in/yaml.v3"
 
@@ -51,6 +53,8 @@ type Bobfile struct {
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
 	dir string
+
+	bobfiles []*Bobfile
 }
 
 func NewBobfile() *Bobfile {
@@ -60,6 +64,14 @@ func NewBobfile() *Bobfile {
 		Runs:      make(bobrun.RunMap),
 	}
 	return b
+}
+
+func (b *Bobfile) SetBobfiles(bobs []*Bobfile) {
+	b.bobfiles = bobs
+}
+
+func (b *Bobfile) Bobfiles() []*Bobfile {
+	return b.bobfiles
 }
 
 // bobfileRead reads a bobfile and intializes private fields.
@@ -79,7 +91,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	}
 
 	err = yaml.Unmarshal(bin, bobfile)
-	errz.Fatal(err)
+	if err != nil {
+		return nil, usererror.Wrapm(err, "YAML unmarshal failed")
+	}
 
 	if bobfile.Variables == nil {
 		bobfile.Variables = VariableMap{}
@@ -123,6 +137,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 // Calls sanitize on the result.
 func BobfileRead(dir string) (_ *Bobfile, err error) {
 	defer errz.Recover(&err)
+
 	b, err := bobfileRead(dir)
 	errz.Fatal(err)
 

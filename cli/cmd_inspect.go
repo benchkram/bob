@@ -1,3 +1,4 @@
+//go:build dev
 // +build dev
 
 package cli
@@ -7,7 +8,7 @@ import (
 	"os"
 
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/errz"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
@@ -48,10 +49,10 @@ var envCmd = &cobra.Command{
 
 func runEnv(taskname string) {
 	b, err := bob.Bob()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to initialise bob")
 
 	bobfile, err := b.Aggregate()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to aggregate bob file")
 
 	task, ok := bobfile.Tasks[taskname]
 	if !ok {
@@ -85,10 +86,10 @@ var exportCmd = &cobra.Command{
 
 func runExport(taskname string) {
 	b, err := bob.Bob()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to initialize bob")
 
 	bobfile, err := b.Aggregate()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to aggregate bob file")
 
 	task, ok := bobfile.Tasks[taskname]
 	if !ok {

@@ -239,10 +239,12 @@ func (c *Cmd) stop() error {
 		return nil
 	}
 
-	// send an interrupt signal to the command
-	err := cmd.Process.Signal(os.Interrupt)
-	if err != nil && !strings.Contains(err.Error(), "os: process already finished") {
-		return err
+	if cmd != nil && cmd.Process != nil {
+		// send an interrupt signal to the command
+		err := cmd.Process.Signal(os.Interrupt)
+		if err != nil && !strings.Contains(err.Error(), "os: process already finished") {
+			return err
+		}
 	}
 
 	return nil

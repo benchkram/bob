@@ -1,9 +1,11 @@
 package bob
 
 import (
-	"github.com/hashicorp/go-version"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"io/ioutil"
 	"os"
+
+	"github.com/hashicorp/go-version"
 
 	"gopkg.in/yaml.v3"
 
@@ -140,6 +142,8 @@ func (b *B) write() (err error) {
 }
 
 func (b *B) read() (err error) {
+	defer errz.Recover(&err)
+
 	if !file.Exists(b.WorkspaceFilePath()) {
 		// Initialise with default values if it does not exist.
 		err := b.write()
@@ -150,7 +154,9 @@ func (b *B) read() (err error) {
 	errz.Fatal(err, "Failed to read config file")
 
 	err = yaml.Unmarshal(bin, b)
-	errz.Fatal(err)
+	if err != nil {
+		return usererror.Wrapm(err, "YAML unmarshal failed")
+	}
 
 	return nil
 }

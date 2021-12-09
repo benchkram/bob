@@ -3,6 +3,7 @@ package version_test
 import (
 	"context"
 	"github.com/Benchkram/bob/bob"
+	"github.com/Benchkram/errz"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -16,10 +17,24 @@ var _ = Describe("Test bob's file export validation", func() {
 			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
 		})
 
-		It("run verify and make sure warnings are shown", func() {
+		It("run verify and make sure no warnings are shown", func() {
 			capture()
 
 			err := b.Verify(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+
+			out := output()
+
+			Expect(out).NotTo(ContainSubstring("major version mismatch"))
+			Expect(out).NotTo(ContainSubstring("possible version incompatibility"))
+		})
+
+		It("make sure warnings are shown on build", func() {
+			capture()
+
+			ctx := context.Background()
+			err := b.Build(ctx, "build")
+			errz.Log(err)
 			Expect(err).NotTo(HaveOccurred())
 
 			out := output()

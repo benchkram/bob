@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
 )
 
@@ -103,14 +104,14 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 						defer done()
 
 						err := c.Stop()
-						errz.Log(err)
+						boblog.Log.Error(err, "Error on stopping comander")
 
 						// Trigger a rebuild.
 						err = c.builder.Build(ctx)
 						errz.Fatal(err)
 
 						err = c.Start()
-						errz.Log(err)
+						boblog.Log.Error(err, "Error during comander run")
 
 						c.control.EmitRestarted()
 					}()

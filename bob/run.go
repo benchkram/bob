@@ -35,6 +35,8 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 	aggregate, err := b.Aggregate()
 	errz.Fatal(err)
 
+	b.PrintVersionCompatibility(aggregate)
+
 	runTask, ok := aggregate.Runs[runName]
 	if !ok {
 		return nil, ErrRunDoesNotExist

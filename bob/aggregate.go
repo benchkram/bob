@@ -2,9 +2,11 @@ package bob
 
 import (
 	"fmt"
-	"github.com/logrusorgru/aurora"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"path/filepath"
 	"strings"
+
+	"github.com/logrusorgru/aurora"
 
 	"github.com/Benchkram/errz"
 
@@ -29,10 +31,10 @@ func (b *B) find() (bobfiles []string, err error) {
 	return bobfiles, nil
 }
 
-func (b *B) CheckVersionCompatibility(bobfiles []*bobfile.Bobfile) (err error) {
+func (b *B) PrintVersionCompatibility(bobfile *bobfile.Bobfile) {
 	binVersion, _ := version.NewVersion(Version)
 
-	for _, boblet := range bobfiles {
+	for _, boblet := range bobfile.Bobfiles() {
 		if boblet.Version != "" {
 			bobletVersion, _ := version.NewVersion(boblet.Version)
 
@@ -47,8 +49,6 @@ func (b *B) CheckVersionCompatibility(bobfiles []*bobfile.Bobfile) (err error) {
 			}
 		}
 	}
-
-	return nil
 }
 
 // Aggregate determine and read Bobfiles recursively into memory
@@ -83,12 +83,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	}
 
 	if aggregate == nil {
-		return nil, ErrCouldNotFindTopLevelBobfile
+		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
-	if err := b.CheckVersionCompatibility(bobs); err != nil {
-		return nil, ErrInvalidVersion
-	}
+	aggregate.SetBobfiles(bobs)
 
 	// Merge tasks into one Bobfile
 	for _, bobfile := range bobs {

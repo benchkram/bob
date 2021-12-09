@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Benchkram/errz"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/spf13/cobra"
 )
 
@@ -14,23 +14,24 @@ var completionCmd = &cobra.Command{
 	Long: `To create completion add
 	source <(bob completion)	   // for bash
 	source <(bob completion -z)    // for zsh
-# ~/.bashrc or ~/.profile ~/.zsh???
+to your .bashrc / .zshrc
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			if zsh {
 				err := rootCmd.GenZshCompletion(os.Stdout)
 				if err != nil {
-					errz.Log(err)
+					boblog.Log.Error(err, "Unable to generate Zsh completion")
 					os.Exit(1)
 				}
 			} else {
 				err := rootCmd.GenBashCompletionV2(os.Stdout, true)
 				if err != nil {
-					errz.Log(err)
+					boblog.Log.Error(err, "Unable to generate bash completion")
 					os.Exit(1)
 				}
 			}
+
 			return
 		}
 
@@ -44,7 +45,7 @@ var completionCmd = &cobra.Command{
 
 				err := rootCmd.GenBashCompletionFileV2(completionPath, true)
 				if err != nil {
-					errz.Log(err)
+					boblog.Log.Error(err, "Unable to install bash completion")
 					os.Exit(1)
 				}
 			}

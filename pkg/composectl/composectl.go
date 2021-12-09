@@ -2,6 +2,7 @@ package composectl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/Benchkram/errz"
 	"io"
@@ -26,7 +27,9 @@ type ComposeController struct {
 	stderr pipe
 	stdin  pipe
 
-	logger *logger
+	logger  *logger
+
+	running bool
 }
 
 type pipe struct {
@@ -117,10 +120,12 @@ func (ctl *ComposeController) Up(ctx context.Context) error {
 			Follow:     true,
 			Timestamps: false,
 		})
-		if err != nil {
+		if err != nil && !errors.Is(err, context.Canceled)  {
 			errz.Log(err)
 		}
 	}()
+
+	ctl.running = true
 
 	return nil
 }
@@ -129,6 +134,12 @@ func (ctl *ComposeController) Down(ctx context.Context) error {
 	if ctl.project == nil {
 		return ErrInvalidProject
 	}
+
+	if !ctl.running {
+		return nil
+	}
+
+	ctl.running = false
 
 	err := ctl.service.Down(ctx, ctl.project.Name, api.DownOptions{
 		Project: ctl.project,

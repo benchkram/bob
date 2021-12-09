@@ -2,9 +2,10 @@ package cli
 
 import (
 	"context"
-	"os"
-
+	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/bob/tui"
+	"github.com/pkg/errors"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/bob/global"
@@ -34,7 +35,6 @@ var runCmd = &cobra.Command{
 }
 
 func run(taskname string) {
-
 	b, err := bob.Bob()
 	errz.Fatal(err)
 
@@ -53,15 +53,25 @@ func run(taskname string) {
 		switch err {
 		case bob.ErrNoRebuildRequired:
 		default:
-			errz.Log(err)
-			os.Exit(1)
+			if errors.As(err, &usererror.Err) {
+				boblog.Log.UserError(err)
+			} else {
+				errz.Fatal(err)
+			}
 		}
 	}
 
-	t.Start(commander)
+	if commander != nil {
+		t.Start(commander)
+	}
 
 	cancel()
-	<-commander.Done()
+
+	if commander != nil {
+		<-commander.Done()
+	}
+
+	t.Restore()
 }
 
 func getRuns() ([]string, error) {

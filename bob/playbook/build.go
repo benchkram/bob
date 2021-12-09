@@ -70,11 +70,14 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		close(done)
 	}()
 
-	_ = p.Play()
+	err = p.Play()
+	errz.Fatal(err)
+
 	err = <-done
 	if err != nil {
 		p.Done()
 	}
+	errz.Fatal(err)
 
 	// summary
 	boblog.Log.V(1).Info("")
@@ -109,6 +112,15 @@ var didWriteBuildOutput bool
 // build a single task and update the playbook state after completion.
 func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 	defer errz.Recover(&err)
+
+	var taskSuccessFul bool
+	var taskErr error
+	defer func() {
+		if !taskSuccessFul {
+			err = p.TaskFailed(task.Name(), taskErr)
+			boblog.Log.Error(err, "Setting the task state to failed, failed")
+		}
+	}()
 
 	coloredName := task.ColoredName()
 
@@ -148,6 +160,7 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 	if !rebuildRequired {
 		status := StateNoRebuildRequired
 		boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, status.Short()))
+		taskSuccessFul = true
 		return p.TaskNoRebuildRequired(task.Name())
 	}
 
@@ -161,7 +174,13 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 	errz.Fatal(err)
 
 	err = task.Run(ctx, p.namePad)
+	if err != nil {
+		taskSuccessFul = false
+		taskErr = err
+	}
 	errz.Fatal(err)
+
+	taskSuccessFul = true
 
 	err = task.VerifyAfter()
 	errz.Fatal(err)
@@ -177,7 +196,7 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 	if target != nil {
 		if !target.Exists() {
 			boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s\t(invalid targets)", p.namePad, coloredName, StateFailed))
-			err = p.TaskFailed(task.Name())
+			err = p.TaskFailed(task.Name(), fmt.Errorf("targets not created"))
 			if err != nil {
 				if errors.Is(err, ErrFailed) {
 					return err

@@ -2,14 +2,13 @@ package cli
 
 import (
 	"fmt"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"os"
 	"runtime"
 	"strconv"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/spf13/cobra"
-
-	"github.com/Benchkram/errz"
 )
 
 var zsh bool
@@ -69,7 +68,7 @@ Commonly used cmds:
 				//
 				//}
 
-				fmt.Printf("bob version %s %s/%s\n", bob.Version, runtime.GOOS, runtime.GOARCH)
+				boblog.Log.Info(fmt.Sprintf("bob version %s %s/%s\n", bob.Version, runtime.GOOS, runtime.GOARCH))
 				os.Exit(0)
 			}
 		}
@@ -83,6 +82,6 @@ Commonly used cmds:
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		err := cmd.Help()
-		errz.Fatal(err)
+		boblog.Log.Error(err, "Unable to generate bash completion")
 	},
 }

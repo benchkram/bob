@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/errz"
 	"github.com/yargevad/filepathx"
 )
 
@@ -19,7 +18,6 @@ var (
 )
 
 func ListRecursive(inp string) (all []string, err error) {
-	defer errz.Recover(&err)
 
 	// TODO: possibly ignore here too, before calling listDir
 	if s, err := os.Stat(inp); err != nil || !s.IsDir() {
@@ -41,7 +39,7 @@ func ListRecursive(inp string) (all []string, err error) {
 				// Directory
 				files, err := listDir(m)
 				if err != nil {
-					errz.Log(err)
+					// TODO: handle error
 					return nil, fmt.Errorf("failed to list dir: %w", err)
 				}
 

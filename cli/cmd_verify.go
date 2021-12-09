@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/errz"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
@@ -23,10 +23,10 @@ var verifyCmd = &cobra.Command{
 
 func runVerify() {
 	b, err := bob.Bob()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to initialise bob")
 
 	err = b.Verify(context.Background())
-	errz.Log(err)
+	boblog.Log.Error(err, "Verification failed")
 
 	fmt.Printf("%s\n", aurora.Green("Verified"))
 }

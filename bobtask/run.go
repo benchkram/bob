@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
 	"mvdan.cc/sh/interp"
@@ -21,7 +22,9 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 
 	for _, run := range t.cmds {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
-		errz.Fatal(err)
+		if err != nil {
+			return usererror.Wrapm(err, "shell command parse error")
+		}
 
 		env := os.Environ()
 		// TODO: warn when overwriting envvar from the environment
@@ -46,8 +49,6 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 			}
 		}()
 
-		//litter.Dump(t.env)
-		// fmt.Printf("exec %s in dir:%s\n", run, t.dir)
 		r, err := interp.New(
 			interp.Params("-e"),
 			interp.Dir(t.dir),
@@ -58,9 +59,9 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		errz.Fatal(err)
 
 		err = r.Run(ctx, p)
-		errz.Fatal(err)
-
-		// fmt.Printf("%s succeded \n", t.name)
+		if err != nil {
+			return usererror.Wrapm(err, "shell command execute error")
+		}
 	}
 
 	return nil

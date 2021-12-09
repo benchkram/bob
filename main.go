@@ -2,22 +2,16 @@ package main
 
 import (
 	"github.com/Benchkram/bob/bob"
-	"os"
-
 	"github.com/Benchkram/bob/cli"
-	"github.com/Benchkram/errz"
+	"github.com/Benchkram/bob/pkg/boblog"
 )
 
 var Version = "0.0.0"
 
 func main() {
-	var exitCode int
-	defer func() { os.Exit(exitCode) }()
-
 	bob.Version = Version
 
 	if err := cli.Execute(); err != nil {
-		errz.Log(err)
-		exitCode = 1
+		boblog.Log.Error(err, "Error on execution of bob command")
 	}
 }

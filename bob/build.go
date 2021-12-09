@@ -18,8 +18,13 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 	aggregate, err := b.Aggregate()
 	errz.Fatal(err)
 
+	b.PrintVersionCompatibility(aggregate)
+
 	playbook, err := aggregate.Playbook(taskname)
 	errz.Fatal(err)
 
-	return playbook.Build(ctx)
+	err = playbook.Build(ctx)
+	errz.Fatal(err)
+
+	return err
 }

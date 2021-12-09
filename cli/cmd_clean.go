@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/errz"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/spf13/cobra"
 )
 
@@ -20,10 +20,10 @@ var cleanCmd = &cobra.Command{
 
 func runClean() {
 	b, err := bob.Bob()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to initialise bob")
 
 	err = b.Clean()
-	errz.Log(err)
+	boblog.Log.Error(err, "Unable to clean buildinfo")
 
 	fmt.Println("build info cleaned")
 	fmt.Println("artifacts cleaned")

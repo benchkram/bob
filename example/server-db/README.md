@@ -64,6 +64,9 @@ As code generation is involved we have to make sure the actual build task is run
 Notice the *dependson:* entry for the build task:
 
 ```yaml
+tasks:
+  generate-api:
+    # ...
   build:
     input: |-
       ./server
@@ -116,6 +119,8 @@ of shutting it down when it's no longer needed, or if we are switching to other 
 As bob can also understand compose files let's define a run-task to start the database:
 
 ```yaml
+tasks:
+  # ...
 runs:
   database:
     type: compose
@@ -139,7 +144,10 @@ and remove the database container using `Ctrl-C`.
 To start the database before our server binary we can depend on the 'database' run task.
 
 ```yaml
+tasks:
+  # ...
 runs:
+  # ...
   server:
     type: binary
     path: ./build/server

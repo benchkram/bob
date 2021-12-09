@@ -138,7 +138,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 			if rebuildRequired {
 				boblog.Log.V(2).Info(fmt.Sprintf("[task:%s] trying to get target from store", taskname))
 				ok, err := task.ArtifactUnpack(hashIn)
-				errz.Log(err)
+				boblog.Log.Error(err, "Unable to get target from store")
 
 				if ok {
 					rebuildRequired = false
@@ -148,7 +148,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 			} else {
 				if !task.ArtifactExists(hashIn) {
 					err = task.ArtifactPack(hashIn)
-					errz.Log(err)
+					boblog.Log.Error(err, "Unable to send target to store")
 				}
 			}
 
@@ -208,6 +208,8 @@ func (p *Playbook) play() error {
 			}
 		case StateFailed:
 			return taskFailed
+		case StateCanceled:
+			return nil
 		case StateNoRebuildRequired:
 			return nil
 		case StateCompleted:
@@ -259,13 +261,13 @@ func (p *Playbook) ErrorChannel() <-chan error {
 	return p.errorChannel
 }
 
-func (p *Playbook) setTaskState(taskname string, state State) error {
+func (p *Playbook) setTaskState(taskname string, state State, taskError error) error {
 	task, ok := p.Tasks[taskname]
 	if !ok {
 		return ErrTaskDoesNotExist
 	}
 
-	task.SetState(state)
+	task.SetState(state, taskError)
 	switch state {
 	case StateCompleted, StateCanceled, StateNoRebuildRequired:
 		task.End = time.Now()
@@ -370,6 +372,7 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 				}
 				buildInfo.Targets[hashIn] = h
 			default:
+				boblog.Log.V(1).Info(string(task.state))
 				return ErrUnexpectedTaskState
 			}
 
@@ -385,7 +388,7 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 	err = p.pack(taskname, hashIn)
 	errz.Fatal(err)
 
-	err = p.setTaskState(taskname, StateCompleted)
+	err = p.setTaskState(taskname, StateCompleted, nil)
 	errz.Fatal(err)
 
 	err = p.play()
@@ -402,7 +405,7 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 func (p *Playbook) TaskNoRebuildRequired(taskname string) (err error) {
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateNoRebuildRequired)
+	err = p.setTaskState(taskname, StateNoRebuildRequired, nil)
 	errz.Fatal(err)
 
 	err = p.play()
@@ -416,22 +419,17 @@ func (p *Playbook) TaskNoRebuildRequired(taskname string) (err error) {
 }
 
 // TaskFailed sets a task to failed
-func (p *Playbook) TaskFailed(taskname string) (err error) {
+func (p *Playbook) TaskFailed(taskname string, taskErr error) (err error) {
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateFailed)
+	err = p.setTaskState(taskname, StateFailed, taskErr)
 	errz.Fatal(err)
 
 	// p.errorChannel <- fmt.Errorf("Task %s failed", taskname)
 
 	// give the playbook the chance to set
 	// the state to done.
-	err = p.play()
-	if err != nil {
-		if !errors.Is(err, ErrDone) {
-			errz.Fatal(err)
-		}
-	}
+	_ = p.play()
 
 	return nil
 }
@@ -440,7 +438,7 @@ func (p *Playbook) TaskFailed(taskname string) (err error) {
 func (p *Playbook) TaskCanceled(taskname string) (err error) {
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateCanceled)
+	err = p.setTaskState(taskname, StateCanceled, nil)
 	errz.Fatal(err)
 
 	// p.errorChannel <- fmt.Errorf("Task %s cancelled", taskname)

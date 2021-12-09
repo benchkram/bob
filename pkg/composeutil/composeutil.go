@@ -2,6 +2,7 @@ package composeutil
 
 import (
 	"fmt"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
 	"math"
@@ -205,9 +206,8 @@ func ProjectFromConfig(composePath string) (p *types.Project, err error) {
 			{Filename: composePath, Content: b},
 		},
 	})
-
 	if err != nil {
-		return nil, err
+		return nil, usererror.Wrapm(err, "error loading docker-compose file")
 	}
 
 	if p.Name == "" {
