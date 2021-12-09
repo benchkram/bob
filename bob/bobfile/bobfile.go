@@ -3,10 +3,11 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
-	"github.com/Benchkram/bob/pkg/usererror"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
@@ -118,6 +119,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		// TODO: All unitialised must be initialised or get default values.
 		// This means switching to pointer types for most members.
 		task.SetEnv([]string{})
+		task.SetRebuildStrategy()
 
 		bobfile.Tasks[key] = task
 	}

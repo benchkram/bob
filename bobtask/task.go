@@ -14,6 +14,13 @@ import (
 	"github.com/Benchkram/bob/pkg/store"
 )
 
+type RebuildType string
+
+const (
+	ALWAYS  RebuildType = "always"
+	ONCHAGE RebuildType = "on-change"
+)
+
 type Task struct {
 	// Inputs are directorys or files
 	// the task monitors for a rebuild.
@@ -56,6 +63,10 @@ type Task struct {
 
 	// Exports other tasks can reuse.
 	Exports export.Map `yaml:"exports"`
+
+	// defines the rebuild strategy
+	RebuildDirty string `yaml:"rebuild,omitempty"`
+	rebuild      RebuildType
 
 	// name is the name of the task
 	// TODO: Make this public to allow yaml.Marshal to add this to the task hash?!?
@@ -122,6 +133,10 @@ func (t *Task) Env() []string {
 	return t.env
 }
 
+func (t *Task) Rebuild() RebuildType {
+	return t.rebuild
+}
+
 func (t *Task) GetExports() export.Map {
 	return t.Exports
 }
@@ -136,6 +151,13 @@ func (t *Task) SetName(name string) {
 
 func (t *Task) SetEnv(env []string) {
 	t.env = env
+}
+
+// Set the rebuild strategy for the task
+// default `always`, if rebuild property is not
+// set in bobfile task
+func (t *Task) SetRebuildStrategy() {
+	t.rebuild = t.parseRebuildDarty()
 }
 
 func (t *Task) WithLocalstore(s store.Store) *Task {
@@ -177,4 +199,18 @@ func (t *Task) parseTargets() error {
 	}
 
 	return nil
+}
+
+func (t *Task) parseRebuildDarty() RebuildType {
+	rebuildType := ALWAYS
+	if t.RebuildDirty == "" {
+		return rebuildType
+	}
+
+	rebuildStr := strings.ToLower(t.RebuildDirty)
+	if rebuildStr == string(ONCHAGE) {
+		rebuildType = ONCHAGE
+	}
+
+	return rebuildType
 }
