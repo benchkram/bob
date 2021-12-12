@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-// Test case overview for target invalidation with artifacts in the local store.x
+// Test case overview for target invalidation with artifacts in the local store.
 // Input change not included, should not change for those tests.
 //
 // dne = does not exist
@@ -42,6 +42,8 @@ var (
 	b *bob.B
 )
 
+// reset base test dir to it's
+// initial state.
 func reset() error {
 	err := os.RemoveAll(dir)
 	if err != nil {
