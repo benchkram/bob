@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Benchkram/bob/bob"
+	"github.com/Benchkram/bob/bobtask"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -37,6 +38,15 @@ var _ = FDescribe("Test artifact creation and extraction", func() {
 			println(artifactID)
 		})
 
+		It("inspect artifact", func() {
+			artifact, err := artifactStore.GetArtifact(context.Background(), artifactID)
+			Expect(err).NotTo(HaveOccurred())
+			description, err := bobtask.ArtifactInspectFromReader(artifact)
+			Expect(err).NotTo(HaveOccurred())
+
+			println(description)
+		})
+
 		It("cleanup build/target dir", func() {
 			err := os.RemoveAll(".bbuild")
 			Expect(err).NotTo(HaveOccurred())
@@ -45,6 +55,7 @@ var _ = FDescribe("Test artifact creation and extraction", func() {
 		It("extract artifact from store on rebuild", func() {
 			err := b.Build(context.Background(), bob.BuildTargetwithdirsTargetName)
 			Expect(err).NotTo(HaveOccurred())
+
 		})
 
 		It("cleanup", func() {
