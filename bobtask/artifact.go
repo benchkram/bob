@@ -35,10 +35,6 @@ func newArchive() archiveIO             { return archiver.NewTarGz() } // TODO: 
 func newArchiveWriter() archiver.Writer { return newArchive() }
 func newArchiveReader() archiver.Reader { return newArchive() }
 
-func (t *Task) ArtifactInspect(artifactName hash.In) (err error) {
-	return nil
-}
-
 // ArtifactPack creates a archive for a target & exports.
 func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	defer errz.Recover(&err)
@@ -53,7 +49,26 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	exports := []string{}
 	if t.target != nil {
 		for _, path := range t.target.Paths {
-			targets = append(targets, filepath.Join(t.dir, path))
+			stat, err := os.Stat(filepath.Join(t.dir, path))
+			errz.Fatal(err)
+			if stat.IsDir() {
+				// TODO: Read all files from dir.
+				root := filepath.Join(t.dir, path)
+				_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+					if err != nil {
+						return err
+					}
+					if d.IsDir() {
+						return nil
+					}
+
+					targets = append(targets, path)
+					return nil
+				})
+			} else {
+				targets = append(targets, filepath.Join(t.dir, path))
+			}
+
 		}
 	}
 	for _, path := range t.Exports {
@@ -71,12 +86,13 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	// targets
 	for _, fname := range targets {
+		//println(fname)
 		info, err := os.Stat(fname)
 		errz.Fatal(err)
 
-		// get file's name for the inside of the archive
-		internalName, err := archiver.NameInArchive(info, fname, fname)
-		errz.Fatal(err)
+		// trim the tasks directory from the internal name
+		internalName := strings.TrimPrefix(fname, t.dir)
+		internalName = strings.TrimPrefix(internalName, "/")
 
 		// open the file
 		file, err := os.Open(fname)
@@ -269,64 +285,6 @@ func (t *Task) ArtifactExists(artifactName hash.In) bool {
 // 	}
 // 	return buf.String(), nil
 // }
-
-// ArtifactInspectFromPath opens a artifact from a io reader and returns
-// a string containing compact information about a target.
-func ArtifactInspectFromReader(reader io.ReadCloser) (description string, err error) {
-	defer errz.Recover(&err)
-
-	buf := bytes.NewBufferString(description)
-
-	archiveReader := newArchiveReader()
-	err = archiveReader.Open(reader, 0)
-	errz.Fatal(err)
-	defer archiveReader.Close()
-
-	for {
-		archiveFile, err := archiveReader.Read()
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			errz.Fatal(err)
-		}
-
-		header, ok := archiveFile.Header.(*tar.Header)
-		if !ok {
-			return "", ErrInvalidTarHeaderType
-		}
-
-		// targets
-		indent := "  "
-		fmt.Fprint(buf, "Targets:\n")
-		if strings.HasPrefix(header.Name, __targets) {
-
-			fmt.Fprintf(buf, "%s%s\n", indent, header.Name)
-			// filename := strings.TrimPrefix(header.Name, __targets+"/")
-
-			// // create directory structure
-			// dir := filepath.Dir(filename)
-			// if dir != "." && dir != "/" {
-			// 	err = os.MkdirAll(filepath.Join(t.dir, dir), 0775)
-			// 	errz.Fatal(err)
-			// }
-
-			// // create dst
-			// dst := filepath.Join(t.dir, filename)
-			// f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
-			// errz.Fatal(err)
-			// defer f.Close()
-
-			// // copy
-			// _, err = io.Copy(f, archiveFile)
-			// errz.Fatal(err)
-		}
-
-		// exports
-		// TODO: handle exports
-	}
-	return buf.String(), nil
-}
 
 // // TODO: implement me
 // func artifactWalk() {

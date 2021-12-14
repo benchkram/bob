@@ -82,6 +82,8 @@ type Task struct {
 
 func Make(opts ...TaskOption) Task {
 	t := Task{
+		inputs:    []string{},
+		cmds:      []string{},
 		DependsOn: []string{},
 		Exports:   make(export.Map),
 		env:       []string{},
@@ -164,8 +166,8 @@ func (t *Task) parseTargets() error {
 	targets := []string{}
 
 	for _, targetPath := range unique(targetDirty) {
-		if strings.Contains(targetPath, "..") {
-			return fmt.Errorf("'..' not allowed in file path %q", targetPath)
+		if strings.Contains(targetPath, "../") {
+			return fmt.Errorf("'../' not allowed in file path %q", targetPath)
 		}
 
 		targets = append(targets, targetPath)
