@@ -1,9 +1,10 @@
 package bob
 
 import (
-	"github.com/Benchkram/bob/pkg/usererror"
 	"io/ioutil"
 	"os"
+
+	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
 

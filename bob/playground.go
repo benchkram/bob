@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	BuildAllTargetName = "all"
+	BuildAllTargetName    = "all"
+	BuildAlwaysTargetName = "always-build"
 )
 
 func maingo(ver int) []byte {
@@ -250,6 +251,13 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 			filepath.Join(SecondLevelDir, ThirdLevelDir, "print"),
 		},
 		TargetDirty: "run",
+	}
+
+	bobfile.Tasks[BuildAlwaysTargetName] = bobtask.Task{
+		InputDirty:   "./main1.go" + "\n" + "go.mod",
+		CmdDirty:     "go build -o run",
+		TargetDirty:  "run",
+		RebuildDirty: string(bobtask.RebuildAlways),
 	}
 
 	bobfile.Tasks["generate"] = bobtask.Task{
