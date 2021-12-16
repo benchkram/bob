@@ -89,6 +89,9 @@ type Task struct {
 
 	// color is used to color the task's name on the terminal
 	color aurora.Color
+
+	// lists of skipped input files
+	skippedInputs []string
 }
 
 func Make(opts ...TaskOption) Task {
@@ -178,6 +181,29 @@ func (t *Task) AddExportPrefix(prefix string) {
 	for i, e := range t.Exports {
 		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))
 	}
+}
+
+func (t *Task) AddToSkippedInputs(f string) {
+	for _, ele := range t.skippedInputs {
+		if ele == f {
+			return
+		}
+	}
+	t.skippedInputs = append(t.skippedInputs, f)
+}
+
+func (t *Task) GetSkippedInputString() string {
+	if len(t.skippedInputs) == 0 {
+		return ""
+	}
+
+	filenames := ""
+	if len(t.skippedInputs) < 10 {
+		filenames = strings.Join(t.skippedInputs, ", ")
+	} else {
+		filenames = strings.Join(t.skippedInputs[:5], ", ") + " & more"
+	}
+	return fmt.Sprintf("skipped \t %s", filenames)
 }
 
 func (t *Task) parseTargets() error {
