@@ -2,9 +2,10 @@ package bob
 
 import (
 	"fmt"
-	"github.com/Benchkram/bob/pkg/usererror"
 	"path/filepath"
 	"strings"
+
+	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/logrusorgru/aurora"
 

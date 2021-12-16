@@ -52,6 +52,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	boblog.Log.V(1).Info(fmt.Sprintf("Running task %s with %d dependencies", rootName, dependencies))
 
 	tasks = []string{}
+	taskitems := []*bobtask.Task{}
 
 	go func() {
 		// TODO: Run a worker pool so that multiple tasks can run in parallel.
@@ -59,8 +60,9 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		c := p.TaskChannel()
 		for task := range c {
 			tasks = append(tasks, task.Name())
+			taskitems = append(taskitems, &task)
 
-			err := p.build(ctx, task)
+			err := p.build(ctx, &task)
 			if err != nil {
 				done <- err
 				break
@@ -78,6 +80,13 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		p.Done()
 	}
 	errz.Fatal(err)
+
+	for _, task := range taskitems {
+		skiptext := task.GetSkippedInputString()
+		if skiptext != "" {
+			boblog.Log.V(1).Info(aurora.Red(skiptext).String())
+		}
+	}
 
 	// summary
 	boblog.Log.V(1).Info("")
@@ -110,15 +119,17 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 var didWriteBuildOutput bool
 
 // build a single task and update the playbook state after completion.
-func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
+func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	defer errz.Recover(&err)
 
 	var taskSuccessFul bool
 	var taskErr error
 	defer func() {
 		if !taskSuccessFul {
-			err = p.TaskFailed(task.Name(), taskErr)
-			boblog.Log.Error(err, "Setting the task state to failed, failed")
+			errr := p.TaskFailed(task.Name(), taskErr)
+			if errr != nil {
+				boblog.Log.Error(errr, "Setting the task state to failed, failed.")
+			}
 		}
 	}()
 
