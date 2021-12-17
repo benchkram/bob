@@ -81,11 +81,10 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	}
 	errz.Fatal(err)
 
+	// iterate through the tasks and logs
+	// input files if it skips any
 	for _, task := range taskitems {
-		skiptext := task.GetSkippedInputString()
-		if skiptext != "" {
-			boblog.Log.V(1).Info(aurora.Red(skiptext).String())
-		}
+		task.LogSkippedInput()
 	}
 
 	// summary
