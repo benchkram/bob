@@ -1,7 +1,6 @@
 package bobtask
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -202,27 +201,20 @@ func (t *Task) LogSkippedInput() {
 		return
 	}
 
-	var (
-		buf    bytes.Buffer
-		logger = log.New(&buf, "", log.LstdFlags)
-	)
-
 	maxinput := t.skippedInputs
 	postfix := ""
 	if len(t.skippedInputs) > 5 {
 		maxinput = t.skippedInputs[:5]
-		postfix = fmt.Sprintf("%s\t & more...", t.name)
+		postfix = fmt.Sprintf("& more...")
 	}
 
 	for _, f := range maxinput {
-		logger.Printf("%s\t '%s' %s", t.name, f, os.ErrPermission)
+		log.Printf("%s\t '%s' %s", t.name, f, os.ErrPermission)
 	}
 
 	if postfix != "" {
-		logger.Printf(postfix)
+		log.Printf("%s\t %s", t.name, postfix)
 	}
-
-	fmt.Print(&buf)
 }
 
 func (t *Task) parseTargets() error {
