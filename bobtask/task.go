@@ -185,6 +185,9 @@ func (t *Task) AddExportPrefix(prefix string) {
 	}
 }
 
+// add filenames with permission issues to the task's
+// skippedInput list. returns without appending if file
+// already exists, thus maintain uniqueness
 func (t *Task) AddToSkippedInputs(f string) {
 	for _, ele := range t.skippedInputs {
 		if ele == f {
