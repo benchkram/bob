@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	BuildAllTargetName = "all"
+	BuildAllTargetName    = "all"
+	BuildAlwaysTargetName = "always-build"
 )
 
 func maingo(ver int) []byte {
@@ -237,9 +238,10 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	bobfile.Variables["helloworld"] = "Hello World!"
 
 	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
-		InputDirty:  "./main1.go" + "\n" + "go.mod",
-		CmdDirty:    "go build -o run",
-		TargetDirty: "run",
+		InputDirty:   "./main1.go" + "\n" + "go.mod",
+		CmdDirty:     "go build -o run",
+		TargetDirty:  "run",
+		RebuildDirty: string(bobtask.RebuildOnChange),
 	}
 
 	bobfile.Tasks[BuildAllTargetName] = bobtask.Task{
@@ -249,7 +251,15 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 			filepath.Join(SecondLevelDir, fmt.Sprintf("%s2", global.DefaultBuildTask)),
 			filepath.Join(SecondLevelDir, ThirdLevelDir, "print"),
 		},
-		TargetDirty: "run",
+		TargetDirty:  "run",
+		RebuildDirty: string(bobtask.RebuildOnChange),
+	}
+
+	bobfile.Tasks[BuildAlwaysTargetName] = bobtask.Task{
+		InputDirty:   "./main1.go" + "\n" + "go.mod",
+		CmdDirty:     "go build -o run",
+		TargetDirty:  "run",
+		RebuildDirty: string(bobtask.RebuildAlways),
 	}
 
 	bobfile.Tasks["generate"] = bobtask.Task{

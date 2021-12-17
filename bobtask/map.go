@@ -59,6 +59,7 @@ func (tm Map) Sanitize() {
 		task.inputs = inputs
 
 		task.cmds = multilinecmd.Split(task.CmdDirty)
+		task.rebuild = task.sanitizeRebuild(task.RebuildDirty)
 
 		tm[key] = task
 	}
