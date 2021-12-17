@@ -1,7 +1,10 @@
 package bobtask
 
 import (
+	"bytes"
 	"fmt"
+	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -192,18 +195,34 @@ func (t *Task) AddToSkippedInputs(f string) {
 	t.skippedInputs = append(t.skippedInputs, f)
 }
 
-func (t *Task) GetSkippedInputString() string {
+// Log the skipped input files from the task.
+// prints nothing if there is not skipped input.
+func (t *Task) LogSkippedInput() {
 	if len(t.skippedInputs) == 0 {
-		return ""
+		return
 	}
 
-	filenames := ""
-	if len(t.skippedInputs) < 10 {
-		filenames = strings.Join(t.skippedInputs, ", ")
-	} else {
-		filenames = strings.Join(t.skippedInputs[:5], ", ") + " & more"
+	var (
+		buf    bytes.Buffer
+		logger = log.New(&buf, "", log.LstdFlags)
+	)
+
+	maxinput := t.skippedInputs
+	postfix := ""
+	if len(t.skippedInputs) > 5 {
+		maxinput = t.skippedInputs[:5]
+		postfix = fmt.Sprintf("%s\t & more...", t.name)
 	}
-	return fmt.Sprintf("skipped \t %s", filenames)
+
+	for _, f := range maxinput {
+		logger.Printf("%s\t '%s' %s", t.name, f, os.ErrPermission)
+	}
+
+	if postfix != "" {
+		logger.Printf(postfix)
+	}
+
+	fmt.Print(&buf)
 }
 
 func (t *Task) parseTargets() error {
