@@ -1,1 +1,2 @@
 * assure targets are stored with full path in artifact
+* nicer artifact descriptions for debugging tests

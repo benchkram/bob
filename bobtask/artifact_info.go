@@ -1,0 +1,46 @@
+package bobtask
+
+import (
+	"bytes"
+	"fmt"
+	"time"
+)
+
+type ArtifactInfo interface {
+	String() string
+}
+
+// artifactInfo is a helper to debug artifacts
+// during testing or from the cli.
+type artifactInfo struct {
+	createdAt time.Time
+
+	taskname string
+	id       string
+	targets  []string
+}
+
+func newArtifactInfo() *artifactInfo {
+	ai := &artifactInfo{
+		targets: []string{},
+	}
+	return ai
+}
+
+func (ai *artifactInfo) String() string {
+	buf := bytes.NewBufferString("")
+
+	indent := "  "
+	fmt.Fprintf(buf, "%s\n", "Artifact Info")
+
+	fmt.Fprintf(buf, "%s%s%s\n", indent, "id:       ", ai.id)
+	fmt.Fprintf(buf, "%s%s%s\n", indent, "taskname: ", ai.taskname)
+
+	fmt.Fprintf(buf, "%s%s\n", indent, "targets:")
+	i := indent + "  "
+	for _, t := range ai.targets {
+		fmt.Fprintf(buf, "%s%s\n", i, t)
+	}
+
+	return buf.String()
+}

@@ -52,8 +52,4 @@ func TestPackAndUnpackArtifacts(t *testing.T) {
 
 	assert.True(t, file.Exists(filepath.Join(testdir, ".bbuild/dirone/fileone")))
 	assert.True(t, file.Exists(filepath.Join(testdir, ".bbuild/dirone/filetwo")))
-
-	description, err := tsk.ArtifactInspect("aaa")
-	assert.Nil(t, err)
-	println(description)
 }

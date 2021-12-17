@@ -86,7 +86,6 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	// targets
 	for _, fname := range targets {
-		//println(fname)
 		info, err := os.Stat(fname)
 		errz.Fatal(err)
 
