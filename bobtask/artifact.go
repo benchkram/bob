@@ -18,11 +18,13 @@ import (
 	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
 	"github.com/mholt/archiver/v3"
+	"gopkg.in/yaml.v3"
 )
 
 const __targets = "targets"
 const __exports = "exports"
 const __summary = "__summary"
+const __metadata = "__metadata"
 
 var ErrInvalidTarHeaderType = fmt.Errorf("invalid tar header type")
 
@@ -147,6 +149,20 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		err = file.Close()
 		errz.Fatal(err)
 	}
+
+	metadata := NewArtifactMetadata()
+	metadata.Taskname = t.name
+	bin, err := yaml.Marshal(metadata)
+	errz.Fatal(err)
+
+	err = archiveWriter.Write(archiver.File{
+		FileInfo: fileInfo{
+			name: __metadata,
+			data: bin,
+		},
+		ReadCloser: io.NopCloser(bytes.NewBuffer(bin)),
+	})
+	errz.Fatal(err)
 
 	return nil
 }

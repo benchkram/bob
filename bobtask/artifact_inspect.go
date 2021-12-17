@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"strings"
 
 	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 	"github.com/mholt/archiver/v3"
+	"gopkg.in/yaml.v3"
 )
 
 var ErrArtifactDoesNotExist = fmt.Errorf("artifact does not exist")
@@ -85,7 +87,17 @@ func artifactInspect(archiveReader archiver.Reader) (_ *artifactInfo, err error)
 			info.targets = append(info.targets, header.Name)
 			// filename := strings.TrimPrefix(header.Name, __targets+"/")
 
+		} else if strings.HasPrefix(header.Name, __metadata) {
+			bin, err := ioutil.ReadAll(archiveFile)
+			errz.Fatal(err)
+
+			metadata := NewArtifactMetadata()
+			err = yaml.Unmarshal(bin, metadata)
+			errz.Fatal(err)
+
+			info.metadata = metadata
 		}
+
 	}
 
 	return info, nil

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Benchkram/bob/pkg/file"
 	"github.com/Benchkram/bob/pkg/store/filestore"
+	"github.com/Benchkram/errz"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,12 +36,14 @@ func TestPackAndUnpackArtifacts(t *testing.T) {
 	tsk := Make()
 	tsk.dir = testdir
 	tsk.local = artifactStore
+	tsk.name = "mytaskname"
 
 	tsk.TargetDirty = ".bbuild/dirone/"
 	err = tsk.parseTargets()
 	assert.Nil(t, err)
 
 	err = tsk.ArtifactPack("aaa")
+	errz.Log(err)
 	assert.Nil(t, err)
 
 	err = os.RemoveAll(filepath.Join(testdir, ".build/dirone"))
@@ -52,4 +55,10 @@ func TestPackAndUnpackArtifacts(t *testing.T) {
 
 	assert.True(t, file.Exists(filepath.Join(testdir, ".bbuild/dirone/fileone")))
 	assert.True(t, file.Exists(filepath.Join(testdir, ".bbuild/dirone/filetwo")))
+
+	info, err := tsk.ArtifactInspect("aaa")
+	assert.Nil(t, err)
+
+	println(info.String())
+
 }
