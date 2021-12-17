@@ -205,7 +205,7 @@ func (t *Task) LogSkippedInput() {
 	postfix := ""
 	if len(t.skippedInputs) > 5 {
 		maxinput = t.skippedInputs[:5]
-		postfix = fmt.Sprintf("& more...")
+		postfix = "& more..."
 	}
 
 	for _, f := range maxinput {
