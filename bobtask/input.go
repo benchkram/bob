@@ -53,8 +53,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 
 		// if path starts with slash, change it to `./`
 		// ensures the path to stay inside the repository
-		// convert any absolute path to relative paths and skips
-		// files outside the repository
+		// convert any absolute path to relative paths
 		input = convertAbsolutePathToRelative(input)
 
 		list, err := filepathutil.ListRecursive(input)
@@ -124,11 +123,11 @@ func unique(ss []string) []string {
 // convertes path leading slash with a . in prefix
 // enforces the path to stay inside the repository
 // turns absolute path into relative path
-func convertAbsolutePathToRelative(path string) string {
-	if strings.HasPrefix(path, "/") {
-		return "." + path
+func convertAbsolutePathToRelative(filepath string) string {
+	if strings.HasPrefix(filepath, "/") {
+		return "." + filepath
 	}
-	return path
+	return filepath
 }
 
 // Split splits a single-line "input" to a slice of inputs.
