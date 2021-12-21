@@ -2,12 +2,16 @@ package bobtask
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/multilinecmd"
 	"github.com/Benchkram/errz"
+	"github.com/logrusorgru/aurora"
 )
 
 type Map map[string]Task
@@ -55,6 +59,11 @@ func (tm Map) Sanitize() {
 		errz.Fatal(err)
 
 		inputs, err := task.filteredInputs()
+		if errors.Is(err, BackwardPathError) || errors.Is(err, OutsideDirError) {
+			boblog.Log.V(1).Info(aurora.Red(err.Error()).String())
+			os.Exit(1)
+		}
+
 		errz.Fatal(err)
 		task.inputs = inputs
 
