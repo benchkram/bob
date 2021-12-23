@@ -3,11 +3,12 @@ package cli
 import (
 	"context"
 	"errors"
-	"github.com/Benchkram/bob/pkg/usererror"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
+
+	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/bob/bobfile"
@@ -65,7 +66,9 @@ func runBuild(dummy bool, taskname string) {
 		return
 	}
 
-	b, err := bob.Bob()
+	b, err := bob.Bob(
+		bob.WithDisableCache(false),
+	)
 	errz.Fatal(err)
 
 	ctx, cancel := context.WithCancel(context.Background())

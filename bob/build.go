@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Benchkram/bob/bob/playbook"
 	"github.com/Benchkram/errz"
 )
 
@@ -20,7 +21,10 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 
 	b.PrintVersionCompatibility(aggregate)
 
-	playbook, err := aggregate.Playbook(taskname)
+	playbook, err := aggregate.Playbook(
+		taskname,
+		playbook.WithLoadArtifacts(!b.disableCache),
+	)
 	errz.Fatal(err)
 
 	err = playbook.Build(ctx)

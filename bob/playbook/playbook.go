@@ -45,14 +45,33 @@ type Playbook struct {
 	start time.Time
 	// end is the point in time the playbook ended
 	end time.Time
+
+	// disable load and unload targets from artifacts while building
+	loadArtifacts bool
 }
 
-func New(root string) *Playbook {
+type Option func(p *Playbook)
+
+func WithLoadArtifacts(load bool) Option {
+	return func(p *Playbook) {
+		p.loadArtifacts = load
+	}
+}
+
+func New(root string, opts ...Option) *Playbook {
 	p := &Playbook{
-		taskChannel:  make(chan bobtask.Task, 10),
-		errorChannel: make(chan error),
-		Tasks:        make(StatusMap),
-		root:         root,
+		taskChannel:   make(chan bobtask.Task, 10),
+		errorChannel:  make(chan error),
+		Tasks:         make(StatusMap),
+		loadArtifacts: true,
+		root:          root,
+	}
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(p)
 	}
 
 	return p
@@ -153,7 +172,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 					boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] failed to get target from store", taskname))
 				}
 			} else {
-				if !task.ArtifactExists(hashIn) {
+				if !task.ArtifactExists(hashIn) && p.loadArtifacts {
 					err = task.ArtifactPack(hashIn)
 					boblog.Log.Error(err, "Unable to send target to store")
 				}
@@ -392,8 +411,10 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 	errz.Fatal(err)
 
 	// TODO: use target hash?
-	err = p.pack(taskname, hashIn)
-	errz.Fatal(err)
+	if p.loadArtifacts {
+		err = p.pack(taskname, hashIn)
+		errz.Fatal(err)
+	}
 
 	err = p.setTaskState(taskname, StateCompleted, nil)
 	errz.Fatal(err)

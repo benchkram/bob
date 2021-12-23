@@ -40,6 +40,10 @@ type B struct {
 	// When this is true a `.bob.workspace` file must exist,
 	// usually done by calling `bob init`
 	readConfig bool
+
+	// disable saving and loading from the artifacts
+	// for every task's target build
+	disableCache bool
 }
 
 func newBob(opts ...Option) *B {

@@ -2,9 +2,11 @@ package bob
 
 import (
 	"fmt"
-	"github.com/Benchkram/bob/pkg/usererror"
 	"path/filepath"
 	"strings"
+
+	"github.com/Benchkram/bob/bobtask"
+	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/logrusorgru/aurora"
 
@@ -74,6 +76,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 				// TODO: Create and use envvar sanitizer
 
 				task.AddEnvironment(strings.ToUpper(variable), value)
+				// set task rebuild to always if bob set to disableCache true
+				if b.disableCache {
+					task.SetRebuildStrategy(bobtask.RebuildAlways)
+				}
 
 				boblet.Tasks[key] = task
 			}
