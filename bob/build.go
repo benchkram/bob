@@ -23,7 +23,7 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 
 	playbook, err := aggregate.Playbook(
 		taskname,
-		playbook.WithLoadArtifacts(!b.disableCache),
+		playbook.WithArtifactsDisabled(b.disableCache),
 	)
 	errz.Fatal(err)
 
