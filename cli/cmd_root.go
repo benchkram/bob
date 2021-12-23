@@ -39,6 +39,7 @@ func init() {
 
 	// buildCmd
 	buildCmd.Flags().Bool("dummy", false, "Create a dummy bobfile")
+	buildCmd.Flags().Bool("no-cache", false, "Make true to disable save and load target from the cache")
 	buildCmd.AddCommand(buildListCmd)
 	rootCmd.AddCommand(buildCmd)
 

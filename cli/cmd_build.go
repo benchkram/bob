@@ -31,12 +31,15 @@ var buildCmd = &cobra.Command{
 		dummy, err := strconv.ParseBool(cmd.Flag("dummy").Value.String())
 		errz.Fatal(err)
 
+		noCache, err := cmd.Flags().GetBool("no-cache")
+		errz.Fatal(err)
+
 		taskname := global.DefaultBuildTask
 		if len(args) > 0 {
 			taskname = args[0]
 		}
 
-		runBuild(dummy, taskname)
+		runBuild(dummy, taskname, noCache)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getTasks()
@@ -57,7 +60,7 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(dummy bool, taskname string) {
+func runBuild(dummy bool, taskname string, noCache bool) {
 	if dummy {
 		wd, err := os.Getwd()
 		errz.Fatal(err)
@@ -67,7 +70,7 @@ func runBuild(dummy bool, taskname string) {
 	}
 
 	b, err := bob.Bob(
-		bob.WithDisableCache(false),
+		bob.WithDisableCache(noCache),
 	)
 	errz.Fatal(err)
 
