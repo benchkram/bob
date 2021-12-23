@@ -76,10 +76,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 				// TODO: Create and use envvar sanitizer
 
 				task.AddEnvironment(strings.ToUpper(variable), value)
-				// set task rebuild to always if bob set to disableCache true
-				if b.disableCache {
-					task.SetRebuildStrategy(bobtask.RebuildAlways)
-				}
 
 				boblet.Tasks[key] = task
 			}
@@ -167,7 +163,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// Looks like this is the wrong place to presume that all child tasks are comming from child bobfiles
 	// must exist.
 	for i, task := range aggregate.Tasks {
-
 		for _, dependentTaskName := range task.DependsOn {
 
 			dependentTask, ok := aggregate.Tasks[dependentTaskName]
@@ -202,6 +197,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	for i, task := range aggregate.Tasks {
 		task.WithLocalstore(b.local)
 		task.WithBuildinfoStore(b.buildInfoStore)
+		// set task rebuild to always if bob set to disableCache true
+		if b.disableCache {
+			task.SetRebuildStrategy(bobtask.RebuildAlways)
+		}
 		aggregate.Tasks[i] = task
 	}
 
