@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"time"
 
@@ -28,39 +29,43 @@ var round = 10 * time.Millisecond
 func (p *Playbook) Build(ctx context.Context) (err error) {
 	done := make(chan error)
 
-	tasks := []string{}
-	for _, t := range p.Tasks {
-		tasks = append(tasks, t.Name())
-	}
-	sort.Strings(tasks)
-
-	// Adjust padding of first column based on the taskname length.
-	// Also assign fixed color to the tasks.
-	p.namePad = 0
-	for i, name := range tasks {
-		if len(name) > p.namePad {
-			p.namePad = len(name)
+	{
+		tasks := []string{}
+		for _, t := range p.Tasks {
+			tasks = append(tasks, t.Name())
 		}
+		sort.Strings(tasks)
 
-		color := colorPool[i%len(colorPool)]
-		p.Tasks[name].Task.SetColor(color)
+		// Adjust padding of first column based on the taskname length.
+		// Also assign fixed color to the tasks.
+		p.namePad = 0
+		for i, name := range tasks {
+			if len(name) > p.namePad {
+				p.namePad = len(name)
+			}
+
+			color := colorPool[i%len(colorPool)]
+			p.Tasks[name].Task.SetColor(color)
+		}
+		p.namePad += 14
+
+		dependencies := len(tasks) - 1
+		rootName := p.Tasks[p.root].ColoredName()
+		boblog.Log.V(1).Info(fmt.Sprintf("Running task %s with %d dependencies", rootName, dependencies))
 	}
-	p.namePad += 14
 
-	dependencies := len(tasks) - 1
-	rootName := p.Tasks[p.root].ColoredName()
-	boblog.Log.V(1).Info(fmt.Sprintf("Running task %s with %d dependencies", rootName, dependencies))
-
-	tasks = []string{}
+	processedTasks := []*bobtask.Task{}
 
 	go func() {
 		// TODO: Run a worker pool so that multiple tasks can run in parallel.
 
 		c := p.TaskChannel()
-		for task := range c {
-			tasks = append(tasks, task.Name())
+		for t := range c {
+			// copy for processing
+			task := t
+			processedTasks = append(processedTasks, &task)
 
-			err := p.build(ctx, task)
+			err := p.build(ctx, &task)
 			if err != nil {
 				done <- err
 				break
@@ -79,13 +84,24 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	}
 	errz.Fatal(err)
 
+	// iterate through tasks and log
+	// skipped input files.
+	var skippedInputs int
+	for _, task := range processedTasks {
+		skippedInputs = logSkippedInputs(
+			skippedInputs,
+			task.ColoredName(),
+			task.LogSkippedInput(),
+		)
+	}
+
 	// summary
 	boblog.Log.V(1).Info("")
 	boblog.Log.V(1).Info(aurora.Bold("● ● ● ●").BrightGreen().String())
-	t := fmt.Sprintf("Ran %d tasks in %s ", len(tasks), p.ExecutionTime().Round(round))
+	t := fmt.Sprintf("Ran %d tasks in %s ", len(processedTasks), p.ExecutionTime().Round(round))
 	boblog.Log.V(1).Info(aurora.Bold(t).BrightGreen().String())
-	for _, t := range tasks {
-		stat, err := p.TaskStatus(t)
+	for _, t := range processedTasks {
+		stat, err := p.TaskStatus(t.Name())
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -97,7 +113,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			execTime = fmt.Sprintf("\t(%s)", stat.ExecutionTime().Round(round))
 		}
 
-		taskName := p.Tasks[t].Name()
+		taskName := t.Name()
 		boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, status.Summary(), execTime))
 	}
 	boblog.Log.V(1).Info("")
@@ -110,15 +126,17 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 var didWriteBuildOutput bool
 
 // build a single task and update the playbook state after completion.
-func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
+func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	defer errz.Recover(&err)
 
 	var taskSuccessFul bool
 	var taskErr error
 	defer func() {
 		if !taskSuccessFul {
-			err = p.TaskFailed(task.Name(), taskErr)
-			boblog.Log.Error(err, "Setting the task state to failed, failed")
+			errr := p.TaskFailed(task.Name(), taskErr)
+			if errr != nil {
+				boblog.Log.Error(errr, "Setting the task state to failed, failed.")
+			}
 		}
 	}()
 
@@ -215,4 +233,28 @@ func (p *Playbook) build(ctx context.Context, task bobtask.Task) (err error) {
 	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, "..."+state.Short()))
 
 	return nil
+}
+
+const maxSkippedInputs = 5
+
+// logSkippedInputs until max is reached
+func logSkippedInputs(count int, taskname string, skippedInputs []string) int {
+	if len(skippedInputs) == 0 {
+		return count
+	}
+	if count >= maxSkippedInputs {
+		return maxSkippedInputs
+	}
+
+	for _, f := range skippedInputs {
+		count = count + 1
+		boblog.Log.V(1).Info(fmt.Sprintf("skipped %s '%s' %s", taskname, f, os.ErrPermission))
+
+		if count >= maxSkippedInputs {
+			boblog.Log.V(1).Info(fmt.Sprintf("skipped %s %s", taskname, "& more..."))
+			break
+		}
+	}
+
+	return count
 }
