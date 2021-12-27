@@ -3,7 +3,9 @@ package bobtask
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -24,7 +26,12 @@ func (t *Task) HashIn() (taskHash hash.In, _ error) {
 	for _, f := range t.inputs {
 		h, err := filehash.Hash(f)
 		if err != nil {
-			return taskHash, fmt.Errorf("failed to hash file %q: %w", f, err)
+			if errors.Is(err, os.ErrPermission) {
+				t.addToSkippedInputs(f)
+				continue
+			} else {
+				return taskHash, fmt.Errorf("failed to hash file %q: %w", f, err)
+			}
 		}
 
 		_, err = aggregatedHashes.Write(h)
