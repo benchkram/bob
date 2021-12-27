@@ -2,8 +2,6 @@ package bobtask
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -92,7 +90,7 @@ type Task struct {
 	// color is used to color the task's name on the terminal
 	color aurora.Color
 
-	// lists of skipped input files
+	// skippedInputs is a lists of skipped input files
 	skippedInputs []string
 }
 
@@ -185,39 +183,22 @@ func (t *Task) AddExportPrefix(prefix string) {
 	}
 }
 
-// add filenames with permission issues to the task's
+// AddToSkippedInputs add filenames with permission issues to the task's
 // skippedInput list. returns without appending if file
 // already exists, thus maintain uniqueness
-func (t *Task) AddToSkippedInputs(f string) {
-	for _, ele := range t.skippedInputs {
-		if ele == f {
+func (t *Task) addToSkippedInputs(f string) {
+	for _, si := range t.skippedInputs {
+		if si == f {
 			return
 		}
 	}
 	t.skippedInputs = append(t.skippedInputs, f)
 }
 
-// Log the skipped input files from the task.
+// LogSkippedInput skipped input files from the task.
 // prints nothing if there is not skipped input.
-func (t *Task) LogSkippedInput() {
-	if len(t.skippedInputs) == 0 {
-		return
-	}
-
-	maxinput := t.skippedInputs
-	postfix := ""
-	if len(t.skippedInputs) > 5 {
-		maxinput = t.skippedInputs[:5]
-		postfix = "& more..."
-	}
-
-	for _, f := range maxinput {
-		log.Printf("%s\t '%s' %s", t.name, f, os.ErrPermission)
-	}
-
-	if postfix != "" {
-		log.Printf("%s\t %s", t.name, postfix)
-	}
+func (t *Task) LogSkippedInput() []string {
+	return t.skippedInputs
 }
 
 func (t *Task) parseTargets() error {

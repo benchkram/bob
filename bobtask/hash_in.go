@@ -27,7 +27,7 @@ func (t *Task) HashIn() (taskHash hash.In, _ error) {
 		h, err := filehash.Hash(f)
 		if err != nil {
 			if errors.Is(err, os.ErrPermission) {
-				t.AddToSkippedInputs(f)
+				t.addToSkippedInputs(f)
 				continue
 			} else {
 				return taskHash, fmt.Errorf("failed to hash file %q: %w", f, err)
