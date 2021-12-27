@@ -18,10 +18,12 @@ var _ = Describe("Test artifact and target on no cache build", func() {
 			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
 		})
 
-		It("should build no cache", func() {
+		It("should build both with and without cache", func() {
 			ctx := context.Background()
+
 			err := bNoCache.Build(ctx, "build")
 			errz.Log(err)
+
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -32,6 +34,8 @@ var _ = Describe("Test artifact and target on no cache build", func() {
 		})
 
 		It("should rebuild and create a new artifact for always-build without no-cache", func() {
+			// b and bNoCache uses the same dir, so this should
+			// work without running b.Build first
 			state, err := buildTask(b, "always-build")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state.State()).To(Equal(playbook.StateCompleted))
@@ -66,10 +70,12 @@ var _ = Describe("Test artifact and target on no cache build", func() {
 		})
 
 		It("cleanup", func() {
-			err := b.CleanBuildInfoStore()
+			// b and bNoCache uses the same dir, so this should
+			// so this cleans directory for both build task
+			err := bNoCache.CleanBuildInfoStore()
 			Expect(err).NotTo(HaveOccurred())
 
-			err = b.CleanLocalStore()
+			err = bNoCache.CleanLocalStore()
 			Expect(err).NotTo(HaveOccurred())
 
 			err = reset()
