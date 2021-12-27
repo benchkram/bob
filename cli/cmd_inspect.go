@@ -13,9 +13,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var inspectArtifactTask string
+
 func init() {
+
+	inspectArtifactCmd.Flags().StringVarP(&inspectArtifactTask, "task", "t",
+		inspectArtifactTask, "list artifacts for a task")
+
 	inspectCmd.AddCommand(envCmd)
 	inspectCmd.AddCommand(exportCmd)
+	inspectArtifactCmd.AddCommand(inspectArtifactListCmd)
 	inspectCmd.AddCommand(inspectArtifactCmd)
 	rootCmd.AddCommand(inspectCmd)
 }
@@ -106,11 +113,14 @@ func runExport(taskname string) {
 var inspectArtifactCmd = &cobra.Command{
 	Use:   "artifact",
 	Short: "Inspect artifacts",
-	Args:  cobra.ExactArgs(1),
-	Long:  ``,
+	//Args:  cobra.ExactArgs(1),
+	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		taskname := args[0]
-		runInspectArtifact(taskname)
+		if inspectArtifactTask == "" {
+			fmt.Printf("%s", aurora.Red("failed to set taskname"))
+			os.Exit(1)
+		}
+		runInspectArtifact(inspectArtifactTask)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getTasks()
@@ -145,4 +155,28 @@ func runInspectArtifact(taskname string) {
 	}
 
 	fmt.Printf("%s", info.String())
+}
+
+var inspectArtifactListCmd = &cobra.Command{
+	Use:   "ls",
+	Short: "List artifacts",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		runinspectArtifactList()
+	},
+}
+
+// runinspectArtifactList list artifacts in relation to tasks
+func runinspectArtifactList() {
+	b, err := bob.Bob()
+	if err != nil {
+		boblog.Log.Error(err, "Unable to initialize bob")
+	}
+
+	out, err := b.ArtifactList()
+	if err != nil {
+		boblog.Log.Error(err, "Unable to generate artifact list")
+	}
+
+	fmt.Println(out)
 }

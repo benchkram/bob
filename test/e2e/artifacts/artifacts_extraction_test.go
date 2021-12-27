@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = FDescribe("Test artifact creation and extraction", func() {
+var _ = Describe("Test artifact creation and extraction", func() {
 	Context("in a fresh playground", func() {
 
 		It("should initialize bob playground", func() {

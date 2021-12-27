@@ -7,17 +7,18 @@ import (
 )
 
 type ArtifactInfo interface {
+	Metadata() *ArtifactMetadata
 	String() string
 }
 
 // artifactInfo is a helper to debug artifacts
 // during testing or from the cli.
 type artifactInfo struct {
-	createdAt time.Time
+	// id is the input hash
+	id string
 
-	taskname string
-	id       string
-	targets  []string
+	// targets contained
+	targets []string
 
 	metadata *ArtifactMetadata
 }
@@ -27,6 +28,10 @@ func newArtifactInfo() *artifactInfo {
 		targets: []string{},
 	}
 	return ai
+}
+
+func (ai *artifactInfo) Metadata() *ArtifactMetadata {
+	return ai.metadata
 }
 
 func (ai *artifactInfo) String() string {
@@ -47,7 +52,7 @@ func (ai *artifactInfo) String() string {
 	i = indent + "  "
 	if ai.metadata != nil {
 		fmt.Fprintf(buf, "%s%s%s\n", i, "taskname: ", ai.metadata.Taskname)
-		fmt.Fprintf(buf, "%s%s%s\n", i, "createdAt: ", ai.metadata.CreatedAt.String())
+		fmt.Fprintf(buf, "%s%s%s\n", i, "createdAt: ", ai.metadata.CreatedAt.Format(time.RFC822Z))
 	}
 
 	return buf.String()

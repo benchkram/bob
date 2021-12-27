@@ -47,7 +47,6 @@ func (t *Task) ArtifactInspect(artifactNames ...hash.In) (ai ArtifactInfo, err e
 	info, err := artifactInspect(archiveReader)
 	errz.Fatal(err)
 	info.id = artifactName.String()
-	info.taskname = t.name // TODO: get from artifact
 
 	return info, nil
 }
@@ -85,8 +84,6 @@ func artifactInspect(archiveReader archiver.Reader) (_ *artifactInfo, err error)
 
 		if strings.HasPrefix(header.Name, __targets) {
 			info.targets = append(info.targets, header.Name)
-			// filename := strings.TrimPrefix(header.Name, __targets+"/")
-
 		} else if strings.HasPrefix(header.Name, __metadata) {
 			bin, err := ioutil.ReadAll(archiveFile)
 			errz.Fatal(err)

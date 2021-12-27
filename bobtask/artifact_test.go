@@ -60,5 +60,4 @@ func TestPackAndUnpackArtifacts(t *testing.T) {
 	assert.Nil(t, err)
 
 	println(info.String())
-
 }

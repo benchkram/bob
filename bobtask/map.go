@@ -83,3 +83,12 @@ func (tm Map) String() string {
 
 	return description.String()
 }
+
+func (tm Map) KeysSortedAlpabethically() (keys []string) {
+	keys = make([]string, 0, len(tm))
+	for key := range tm {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
