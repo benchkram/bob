@@ -34,6 +34,7 @@ func init() {
 	rootCmd.AddCommand(cmdWorkspace)
 
 	// runCmd
+	runCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
 	runCmd.AddCommand(runListCmd)
 	rootCmd.AddCommand(runCmd)
 
