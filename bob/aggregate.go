@@ -197,6 +197,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	for i, task := range aggregate.Tasks {
 		task.WithLocalstore(b.local)
 		task.WithBuildinfoStore(b.buildInfoStore)
+		task.SetBuilder(b.dir) // TODO: todoproject, use project name instead of dir
 		aggregate.Tasks[i] = task
 	}
 

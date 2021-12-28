@@ -71,6 +71,15 @@ type Task struct {
 	// name is the name of the task
 	// TODO: Make this public to allow yaml.Marshal to add this to the task hash?!?
 	name string
+
+	// builder is the project who trigered the build
+	builder string
+
+	// project this tasks belongs to
+	// TODO: todoproject: Currently it's the path.. later
+	// we need globaly unique identifiers when using remote caching.
+	project string
+
 	// dir is the working directory for this task
 	dir string
 
@@ -156,6 +165,14 @@ func (t *Task) SetName(name string) {
 
 func (t *Task) SetEnv(env []string) {
 	t.env = env
+}
+
+func (t *Task) SetProject(proj string) {
+	t.project = proj
+}
+
+func (t *Task) SetBuilder(builder string) {
+	t.builder = builder
 }
 
 // Set the rebuild strategy for the task

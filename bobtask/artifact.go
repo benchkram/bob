@@ -152,7 +152,8 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	metadata := NewArtifactMetadata()
 	metadata.Taskname = t.name
-	metadata.Project = t.dir //TODO: use a globaly unique identifier for remote stores
+	metadata.Project = t.project //TODO: use a globaly unique identifier for remote stores
+	metadata.Builder = t.builder
 	metadata.InputHash = artifactName.String()
 	bin, err := yaml.Marshal(metadata)
 	errz.Fatal(err)

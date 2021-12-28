@@ -9,24 +9,19 @@ import (
 	"github.com/Benchkram/errz"
 )
 
-type TaskArtifactsMap map[string]*bobtask.ArtifactMetadata
-
-func (b *B) ArtifactList() (description string, err error) {
+func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 	defer errz.Recover(&err)
 
 	bobfile, err := b.Aggregate()
 	errz.Fatal(err)
 
-	items, err := b.Localstore().List(context.TODO())
+	items, err := b.Localstore().List(ctx)
 	errz.Fatal(err)
 
-	// projectTasknameMap helper map to the artifactname
-	// in relation to a project_taskname identifier
-	projectTasknameMap := make(TaskArtifactsMap)
-
+	metadataAll := []*bobtask.ArtifactMetadata{}
 	// prepare projectTasknameMap once from artifact store
 	for _, item := range items {
-		artifact, err := b.Localstore().GetArtifact(context.TODO(), item)
+		artifact, err := b.Localstore().GetArtifact(ctx, item)
 		errz.Fatal(err)
 		defer artifact.Close()
 
@@ -37,26 +32,39 @@ func (b *B) ArtifactList() (description string, err error) {
 		if m == nil {
 			continue
 		}
-
-		projectTasknameMap[taskArtifactsMapKey(m.Project, m.Taskname)] = m
+		metadataAll = append(metadataAll, m)
 	}
 
-	// List artifacts in relation to tasknames in alphabetcal order
+	// List artifacts in relation to tasknames in alphabetical order
 	buf := bytes.NewBufferString("")
 	sortedKeys := bobfile.Tasks.KeysSortedAlpabethically()
 	for _, key := range sortedKeys {
 		task := bobfile.Tasks[key]
 
 		fmt.Fprintln(buf, task.Name())
-		metadata, ok := projectTasknameMap[taskArtifactsMapKey(task.Dir(), task.Name())]
-		if ok {
-			fmt.Fprintln(buf, "  "+metadata.InputHash)
+
+		// additionaly check if there is a artifact match by inputHash
+		for _, m := range metadataAll {
+			var match bool
+
+			if m.Project == task.Dir() && m.Taskname == task.Name() {
+				match = true
+			}
+
+			// check input hash match in case we have no match yet.
+			if !match {
+				inputHash, err := task.HashIn()
+				errz.Fatal(err)
+				if m.InputHash == inputHash.String() {
+					match = true
+				}
+			}
+
+			if match {
+				fmt.Fprintln(buf, "  "+m.InputHash)
+			}
 		}
 	}
 
 	return buf.String(), nil
-}
-
-func taskArtifactsMapKey(projectName, taskname string) string {
-	return projectName + "_" + taskname
 }

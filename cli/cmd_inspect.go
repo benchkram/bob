@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -162,21 +163,20 @@ var inspectArtifactListCmd = &cobra.Command{
 	Short: "List artifacts",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		runinspectArtifactList()
+		runInspectArtifactList()
 	},
 }
 
 // runinspectArtifactList list artifacts in relation to tasks
-func runinspectArtifactList() {
+func runInspectArtifactList() {
 	b, err := bob.Bob()
 	if err != nil {
 		boblog.Log.Error(err, "Unable to initialize bob")
 	}
 
-	out, err := b.ArtifactList()
+	out, err := b.ArtifactList(context.TODO())
 	if err != nil {
 		boblog.Log.Error(err, "Unable to generate artifact list")
 	}
-
 	fmt.Println(out)
 }
