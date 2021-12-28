@@ -41,8 +41,8 @@ type B struct {
 	// usually done by calling `bob init`
 	readConfig bool
 
-	// enable caching by saving and loading from the artifacts
-	// for every task's target build. Default: true
+	// enableCaching allows to save and load artifacts
+	// from the cache Default: true
 	enableCaching bool
 }
 

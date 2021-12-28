@@ -33,8 +33,8 @@ func WithBuildinfoStore(store buildinfostore.Store) Option {
 	}
 }
 
-func WithCachingEnabled(cache bool) Option {
+func WithCachingEnabled(enabled bool) Option {
 	return func(b *B) {
-		b.enableCaching = cache
+		b.enableCaching = enabled
 	}
 }

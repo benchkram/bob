@@ -197,7 +197,8 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	for i, task := range aggregate.Tasks {
 		task.WithLocalstore(b.local)
 		task.WithBuildinfoStore(b.buildInfoStore)
-		// set task rebuild to always if bob set to enableCaching false
+
+		// a task must always-rebuild when caching is disabled
 		if !b.enableCaching {
 			task.SetRebuildStrategy(bobtask.RebuildAlways)
 		}
