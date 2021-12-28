@@ -36,7 +36,7 @@ var _ = Describe("Test artifact and target on no cache build", func() {
 		It("should rebuild and create a new artifact for always-build without no-cache", func() {
 			// b and bNoCache uses the same dir, so this should
 			// work without running b.Build first
-			state, err := buildTask(b, "always-build")
+			state, err := buildTask(b, bob.BuildAlwaysTargetName)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state.State()).To(Equal(playbook.StateCompleted))
 
@@ -51,7 +51,7 @@ var _ = Describe("Test artifact and target on no cache build", func() {
 
 		It("should rebuild and create no artifact for always-build with no-cache", func() {
 			ctx := context.Background()
-			err := bNoCache.Build(ctx, "always-build")
+			err := bNoCache.Build(ctx, bob.BuildAlwaysTargetName)
 			Expect(err).NotTo(HaveOccurred())
 
 			fs, err := os.ReadDir(artifactDir)
@@ -61,7 +61,7 @@ var _ = Describe("Test artifact and target on no cache build", func() {
 
 		It("should rebuild and create no artifact for all task build with no-cache", func() {
 			ctx := context.Background()
-			err := bNoCache.Build(ctx, "all")
+			err := bNoCache.Build(ctx, bob.BuildAllTargetName)
 			Expect(err).NotTo(HaveOccurred())
 
 			fs, err := os.ReadDir(artifactDir)
