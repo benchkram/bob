@@ -52,6 +52,7 @@ func (ai *artifactInfo) String() string {
 	i = indent + "  "
 	if ai.metadata != nil {
 		fmt.Fprintf(buf, "%s%s%s\n", i, "taskname: ", ai.metadata.Taskname)
+		fmt.Fprintf(buf, "%s%s%s\n", i, "inputHash: ", ai.metadata.InputHash)
 		fmt.Fprintf(buf, "%s%s%s\n", i, "createdAt: ", ai.metadata.CreatedAt.Format(time.RFC822Z))
 	}
 

@@ -14,12 +14,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var inspectArtifactTask string
+var inspectArtifactId string
 
 func init() {
 
-	inspectArtifactCmd.Flags().StringVarP(&inspectArtifactTask, "task", "t",
-		inspectArtifactTask, "list artifacts for a task")
+	inspectArtifactCmd.Flags().StringVarP(&inspectArtifactId, "id", "",
+		inspectArtifactId, "inspect artifact with id")
 
 	inspectCmd.AddCommand(envCmd)
 	inspectCmd.AddCommand(exportCmd)
@@ -113,15 +113,15 @@ func runExport(taskname string) {
 
 var inspectArtifactCmd = &cobra.Command{
 	Use:   "artifact",
-	Short: "Inspect artifacts",
+	Short: "Inspect artifacts by id",
 	//Args:  cobra.ExactArgs(1),
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		if inspectArtifactTask == "" {
-			fmt.Printf("%s", aurora.Red("failed to set taskname"))
+		if inspectArtifactId == "" {
+			fmt.Printf("%s", aurora.Red("failed to set artifact id"))
 			os.Exit(1)
 		}
-		runInspectArtifact(inspectArtifactTask)
+		runInspectArtifact(inspectArtifactId)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getTasks()
@@ -133,20 +133,11 @@ var inspectArtifactCmd = &cobra.Command{
 	},
 }
 
-func runInspectArtifact(taskname string) {
+func runInspectArtifact(artifactID string) {
 	b, err := bob.Bob()
 	boblog.Log.Error(err, "Unable to initialize bob")
 
-	bobfile, err := b.Aggregate()
-	boblog.Log.Error(err, "Unable to aggregate bob file")
-
-	task, ok := bobfile.Tasks[taskname]
-	if !ok {
-		fmt.Printf("%s\n", aurora.Red("Task does not exists"))
-		os.Exit(1)
-	}
-
-	info, err := task.ArtifactInspect()
+	info, err := b.ArtifactInspect(artifactID)
 	if err != nil {
 		if errors.As(err, &usererror.Err) {
 			fmt.Printf("%s\n", errors.Unwrap(err).Error())

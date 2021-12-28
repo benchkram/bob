@@ -4,11 +4,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/fs"
 
 	"github.com/Benchkram/bob/bobtask"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 )
 
+// ArtifactList list artifacts belonging to each tasks.
+// Artifacts are matched by project & taskname as well as their input hash stored
+// in the artifacts metadata if required.
 func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 	defer errz.Recover(&err)
 
@@ -67,4 +72,19 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 	}
 
 	return buf.String(), nil
+}
+
+func (b *B) ArtifactInspect(artifactID string) (ai bobtask.ArtifactInfo, err error) {
+
+	artifact, err := b.local.GetArtifact(context.TODO(), artifactID)
+	if err != nil {
+		_, ok := err.(*fs.PathError)
+		if ok {
+			return ai, usererror.Wrap(bobtask.ErrArtifactDoesNotExist)
+		}
+		errz.Fatal(err)
+	}
+	defer artifact.Close()
+
+	return bobtask.ArtifactInspectFromReader(artifact)
 }
