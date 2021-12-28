@@ -3,11 +3,12 @@ package cli
 import (
 	"context"
 	"errors"
-	"github.com/Benchkram/bob/pkg/usererror"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
+
+	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/bob/bobfile"
@@ -30,12 +31,15 @@ var buildCmd = &cobra.Command{
 		dummy, err := strconv.ParseBool(cmd.Flag("dummy").Value.String())
 		errz.Fatal(err)
 
+		noCache, err := cmd.Flags().GetBool("no-cache")
+		errz.Fatal(err)
+
 		taskname := global.DefaultBuildTask
 		if len(args) > 0 {
 			taskname = args[0]
 		}
 
-		runBuild(dummy, taskname)
+		runBuild(dummy, taskname, noCache)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getTasks()
@@ -56,7 +60,7 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(dummy bool, taskname string) {
+func runBuild(dummy bool, taskname string, noCache bool) {
 	if dummy {
 		wd, err := os.Getwd()
 		errz.Fatal(err)
@@ -65,7 +69,9 @@ func runBuild(dummy bool, taskname string) {
 		return
 	}
 
-	b, err := bob.Bob()
+	b, err := bob.Bob(
+		bob.WithCachingEnabled(!noCache),
+	)
 	errz.Fatal(err)
 
 	ctx, cancel := context.WithCancel(context.Background())

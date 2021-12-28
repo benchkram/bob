@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+
 	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/bob/tui"
@@ -23,7 +24,11 @@ var runCmd = &cobra.Command{
 		if len(args) > 0 {
 			taskname = args[0]
 		}
-		run(taskname)
+
+		noCache, err := cmd.Flags().GetBool("no-cache")
+		errz.Fatal(err)
+
+		run(taskname, noCache)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getRuns()
@@ -34,8 +39,10 @@ var runCmd = &cobra.Command{
 	},
 }
 
-func run(taskname string) {
-	b, err := bob.Bob()
+func run(taskname string, noCache bool) {
+	b, err := bob.Bob(
+		bob.WithCachingEnabled(!noCache),
+	)
 	errz.Fatal(err)
 
 	ctx, cancel := context.WithCancel(context.Background())

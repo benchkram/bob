@@ -45,14 +45,26 @@ type Playbook struct {
 	start time.Time
 	// end is the point in time the playbook ended
 	end time.Time
+
+	// enableCaching allows artifacts to be read & written to a store.
+	// Default: true.
+	enableCaching bool
 }
 
-func New(root string) *Playbook {
+func New(root string, opts ...Option) *Playbook {
 	p := &Playbook{
-		taskChannel:  make(chan bobtask.Task, 10),
-		errorChannel: make(chan error),
-		Tasks:        make(StatusMap),
-		root:         root,
+		taskChannel:   make(chan bobtask.Task, 10),
+		errorChannel:  make(chan error),
+		Tasks:         make(StatusMap),
+		enableCaching: true,
+		root:          root,
+	}
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(p)
 	}
 
 	return p
@@ -153,7 +165,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 					boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] failed to get target from store", taskname))
 				}
 			} else {
-				if !task.ArtifactExists(hashIn) {
+				if !task.ArtifactExists(hashIn) && p.enableCaching {
 					err = task.ArtifactPack(hashIn)
 					boblog.Log.Error(err, "Unable to send target to store")
 				}
@@ -392,8 +404,10 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 	errz.Fatal(err)
 
 	// TODO: use target hash?
-	err = p.pack(taskname, hashIn)
-	errz.Fatal(err)
+	if p.enableCaching {
+		err = p.pack(taskname, hashIn)
+		errz.Fatal(err)
+	}
 
 	err = p.setTaskState(taskname, StateCompleted, nil)
 	errz.Fatal(err)

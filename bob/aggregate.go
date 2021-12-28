@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Benchkram/bob/bobtask"
 	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/logrusorgru/aurora"
@@ -162,7 +163,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// Looks like this is the wrong place to presume that all child tasks are comming from child bobfiles
 	// must exist.
 	for i, task := range aggregate.Tasks {
-
 		for _, dependentTaskName := range task.DependsOn {
 
 			dependentTask, ok := aggregate.Tasks[dependentTaskName]
@@ -197,6 +197,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	for i, task := range aggregate.Tasks {
 		task.WithLocalstore(b.local)
 		task.WithBuildinfoStore(b.buildInfoStore)
+
+		// a task must always-rebuild when caching is disabled
+		if !b.enableCaching {
+			task.SetRebuildStrategy(bobtask.RebuildAlways)
+		}
 		aggregate.Tasks[i] = task
 	}
 

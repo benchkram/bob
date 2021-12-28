@@ -40,6 +40,8 @@ var (
 	cleanup func() error
 
 	b *bob.B
+
+	bNoCache *bob.B
 )
 
 func reset() error {
@@ -63,6 +65,13 @@ var _ = BeforeSuite(func() {
 	b, err = bob.BobWithBaseStoreDir(
 		storageDir,
 		bob.WithDir(dir),
+	)
+	Expect(err).NotTo(HaveOccurred())
+
+	bNoCache, err = bob.BobWithBaseStoreDir(
+		storageDir,
+		bob.WithDir(dir),
+		bob.WithCachingEnabled(false),
 	)
 	Expect(err).NotTo(HaveOccurred())
 })
