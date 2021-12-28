@@ -70,7 +70,7 @@ func runBuild(dummy bool, taskname string, noCache bool) {
 	}
 
 	b, err := bob.Bob(
-		bob.WithDisableCache(noCache),
+		bob.WithCachingEnabled(!noCache),
 	)
 	errz.Fatal(err)
 

@@ -71,7 +71,7 @@ var _ = BeforeSuite(func() {
 	bNoCache, err = bob.BobWithBaseStoreDir(
 		storageDir,
 		bob.WithDir(dir),
-		bob.WithDisableCache(true),
+		bob.WithCachingEnabled(false),
 	)
 	Expect(err).NotTo(HaveOccurred())
 })

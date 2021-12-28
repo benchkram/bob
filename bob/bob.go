@@ -41,9 +41,9 @@ type B struct {
 	// usually done by calling `bob init`
 	readConfig bool
 
-	// disable saving and loading from the artifacts
-	// for every task's target build
-	disableCache bool
+	// enable caching by saving and loading from the artifacts
+	// for every task's target build. Default: true
+	enableCaching bool
 }
 
 func newBob(opts ...Option) *B {
@@ -55,6 +55,7 @@ func newBob(opts ...Option) *B {
 	b := &B{
 		DefaultCloneSchema: SSH,
 		dir:                wd,
+		enableCaching:      true,
 	}
 
 	for _, opt := range opts {
