@@ -47,9 +47,9 @@ type Bobfile struct {
 
 	Variables VariableMap
 
-	Tasks bobtask.Map
+	Tasks bobtask.Map `yaml:"build"`
 
-	Runs bobrun.RunMap
+	Runs bobrun.RunMap `yaml:"run"`
 
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
