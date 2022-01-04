@@ -57,6 +57,7 @@ func run(taskname string, noCache bool) {
 
 		return
 	}
+	defer t.Restore()
 
 	commander, err := b.Run(ctx, taskname)
 	if err != nil {
@@ -65,6 +66,7 @@ func run(taskname string, noCache bool) {
 		default:
 			if errors.As(err, &usererror.Err) {
 				boblog.Log.UserError(err)
+				return
 			} else {
 				errz.Fatal(err)
 			}
@@ -80,8 +82,6 @@ func run(taskname string, noCache bool) {
 	if commander != nil {
 		<-commander.Done()
 	}
-
-	t.Restore()
 }
 
 func getRuns() ([]string, error) {

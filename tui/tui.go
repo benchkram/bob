@@ -31,7 +31,9 @@ func New() (*TUI, error) {
 		return nil, err
 	}
 
-	// Redirect of stderr and stdout will happen in (t *TUI) Start(cmder ctl.Commander)
+	// Redirect of stderr and stdout to cache all logging until tui is either started or restored
+	os.Stdout = wout
+	os.Stderr = wout
 
 	buf, err := multiScanner(0, evts, rout)
 	if err != nil {
@@ -50,12 +52,6 @@ func New() (*TUI, error) {
 
 func (t *TUI) Start(cmder ctl.Commander) {
 	t.started = true
-
-	// Redirect stdout and stderr
-	// Do this as late as possible
-	// Any logging to stdout and stderr between redirecting and actually starting logging from new out/err
-	os.Stdout = t.output
-	os.Stderr = t.output
 
 	programEvts := make(chan interface{}, 1)
 
