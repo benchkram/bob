@@ -31,6 +31,19 @@ var CmdGitStatus = &cobra.Command{
 	},
 }
 
+var CmdGitAdd = &cobra.Command{
+	Use:   "add",
+	Short: "Run git add on all child repos",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		var url string
+		if len(args) > 0 {
+			url = args[0]
+		}
+		runGitAdd(url)
+	},
+}
+
 func runGitStatus() {
 	s, err := bobgit.Status()
 	if err != nil {
@@ -45,4 +58,9 @@ func runGitStatus() {
 		errz.Fatal(err)
 	}
 	fmt.Println(s.String())
+}
+
+func runGitAdd(url string) {
+	fmt.Println(url)
+	fmt.Println("Git add will run on all child repos")
 }
