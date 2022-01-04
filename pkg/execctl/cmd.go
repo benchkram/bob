@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/Benchkram/bob/pkg/ctl"
+	"github.com/Benchkram/bob/pkg/usererror"
 )
 
 var (
@@ -122,7 +123,7 @@ func (c *Cmd) Start() error {
 	// start the command
 	err := c.cmd.Start()
 	if err != nil {
-		return err
+		return usererror.Wrapm(err, "Command execution failed")
 	}
 
 	go func() {

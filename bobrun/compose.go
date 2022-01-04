@@ -3,9 +3,11 @@ package bobrun
 import (
 	"context"
 	"fmt"
+
 	"github.com/Benchkram/bob/pkg/composectl"
 	"github.com/Benchkram/bob/pkg/composeutil"
 	"github.com/Benchkram/bob/pkg/ctl"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 )
 
@@ -32,7 +34,7 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 		portConflicts = conflicts.String()
 
 		// TODO: disable once we also resolve binaries' ports
-		errz.Fatal(fmt.Errorf(fmt.Sprint("conflicting ports detected:\n", conflicts)))
+		errz.Fatal(usererror.Wrap(fmt.Errorf(fmt.Sprint("conflicting ports detected:\n", conflicts))))
 
 		resolved, err := composeutil.ResolvePortConflicts(conflicts)
 		errz.Fatal(err)

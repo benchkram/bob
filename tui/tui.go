@@ -2,11 +2,12 @@ package tui
 
 import (
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/Benchkram/bob/pkg/ctl"
 	"github.com/Benchkram/errz"
 	tea "github.com/charmbracelet/bubbletea"
-	"os"
-	"time"
 )
 
 type TUI struct {
@@ -30,8 +31,7 @@ func New() (*TUI, error) {
 		return nil, err
 	}
 
-	os.Stdout = wout
-	os.Stderr = wout
+	// Redirect of stderr and stdout will happen in (t *TUI) Start(cmder ctl.Commander)
 
 	buf, err := multiScanner(0, evts, rout)
 	if err != nil {
@@ -50,6 +50,12 @@ func New() (*TUI, error) {
 
 func (t *TUI) Start(cmder ctl.Commander) {
 	t.started = true
+
+	// Redirect stdout and stderr
+	// Do this as late as possible
+	// Any logging to stdout and stderr between redirecting and actually starting logging from new out/err
+	os.Stdout = t.output
+	os.Stderr = t.output
 
 	programEvts := make(chan interface{}, 1)
 

@@ -40,6 +40,9 @@ var runCmd = &cobra.Command{
 }
 
 func run(taskname string, noCache bool) {
+	var err error
+	defer errz.Recover(&err)
+
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
 	)
