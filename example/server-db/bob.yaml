@@ -1,5 +1,5 @@
 version: 0
-buil:
+build:
   generate-api:
     input: openapi.yaml
     cmd: |-
