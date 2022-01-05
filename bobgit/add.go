@@ -3,12 +3,12 @@ package bobgit
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/Benchkram/bob/bobgit/add"
 	"github.com/Benchkram/bob/pkg/bobutil"
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/errz"
@@ -50,31 +50,27 @@ func Add(target string) (err error) {
 		return ErrCouldNotFindGitDir
 	}
 
+	at := add.NewTarget(target)
+
 	// search for git repos inside bobRoot/.
-	repoNames, err := getAllRepos(bobRoot)
+	allRepos, err := getAllRepos(bobRoot)
 	errz.Fatal(err)
 
-	filterRepoNames, err := compareTargetWithRepos(repoNames, target)
-	errz.Fatal(err)
+	filteredRepos := at.PopulateAndFilterRepos(allRepos)
 
-	for _, name := range filterRepoNames {
+	for _, name := range filteredRepos {
+		thistarget, err := at.GetRelativeTarget(name)
+		errz.Fatal(err)
 
 		if name == "." {
 			name = strings.TrimSuffix(name, ".")
 		}
-		target = prepareAccordingTarget(target, name)
 
-		fmt.Println(name)
-		fmt.Println(target)
-
-		output, err := cmdutil.GitAddDry(name, target)
+		output, err := cmdutil.GitAddDry(name, thistarget)
 		errz.Fatal(err)
 
 		filenames, err := parseAddDryOutput(output)
 		errz.Fatal(err)
-
-		// fmt.Println(filenames)
-		// fmt.Println("=========================")
 
 		if len(filenames) > 0 {
 			err = cmdutil.GitAdd(name, target)
@@ -125,75 +121,20 @@ func trimTarget(target string) string {
 	return tempTarget
 }
 
-func prepareAccordingTarget(target string, repo string) string {
-	if repo == "" {
-		return target
-	}
-
-	if target == repo {
-		return "."
-	}
-
-	tempTarget := target
-	if strings.HasPrefix(target, repo) {
-		tempTarget = target[len(repo)+1:]
-	}
-
-	return tempTarget
-}
-
-func compareTargetWithRepos(repos []string, target string) ([]string, error) {
-
-	selected := []string{}
-
-	if target == "." || target == "./" {
-		return repos, nil
-	}
-
-	isDir, err := isDirectory(target)
-	if err != nil {
-		return selected, err
-	}
-	targetPath := target
-	if !isDir {
-		targetPath = filepath.Dir(target)
-	}
-
-	for _, r := range repos {
-		if r == targetPath {
-			selected = append(selected, r)
-		}
-	}
-
-	if len(selected) == 0 {
-		for _, r := range repos {
-			if strings.HasPrefix(target, r) {
-				selected = append(selected, r)
-			}
-		}
-	}
-
-	if len(selected) == 0 {
-		selected = append(selected, ".")
-	}
-
-	return selected, nil
-}
-
 // isDirectory determines if a file represented
 // by `path` is a directory or not
-func isDirectory(path string) (bool, error) {
-	fileInfo, err := os.Stat(path)
+// func IsDirectory(path string) (bool, error) {
+// 	fileInfo, err := os.Stat(path)
 
-	// returns isDirectory false if file does not exist
-	// to process the directory further in case of regex
-	// in case of a sure directory it should not be processed
-	// further
-	if err != nil && errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	} else if err != nil {
-		return false, err
-	}
+// 	// returns isDirectory false if file does not exist
+// 	// to process the directory further in case of regex
+// 	// in case of a sure directory it should not be processed
+// 	// further
+// 	if err != nil && errors.Is(err, os.ErrNotExist) {
+// 		return false, nil
+// 	} else if err != nil {
+// 		return false, err
+// 	}
 
-	return fileInfo.IsDir(), err
-}
+// 	return fileInfo.IsDir(), err
+// }
