@@ -60,7 +60,9 @@ func runGitStatus() {
 	fmt.Println(s.String())
 }
 
-func runGitAdd(url string) {
-	fmt.Println(url)
-	fmt.Println("Git add will run on all child repos")
+func runGitAdd(target string) {
+	err := bobgit.Add(target)
+	if err != nil {
+		errz.Fatal(err)
+	}
 }

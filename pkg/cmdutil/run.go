@@ -77,3 +77,21 @@ func GitStatus(root string) ([]byte, error) {
 	}
 	return r.Output()
 }
+
+func GitAddDry(root string, targetDir string) ([]byte, error) {
+	r, err := gitprepare(root, "add", targetDir, "--dry-run")
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Output()
+}
+
+func GitAdd(root string, targetDir string) error {
+	r, err := gitprepare(root, "add", targetDir)
+	if err != nil {
+		return err
+	}
+
+	return r.Run()
+}
