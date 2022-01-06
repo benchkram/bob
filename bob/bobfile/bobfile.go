@@ -121,6 +121,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		task.SetEnv([]string{})
 		task.SetRebuildStrategy(bobtask.RebuildOnChange)
 
+		// TODO: todoproject
+		task.SetProject(dir)
+
 		bobfile.Tasks[key] = task
 	}
 

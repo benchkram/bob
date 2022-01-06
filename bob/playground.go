@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	BuildAllTargetName    = "all"
-	BuildAlwaysTargetName = "always-build"
+	BuildAllTargetName            = "all"
+	BuildTargetwithdirsTargetName = "targetwithdirs"
+	BuildAlwaysTargetName         = "always-build"
 )
 
 func maingo(ver int) []byte {
@@ -327,6 +328,17 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	bobfile.Tasks["ignoredInputs"] = bobtask.Task{
 		InputDirty: "fileToWatch" + "\n" + "!fileToIgnore",
 		CmdDirty:   "echo \"Hello from ignored inputs task\"",
+	}
+
+	bobfile.Tasks[BuildTargetwithdirsTargetName] = bobtask.Task{
+		CmdDirty: strings.Join([]string{
+			"mkdir -p .bbuild/dirone/dirtwo",
+			"touch .bbuild/dirone/fileone",
+			"touch .bbuild/dirone/filetwo",
+			"touch .bbuild/dirone/dirtwo/fileone",
+			"touch .bbuild/dirone/dirtwo/filetwo",
+		}, "\n"),
+		TargetDirty: ".bbuild/dirone/",
 	}
 
 	return bobfile.BobfileSave(dir)

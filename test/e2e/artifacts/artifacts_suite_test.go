@@ -7,13 +7,15 @@ import (
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/bob/global"
+	"github.com/Benchkram/bob/pkg/buildinfostore"
+	"github.com/Benchkram/bob/pkg/store"
 	"github.com/Benchkram/bob/test/setup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-// Test case overview for target invalidation with artifacts in the local store.x
+// Test case overview for target invalidation with artifacts in the local store.
 // Input change not included, should not change for those tests.
 //
 // dne = does not exist
@@ -37,6 +39,9 @@ var (
 	dir         string
 	artifactDir string
 
+	artifactStore  store.Store
+	buildinfoStore buildinfostore.Store
+
 	cleanup func() error
 
 	b *bob.B
@@ -44,6 +49,8 @@ var (
 	bNoCache *bob.B
 )
 
+// reset base test dir to it's
+// initial state.
 func reset() error {
 	err := os.RemoveAll(dir)
 	if err != nil {
@@ -62,9 +69,14 @@ var _ = BeforeSuite(func() {
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	b, err = bob.BobWithBaseStoreDir(
-		storageDir,
+	artifactStore, err = bob.Filestore(storageDir)
+	Expect(err).NotTo(HaveOccurred())
+	buildinfoStore, err = bob.BuildinfoStore(storageDir)
+	Expect(err).NotTo(HaveOccurred())
+	b, err = bob.Bob(
 		bob.WithDir(dir),
+		bob.WithFilestore(artifactStore),
+		bob.WithBuildinfoStore(buildinfoStore),
 	)
 	Expect(err).NotTo(HaveOccurred())
 
