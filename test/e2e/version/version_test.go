@@ -2,6 +2,7 @@ package version_test
 
 import (
 	"context"
+
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/errz"
 

@@ -26,8 +26,8 @@ func (b *B) GetList() (tasks []string, err error) {
 	aggregate, err := b.Aggregate()
 	errz.Fatal(err)
 
-	keys := make([]string, 0, len(aggregate.Tasks))
-	for k := range aggregate.Tasks {
+	keys := make([]string, 0, len(aggregate.BTasks))
+	for k := range aggregate.BTasks {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
