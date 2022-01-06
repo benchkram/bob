@@ -3,7 +3,6 @@ package bobgit
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,14 +14,12 @@ import (
 	"github.com/Benchkram/errz"
 )
 
-var ErrOutsideBobWorkspace = fmt.Errorf("Not allowed, path pointing outside of Bob workspace.")
-
 // Status executes `git add` in all repositories
 // first level repositories found inside a .bob filtree.
-// It parses the output of each call and creates a object
-// containing status infos for all of them combined.
-// The result is similar to what `git add` would print
-// but visualy optimised for the multi repository case.
+// run git add commands by travsersing all the repositories
+// inside the bob workspace. if target is provided "." or  ""
+// it runs `git add .` in all repos, else run `git add ${relativeTargetPath}`
+// only on the selected repos depending on the target path
 func Add(target string) (err error) {
 	defer errz.Recover(&err)
 
@@ -112,21 +109,3 @@ func convertTargetPathRelativeToRoot(root string, target string) (string, error)
 	relativepath := dir[len(root)+1:]
 	return relativepath, nil
 }
-
-// isDirectory determines if a file represented
-// by `path` is a directory or not
-// func IsDirectory(path string) (bool, error) {
-// 	fileInfo, err := os.Stat(path)
-
-// 	// returns isDirectory false if file does not exist
-// 	// to process the directory further in case of regex
-// 	// in case of a sure directory it should not be processed
-// 	// further
-// 	if err != nil && errors.Is(err, os.ErrNotExist) {
-// 		return false, nil
-// 	} else if err != nil {
-// 		return false, err
-// 	}
-
-// 	return fileInfo.IsDir(), err
-// }

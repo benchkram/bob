@@ -1,9 +1,44 @@
 package bobgit
 
 import (
+	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
+
+	"github.com/Benchkram/errz"
 )
+
+var (
+	ErrOutsideBobWorkspace = fmt.Errorf("Not allowed, path pointing outside of Bob workspace.")
+	ErrCouldNotFindGitDir  = fmt.Errorf("Could not find a .git folder")
+)
+
+var dontFollow = []string{
+	"node_modules",
+	".git",
+	".vscode",
+}
+
+// isGitRepo return true is the directory contains a `.git` directory
+func isGitRepo(dir string) (isGit bool, err error) {
+	defer errz.Recover(&err)
+	entrys, err := os.ReadDir(dir)
+	errz.Fatal(err)
+
+	for _, entry := range entrys {
+		if !entry.IsDir() {
+			continue
+		}
+
+		if entry.Name() == ".git" {
+			isGit = true
+			break
+		}
+	}
+
+	return isGit, nil
+}
 
 // search for git repos inside provided root directory
 func getAllRepos(root string) ([]string, error) {
