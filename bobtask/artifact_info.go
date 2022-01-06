@@ -14,9 +14,6 @@ type ArtifactInfo interface {
 // artifactInfo is a helper to debug artifacts
 // during testing or from the cli.
 type artifactInfo struct {
-	// id is the input hash
-	id string
-
 	// targets contained
 	targets []string
 
@@ -39,8 +36,6 @@ func (ai *artifactInfo) String() string {
 
 	indent := "  "
 	fmt.Fprintf(buf, "%s\n", "Artifact Info")
-
-	fmt.Fprintf(buf, "%s%s%s\n", indent, "id:       ", ai.id)
 
 	fmt.Fprintf(buf, "%s%s\n", indent, "targets:")
 	i := indent + "  "

@@ -46,7 +46,6 @@ func (t *Task) ArtifactInspect(artifactNames ...hash.In) (ai ArtifactInfo, err e
 
 	info, err := artifactInspect(archiveReader)
 	errz.Fatal(err)
-	info.id = artifactName.String()
 
 	return info, nil
 }
