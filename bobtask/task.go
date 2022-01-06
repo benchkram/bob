@@ -110,6 +110,7 @@ func Make(opts ...TaskOption) Task {
 		DependsOn: []string{},
 		Exports:   make(export.Map),
 		env:       []string{},
+		rebuild:   RebuildOnChange,
 	}
 
 	for _, opt := range opts {

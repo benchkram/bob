@@ -45,6 +45,8 @@ var (
 	cleanup func() error
 
 	b *bob.B
+
+	bNoCache *bob.B
 )
 
 // reset base test dir to it's
@@ -75,6 +77,13 @@ var _ = BeforeSuite(func() {
 		bob.WithDir(dir),
 		bob.WithFilestore(artifactStore),
 		bob.WithBuildinfoStore(buildinfoStore),
+	)
+	Expect(err).NotTo(HaveOccurred())
+
+	bNoCache, err = bob.BobWithBaseStoreDir(
+		storageDir,
+		bob.WithDir(dir),
+		bob.WithCachingEnabled(false),
 	)
 	Expect(err).NotTo(HaveOccurred())
 })

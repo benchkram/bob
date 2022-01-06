@@ -5,9 +5,10 @@ import (
 	"github.com/Benchkram/bob/bobtask"
 )
 
-func (b *Bobfile) Playbook(taskname string) (*playbook.Playbook, error) {
+func (b *Bobfile) Playbook(taskname string, opts ...playbook.Option) (*playbook.Playbook, error) {
 	pb := playbook.New(
 		taskname,
+		opts...,
 	)
 
 	err := b.Tasks.Walk(taskname, "", func(tn string, task bobtask.Task, err error) error {

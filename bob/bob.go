@@ -40,6 +40,10 @@ type B struct {
 	// When this is true a `.bob.workspace` file must exist,
 	// usually done by calling `bob init`
 	readConfig bool
+
+	// enableCaching allows to save and load artifacts
+	// from the cache Default: true
+	enableCaching bool
 }
 
 func newBob(opts ...Option) *B {
@@ -51,6 +55,7 @@ func newBob(opts ...Option) *B {
 	b := &B{
 		DefaultCloneSchema: SSH,
 		dir:                wd,
+		enableCaching:      true,
 	}
 
 	for _, opt := range opts {

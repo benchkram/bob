@@ -34,11 +34,13 @@ func init() {
 	rootCmd.AddCommand(cmdWorkspace)
 
 	// runCmd
+	runCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
 	runCmd.AddCommand(runListCmd)
 	rootCmd.AddCommand(runCmd)
 
 	// buildCmd
 	buildCmd.Flags().Bool("dummy", false, "Create a dummy bobfile")
+	buildCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
 	buildCmd.AddCommand(buildListCmd)
 	rootCmd.AddCommand(buildCmd)
 
