@@ -8,7 +8,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/Benchkram/bob/bobgit"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/bobutil"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 )
 
@@ -63,6 +65,11 @@ func runGitStatus() {
 func runGitAdd(target string) {
 	err := bobgit.Add(target)
 	if err != nil {
-		errz.Fatal(err)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+			os.Exit(1)
+		} else {
+			errz.Fatal(err)
+		}
 	}
 }

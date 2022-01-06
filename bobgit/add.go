@@ -11,10 +11,11 @@ import (
 	"github.com/Benchkram/bob/bobgit/add"
 	"github.com/Benchkram/bob/pkg/bobutil"
 	"github.com/Benchkram/bob/pkg/cmdutil"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 )
 
-var ErrOutsideCurrentDir = fmt.Errorf("Not allowed, path pointing to outside of repository.")
+var ErrOutsideBobWorkspace = fmt.Errorf("Not allowed, path pointing outside of Bob workspace.")
 
 // Status executes `git add` in all repositories
 // first level repositories found inside a .bob filtree.
@@ -25,19 +26,16 @@ var ErrOutsideCurrentDir = fmt.Errorf("Not allowed, path pointing to outside of 
 func Add(target string) (err error) {
 	defer errz.Recover(&err)
 
-	if strings.HasPrefix(target, "../") || strings.HasPrefix(target, "/") {
-		return ErrOutsideCurrentDir
+	if strings.HasPrefix(target, "/") {
+		return usererror.Wrap(ErrOutsideBobWorkspace)
 	}
 
 	bobRoot, err := bobutil.FindBobRoot()
 	errz.Fatal(err)
 
-	depth, err := wdDepth(bobRoot)
-	errz.Fatal(err)
-
-	target = trimTarget(target)
-	if depth > 0 {
-		target = addCurrentDirectoryInFront(bobRoot, target)
+	target, err = convertTargetPathRelativeToRoot(bobRoot, target)
+	if err != nil {
+		return usererror.Wrap(err)
 	}
 
 	err = os.Chdir(bobRoot)
@@ -47,7 +45,7 @@ func Add(target string) (err error) {
 	isGit, err := isGitRepo(bobRoot)
 	errz.Fatal(err)
 	if !isGit {
-		return ErrCouldNotFindGitDir
+		return usererror.Wrap(ErrCouldNotFindGitDir)
 	}
 
 	at := add.NewTarget(target)
@@ -67,21 +65,24 @@ func Add(target string) (err error) {
 		}
 
 		output, err := cmdutil.GitAddDry(name, thistarget)
-		errz.Fatal(err)
+		if err != nil {
+			return usererror.Wrapm(err, "Failed to Add files to git.")
+		}
 
-		filenames, err := parseAddDryOutput(output)
-		errz.Fatal(err)
+		filenames := parseAddDryOutput(output)
 
 		if len(filenames) > 0 {
 			err = cmdutil.GitAdd(name, target)
-			errz.Fatal(err)
+			if err != nil {
+				return usererror.Wrapm(err, "Failed to Add files to git.")
+			}
 		}
 	}
 
 	return nil
 }
 
-func parseAddDryOutput(buf []byte) (_ []string, err error) {
+func parseAddDryOutput(buf []byte) (_ []string) {
 	fileNames := []string{}
 
 	scanner := bufio.NewScanner(bytes.NewBuffer(buf))
@@ -93,32 +94,19 @@ func parseAddDryOutput(buf []byte) (_ []string, err error) {
 		fileNames = append(fileNames, fileName)
 	}
 
-	return fileNames, nil
+	return fileNames
 }
 
-func addCurrentDirectoryInFront(bobroot string, target string) string {
-	wd, err := os.Getwd()
+func convertTargetPathRelativeToRoot(root string, target string) (string, error) {
+	dir, err := filepath.Abs(target)
 	errz.Fatal(err)
 
-	dir, err := filepath.Abs(bobroot)
-	errz.Fatal(err)
-
-	if strings.HasPrefix(wd, dir) {
-		trimmed := wd[len(dir):]
-		updated := filepath.Join(".", trimmed, target)
-		return updated
+	if !strings.HasPrefix(dir, root) {
+		return target, ErrOutsideBobWorkspace
 	}
 
-	return target
-}
-
-func trimTarget(target string) string {
-	tempTarget := strings.Trim(target, " ")
-
-	tempTarget = strings.TrimPrefix(tempTarget, "./")
-	tempTarget = strings.TrimSuffix(tempTarget, "/")
-
-	return tempTarget
+	relativepath := dir[len(root)+1:]
+	return relativepath, nil
 }
 
 // isDirectory determines if a file represented

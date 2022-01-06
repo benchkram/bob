@@ -11,13 +11,13 @@ type RepoTargetMap map[string]string
 
 var ErrRepoNotFound = fmt.Errorf("Repository name not found in target path repository list")
 
-type AddTarget struct {
+type Target struct {
 	target        string
 	possibleRepos RepoTargetMap
 }
 
-func NewTarget(target string) *AddTarget {
-	at := &AddTarget{
+func NewTarget(target string) *Target {
+	at := &Target{
 		target:        target,
 		possibleRepos: ComputePossibleRepos(target),
 	}
@@ -25,28 +25,7 @@ func NewTarget(target string) *AddTarget {
 	return at
 }
 
-func ComputePossibleRepos(target string) RepoTargetMap {
-
-	possibleRepos := make(RepoTargetMap)
-	possibleRepos["."] = target
-
-	if target == "." {
-		return possibleRepos
-	}
-
-	splitted := strings.Split(target, "/")
-
-	for i := 0; i < len(splitted)-1; i++ {
-		repo := strings.Join(splitted[:i+1], "/")
-		target := strings.Join(splitted[i+1:], "/")
-		possibleRepos[repo] = target
-	}
-	possibleRepos[strings.Join(splitted, "/")] = "."
-
-	return possibleRepos
-}
-
-func (at *AddTarget) PopulateAndFilterRepos(repolist []string) []string {
+func (at *Target) PopulateAndFilterRepos(repolist []string) []string {
 	if at.target == "." || at.target == "./" {
 		for _, repo := range repolist {
 			if repo != "." {
@@ -69,12 +48,33 @@ func (at *AddTarget) PopulateAndFilterRepos(repolist []string) []string {
 	return filterd
 }
 
-func (at *AddTarget) GetRelativeTarget(reponame string) (string, error) {
+func (at *Target) GetRelativeTarget(reponame string) (string, error) {
 	if val, ok := at.possibleRepos[reponame]; ok {
 		return val, nil
 	}
 
 	return "", ErrRepoNotFound
+}
+
+func ComputePossibleRepos(target string) RepoTargetMap {
+
+	possibleRepos := make(RepoTargetMap)
+	possibleRepos["."] = target
+
+	if target == "." {
+		return possibleRepos
+	}
+
+	splitted := strings.Split(target, "/")
+
+	for i := 0; i < len(splitted)-1; i++ {
+		repo := strings.Join(splitted[:i+1], "/")
+		target := strings.Join(splitted[i+1:], "/")
+		possibleRepos[repo] = target
+	}
+	possibleRepos[strings.Join(splitted, "/")] = "."
+
+	return possibleRepos
 }
 
 func removeParentRepos(repolist []string) []string {
