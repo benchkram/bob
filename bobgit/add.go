@@ -54,7 +54,7 @@ func Add(target string) (err error) {
 	allRepos, err := getAllRepos(bobRoot)
 	errz.Fatal(err)
 
-	filteredRepos := at.PopulateAndFilterRepos(allRepos)
+	filteredRepos := at.SelectReposByTarget(allRepos)
 
 	for _, name := range filteredRepos {
 		thistarget, err := at.GetRelativeTarget(name)
@@ -100,6 +100,10 @@ func parseAddDryOutput(buf []byte) (_ []string) {
 func convertTargetPathRelativeToRoot(root string, target string) (string, error) {
 	dir, err := filepath.Abs(target)
 	errz.Fatal(err)
+
+	if dir == root {
+		return ".", nil
+	}
 
 	if !strings.HasPrefix(dir, root) {
 		return target, ErrOutsideBobWorkspace

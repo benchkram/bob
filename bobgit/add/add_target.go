@@ -25,7 +25,11 @@ func NewTarget(target string) *Target {
 	return at
 }
 
-func (at *Target) PopulateAndFilterRepos(repolist []string) []string {
+// select the repos by the target path where git add command
+// will be executed.
+// Select all repos in case of target "." and set target path
+// to "." for all repos.
+func (at *Target) SelectReposByTarget(repolist []string) []string {
 	if at.target == "." || at.target == "./" {
 		for _, repo := range repolist {
 			if repo != "." {
@@ -48,6 +52,9 @@ func (at *Target) PopulateAndFilterRepos(repolist []string) []string {
 	return filterd
 }
 
+// Returns the relative target path created
+// from the provided target for a repo
+// inside the bob workspace
 func (at *Target) GetRelativeTarget(reponame string) (string, error) {
 	if val, ok := at.possibleRepos[reponame]; ok {
 		return val, nil
@@ -56,6 +63,9 @@ func (at *Target) GetRelativeTarget(reponame string) (string, error) {
 	return "", ErrRepoNotFound
 }
 
+// Compute all the possible repository path and relative target path
+// from the provided target path inside bob workspace
+// repositories can be filtered later from the computed repository paths
 func ComputePossibleRepos(target string) RepoTargetMap {
 
 	possibleRepos := make(RepoTargetMap)
@@ -77,6 +87,9 @@ func ComputePossibleRepos(target string) RepoTargetMap {
 	return possibleRepos
 }
 
+// filter out the parent repositories from the
+// selected repos and only keep the child repository
+// to execute the git add command later
 func removeParentRepos(repolist []string) []string {
 	filtered := []string{}
 	for _, repo := range repolist {
