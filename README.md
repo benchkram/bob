@@ -28,10 +28,15 @@ features are fully-functional and tested, but some details are yet to be ironed 
 
 ## Install
 
-To install and start using Bob, do:
+### Release builds
+
+[Download](https://github.com/benchkram/bob/releases) the latest release from GitHub.
+### Install from Source
+
+If you already have Go 1.16 or later installed, the short version is:
 
 ```bash
-go install github.com/Benchkram/bob
+go install github.com/Benchkram/bob@latest
 ```
 
 For shell autocompletion (bash and zsh supported) add `source <(bob completion)` to your `.bashrc`/`.zshrc`.
@@ -128,6 +133,8 @@ Cloning an existing workspace from a remote git repository:
 bob clone git@github.com:Benchkram/bob.git
 ```
 
+### Documentation
+You can find the documentation of Bob at [bob.build](https://bob.build)
 ### Dependencies
 
 A list of Bob's top dependencies:
