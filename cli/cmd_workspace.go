@@ -1,9 +1,12 @@
 package cli
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 
 	"github.com/Benchkram/bob/bob"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
 )
 
@@ -17,9 +20,15 @@ var cmdWorkspace = &cobra.Command{
 }
 
 func runInit() {
-	bob, err := bob.Bob()
+	b, err := bob.Bob()
 	errz.Fatal(err)
 
-	err = bob.Init()
-	errz.Fatal(err)
+	err = b.Init()
+	if err != nil {
+		if errors.Is(err, bob.ErrWorkspaceAlreadyInitialised) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
+	}
 }

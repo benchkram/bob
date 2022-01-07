@@ -71,6 +71,15 @@ type Task struct {
 	// name is the name of the task
 	// TODO: Make this public to allow yaml.Marshal to add this to the task hash?!?
 	name string
+
+	// builder is the project who trigered the build
+	builder string
+
+	// project this tasks belongs to
+	// TODO: todoproject: Currently it's the path.. later
+	// we need globaly unique identifiers when using remote caching.
+	project string
+
 	// dir is the working directory for this task
 	dir string
 
@@ -96,6 +105,8 @@ type Task struct {
 
 func Make(opts ...TaskOption) Task {
 	t := Task{
+		inputs:    []string{},
+		cmds:      []string{},
 		DependsOn: []string{},
 		Exports:   make(export.Map),
 		env:       []string{},
@@ -157,6 +168,14 @@ func (t *Task) SetEnv(env []string) {
 	t.env = env
 }
 
+func (t *Task) SetProject(proj string) {
+	t.project = proj
+}
+
+func (t *Task) SetBuilder(builder string) {
+	t.builder = builder
+}
+
 // Set the rebuild strategy for the task
 // defaults to `on-change`.
 func (t *Task) SetRebuildStrategy(rebuild RebuildType) {
@@ -207,8 +226,8 @@ func (t *Task) parseTargets() error {
 	targets := []string{}
 
 	for _, targetPath := range unique(targetDirty) {
-		if strings.Contains(targetPath, "..") {
-			return fmt.Errorf("'..' not allowed in file path %q", targetPath)
+		if strings.Contains(targetPath, "../") {
+			return fmt.Errorf("'../' not allowed in file path %q", targetPath)
 		}
 
 		targets = append(targets, targetPath)

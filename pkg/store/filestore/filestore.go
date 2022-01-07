@@ -63,3 +63,17 @@ func (s *s) Clean(_ context.Context) (err error) {
 
 	return nil
 }
+
+// List the items id's in the store
+func (s *s) List(_ context.Context) (items []string, err error) {
+	defer errz.Recover(&err)
+	entrys, err := os.ReadDir(s.dir)
+	errz.Fatal(err)
+
+	items = []string{}
+	for _, e := range entrys {
+		items = append(items, e.Name())
+	}
+
+	return items, nil
+}
