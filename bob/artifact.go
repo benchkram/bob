@@ -42,9 +42,9 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 
 	// List artifacts in relation to tasknames in alphabetical order
 	buf := bytes.NewBufferString("")
-	sortedKeys := bobfile.Tasks.KeysSortedAlpabethically()
+	sortedKeys := bobfile.BTasks.KeysSortedAlpabethically()
 	for _, key := range sortedKeys {
-		task := bobfile.Tasks[key]
+		task := bobfile.BTasks[key]
 
 		fmt.Fprintln(buf, task.Name())
 

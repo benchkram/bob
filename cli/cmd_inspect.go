@@ -63,7 +63,7 @@ func runEnv(taskname string) {
 	bobfile, err := b.Aggregate()
 	boblog.Log.Error(err, "Unable to aggregate bob file")
 
-	task, ok := bobfile.Tasks[taskname]
+	task, ok := bobfile.BTasks[taskname]
 	if !ok {
 		fmt.Printf("%s\n", aurora.Red("Task does not exists"))
 		os.Exit(1)
@@ -100,7 +100,7 @@ func runExport(taskname string) {
 	bobfile, err := b.Aggregate()
 	boblog.Log.Error(err, "Unable to aggregate bob file")
 
-	task, ok := bobfile.Tasks[taskname]
+	task, ok := bobfile.BTasks[taskname]
 	if !ok {
 		fmt.Printf("%s\n", aurora.Red("Task does not exists"))
 		os.Exit(1)

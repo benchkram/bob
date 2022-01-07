@@ -12,26 +12,24 @@ In this example we guide you through the folowing steps to build and launch a ht
 
 These steps are already defined in [bob.yaml](./bob.yaml), check Bob's README for explanation.
 
-
-
 ## Prerequisites
+
 This example requires deepmap/oapi-codegen (as well as Go) to generate the server boilerplate from an openapi.yaml file.
 
 ```bash
 go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.9.0
 ```
 
-
-
 ## Walk-through
 
 ### 1. Code Generation
 
-To generate the HTTP API server code from an openapi.yaml spec we use [oapi-codegen](https://github.com/deepmap/oapi-codegen). 
+To generate the HTTP API server code from an openapi.yaml spec we use [oapi-codegen](https://github.com/deepmap/oapi-codegen).
 
-Here is the task to do that:
+Here is the build task to do that:
+
 ```yaml
-tasks:
+build:
   generate-api:
     input: openapi.yaml
     cmd: |-
@@ -52,7 +50,7 @@ This will generate the boilerplate code in [server/rest-api/generated](./server/
 
 ![bob-build-generate-api](../../example/server-db/assets/bob-build-generate-api.png?raw=true "bob build generate-api")
 
-Bob tracks inputs and performs intelligent caching so that it doesn't have to do unnecessary work. 
+Bob tracks inputs and performs intelligent caching so that it doesn't have to do unnecessary work.
 
 If you run `bob build generate-api` again, it will be much faster as it doesn't have to be generated again.
 
@@ -61,10 +59,10 @@ If you run `bob build generate-api` again, it will be much faster as it doesn't 
 ### 2. Building the Binary
 
 As code generation is involved we have to make sure the actual build task is run after code-generation is completed.
-Notice the *dependson:* entry for the build task:
+Notice the _dependson:_ entry for the build task:
 
 ```yaml
-tasks:
+build:
   generate-api:
     # ...
   build:
@@ -90,7 +88,7 @@ Now, let's build the binary:
 bob build    # or bob build build
 ```
 
-This compiles the server binary and saves it as *./build/server*
+This compiles the server binary and saves it as _./build/server_
 
 ![bob-build](../../example/server-db/assets/bob-build.png?raw=true "bob build")
 
@@ -104,7 +102,7 @@ will be re-run, and not use the cached targets, since their respective inputs ha
 For a regular CRUD app we need a database, to store and modify data. Let's use Redis as defined in [docker-compose.yaml](./docker-compose.yaml).
 
 ```yaml
-version: '3'
+version: "3"
 services:
   redis:
     image: redis:latest
@@ -116,12 +114,12 @@ services:
 We could use `docker compose up` in a separate shell instance to start the database but that means we have to take care
 of shutting it down when it's no longer needed, or if we are switching to other contexts.
 
-As bob can also understand compose files let's define a run-task to start the database:
+As bob can also understand compose files let's define a run task to start the database:
 
 ```yaml
-tasks:
+build:
   # ...
-runs:
+run:
   database:
     type: compose
     path: docker-compose.yml
@@ -137,16 +135,16 @@ This will run the database in a container inside docker, and will allow us to co
 Interface (TUI).
 
 Press `Tab` to switch between the status page and the logs from the database. Restart the database using `Ctrl-R`. Stop
-and remove the database container using `Ctrl-C`. 
+and remove the database container using `Ctrl-C`.
 
 ### 4. Run Server
 
 To start the database before our server binary we can depend on the 'database' run task.
 
 ```yaml
-tasks:
+build:
   # ...
-runs:
+run:
   # ...
   server:
     type: binary
@@ -175,6 +173,7 @@ built-in TUI.
 ---
 
 Calling the server api:
-* `curl http://localhost:8080/api/ping`
-* `curl -X POST http://localhost:8080/api/items`
-* `curl http://localhost:8080/api/item/:itemId`
+
+- `curl http://localhost:8080/api/ping`
+- `curl -X POST http://localhost:8080/api/items`
+- `curl http://localhost:8080/api/item/:itemId`

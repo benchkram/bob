@@ -26,8 +26,8 @@ func (b *B) GetRunList() (tasks []string, err error) {
 	aggregate, err := b.Aggregate()
 	errz.Fatal(err)
 
-	keys := make([]string, 0, len(aggregate.Runs))
-	for k := range aggregate.Runs {
+	keys := make([]string, 0, len(aggregate.RTasks))
+	for k := range aggregate.RTasks {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)

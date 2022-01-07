@@ -238,14 +238,14 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 
 	bobfile.Variables["helloworld"] = "Hello World!"
 
-	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
+	bobfile.BTasks[global.DefaultBuildTask] = bobtask.Task{
 		InputDirty:   "./main1.go" + "\n" + "go.mod",
 		CmdDirty:     "go build -o run",
 		TargetDirty:  "run",
 		RebuildDirty: string(bobtask.RebuildOnChange),
 	}
 
-	bobfile.Tasks[BuildAllTargetName] = bobtask.Task{
+	bobfile.BTasks[BuildAllTargetName] = bobtask.Task{
 		InputDirty: "./main1.go",
 		CmdDirty:   "go build -o run",
 		DependsOn: []string{
@@ -256,14 +256,14 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		RebuildDirty: string(bobtask.RebuildOnChange),
 	}
 
-	bobfile.Tasks[BuildAlwaysTargetName] = bobtask.Task{
+	bobfile.BTasks[BuildAlwaysTargetName] = bobtask.Task{
 		InputDirty:   "./main1.go" + "\n" + "go.mod",
 		CmdDirty:     "go build -o run",
 		TargetDirty:  "run",
 		RebuildDirty: string(bobtask.RebuildAlways),
 	}
 
-	bobfile.Tasks["generate"] = bobtask.Task{
+	bobfile.BTasks["generate"] = bobtask.Task{
 		InputDirty: "openapi.yaml",
 		CmdDirty: strings.Join([]string{
 			"mkdir -p rest-server/generated",
@@ -281,7 +281,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		}, "\n"),
 	}
 
-	bobfile.Tasks["slow"] = bobtask.Task{
+	bobfile.BTasks["slow"] = bobtask.Task{
 		CmdDirty: strings.Join([]string{
 			"sleep 2",
 			"touch slowdone",
@@ -290,11 +290,11 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	}
 
 	// A run command to run a environment from a compose file
-	bobfile.Runs["environment"] = &bobrun.Run{
+	bobfile.RTasks["environment"] = &bobrun.Run{
 		Type: bobrun.RunTypeCompose,
 	}
 
-	bobfile.Runs["whoami"] = &bobrun.Run{
+	bobfile.RTasks["whoami"] = &bobrun.Run{
 		Type: bobrun.RunTypeCompose,
 		Path: "docker-compose.whoami.yml",
 		DependsOn: []string{
@@ -304,7 +304,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	}
 
 	// A run command to run a binary
-	bobfile.Runs["binary"] = &bobrun.Run{
+	bobfile.RTasks["binary"] = &bobrun.Run{
 		Type: bobrun.RunTypeBinary,
 		Path: "./run",
 		DependsOn: []string{
@@ -313,11 +313,11 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		},
 	}
 
-	bobfile.Tasks["print"] = bobtask.Task{
+	bobfile.BTasks["print"] = bobtask.Task{
 		CmdDirty: "echo ${HELLOWORLD}",
 	}
 
-	bobfile.Tasks["multilinetouch"] = bobtask.Task{
+	bobfile.BTasks["multilinetouch"] = bobtask.Task{
 		CmdDirty: strings.Join([]string{
 			"mkdir -p \\\nmultilinetouch",
 			"touch \\\n\tmultilinefile1 \\\n\tmultilinefile2 \\\n\t\tmultilinefile3 \\\n        multilinefile4",
@@ -325,12 +325,12 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 		}, "\n"),
 	}
 
-	bobfile.Tasks["ignoredInputs"] = bobtask.Task{
+	bobfile.BTasks["ignoredInputs"] = bobtask.Task{
 		InputDirty: "fileToWatch" + "\n" + "!fileToIgnore",
 		CmdDirty:   "echo \"Hello from ignored inputs task\"",
 	}
 
-	bobfile.Tasks[BuildTargetwithdirsTargetName] = bobtask.Task{
+	bobfile.BTasks[BuildTargetwithdirsTargetName] = bobtask.Task{
 		CmdDirty: strings.Join([]string{
 			"mkdir -p .bbuild/dirone/dirtwo",
 			"touch .bbuild/dirone/fileone",
@@ -355,7 +355,7 @@ func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite boo
 	exports := make(export.Map)
 	exports["openapi"] = "openapi.yaml"
 	exports["openapi2"] = "openapi2.yaml"
-	bobfile.Tasks["openapi"] = bobtask.Task{
+	bobfile.BTasks["openapi"] = bobtask.Task{
 		Exports: exports,
 	}
 	return bobfile.BobfileSave(dir)
@@ -370,7 +370,7 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) 
 	bobfile := bobfile.NewBobfile()
 	bobfile.Version = "1.2.3"
 
-	bobfile.Tasks[fmt.Sprintf("%s2", global.DefaultBuildTask)] = bobtask.Task{
+	bobfile.BTasks[fmt.Sprintf("%s2", global.DefaultBuildTask)] = bobtask.Task{
 		InputDirty: "./main2.go",
 		DependsOn: []string{
 			filepath.Join(ThirdLevelDir, fmt.Sprintf("%s3", global.DefaultBuildTask)),
@@ -390,13 +390,13 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
 	bobfile := bobfile.NewBobfile()
 	bobfile.Version = "4.5.6"
 
-	bobfile.Tasks[fmt.Sprintf("%s3", global.DefaultBuildTask)] = bobtask.Task{
+	bobfile.BTasks[fmt.Sprintf("%s3", global.DefaultBuildTask)] = bobtask.Task{
 		InputDirty:  "*",
 		CmdDirty:    "go build -o runthirdlevel",
 		TargetDirty: "runthirdlevel",
 	}
 
-	bobfile.Tasks["print"] = bobtask.Task{
+	bobfile.BTasks["print"] = bobtask.Task{
 		CmdDirty: "echo hello-third-level",
 	}
 
