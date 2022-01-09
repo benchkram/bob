@@ -30,6 +30,8 @@ func NewTarget(target string) *Target {
 // Select all repos in case of target "." and set target path
 // to "." for all repos.
 func (at *Target) SelectReposByTarget(repolist []string) []string {
+	// return all the possible repos in case of
+	// all `.`
 	if at.target == "." || at.target == "./" {
 		for _, repo := range repolist {
 			if repo != "." {
@@ -48,7 +50,23 @@ func (at *Target) SelectReposByTarget(repolist []string) []string {
 		}
 	}
 
+	// get filtered repos from the target path
 	filterd = removeParentRepos(filterd)
+
+	// add more possible repositories if that situated
+	// in the target directory
+	if strings.Contains(at.target, "/.") {
+		for _, repo := range repolist {
+			if !contains(filterd, repo) {
+				temptarget := strings.Trim(at.target, "/.")
+				if strings.HasPrefix(repo, temptarget) {
+					filterd = append(filterd, repo)
+					at.possibleRepos[repo] = "."
+				}
+			}
+		}
+	}
+
 	return filterd
 }
 
@@ -104,4 +122,13 @@ func removeParentRepos(repolist []string) []string {
 		}
 	}
 	return filtered
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

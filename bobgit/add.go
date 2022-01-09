@@ -69,7 +69,7 @@ func Add(target string) (err error) {
 		filenames := parseAddDryOutput(output)
 
 		if len(filenames) > 0 {
-			err = cmdutil.GitAdd(name, target)
+			err = cmdutil.GitAdd(name, thistarget)
 			if err != nil {
 				return usererror.Wrapm(err, "Failed to Add files to git.")
 			}
@@ -107,5 +107,10 @@ func convertTargetPathRelativeToRoot(root string, target string) (string, error)
 	}
 
 	relativepath := dir[len(root)+1:]
+
+	if target == "." || target == "" {
+		relativepath = relativepath + "/."
+	}
+
 	return relativepath, nil
 }
