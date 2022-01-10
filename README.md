@@ -1,4 +1,9 @@
-# Bob
+
+
+<div align="right" ><a href="https://bob.build/docs">Documentation</a></div>  
+
+# Bob 
+
 
 _Inspired by Make and Bazel · Made for humans_
 
@@ -12,7 +17,9 @@ _Inspired by Make and Bazel · Made for humans_
     <a href="https://github.com/benchkram/bob/actions">
         <img src="https://github.com/benchkram/bob/actions/workflows/main.yml/badge.svg" alt="Build Status">
     </a>
+    
 </p>
+
 
 Bob is a build system, a task runner as well as tooling for Git Multi-repos, all bundled into a single binary.
 
@@ -134,7 +141,7 @@ bob clone git@github.com:Benchkram/bob.git
 ```
 
 ### Documentation
-You can find the documentation of Bob at [bob.build](https://bob.build)
+Full documentation of Bob is available at [bob.build](https://bob.build)
 ### Dependencies
 
 A list of Bob's top dependencies:
