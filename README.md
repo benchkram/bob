@@ -1,11 +1,6 @@
-
-
-
-
 # Bob 
-
-
 _Inspired by Make and Bazel · Made for humans_
+
 <p>
     <a href="https://github.com/benchkram/bob/releases">
         <img src="https://img.shields.io/github/release/benchkram/bob.svg" alt="Latest Release">
@@ -16,7 +11,6 @@ _Inspired by Make and Bazel · Made for humans_
     <a href="https://github.com/benchkram/bob/actions">
         <img src="https://github.com/benchkram/bob/actions/workflows/main.yml/badge.svg" alt="Build Status">
     </a>
-    
 </p>
 
 
