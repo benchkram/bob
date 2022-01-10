@@ -123,14 +123,14 @@ This creates a _.bob.workspace_ file and initializes a new git repository in the
 Adding repositories to the workspace:
 
 ```bash
-bob workspace add git@github.com:Benchkram/bob.git
+bob workspace add git@github.com:benchkram/bob.git
 bob clone # calls git clone for missing repos
 ```
 
 Cloning an existing workspace from a remote git repository:
 
 ```bash
-bob clone git@github.com:Benchkram/bob.git
+bob clone git@github.com:benchkram/bob.git
 ```
 
 ### Documentation
