@@ -15,5 +15,7 @@ type Store interface {
 	NewArtifact(_ context.Context, id string) (Artifact, error)
 	GetArtifact(_ context.Context, id string) (Artifact, error)
 
-	Clean(_ context.Context) error
+	List(context.Context) ([]string, error)
+
+	Clean(context.Context) error
 }

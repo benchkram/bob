@@ -27,7 +27,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/build3"
-			task, ok := aggregate.Tasks[globaltaskname]
+			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
 			hashIn, err := task.HashIn()
@@ -48,7 +48,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/build3"
-			task, ok := aggregate.Tasks[globaltaskname]
+			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
 			hashIn, err := task.HashIn()
@@ -96,7 +96,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/build3"
-			task, ok := aggregate.Tasks[globaltaskname]
+			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
 			hashIn, err := task.HashIn()
@@ -118,7 +118,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/print"
-			task, ok := aggregate.Tasks[globaltaskname]
+			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
 			hashIn, err := task.HashIn()

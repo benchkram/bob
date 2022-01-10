@@ -66,3 +66,8 @@ func MustDefaultBuildinfoStore() buildinfostore.Store {
 	s, _ := DefaultBuildinfoStore()
 	return s
 }
+
+// Localstore returns the local artifact store
+func (b *B) Localstore() store.Store {
+	return b.local
+}

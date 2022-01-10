@@ -25,7 +25,7 @@ var _ = Describe("Test bob's file export validation", func() {
 		It("check that env vars are correctly set", func() {
 			bobfile, err := b.Aggregate()
 			Expect(err).NotTo(HaveOccurred())
-			task, ok := bobfile.Tasks["generate"]
+			task, ok := bobfile.BTasks["generate"]
 			Expect(ok).To(BeTrue())
 
 			env := task.Env()

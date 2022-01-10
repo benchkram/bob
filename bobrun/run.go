@@ -20,7 +20,7 @@ type Run struct {
 	// DependsOn run or build tasks
 	DependsOn []string
 
-	// didUpdate fires after the run-task
+	// didUpdate fires after the run task
 	// did a restart.
 	didUpdate chan struct{}
 
