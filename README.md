@@ -134,7 +134,7 @@ bob clone git@github.com:Benchkram/bob.git
 ```
 
 ### Documentation
-Full documentation of Bob is available at [bob.build/docs](https://bob.build/docs)
+Full documentation of Bob is available at [bob.build](https://bob.build/docs)
 ### Dependencies
 
 A list of Bob's top dependencies:
