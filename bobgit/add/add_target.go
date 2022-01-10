@@ -58,7 +58,7 @@ func (at *Target) SelectReposByTarget(repolist []string) []string {
 	if strings.Contains(at.target, "/.") {
 		for _, repo := range repolist {
 			if !contains(filterd, repo) {
-				temptarget := strings.Trim(at.target, "/.")
+				temptarget := strings.Trim(at.target, ".")
 				if strings.HasPrefix(repo, temptarget) {
 					filterd = append(filterd, repo)
 					at.possibleRepos[repo] = "."

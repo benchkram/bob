@@ -17,7 +17,7 @@ var debug = false
 
 // createTestDirs structure without runnign tests.
 // Usful to debug the created repo structure.
-var createTestDirs = true
+var createTestDirs = false
 
 func TestStatus(t *testing.T) {
 
@@ -38,313 +38,312 @@ func TestStatus(t *testing.T) {
 		execdir string
 	}
 
-	tests := []test{}
-	// tests := []test{
-	// 	{
-	// 		"status_untracked",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+	tests := []test{
+		{
+			"status_untracked",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 
-	// 				repo := filepath.Join(dir, "repo")
-	// 				assert.Nil(t, os.MkdirAll(repo, 0775))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "init"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	// validate output when a repo is placed in a subfolder instead of the repo root
-	// 	{
-	// 		"status_subfolder",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+				},
+			},
+			"",
+		},
+		// validate output when a repo is placed in a subfolder instead of the repo root
+		{
+			"status_subfolder",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 
-	// 				repo := filepath.Join(dir, "subfolder", "repo")
-	// 				assert.Nil(t, os.MkdirAll(repo, 0775))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "init"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	// validate vorrect display of paths in root repo (../).
-	// 	{
-	// 		"status_exec_from_subfolder",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					repo := filepath.Join(dir, "subfolder", "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+				},
+			},
+			"",
+		},
+		// validate vorrect display of paths in root repo (../).
+		{
+			"status_exec_from_subfolder",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 
-	// 				repo := filepath.Join(dir, "subfolder", "repo")
-	// 				assert.Nil(t, os.MkdirAll(repo, 0775))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "init"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-	// 			},
-	// 		},
-	// 		"subfolder",
-	// 	},
-	// 	{
-	// 		"status_added",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					repo := filepath.Join(dir, "subfolder", "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+				},
+			},
+			"subfolder",
+		},
+		{
+			"status_added",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
 
-	// 				repo := filepath.Join(dir, "repo")
-	// 				assert.Nil(t, os.MkdirAll(repo, 0775))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "init"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	{
-	// 		"status_comitted",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+				},
+			},
+			"",
+		},
+		{
+			"status_comitted",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
 
-	// 				repo := filepath.Join(dir, "repo")
-	// 				assert.Nil(t, os.MkdirAll(repo, 0775))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "init"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("changedfilecontent"), 0664))
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	{
-	// 		"status_conflict",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("changedfilecontent"), 0664))
+				},
+			},
+			"",
+		},
+		{
+			"status_conflict",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
 
-	// 				assertMergeConflict(t, dir)
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	{
-	// 		"status_conflict_multirepo",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					assertMergeConflict(t, dir)
+				},
+			},
+			"",
+		},
+		{
+			"status_conflict_multirepo",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
 
-	// 				assertMergeConflict(t, dir)
+					assertMergeConflict(t, dir)
 
-	// 				repo := filepath.Join(dir, "repo")
-	// 				assert.Nil(t, os.MkdirAll(repo, 0775))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "init"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("changedfilecontent"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "Updated content"))
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "Updated content"))
 
-	// 				assertMergeConflict(t, repo)
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	{
-	// 		"status_conflict_delete",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					assertMergeConflict(t, repo)
+				},
+			},
+			"",
+		},
+		{
+			"status_conflict_delete",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
 
-	// 				assertMergeDeleteConflict(t, dir, false)
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	{
-	// 		"status_conflict_delete_main",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					assertMergeDeleteConflict(t, dir, false)
+				},
+			},
+			"",
+		},
+		{
+			"status_conflict_delete_main",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
 
-	// 				assertMergeDeleteConflict(t, dir, true)
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	{
-	// 		"status_conflict_delete_multirepo",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					assertMergeDeleteConflict(t, dir, true)
+				},
+			},
+			"",
+		},
+		{
+			"status_conflict_delete_multirepo",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
-	// 				assertMergeDeleteConflict(t, dir, false)
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "Updated content"))
+					assertMergeDeleteConflict(t, dir, false)
 
-	// 				repo := filepath.Join(dir, "repo")
-	// 				assert.Nil(t, os.MkdirAll(repo, 0775))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "init"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("changedfilecontent"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "Updated content"))
-	// 				assertMergeDeleteConflict(t, repo, true)
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	{
-	// 		"status_conflict_added_multirepo",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("changedfilecontent"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "Updated content"))
+					assertMergeDeleteConflict(t, repo, true)
+				},
+			},
+			"",
+		},
+		{
+			"status_conflict_added_multirepo",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "new"), []byte("added some text to new from main"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "new file added"))
-	// 				assertMergeAddedConflict(t, dir)
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "new"), []byte("added some text to new from main"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "new file added"))
+					assertMergeAddedConflict(t, dir)
 
-	// 				repo := filepath.Join(dir, "repo")
-	// 				assert.Nil(t, os.MkdirAll(repo, 0775))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "init"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "new"), []byte("added some text to new from main"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "new file added"))
-	// 				assertMergeAddedConflict(t, repo)
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// 	{
-	// 		"status_conflict_added_by_both",
-	// 		input{
-	// 			func(dir string) {
-	// 				err := cmdutil.RunGit(dir, "init")
-	// 				assert.Nil(t, err)
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "new"), []byte("added some text to new from main"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "new file added"))
+					assertMergeAddedConflict(t, repo)
+				},
+			},
+			"",
+		},
+		{
+			"status_conflict_added_by_both",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
 
-	// 				assert.Nil(t, os.MkdirAll(dir, 0775))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
-	// 				assertMergeAddedByBothConflict(t, dir)
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "initialcommit"))
+					assertMergeAddedByBothConflict(t, dir)
 
-	// 				repo := filepath.Join(dir, "repo")
-	// 				assert.Nil(t, os.MkdirAll(repo, 0775))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "init"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
-	// 				assert.Nil(t, os.WriteFile(filepath.Join(repo, "new"), []byte("added some text to new from main"), 0664))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
-	// 				assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "new file added"))
-	// 				assertMergeAddedByBothConflict(t, repo)
-	// 			},
-	// 		},
-	// 		"",
-	// 	},
-	// }
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "initialcommit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "new"), []byte("added some text to new from main"), 0664))
+					assert.Nil(t, cmdutil.RunGit(repo, "add", "--all"))
+					assert.Nil(t, cmdutil.RunGit(repo, "commit", "-m", "new file added"))
+					assertMergeAddedByBothConflict(t, repo)
+				},
+			},
+			"",
+		},
+	}
 
 	for _, test := range tests {
 		dir, err := ioutil.TempDir("", test.name+"-*")

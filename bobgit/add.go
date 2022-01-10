@@ -108,7 +108,7 @@ func convertTargetPathRelativeToRoot(root string, target string) (string, error)
 
 	relativepath := dir[len(root)+1:]
 
-	if target == "." || target == "" {
+	if target == "." || target == "" || strings.HasSuffix(target, "/.") {
 		relativepath = relativepath + "/."
 	}
 
