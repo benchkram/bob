@@ -1,12 +1,11 @@
 
 
-<div align="right" ><a href="https://bob.build/docs">Documentation</a></div>  
+
 
 # Bob 
 
 
 _Inspired by Make and Bazel · Made for humans_
-
 <p>
     <a href="https://github.com/benchkram/bob/releases">
         <img src="https://img.shields.io/github/release/benchkram/bob.svg" alt="Latest Release">
@@ -141,7 +140,7 @@ bob clone git@github.com:Benchkram/bob.git
 ```
 
 ### Documentation
-Full documentation of Bob is available at [bob.build](https://bob.build)
+Full documentation of Bob is available at [bob.build/docs](https://bob.build/docs)
 ### Dependencies
 
 A list of Bob's top dependencies:
