@@ -31,6 +31,16 @@ var CmdGitStatus = &cobra.Command{
 	},
 }
 
+var CmdGitCommit = &cobra.Command{
+	Use:   "commit",
+	Short: "Run git commit on all child repos using the given message",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		message, _ := cmd.Flags().GetString("message")
+		runGitCommit(message)
+	},
+}
+
 func runGitStatus() {
 	s, err := bobgit.Status()
 	if err != nil {
@@ -45,4 +55,9 @@ func runGitStatus() {
 		errz.Fatal(err)
 	}
 	fmt.Println(s.String())
+}
+
+func runGitCommit(m string) {
+	err := bobgit.Commit(m)
+	errz.Fatal(err)
 }
