@@ -57,7 +57,7 @@ func (at *Target) SelectReposByTarget(repolist []string) []string {
 	// in the target directory
 	if strings.Contains(at.target, "/.") {
 		for _, repo := range repolist {
-			if !contains(filterd, repo) {
+			if !Contains(filterd, repo) {
 				temptarget := strings.Trim(at.target, ".")
 				if strings.HasPrefix(repo, temptarget) {
 					filterd = append(filterd, repo)
@@ -124,7 +124,7 @@ func removeParentRepos(repolist []string) []string {
 	return filtered
 }
 
-func contains(s []string, e string) bool {
+func Contains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
 			return true
