@@ -14,6 +14,11 @@ import (
 	"github.com/Benchkram/errz"
 )
 
+type fileItem struct {
+	repo string
+	file string
+}
+
 // Add executes `git add` in all repositories
 // first level repositories found inside a .bob filtree.
 // run git add commands by travsersing all the repositories
@@ -21,6 +26,8 @@ import (
 // it runs `git add .` in all repos, else run `git add ${relativeTargetPath}`
 // only on the selected repos depending on the target path
 func Add(targets ...string) (err error) {
+	fileRepos := make(map[string]fileItem)
+
 	for _, target := range targets {
 		defer errz.Recover(&err)
 
@@ -69,12 +76,20 @@ func Add(targets ...string) (err error) {
 
 			filenames := parseAddDryOutput(output)
 
-			if len(filenames) > 0 {
-				err = cmdutil.GitAdd(name, thistarget)
-				if err != nil {
-					return usererror.Wrapm(err, "Failed to Add files to git.")
+			for _, f := range filenames {
+				fileRepo := fileItem{
+					repo: name,
+					file: f,
 				}
+				fileRepos[f+"_"+name] = fileRepo
 			}
+		}
+	}
+
+	for _, fileRepo := range fileRepos {
+		err = cmdutil.GitAdd(fileRepo.repo, fileRepo.file)
+		if err != nil {
+			return usererror.Wrapm(err, "Failed to Add files to git.")
 		}
 	}
 
@@ -116,43 +131,3 @@ func convertTargetPathRelativeToRoot(root string, target string) (string, error)
 
 	return relativepath, nil
 }
-
-// func MatchFiles(pattern string) ([]string, error) {
-// 	abspath, err := filepath.Abs(pattern)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	root := filepath.Dir(abspath)
-// 	filepattern := filepath.Base(pattern)
-// 	if filepattern == "." {
-// 		filepattern = "*"
-// 	}
-
-// 	var matches []string
-// 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if add.Contains(dontFollow, info.Name()) {
-// 			return filepath.SkipDir
-// 		}
-
-// 		if info.IsDir() {
-// 			return nil
-// 		}
-
-// 		if matched, err := filepath.Match(filepattern, filepath.Base(path)); err != nil {
-// 			return err
-// 		} else if matched {
-// 			temppath := path[len(root)+1:]
-// 			matches = append(matches, temppath)
-// 		}
-// 		return nil
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return matches, nil
-// }
