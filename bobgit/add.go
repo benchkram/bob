@@ -7,33 +7,31 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Benchkram/bob/bobgit/add"
+	"github.com/Benchkram/bob/bobgit/pathspec"
 	"github.com/Benchkram/bob/pkg/bobutil"
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 )
 
-type fileItem struct {
-	repo string
-	file string
+// Item, to store git pathspec with the repository
+// path relative to the bob root
+type pathspecItem struct {
+	repo     string
+	pathspec string
 }
 
 // Add executes `git add` in all repositories
 // first level repositories found inside a .bob filtree.
 // run git add commands by travsersing all the repositories
-// inside the bob workspace. if target is provided "." or  ""
+// inside the bob workspace. if target is provided "."
 // it runs `git add .` in all repos, else run `git add ${relativeTargetPath}`
 // only on the selected repos depending on the target path
 func Add(targets ...string) (err error) {
-	fileRepos := make(map[string]fileItem)
+	pathlist := []pathspecItem{}
 
 	for _, target := range targets {
 		defer errz.Recover(&err)
-
-		if strings.HasPrefix(target, "/") {
-			return usererror.Wrap(ErrOutsideBobWorkspace)
-		}
 
 		bobRoot, err := bobutil.FindBobRoot()
 		errz.Fatal(err)
@@ -53,16 +51,16 @@ func Add(targets ...string) (err error) {
 			return usererror.Wrap(ErrCouldNotFindGitDir)
 		}
 
-		at := add.NewTarget(target)
+		ps := pathspec.New(target)
 
 		// search for git repos inside bobRoot/.
-		allRepos, err := getAllRepos(bobRoot)
+		allRepos, err := findRepos(bobRoot)
 		errz.Fatal(err)
 
-		filteredRepos := at.SelectReposByTarget(allRepos)
+		filteredRepos := ps.SelectReposByPath(allRepos)
 
 		for _, name := range filteredRepos {
-			thistarget, err := at.GetRelativeTarget(name)
+			thistarget, err := ps.GetRelativePathspec(name)
 			errz.Fatal(err)
 
 			if name == "." {
@@ -77,17 +75,17 @@ func Add(targets ...string) (err error) {
 			filenames := parseAddDryOutput(output)
 
 			for _, f := range filenames {
-				fileRepo := fileItem{
-					repo: name,
-					file: f,
+				pathspecItem := pathspecItem{
+					repo:     name,
+					pathspec: f,
 				}
-				fileRepos[f+"_"+name] = fileRepo
+				pathlist = append(pathlist, pathspecItem)
 			}
 		}
 	}
 
-	for _, fileRepo := range fileRepos {
-		err = cmdutil.GitAdd(fileRepo.repo, fileRepo.file)
+	for _, pi := range pathlist {
+		err = cmdutil.GitAdd(pi.repo, pi.pathspec)
 		if err != nil {
 			return usererror.Wrapm(err, "Failed to Add files to git.")
 		}
@@ -96,6 +94,9 @@ func Add(targets ...string) (err error) {
 	return nil
 }
 
+// parseAddDryOutput parse the output from the git add dry run
+// command and returns the filename that are ready to be
+// executed.
 func parseAddDryOutput(buf []byte) (_ []string) {
 	fileNames := []string{}
 
@@ -111,6 +112,8 @@ func parseAddDryOutput(buf []byte) (_ []string) {
 	return fileNames
 }
 
+// convertTargetPathRelativeToRoot returns the relative targetpath from
+// the provided root. e.g. converts `../sample/path` to `bobroot/sample/path`
 func convertTargetPathRelativeToRoot(root string, target string) (string, error) {
 	dir, err := filepath.Abs(target)
 	errz.Fatal(err)
