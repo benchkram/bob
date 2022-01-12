@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Benchkram/bob/pkg/cmdutil"
@@ -305,6 +306,33 @@ func TestGitAdd(t *testing.T) {
 			"subfolder/repo",
 			"../../subfolder/repo2/file",
 		},
+		// add multiple pathspecs
+		{
+			"add_multiple_pathspecs_with_regex",
+			input{
+				func(dir string) {
+					createGitRepo(t, dir)
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("subfolder/repo/\nsubfolder/repo2/"), 0664))
+
+					subfolder := filepath.Join(dir, "subfolder")
+					assert.Nil(t, os.MkdirAll(subfolder, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(subfolder, "folder-file"), []byte("file"), 0664))
+
+					repoPath := filepath.Join(subfolder, "repo")
+					createGitRepo(t, repoPath)
+					assert.Nil(t, os.WriteFile(filepath.Join(repoPath, ".gitignore"), []byte("second-level/"), 0664))
+					createGitRepo(t, repoPath, "second-level")
+
+					repo2Path := filepath.Join(subfolder, "repo2")
+					createGitRepo(t, repo2Path)
+					assert.Nil(t, os.WriteFile(filepath.Join(repo2Path, "file.txt"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo2Path, "file2.txt"), []byte("file"), 0664))
+				},
+			},
+			"",
+			"subfolder/repo/second-level/ subfolder/repo2/*.txt",
+		},
 	}
 
 	for _, test := range tests {
@@ -334,7 +362,8 @@ func TestGitAdd(t *testing.T) {
 		statusBefore, err := getStatus(execdir)
 		assert.Nil(t, err)
 
-		err = executeAdd(execdir, test.target)
+		targets := strings.Split(test.target, " ")
+		err = executeAdd(execdir, targets...)
 		assert.Nil(t, err)
 
 		statusAfter, err := getStatus(execdir)
@@ -374,7 +403,7 @@ func TestGitAdd(t *testing.T) {
 
 // executeAdd changes the current working dir before
 // executing add command.
-func executeAdd(dir string, target string) (err error) {
+func executeAdd(dir string, target ...string) (err error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -386,7 +415,7 @@ func executeAdd(dir string, target string) (err error) {
 	}
 	defer func() { _ = os.Chdir(wd) }()
 
-	return Add(target)
+	return Add(target...)
 }
 
 func createGitRepo(t *testing.T, dirs ...string) {
