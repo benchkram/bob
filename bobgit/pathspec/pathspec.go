@@ -7,6 +7,9 @@ import (
 	"github.com/Benchkram/bob/pkg/filepathutil"
 )
 
+// map the pathspec and repo name
+// where pathspec is relative to the repository
+// and repository is relative to the bobroot
 type RepoPathspecMap map[string]string
 
 var ErrRepoNotFound = fmt.Errorf("Repository name not found in target path repository list")
