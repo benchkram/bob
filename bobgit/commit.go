@@ -18,6 +18,10 @@ var ErrEmptyCommitMessage = fmt.Errorf("Bobgit does not allow empty message")
 
 // Commit executes `git commit -m ${message}` in all repositories
 // first level repositories found inside a .bob filtree.
+// indifferent of the subdirectories and subrepositories,
+// it walks through all the repositories with tracked changes starting from bobroot
+// and run `git commit -m {message}` command
+// Only shows user messages incase of nothing to commit
 func Commit(message string) (err error) {
 	defer errz.Recover(&err)
 
