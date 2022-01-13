@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"strconv"
 
 	"github.com/cli/cli/git"
 )
@@ -72,6 +73,22 @@ func RunGit(root string, args ...string) error {
 
 func GitStatus(root string) ([]byte, error) {
 	r, err := gitprepare(root, "status", "--porcelain")
+	if err != nil {
+		return nil, err
+	}
+	return r.Output()
+}
+
+func GitDryCommit(root string, message string) ([]byte, error) {
+	r, err := gitprepare(root, "commit", "-m", strconv.Quote(message), "--dry-run", "--porcelain")
+	if err != nil {
+		return nil, err
+	}
+	return r.Output()
+}
+
+func GitCommit(root string, message string) ([]byte, error) {
+	r, err := gitprepare(root, "commit", "-m", strconv.Quote(message))
 	if err != nil {
 		return nil, err
 	}
