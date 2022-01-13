@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/bobutil"
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/bob/pkg/usererror"
@@ -65,22 +66,32 @@ func Commit(message string) (err error) {
 	// repos with no changes, throws exit status 1 error
 	// while executing `git commit --dry-run`
 	// only repos with changes filtered out
-	filteredRepo, err := filterModifiedRepos(repoNames)
+	filteredRepo, untrackedRepo, err := filterModifiedRepos(repoNames)
 	errz.Fatal(err)
+
+	// throw some user message for untracked repositories
+	if len(filteredRepo) == 0 {
+		s := "nothing to commit, working trees are clean."
+		if len(untrackedRepo) > 0 {
+			s = "nothing added to commit but untracked files present."
+		}
+		boblog.Log.V(1).Info(s)
+		return nil
+	}
 
 	// execute dry-run first on all repositories
 	// to check for errors
 	for _, name := range filteredRepo {
 		_, err := cmdutil.GitDryCommit(name, message)
 		if err != nil {
-			return usererror.Wrapm(err, "Failed to commit to git dry run")
+			return usererror.Wrapm(err, "Failed to commit to git in repo "+name)
 		}
 	}
 
-	for _, name := range repoNames {
+	for _, name := range filteredRepo {
 		_, err := cmdutil.GitCommit(name, message)
 		if err != nil {
-			return usererror.Wrapm(err, "Failed to commit to git")
+			return usererror.Wrapm(err, "Failed to commit to git in repo "+name)
 		}
 	}
 
@@ -89,33 +100,43 @@ func Commit(message string) (err error) {
 
 // filterModifiedRepos filters the repositories with changes
 // by running `git status` command on each repository and look for
-// modified files. returns a list of repository with changes.
-func filterModifiedRepos(repolist []string) ([]string, error) {
+// tracked files in staging.
+// returns a list of repository which consist tracked files
+// also returns a list of untracked repositories
+func filterModifiedRepos(repolist []string) ([]string, []string, error) {
 	updatedRepo := []string{}
+	untrackedRepo := []string{}
 
 	for _, name := range repolist {
 		output, err := cmdutil.GitStatus(name)
 		if err != nil {
-			return updatedRepo, err
+			return updatedRepo, untrackedRepo, err
 		}
 
 		status, err := parse(output)
 		if err != nil {
-			return updatedRepo, err
+			return updatedRepo, untrackedRepo, err
 		}
 
-		modified := false
+		tracked := false
+		untracked := false
 		for _, filestatus := range status {
-			if filestatus.Staging != git.Unmodified || filestatus.Worktree != git.Unmodified {
-				modified = true
+			if filestatus.Staging != git.Untracked {
+				tracked = true
 				break
+			}
+
+			if !untracked && filestatus.Worktree != git.Unmodified {
+				untracked = true
 			}
 		}
 
-		if modified {
+		if tracked {
 			updatedRepo = append(updatedRepo, name)
+		} else if untracked {
+			untrackedRepo = append(untrackedRepo, name)
 		}
 	}
 
-	return updatedRepo, nil
+	return updatedRepo, untrackedRepo, nil
 }
