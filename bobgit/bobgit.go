@@ -40,7 +40,7 @@ func isGitRepo(dir string) (isGit bool, err error) {
 	return isGit, nil
 }
 
-// find for git repos inside provided root directory
+// findRepos searches for git repos inside provided root directory
 func findRepos(root string) ([]string, error) {
 	repoNames := []string{}
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {

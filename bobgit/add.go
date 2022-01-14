@@ -14,11 +14,11 @@ import (
 	"github.com/Benchkram/errz"
 )
 
-// Item, to store git pathspec with the repository
+// pathspecItem stores a git pathspec with the repository
 // path relative to the bob root
 type pathspecItem struct {
-	repo     string
 	pathspec string
+	repo     string
 }
 
 // Add executes `git add` in all repositories
@@ -94,9 +94,15 @@ func Add(targets ...string) (err error) {
 	return nil
 }
 
-// parseAddDryOutput parse the output from the git add dry run
-// command and returns the filename that are ready to be
-// executed.
+// parseAddDryOutput parse the output from `git add --dry-run`
+// and returns a list of filenames
+//
+// Example output:
+//   $ git add . --dry-run
+//   add 'bobgit/add.go'
+//   add 'bobgit/bobgit.go'
+//   add 'qq'
+//
 func parseAddDryOutput(buf []byte) (_ []string) {
 	fileNames := []string{}
 
