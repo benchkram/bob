@@ -9,14 +9,13 @@ import (
 
 // map the pathspec and repo name
 // where pathspec is relative to the repository
-// and repository is relative to the bobroot
+// and repository is relative to the bobroot.
 type RepoPathspecMap map[string]string
 
 var ErrRepoNotFound = fmt.Errorf("Repository name not found in target path repository list")
 
-// P, stores the pathspec attribute for git.
-// also applies some computations and manipulation
-// to the path attributes necessary for bob multirepo structure
+// P, stores the pathspec attribute for git
+// intended to be used for the multi repo case.
 type P struct {
 	path          string
 	possibleRepos RepoPathspecMap
@@ -31,7 +30,7 @@ func New(path string) *P {
 	return at
 }
 
-// SelectReposByPath, filter the repos from all the repository list
+// SelectReposByPath filter the repos from all the repository list
 // by the pathspec where git add command will be executed.
 // Select all repos in case of target "." and set pathspecc
 // to "." for all repos.
@@ -63,7 +62,7 @@ func (p *P) SelectReposByPath(repolist []string) []string {
 	// in the target directory if path ends with `.`
 	if strings.Contains(p.path, "/.") {
 		for _, repo := range repolist {
-			if !Contains(filterd, repo) {
+			if !contains(filterd, repo) {
 				temptarget := strings.Trim(p.path, ".")
 				if strings.HasPrefix(repo, temptarget) {
 					filterd = append(filterd, repo)
@@ -76,18 +75,15 @@ func (p *P) SelectReposByPath(repolist []string) []string {
 	return filterd
 }
 
-// GetRelativePathspec, Returns the relative pathspec by the reponame key
-// created from the provided path earlier, for a relative repository from
-// the bob root.
+// GetRelativePathspec returns the relative pathspec from the internal map.
 func (p *P) GetRelativePathspec(reponame string) (string, error) {
 	if val, ok := p.possibleRepos[reponame]; ok {
 		return val, nil
 	}
-
 	return "", ErrRepoNotFound
 }
 
-// ComputePossibleRepos, Compute all the possible repository path from
+// ComputePossibleRepos Compute all the possible repository path from
 // bob root and relative pathspec from a provided path inside bob workspace
 // and returns a map of string  where key is every repository and value is
 // the relative path from that repository.
@@ -115,9 +111,8 @@ func ComputePossibleRepos(path string) RepoPathspecMap {
 	return possibleRepos
 }
 
-// removeParentRepos, filters out the parent repositories from the
-// selected repos and only keep the child repository
-// to execute the git add command later
+// removeParentRepos removes the parent repository path from each
+// repo in `repolist`.  Keeping only the child repository path.
 func removeParentRepos(repolist []string) []string {
 	filtered := []string{}
 	for _, repo := range repolist {
@@ -134,9 +129,8 @@ func removeParentRepos(repolist []string) []string {
 	return filtered
 }
 
-// Contains returns if a slice of string
-// contains a specific string or not
-func Contains(s []string, e string) bool {
+// contains returns true when e is contained in s
+func contains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
 			return true
