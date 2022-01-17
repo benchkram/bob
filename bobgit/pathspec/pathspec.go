@@ -8,6 +8,7 @@ import (
 )
 
 // map the repo as key and pathspec as value
+//
 // where repository is relative to the bobroot
 // and pathspec is relative to the repository.
 type RepoPathspecMap map[string]string
@@ -32,6 +33,7 @@ func New(path string) *P {
 
 // SelectReposByPath filter the repos from all the repository list
 // by the pathspec where git add command will be executed.
+//
 // Select all repos in case of target "." and set pathspecc
 // to "." for all repos.
 func (p *P) SelectReposByPath(repolist []string) []string {
@@ -85,11 +87,16 @@ func (p *P) GetRelativePathspec(reponame string) (string, error) {
 
 // ComputePossibleRepos Compute all the possible repository path
 // from the provided path starting from bobroot inside bob workspace
-// and returns a map of string  where key is every repository and value is
+// and returns a map of string  where key is repository path and value is
 // the relative path from that repository.
+//
 // repositories can be filtered later from the computed repository paths.
-// e.g: 'bobroot/sample/path' computes items like ".": 'bobroot/sample/path',
-// "bobroot": 'sample/path', "bobroot/sample": 'path' ..
+//
+// Example:
+//
+// 'bobroot/sample/path' => {".": 'bobroot/sample/path',
+// "bobroot": 'sample/path', "bobroot/sample": 'path', ..}
+//
 // can be interpreted this way, if the selected repository path is `bobroot/sample`,
 // then pathspec for that target path would be only `path`, and so on.
 func ComputePossibleRepos(path string) RepoPathspecMap {
