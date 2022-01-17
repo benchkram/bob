@@ -46,6 +46,7 @@ func init() {
 
 	// gitCmd
 	CmdGit.AddCommand(CmdGitStatus)
+	CmdGit.AddCommand(CmdGitAdd)
 	rootCmd.AddCommand(CmdGit)
 }
 
