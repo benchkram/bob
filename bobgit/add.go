@@ -136,10 +136,11 @@ func convertPathRelativeToRoot(root string, target string) (string, error) {
 		return ".", nil
 	}
 
-	relativepath, err := filepath.Rel(root, dir)
-	if err != nil {
+	if !strings.HasPrefix(dir, root) {
 		return target, ErrOutsideBobWorkspace
 	}
+	relativepath, err := filepath.Rel(root, dir)
+	errz.Fatal(err)
 
 	if target == "." || target == "" || strings.HasSuffix(target, "/.") {
 		relativepath = relativepath + "/."
