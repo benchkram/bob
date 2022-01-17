@@ -21,12 +21,18 @@ type pathspecItem struct {
 	repo     string
 }
 
-// Add executes `git add` in all repositories
-// first level repositories found inside a .bob filtree.
-// run git add commands by travsersing all the repositories
-// inside the bob workspace. if target is provided "."
-// it runs `git add .` in all repos, else run `git add ${relativeTargetPath}`
-// only on the selected repos depending on the target path
+// Add run git add commands by travsersing all the repositories
+// inside the bob workspace.
+// if target is provided "." it selects all modified files
+// in all repos by running `git add . --dry-run`, then run
+// `git add {filename}` for all selected files.
+// else for subdirectory e.g. `subdir/.` it selectes all files
+// on that subdir and also all repository under that subtree
+// and run `git add --dry-run` followed by `git add {filename}`
+// else for specific file under any repository on bob workspace
+// select the specific repository and run `git add --dry-run` followed
+// by `git add {filename}`.
+// Run all the steps iterativley for multiple targets
 func Add(targets ...string) (err error) {
 	pathlist := []pathspecItem{}
 
