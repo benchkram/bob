@@ -17,11 +17,12 @@ import (
 var ErrEmptyCommitMessage = fmt.Errorf("Bobgit does not allow empty message")
 
 // Commit executes `git commit -m ${message}` in all repositories
-// first level repositories found inside a .bob filtree.
+//
 // indifferent of the subdirectories and subrepositories,
-// it walks through all the repositories with tracked changes starting from bobroot
+// it walks through all the repositories starting from bobroot
 // and run `git commit -m {message}` command
-// Only shows user messages incase of nothing to commit
+//
+// Only shows user messages in case of nothing to commit
 func Commit(message string) (err error) {
 	defer errz.Recover(&err)
 
@@ -105,8 +106,9 @@ func Commit(message string) (err error) {
 // filterModifiedRepos filters the repositories with changes
 // by running `git status` command on each repository and look for
 // tracked files in staging.
+//
 // returns a list of repository which consist tracked files
-// also returns a list of untracked repositories
+// also returns a list of untracked but modified repositories
 func filterModifiedRepos(repolist []string) ([]string, []string, error) {
 	updatedRepo := []string{}
 	untrackedRepo := []string{}
