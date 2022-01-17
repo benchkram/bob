@@ -46,6 +46,7 @@ func init() {
 
 	// gitCmd
 	CmdGitCommit.Flags().StringP("message", "m", "", "Set the commit message for all repository")
+	CmdGit.AddCommand(CmdGitAdd)
 	CmdGit.AddCommand(CmdGitCommit)
 	CmdGit.AddCommand(CmdGitStatus)
 	rootCmd.AddCommand(CmdGit)
