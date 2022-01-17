@@ -36,7 +36,7 @@ func Add(targets ...string) (err error) {
 		bobRoot, err := bobutil.FindBobRoot()
 		errz.Fatal(err)
 
-		target, err = convertTargetPathRelativeToRoot(bobRoot, target)
+		target, err = convertPathRelativeToRoot(bobRoot, target)
 		if err != nil {
 			return usererror.Wrap(err)
 		}
@@ -118,9 +118,11 @@ func parseAddDryOutput(buf []byte) (_ []string) {
 	return fileNames
 }
 
-// convertTargetPathRelativeToRoot returns the relative targetpath from
-// the provided root. e.g. converts `../sample/path` to `bobroot/sample/path`
-func convertTargetPathRelativeToRoot(root string, target string) (string, error) {
+// convertPathRelativeToRoot returns the relative targetpath from
+// the provided root. e.g. converts `../sample/path` to `bobroot/sample/path`.
+// also handles git pathspec features like `.`
+// e.g. `sample/.` to `bobroot/sample/.`
+func convertPathRelativeToRoot(root string, target string) (string, error) {
 	dir, err := filepath.Abs(target)
 	errz.Fatal(err)
 
@@ -128,11 +130,10 @@ func convertTargetPathRelativeToRoot(root string, target string) (string, error)
 		return ".", nil
 	}
 
-	if !strings.HasPrefix(dir, root) {
+	relativepath, err := filepath.Rel(root, dir)
+	if err != nil {
 		return target, ErrOutsideBobWorkspace
 	}
-
-	relativepath := dir[len(root)+1:]
 
 	if target == "." || target == "" || strings.HasSuffix(target, "/.") {
 		relativepath = relativepath + "/."
