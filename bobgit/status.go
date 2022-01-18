@@ -17,14 +17,6 @@ import (
 	"github.com/Benchkram/errz"
 )
 
-var ErrCouldNotFindGitDir = fmt.Errorf("Could not find a .git folder")
-
-var dontFollow = []string{
-	"node_modules",
-	".git",
-	".vscode",
-}
-
 // Status executes `git status -porcelain` in all repositories
 // first level repositories found inside a .bob filtree.
 // It parses the output of each call and creates a object
@@ -179,26 +171,6 @@ func readX(line string) git.StatusCode {
 
 func readY(line string) git.StatusCode {
 	return git.StatusCode(line[1])
-}
-
-// isGitRepo return true is the directory contains a `.git` directory
-func isGitRepo(dir string) (isGit bool, err error) {
-	defer errz.Recover(&err)
-	entrys, err := os.ReadDir(dir)
-	errz.Fatal(err)
-
-	for _, entry := range entrys {
-		if !entry.IsDir() {
-			continue
-		}
-
-		if entry.Name() == ".git" {
-			isGit = true
-			break
-		}
-	}
-
-	return isGit, nil
 }
 
 // wdDepth returns the number of `../` traversals
