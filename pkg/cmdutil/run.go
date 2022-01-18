@@ -95,3 +95,12 @@ func GitAdd(root string, targetDir string) error {
 
 	return r.Run()
 }
+
+func GitUnpushedCommit(root string) ([]byte, error) {
+	r, err := gitprepare(root, "cherry", "-v")
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Output()
+}

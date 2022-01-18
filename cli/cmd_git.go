@@ -42,6 +42,15 @@ var CmdGitAdd = &cobra.Command{
 	},
 }
 
+var CmdGitPush = &cobra.Command{
+	Use:   "push",
+	Short: "Run git push on all child repos",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		runGitPush()
+	},
+}
+
 func runGitStatus() {
 	s, err := bobgit.Status()
 	if err != nil {
@@ -60,6 +69,18 @@ func runGitStatus() {
 
 func runGitAdd(targets ...string) {
 	err := bobgit.Add(targets...)
+	if err != nil {
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+			os.Exit(1)
+		} else {
+			errz.Fatal(err)
+		}
+	}
+}
+
+func runGitPush() {
+	err := bobgit.Push()
 	if err != nil {
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
