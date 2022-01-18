@@ -2,9 +2,7 @@ package bobgit
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
-	"path/filepath"
 
 	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/bobutil"
@@ -16,13 +14,13 @@ import (
 
 var ErrEmptyCommitMessage = fmt.Errorf("Bobgit does not allow empty message")
 
-// Commit executes `git commit -m ${message}` in all repositories
+// Commit executes `git commit -m ${message}` in all repositories.
 //
 // indifferent of the subdirectories and subrepositories,
 // it walks through all the repositories starting from bobroot
-// and run `git commit -m {message}` command
+// and run `git commit -m {message}` command.
 //
-// Only shows user messages in case of nothing to commit
+// Only shows user messages in case of nothing to commit.
 func Commit(message string) (err error) {
 	defer errz.Recover(&err)
 
@@ -44,28 +42,7 @@ func Commit(message string) (err error) {
 	}
 
 	// search for git repos inside bobRoot/.
-	repoNames := []string{}
-	err = filepath.WalkDir(bobRoot, func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() {
-			return nil
-		}
-
-		if d.Name() == ".git" {
-			p, err := filepath.Rel(bobRoot, filepath.Dir(path))
-			if err != nil {
-				return err
-			}
-			repoNames = append(repoNames, p)
-		}
-
-		for _, dir := range dontFollow {
-			if d.Name() == dir {
-				return fs.SkipDir
-			}
-		}
-
-		return nil
-	})
+	repoNames, err := findRepos(bobRoot)
 	errz.Fatal(err)
 
 	// repos with no changes, throws exit status 1 error
@@ -107,8 +84,8 @@ func Commit(message string) (err error) {
 // by running `git status` command on each repository and look for
 // tracked files in staging.
 //
-// returns a list of repository which consist tracked files
-// also returns a list of untracked but modified repositories
+// returns a list of repository which consist tracked files,
+// also returns a list of untracked but modified repositories.
 func filterModifiedRepos(repolist []string) ([]string, []string, error) {
 	updatedRepo := []string{}
 	untrackedRepo := []string{}
