@@ -77,7 +77,7 @@ func Commit(message string) (s string, err error) {
 		}
 	}
 
-	s = "Changes in " + strings.Join(filteredRepo, ", ") + " has been successfully commited"
+	s = "Changes in \"" + strings.Join(filteredRepo, "\", \"") + "\" has been successfully commited"
 
 	return s, nil
 }
