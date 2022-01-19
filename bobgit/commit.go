@@ -12,7 +12,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 )
 
-var ErrEmptyCommitMessage = fmt.Errorf("Bobgit does not allow empty message")
+var ErrEmptyCommitMessage = fmt.Errorf("use bob git commit -m \"your message\".")
 
 // Commit executes `git commit -m ${message}` in all repositories.
 //
@@ -25,7 +25,7 @@ func Commit(message string) (err error) {
 	defer errz.Recover(&err)
 
 	if message == "" {
-		return usererror.Wrapm(ErrEmptyCommitMessage, "Aborting commit due to empty commit message")
+		return usererror.Wrapm(ErrEmptyCommitMessage, "Aborting commit")
 	}
 
 	bobRoot, err := bobutil.FindBobRoot()
@@ -46,7 +46,8 @@ func Commit(message string) (err error) {
 	errz.Fatal(err)
 
 	// repos with no changes, throws exit status 1 error
-	// while executing `git commit --dry-run`
+	// while executing `git commit --dry-run`.
+	//
 	// only repos with changes filtered out
 	filteredRepo, untrackedRepo, err := filterModifiedRepos(repoNames)
 	errz.Fatal(err)
@@ -66,14 +67,14 @@ func Commit(message string) (err error) {
 	for _, name := range filteredRepo {
 		_, err := cmdutil.GitDryCommit(name, message)
 		if err != nil {
-			return usererror.Wrapm(err, "Failed to commit to git in repo "+name)
+			return usererror.Wrapm(err, "Failed to commit to git in repo \""+name+"\"")
 		}
 	}
 
 	for _, name := range filteredRepo {
 		_, err := cmdutil.GitCommit(name, message)
 		if err != nil {
-			return usererror.Wrapm(err, "Failed to commit to git in repo "+name)
+			return usererror.Wrapm(err, "Failed to commit to git in repo \""+name+"\"")
 		}
 	}
 
@@ -81,8 +82,8 @@ func Commit(message string) (err error) {
 }
 
 // filterModifiedRepos filters the repositories with changes
-// by running `git status` command on each repository and look for
-// tracked files in staging.
+// by running `git status --porcelain` command on each repository and
+// look for tracked files in staging.
 //
 // returns a list of repository which consist tracked files,
 // also returns a list of untracked but modified repositories.
@@ -101,8 +102,8 @@ func filterModifiedRepos(repolist []string) ([]string, []string, error) {
 			return updatedRepo, untrackedRepo, err
 		}
 
-		tracked := false
-		untracked := false
+		var tracked bool = false
+		var untracked bool = false
 		for _, filestatus := range status {
 			if filestatus.Staging != git.Untracked {
 				tracked = true
