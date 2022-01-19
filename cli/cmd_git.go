@@ -65,7 +65,7 @@ func runGitAdd(targets ...string) {
 }
 
 func runGitCommit(m string) {
-	err := bobgit.Commit(m)
+	s, err := bobgit.Commit(m)
 	if err != nil {
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
@@ -74,6 +74,7 @@ func runGitCommit(m string) {
 			errz.Fatal(err)
 		}
 	}
+	fmt.Println(s)
 }
 
 func runGitStatus() {

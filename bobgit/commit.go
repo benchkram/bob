@@ -3,8 +3,8 @@ package bobgit
 import (
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/bobutil"
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/bob/pkg/usererror"
@@ -21,11 +21,11 @@ var ErrEmptyCommitMessage = fmt.Errorf("use bob git commit -m \"your message\"."
 // and run `git commit -m {message}` command.
 //
 // Only shows user messages in case of nothing to commit.
-func Commit(message string) (err error) {
+func Commit(message string) (s string, err error) {
 	defer errz.Recover(&err)
 
 	if message == "" {
-		return usererror.Wrapm(ErrEmptyCommitMessage, "Aborting commit")
+		return "", usererror.Wrapm(ErrEmptyCommitMessage, "Aborting commit")
 	}
 
 	bobRoot, err := bobutil.FindBobRoot()
@@ -38,7 +38,7 @@ func Commit(message string) (err error) {
 	isGit, err := isGitRepo(bobRoot)
 	errz.Fatal(err)
 	if !isGit {
-		return usererror.Wrap(ErrCouldNotFindGitDir)
+		return "", usererror.Wrap(ErrCouldNotFindGitDir)
 	}
 
 	// search for git repos inside bobRoot/.
@@ -56,10 +56,9 @@ func Commit(message string) (err error) {
 	if len(filteredRepo) == 0 {
 		s := "nothing to commit, working trees are clean."
 		if len(untrackedRepo) > 0 {
-			s = "nothing added to commit but untracked files present."
+			s = "nothing to commit, but untracked files present in working tree."
 		}
-		boblog.Log.V(1).Info(s)
-		return nil
+		return s, nil
 	}
 
 	// execute dry-run first on all repositories
@@ -67,18 +66,20 @@ func Commit(message string) (err error) {
 	for _, name := range filteredRepo {
 		_, err := cmdutil.GitDryCommit(name, message)
 		if err != nil {
-			return usererror.Wrapm(err, "Failed to commit to git in repo \""+name+"\"")
+			return "", usererror.Wrapm(err, "Failed to commit to git in repo \""+name+"\"")
 		}
 	}
 
 	for _, name := range filteredRepo {
 		_, err := cmdutil.GitCommit(name, message)
 		if err != nil {
-			return usererror.Wrapm(err, "Failed to commit to git in repo \""+name+"\"")
+			return "", usererror.Wrapm(err, "Failed to commit to git in repo \""+name+"\"")
 		}
 	}
 
-	return nil
+	s = "Changes in " + strings.Join(filteredRepo, ", ") + " has been successfully commited"
+
+	return s, nil
 }
 
 // filterModifiedRepos filters the repositories with changes

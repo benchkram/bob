@@ -248,7 +248,7 @@ func TestCommit(t *testing.T) {
 		statusBefore, err := getStatus(execdir)
 		assert.Nil(t, err)
 
-		err = executeCommit(execdir, test.message)
+		_, err = executeCommit(execdir, test.message)
 		// ignore the error caused by test.message nill
 		if err != nil && !errors.Is(err, ErrEmptyCommitMessage) {
 			assert.Nil(t, err)
@@ -291,15 +291,15 @@ func TestCommit(t *testing.T) {
 
 // executeCommit changes the current working dir before
 // executing commit command.
-func executeCommit(dir string, message string) (err error) {
+func executeCommit(dir string, message string) (_ string, err error) {
 	wd, err := os.Getwd()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = os.Chdir(dir)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer func() { _ = os.Chdir(wd) }()
 
