@@ -11,6 +11,7 @@ import (
 type Runnable interface {
 	Run() error
 	Output() ([]byte, error)
+	OutputCombined() ([]byte, error)
 }
 
 type run struct {
@@ -50,6 +51,23 @@ func (run *run) Output() ([]byte, error) {
 	return output, nil
 }
 
+func (run *run) OutputCombined() ([]byte, error) {
+	var b bytes.Buffer
+	run.cmd.Stdout = &b
+	run.cmd.Stderr = &b
+
+	err := run.cmd.Run()
+	if err != nil {
+		return nil, CmdError{
+			Stderr: &b,
+			Args:   run.cmd.Args,
+			Err:    err,
+		}
+	}
+
+	return b.Bytes(), nil
+}
+
 // gitprepare inits git cmd with `root` as the working dir.
 func gitprepare(root string, args ...string) (r Runnable, _ error) {
 	cmd, err := git.GitCommand(args...)
@@ -79,7 +97,7 @@ func GitStatus(root string) ([]byte, error) {
 }
 
 func GitAddDry(root string, targetDir string) ([]byte, error) {
-	r, err := gitprepare(root, "add", targetDir, "--dry-run")
+	r, err := gitprepare(root, "add", targetDir, "--dry-run", "--verbose")
 	if err != nil {
 		return nil, err
 	}
@@ -96,11 +114,20 @@ func GitAdd(root string, targetDir string) error {
 	return r.Run()
 }
 
-func GitUnpushedCommit(root string) ([]byte, error) {
+func GitUnpushedCommits(root string) ([]byte, error) {
 	r, err := gitprepare(root, "cherry", "-v")
 	if err != nil {
 		return nil, err
 	}
 
 	return r.Output()
+}
+
+func GitPushDry(root string, remote string, ref string) ([]byte, error) {
+	r, err := gitprepare(root, "push", "--set-upstream", remote, ref, "--dry-run")
+	if err != nil {
+		return nil, fmt.Errorf("failed to make git command: %w", err)
+	}
+
+	return r.OutputCombined()
 }
