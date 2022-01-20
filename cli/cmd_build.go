@@ -61,6 +61,10 @@ var buildListCmd = &cobra.Command{
 }
 
 func runBuild(dummy bool, taskname string, noCache bool) {
+	var exitCode int
+	defer func() { os.Exit(exitCode) }()
+	defer errz.Recover()
+
 	if dummy {
 		wd, err := os.Getwd()
 		errz.Fatal(err)
@@ -72,7 +76,10 @@ func runBuild(dummy bool, taskname string, noCache bool) {
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
 	)
-	errz.Fatal(err)
+	if err != nil {
+		exitCode = 1
+		errz.Fatal(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -86,10 +93,13 @@ func runBuild(dummy bool, taskname string, noCache bool) {
 	}()
 
 	err = b.Build(ctx, taskname)
-	if errors.As(err, &usererror.Err) {
-		boblog.Log.UserError(err)
-	} else {
-		errz.Fatal(err)
+	if err != nil {
+		exitCode = 1
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
 	}
 }
 
