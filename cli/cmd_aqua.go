@@ -22,11 +22,16 @@ var aquaCmd = &cobra.Command{
 
 		ctx := context.Background()
 		param := &controller.Param{
-			// ConfigFilePath: "config",
+			// TODO: checkout contents of config file
+			// ConfigFilePath: "config",<
 			IsTest:      false,
 			All:         true,
 			AQUAVersion: "v0.13.0",
 		}
+
+		// TODO: find allocation of .aqua path inside aqua
+
+		// TODO: remove/reinstall packages
 
 		ctrl, err := controller.New(ctx, param)
 		errz.Fatal(err)
