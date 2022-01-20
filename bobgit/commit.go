@@ -1,6 +1,7 @@
 package bobgit
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 	git "github.com/go-git/go-git/v5"
+	"github.com/logrusorgru/aurora"
 )
 
 var ErrEmptyCommitMessage = fmt.Errorf("use bob git commit -m \"your message\".")
@@ -56,30 +58,35 @@ func Commit(message string) (s string, err error) {
 	if len(filteredRepo) == 0 {
 		s := "nothing to commit, working trees are clean."
 		if len(untrackedRepo) > 0 {
-			s = "nothing to commit, but untracked files present in working tree."
+			s = "nothing to commit, untracked files present in working tree."
 		}
 		return s, nil
 	}
 
+	maxRepoLen := 0
 	// execute dry-run first on all repositories
 	// to check for errors
 	for _, name := range filteredRepo {
 		_, err := cmdutil.GitDryCommit(name, message)
+
+		// set maximum repository name length for indentation
+		if len(name) > maxRepoLen {
+			maxRepoLen = len(name)
+		}
+
 		if err != nil {
 			return "", usererror.Wrapm(err, "Failed to commit to git in repo \""+name+"\"")
 		}
 	}
 
+	outbuf := bytes.NewBuffer(nil)
 	for _, name := range filteredRepo {
-		_, err := cmdutil.GitCommit(name, message)
-		if err != nil {
-			return "", usererror.Wrapm(err, "Failed to commit to git in repo \""+name+"\"")
-		}
+		output, err := cmdutil.GitCommit(name, message)
+		buf := FprintCommitOutput(name, output, maxRepoLen, err == nil)
+		fmt.Fprintln(outbuf, buf)
 	}
 
-	s = "Changes in \"" + strings.Join(filteredRepo, "\", \"") + "\" has been successfully commited"
-
-	return s, nil
+	return outbuf.String(), nil
 }
 
 // filterModifiedRepos filters the repositories with changes
@@ -124,4 +131,39 @@ func filterModifiedRepos(repolist []string) ([]string, []string, error) {
 	}
 
 	return updatedRepo, untrackedRepo, nil
+}
+
+// FprintCommitOutput formats output buffer from every repository commit output
+func FprintCommitOutput(reponame string, output []byte, maxlen int, success bool) *bytes.Buffer {
+	buf := bytes.NewBuffer(nil)
+
+	// format the reponame for output
+	repopath := reponame
+	if reponame == "." {
+		repopath = "/"
+	} else if repopath[len(repopath)-1:] != "/" {
+		repopath = repopath + "/"
+	}
+
+	spacing := "%-" + fmt.Sprint(maxlen) + "s"
+	repopath = fmt.Sprintf(spacing, repopath)
+	title := fmt.Sprint(repopath, "\t", aurora.Green("success"))
+	if !success {
+		title = fmt.Sprint(repopath, "\t", aurora.Red("failed!!"))
+	}
+	fmt.Fprint(buf, title)
+	fmt.Fprintln(buf)
+
+	if len(output) > 0 {
+		for _, line := range outputLines(output) {
+			modified := fmt.Sprint("  ", aurora.Gray(12, line))
+			fmt.Fprintln(buf, modified)
+		}
+	}
+	return buf
+}
+
+func outputLines(output []byte) []string {
+	lines := strings.TrimSuffix(string(output), "\n")
+	return strings.Split(lines, "\n")
 }

@@ -12,6 +12,7 @@ import (
 type Runnable interface {
 	Run() error
 	Output() ([]byte, error)
+	OutputCombined() ([]byte, error)
 }
 
 type run struct {
@@ -40,6 +41,7 @@ func (run *run) Output() ([]byte, error) {
 	run.cmd.Stderr = &stderr
 
 	output, err := run.cmd.Output()
+
 	if err != nil {
 		return nil, CmdError{
 			Stderr: &stderr,
@@ -49,6 +51,23 @@ func (run *run) Output() ([]byte, error) {
 	}
 
 	return output, nil
+}
+
+func (run *run) OutputCombined() ([]byte, error) {
+	var b bytes.Buffer
+	run.cmd.Stdout = &b
+	run.cmd.Stderr = &b
+
+	err := run.cmd.Run()
+	if err != nil {
+		return nil, CmdError{
+			Stderr: &b,
+			Args:   run.cmd.Args,
+			Err:    err,
+		}
+	}
+
+	return b.Bytes(), nil
 }
 
 // gitprepare inits git cmd with `root` as the working dir.
@@ -92,7 +111,7 @@ func GitCommit(root string, message string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return r.Output()
+	return r.OutputCombined()
 }
 
 func GitAddDry(root string, targetDir string) ([]byte, error) {
