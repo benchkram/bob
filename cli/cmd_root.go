@@ -47,6 +47,9 @@ func init() {
 	// gitCmd
 	CmdGit.AddCommand(CmdGitStatus)
 	rootCmd.AddCommand(CmdGit)
+
+	// aqua test
+	rootCmd.AddCommand(aquaCmd)
 }
 
 var rootCmd = &cobra.Command{

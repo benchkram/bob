@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/Benchkram/errz v0.0.0-20180520163740-571a80a661f2
+	github.com/aquaproj/aqua v0.10.0
 	github.com/charmbracelet/bubbles v0.9.0
 	github.com/charmbracelet/bubbletea v0.19.1
 	github.com/charmbracelet/lipgloss v0.3.0
@@ -14,11 +15,11 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/go-cmp v0.5.5
-	github.com/hashicorp/go-version v1.3.0
+	github.com/google/go-cmp v0.5.6
+	github.com/hashicorp/go-version v1.4.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/mholt/archiver/v3 v3.5.0
+	github.com/mholt/archiver/v3 v3.5.1
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
 	github.com/muesli/ansi v0.0.0-20211031195517-c9f0611b6c70 // indirect
 	github.com/onsi/ginkgo v1.16.4
