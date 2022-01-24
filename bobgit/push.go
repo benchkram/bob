@@ -1,16 +1,22 @@
 package bobgit
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/Benchkram/bob/pkg/bobutil"
 	"github.com/Benchkram/bob/pkg/cmdutil"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 	"github.com/cli/cli/git"
 )
+
+var ErrInsufficientConfig = fmt.Errorf("Insufficient Configeration.")
+var ErrUptodateAllRepo = fmt.Errorf("All repositories up to date.")
 
 // Push run `git push` commands iteratively
 // in all the git repositories under bob workspace
@@ -34,7 +40,14 @@ func Push() (err error) {
 	errz.Fatal(err)
 
 	filteredRepo, err := filterReadyToCommitRepos(bobRoot, repoNames)
+	if errors.Is(err, ErrInsufficientConfig) {
+		return usererror.Wrapm(ErrInsufficientConfig, "Git push failed")
+	}
 	errz.Fatal(err)
+
+	if len(filteredRepo) == 0 {
+		return usererror.Wrapm(ErrUptodateAllRepo, "Nothing to push")
+	}
 
 	for _, repo := range filteredRepo {
 		conf, err := getRepoConfig(bobRoot, repo)
@@ -62,6 +75,13 @@ func filterReadyToCommitRepos(root string, repolist []string) ([]string, error) 
 			commits := parseCommitsOutput(output)
 			if len(commits) > 0 {
 				filtered = append(filtered, repo)
+			}
+		} else {
+			fmt.Println("WARNING!! No configured push destination for repository \"" + formatRepoNameForOutput(repo) + "\"")
+			fmt.Printf("Are you sure want to continue with the rest of the repositories? (yes/no): ")
+			resp := askForConfirmation()
+			if !resp {
+				return nil, ErrInsufficientConfig
 			}
 		}
 	}
@@ -123,4 +143,61 @@ func parseCommitsOutput(output []byte) []*git.Commit {
 func outputLines(output []byte) []string {
 	lines := strings.TrimSuffix(string(output), "\n")
 	return strings.Split(lines, "\n")
+}
+
+// formatRepoNameForOutput returns formatted reponame for output.
+//
+// Example: "." => "/", "second-level" => "second-level/"
+func formatRepoNameForOutput(reponame string) string {
+	repopath := reponame
+	if reponame == "." {
+		repopath = "/"
+	} else if repopath[len(repopath)-1:] != "/" {
+		repopath = repopath + "/"
+	}
+	return repopath
+}
+
+// askForConfirmation uses Scanln to parse user input. A user must type in "yes" or "no" and
+// then press enter. It has fuzzy matching, so "y", "Y", "yes", "YES", and "Yes" all count as
+// confirmations. If the input is not recognized, it will ask again. The function does not return
+// until it gets a valid response from the user. Typically, you should use fmt to print out a question
+// before calling askForConfirmation. E.g. fmt.Println("WARNING: Are you sure? (yes/no)")
+func askForConfirmation() bool {
+	var response string
+	_, err := fmt.Scanln(&response)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response = strings.ToLower(response)
+
+	okayResponses := []string{"y", "Y", "yes", "Yes", "YES"}
+	nokayResponses := []string{"n", "N", "no", "No", "NO"}
+	if containsString(okayResponses, response) {
+		return true
+	} else if containsString(nokayResponses, response) {
+		return false
+	} else {
+		fmt.Println("Please type yes or no and then press enter:")
+		return askForConfirmation()
+	}
+}
+
+// containsString returns true if slice contains element
+func containsString(slice []string, element string) bool {
+	return !(posString(slice, element) == -1)
+}
+
+// You might want to put the following two functions in a separate utility package.
+
+// posString returns the first index of element in slice.
+// If slice does not contain element, returns -1.
+func posString(slice []string, element string) int {
+	for index, elem := range slice {
+		if elem == element {
+			return index
+		}
+	}
+	return -1
 }
