@@ -80,9 +80,8 @@ func Push() (err error) {
 		errz.Fatal(err)
 
 		output, err := cmdutil.GitPush(repo, conf.RemoteName, conf.MergeRef)
-		errz.Fatal(err)
 
-		buf := FprintPushOutput(repo, output, maxlen, true)
+		buf := FprintPushOutput(repo, output, maxlen, err == nil)
 		fmt.Println(buf.String())
 	}
 
@@ -125,8 +124,8 @@ func filterReadyToPushRepos(root string, repolist []string, maxlen int) ([]strin
 func FprintErrorPushDestination(reponame string, maxlen int) *bytes.Buffer {
 	buf := FprintRepoTitle(reponame, maxlen, false)
 
-	line1 := fmt.Sprintln("  ", aurora.Gray(12, "No configured push destination"))
-	line2 := fmt.Sprintln("  ", aurora.Gray(12, configureInstruction))
+	line1 := fmt.Sprintln("  ", aurora.Red("No configured push destination"))
+	line2 := fmt.Sprintln("  ", aurora.Red(configureInstruction))
 	fmt.Fprint(buf, line1, line2)
 	return buf
 }
@@ -138,8 +137,11 @@ func FprintPushOutput(reponame string, output []byte, maxlen int, success bool) 
 
 	if len(output) > 0 {
 		for _, line := range strutil.ConvertToLines(output) {
-			modified := fmt.Sprint("  ", aurora.Gray(12, line))
-			fmt.Fprintln(buf, modified)
+			modified := fmt.Sprint(aurora.Gray(12, line))
+			if !success {
+				modified = fmt.Sprint(aurora.Red(line))
+			}
+			fmt.Fprintln(buf, "  ", modified)
 		}
 	}
 
@@ -190,8 +192,9 @@ func parseCommitsOutput(output []byte) []*git.Commit {
 
 // askForConfirmation uses Scanln to parse user input. A user must type in "yes" or "no" and
 // then press enter. It has fuzzy matching, so "y", "Y", "yes", "YES", and "Yes" all count as
-// confirmations. If the input is not recognized, it will ask again. The function does not return
-// until it gets a valid response from the user.
+// confirmations. If the input is not recognized, it will ask again.
+//
+// The function does not return until it gets a valid response from the user.
 // prints the confirmation message before asking for the confirmation.
 func askForConfirmation(confirmationMessage string) bool {
 
