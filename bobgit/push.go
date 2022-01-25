@@ -1,6 +1,7 @@
 package bobgit
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
@@ -13,10 +14,14 @@ import (
 	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 	"github.com/cli/cli/git"
+	"github.com/logrusorgru/aurora"
 )
 
-var ErrInsufficientConfig = fmt.Errorf("Insufficient Configeration.")
+var ErrInsufficientConfig = fmt.Errorf("Repository Not configured Properly.")
 var ErrUptodateAllRepo = fmt.Errorf("All repositories up to date.")
+
+const configureInstruction string = "Either specify the URL from the command-line or configure a remote " +
+	"repository and then push using the remote name."
 
 // Push run `git push` commands iteratively
 // in all the git repositories under bob workspace
@@ -64,6 +69,7 @@ func Push() (err error) {
 
 func filterReadyToCommitRepos(root string, repolist []string) ([]string, error) {
 	filtered := []string{}
+	maxlen := longestStrLen(repolist)
 	for _, repo := range repolist {
 		repoConfig, err := getRepoConfig(root, repo)
 		errz.Fatal(err)
@@ -77,16 +83,32 @@ func filterReadyToCommitRepos(root string, repolist []string) ([]string, error) 
 				filtered = append(filtered, repo)
 			}
 		} else {
-			fmt.Println("WARNING!! No configured push destination for repository \"" + formatRepoNameForOutput(repo) + "\"")
-			fmt.Printf("Are you sure want to continue with the rest of the repositories? (yes/no): ")
-			resp := askForConfirmation()
+			buf := FprintErrorPushDestination(repo, maxlen)
+			fmt.Println(buf.String())
+			resp := askForConfirmation("Sure want to continue with the rest of the repositories? (yes/no): ")
 			if !resp {
 				return nil, ErrInsufficientConfig
 			}
+			fmt.Println()
 		}
 	}
 
 	return filtered, nil
+}
+
+// FprintErrorPushDestination created output buffer for not configured respository error
+func FprintErrorPushDestination(reponame string, maxlen int) *bytes.Buffer {
+	buf := bytes.NewBuffer(nil)
+	spacing := "%-" + fmt.Sprint(maxlen) + "s"
+	repopath := fmt.Sprintf(spacing, formatRepoNameForOutput(reponame))
+	title := fmt.Sprint(repopath, "\t", aurora.Red("error"))
+	fmt.Fprint(buf, title)
+	fmt.Fprintln(buf)
+
+	line1 := fmt.Sprintln("  ", aurora.Gray(12, "No configured push destination"))
+	line2 := fmt.Sprintln("  ", aurora.Gray(12, configureInstruction))
+	fmt.Fprint(buf, line1, line2)
+	return buf
 }
 
 // getRepoConfig detects repository current branch and
@@ -163,7 +185,10 @@ func formatRepoNameForOutput(reponame string) string {
 // confirmations. If the input is not recognized, it will ask again. The function does not return
 // until it gets a valid response from the user. Typically, you should use fmt to print out a question
 // before calling askForConfirmation. E.g. fmt.Println("WARNING: Are you sure? (yes/no)")
-func askForConfirmation() bool {
+func askForConfirmation(confirmationMessage string) bool {
+
+	fmt.Print(confirmationMessage)
+
 	var response string
 	_, err := fmt.Scanln(&response)
 	if err != nil {
@@ -179,8 +204,7 @@ func askForConfirmation() bool {
 	} else if containsString(nokayResponses, response) {
 		return false
 	} else {
-		fmt.Println("Please type yes or no and then press enter:")
-		return askForConfirmation()
+		return askForConfirmation("Please type yes or no and then press enter:")
 	}
 }
 
@@ -200,4 +224,17 @@ func posString(slice []string, element string) int {
 		}
 	}
 	return -1
+}
+
+// longestStrLen returns maximum string length from a slice of strings
+func longestStrLen(inputs []string) int {
+	maxlen := -1
+
+	for _, i := range inputs {
+		if len(i) > maxlen {
+			maxlen = len(i)
+		}
+	}
+
+	return maxlen
 }
