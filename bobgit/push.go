@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/Benchkram/bob/pkg/bobutil"
 	"github.com/Benchkram/bob/pkg/cmdutil"
+	"github.com/Benchkram/bob/pkg/strutil"
 	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 	"github.com/cli/cli/git"
@@ -24,7 +24,10 @@ const configureInstruction string = "Either specify the URL from the command-lin
 	"repository and then push using the remote name."
 
 // Push run `git push` commands iteratively
-// in all the git repositories under bob workspace
+// in all the git repositories under bob workspace.
+//
+// Run through all the repositories with a confirm dialog in case of
+// not configured remote.
 func Push() (err error) {
 	defer errz.Recover(&err)
 
@@ -44,7 +47,10 @@ func Push() (err error) {
 	repoNames, err := findRepos(bobRoot)
 	errz.Fatal(err)
 
-	filteredRepo, err := filterReadyToCommitRepos(bobRoot, repoNames)
+	// pre-compute maximum repository name length for proper formatting
+	maxlen := strutil.LongestStrLen(repoNames)
+
+	filteredRepo, err := filterReadyToPushRepos(bobRoot, repoNames, maxlen)
 	if errors.Is(err, ErrInsufficientConfig) {
 		return usererror.Wrapm(ErrInsufficientConfig, "Git push failed")
 	}
@@ -54,22 +60,41 @@ func Push() (err error) {
 		return usererror.Wrapm(ErrUptodateAllRepo, "Nothing to push")
 	}
 
+	// run git push --dry-run first
+	// if error happens rejects the whole command with error message
 	for _, repo := range filteredRepo {
 		conf, err := getRepoConfig(bobRoot, repo)
 		errz.Fatal(err)
 
 		output, err := cmdutil.GitPushDry(repo, conf.RemoteName, conf.MergeRef)
+		if err != nil {
+			buf := FprintPushOutput(repo, output, maxlen, true)
+			fmt.Println(buf.String())
+		}
+		errz.Fatal(err)
+	}
+
+	// run git push finally
+	for _, repo := range filteredRepo {
+		conf, err := getRepoConfig(bobRoot, repo)
 		errz.Fatal(err)
 
-		fmt.Println(string(output))
+		output, err := cmdutil.GitPush(repo, conf.RemoteName, conf.MergeRef)
+		errz.Fatal(err)
+
+		buf := FprintPushOutput(repo, output, maxlen, true)
+		fmt.Println(buf.String())
 	}
 
 	return nil
 }
 
-func filterReadyToCommitRepos(root string, repolist []string) ([]string, error) {
+// filterReadyToPushRepos returns repositories with already preapred commits and ready to push.
+//
+// ask for confirmation in case of not configured remote. If confirmed with `no` rejects the whole
+// command.
+func filterReadyToPushRepos(root string, repolist []string, maxlen int) ([]string, error) {
 	filtered := []string{}
-	maxlen := longestStrLen(repolist)
 	for _, repo := range repolist {
 		repoConfig, err := getRepoConfig(root, repo)
 		errz.Fatal(err)
@@ -98,12 +123,7 @@ func filterReadyToCommitRepos(root string, repolist []string) ([]string, error) 
 
 // FprintErrorPushDestination created output buffer for not configured respository error
 func FprintErrorPushDestination(reponame string, maxlen int) *bytes.Buffer {
-	buf := bytes.NewBuffer(nil)
-	spacing := "%-" + fmt.Sprint(maxlen) + "s"
-	repopath := fmt.Sprintf(spacing, formatRepoNameForOutput(reponame))
-	title := fmt.Sprint(repopath, "\t", aurora.Red("error"))
-	fmt.Fprint(buf, title)
-	fmt.Fprintln(buf)
+	buf := FprintRepoTitle(reponame, maxlen, false)
 
 	line1 := fmt.Sprintln("  ", aurora.Gray(12, "No configured push destination"))
 	line2 := fmt.Sprintln("  ", aurora.Gray(12, configureInstruction))
@@ -111,28 +131,34 @@ func FprintErrorPushDestination(reponame string, maxlen int) *bytes.Buffer {
 	return buf
 }
 
-// getRepoConfig detects repository current branch and
-// returns the Branch Config with remote name, url and merge ref
-func getRepoConfig(root string, repo string) (_ *git.BranchConfig, err error) {
-	repoPath := filepath.Join(root, repo)
+// FprintPushOutput returns formatted output buffer with repository title
+// from git push output.
+func FprintPushOutput(reponame string, output []byte, maxlen int, success bool) *bytes.Buffer {
+	buf := FprintRepoTitle(reponame, maxlen, success)
 
-	err = os.Chdir(repoPath)
-	if err != nil {
-		return nil, err
+	if len(output) > 0 {
+		for _, line := range strutil.ConvertToLines(output) {
+			modified := fmt.Sprint("  ", aurora.Gray(12, line))
+			fmt.Fprintln(buf, modified)
+		}
 	}
 
-	defer func() {
-		err = os.Chdir(root)
-		errz.Fatal(err)
-	}()
+	return buf
+}
 
-	branch, err := git.CurrentBranch()
-	if err != nil {
-		return nil, err
+// FprintRepoTitle returns repo title buffer with success/error label
+func FprintRepoTitle(reponame string, maxlen int, success bool) *bytes.Buffer {
+	buf := bytes.NewBuffer(nil)
+	spacing := "%-" + fmt.Sprint(maxlen) + "s"
+	repopath := fmt.Sprintf(spacing, formatRepoNameForOutput(reponame))
+	title := fmt.Sprint(repopath, "\t", aurora.Green("success"))
+	if !success {
+		title = fmt.Sprint(repopath, "\t", aurora.Red("error"))
 	}
+	fmt.Fprint(buf, title)
+	fmt.Fprintln(buf)
 
-	config := git.ReadBranchConfig(branch)
-	return &config, nil
+	return buf
 }
 
 // parseCommitsOutput parses `git cherry -v` output,
@@ -148,7 +174,7 @@ func parseCommitsOutput(output []byte) []*git.Commit {
 	sha := 1
 	title := 2
 	if len(output) > 0 {
-		for _, line := range outputLines(output) {
+		for _, line := range strutil.ConvertToLines(output) {
 			split := strings.SplitN(line, " ", 3)
 			if len(split) == 3 {
 				commits = append(commits, &git.Commit{
@@ -162,29 +188,11 @@ func parseCommitsOutput(output []byte) []*git.Commit {
 	return commits
 }
 
-func outputLines(output []byte) []string {
-	lines := strings.TrimSuffix(string(output), "\n")
-	return strings.Split(lines, "\n")
-}
-
-// formatRepoNameForOutput returns formatted reponame for output.
-//
-// Example: "." => "/", "second-level" => "second-level/"
-func formatRepoNameForOutput(reponame string) string {
-	repopath := reponame
-	if reponame == "." {
-		repopath = "/"
-	} else if repopath[len(repopath)-1:] != "/" {
-		repopath = repopath + "/"
-	}
-	return repopath
-}
-
 // askForConfirmation uses Scanln to parse user input. A user must type in "yes" or "no" and
 // then press enter. It has fuzzy matching, so "y", "Y", "yes", "YES", and "Yes" all count as
 // confirmations. If the input is not recognized, it will ask again. The function does not return
-// until it gets a valid response from the user. Typically, you should use fmt to print out a question
-// before calling askForConfirmation. E.g. fmt.Println("WARNING: Are you sure? (yes/no)")
+// until it gets a valid response from the user.
+// prints the confirmation message before asking for the confirmation.
 func askForConfirmation(confirmationMessage string) bool {
 
 	fmt.Print(confirmationMessage)
@@ -199,42 +207,11 @@ func askForConfirmation(confirmationMessage string) bool {
 
 	okayResponses := []string{"y", "Y", "yes", "Yes", "YES"}
 	nokayResponses := []string{"n", "N", "no", "No", "NO"}
-	if containsString(okayResponses, response) {
+	if strutil.Contains(okayResponses, response) {
 		return true
-	} else if containsString(nokayResponses, response) {
+	} else if strutil.Contains(nokayResponses, response) {
 		return false
 	} else {
 		return askForConfirmation("Please type yes or no and then press enter:")
 	}
-}
-
-// containsString returns true if slice contains element
-func containsString(slice []string, element string) bool {
-	return !(posString(slice, element) == -1)
-}
-
-// You might want to put the following two functions in a separate utility package.
-
-// posString returns the first index of element in slice.
-// If slice does not contain element, returns -1.
-func posString(slice []string, element string) int {
-	for index, elem := range slice {
-		if elem == element {
-			return index
-		}
-	}
-	return -1
-}
-
-// longestStrLen returns maximum string length from a slice of strings
-func longestStrLen(inputs []string) int {
-	maxlen := -1
-
-	for _, i := range inputs {
-		if len(i) > maxlen {
-			maxlen = len(i)
-		}
-	}
-
-	return maxlen
 }

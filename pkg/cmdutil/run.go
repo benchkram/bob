@@ -131,3 +131,12 @@ func GitPushDry(root string, remote string, ref string) ([]byte, error) {
 
 	return r.OutputCombined()
 }
+
+func GitPush(root string, remote string, ref string) ([]byte, error) {
+	r, err := gitprepare(root, "push", "--set-upstream", remote, ref)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make git command: %w", err)
+	}
+
+	return r.OutputCombined()
+}
