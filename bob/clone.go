@@ -1,10 +1,12 @@
 package bob
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/bob/pkg/file"
@@ -33,20 +35,28 @@ func (b *B) Clone() (err error) {
 			continue
 		}
 
+		var buf *bytes.Buffer
 		// Try to clone from ssh, if it fails try https
-		err = cmdutil.RunGit(b.dir, "clone", repoFromSSH.SSH.String())
+		out, err := cmdutil.RunGitWithOutput(b.dir, "clone", repoFromSSH.SSH.String(), "--progress")
 		if err != nil {
 			fmt.Printf("%s\n", aurora.Yellow(fmt.Sprintf("Failed to clone %s using ssh", repo.Name)))
 
 			// Let's try https
-			err := cmdutil.RunGit(b.dir, "clone", repoFromHTTPS.HTTPS.String())
+			out, err := cmdutil.RunGitWithOutput(b.dir, "clone", repoFromHTTPS.HTTPS.String(), "--progress")
 			if err != nil {
 				fmt.Printf("%s\n", aurora.Yellow(fmt.Sprintf("Failed to clone %s using https", repo.Name)))
 
-				err := cmdutil.RunGit(b.dir, "clone", localUrl)
+				out, err := cmdutil.RunGitWithOutput(b.dir, "clone", localUrl, "--progress")
 				errz.Fatal(err)
+				buf = FprintCloneOutput(repo.Name, out, err == nil)
+			} else {
+				buf = FprintCloneOutput(repo.Name, out, err == nil)
 			}
+		} else {
+			buf = FprintCloneOutput(repo.Name, out, err == nil)
 		}
+
+		fmt.Println(buf.String())
 
 		err = b.gitignoreAdd(repo.Name)
 		errz.Fatal(err)
@@ -58,15 +68,23 @@ func (b *B) Clone() (err error) {
 func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 	defer errz.Recover(&err)
 
-	err = cmdutil.RunGit(b.dir, "clone", repoURL)
+	out, err := cmdutil.RunGitWithOutput(b.dir, "clone", repoURL, "--progress")
 	errz.Fatal(err)
+
+	buf := FprintCloneOutput(".", out, err == nil)
+	fmt.Println(buf.String())
 
 	repo, err := Parse(repoURL)
 	errz.Fatal(err)
+
 	// TODO: let repoName be handled by Parse().
 	repoName := RepoName(repo.HTTPS.URL)
 
 	absRepoPath, err := filepath.Abs(repoName)
+	errz.Fatal(err)
+
+	// change currenct directory to inside the repository
+	err = os.Chdir(absRepoPath)
 	errz.Fatal(err)
 
 	bob, err := Bob(
@@ -83,4 +101,55 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 	}
 
 	return repoName, nil
+}
+
+// FprintCloneOutput returns formatted output buffer with repository title
+// from git clone output.
+func FprintCloneOutput(reponame string, output []byte, success bool) *bytes.Buffer {
+	buf := FprintRepoTitle(reponame, 20, success)
+	if len(output) > 0 {
+		for _, line := range ConvertToLines(output) {
+			modified := fmt.Sprint(aurora.Gray(12, line))
+			if !success {
+				modified = fmt.Sprint(aurora.Red(line))
+			}
+			fmt.Fprintln(buf, modified)
+		}
+	}
+
+	return buf
+}
+
+// FprintRepoTitle returns repo title buffer with success/error label
+func FprintRepoTitle(reponame string, maxlen int, success bool) *bytes.Buffer {
+	buf := bytes.NewBuffer(nil)
+	spacing := "%-" + fmt.Sprint(maxlen) + "s"
+	repopath := fmt.Sprintf(spacing, formatRepoNameForOutput(reponame))
+	title := fmt.Sprint(repopath, "\t", aurora.Green("success"))
+	if !success {
+		title = fmt.Sprint(repopath, "\t", aurora.Red("error"))
+	}
+	fmt.Fprint(buf, title)
+	fmt.Fprintln(buf)
+
+	return buf
+}
+
+// formatRepoNameForOutput returns formatted reponame for output.
+//
+// Example: "." => "/", "second-level" => "second-level/"
+func formatRepoNameForOutput(reponame string) string {
+	repopath := reponame
+	if reponame == "." {
+		repopath = "/"
+	} else if repopath[len(repopath)-1:] != "/" {
+		repopath = repopath + "/"
+	}
+	return repopath
+}
+
+// ConvertToLines converts bytes into a list of strings separeted by newline
+func ConvertToLines(output []byte) []string {
+	lines := strings.TrimSuffix(string(output), "\n")
+	return strings.Split(lines, "\n")
 }
