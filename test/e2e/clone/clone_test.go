@@ -20,7 +20,7 @@ var _ = Describe("Test bob clone", func() {
 		})
 
 		It("adds HTTPS repo to bob", func() {
-			Expect(b.Add("https://github.com/pkg/errors.git")).NotTo(HaveOccurred())
+			Expect(b.Add("https://github.com/pkg/errors.git", false, false)).NotTo(HaveOccurred())
 		})
 
 		// TODO: Reenable. Fails to clone on CI.
@@ -31,11 +31,11 @@ var _ = Describe("Test bob clone", func() {
 		It("adds local repos to bob", func() {
 			// Children
 			for _, child := range childs {
-				Expect(b.Add(fmt.Sprintf("file://%s", child))).NotTo(HaveOccurred())
+				Expect(b.Add(fmt.Sprintf("file://%s", child), false, false)).NotTo(HaveOccurred())
 			}
 
 			// Recursive
-			Expect(b.Add(fmt.Sprintf("file://%s", recursiveRepo))).NotTo(HaveOccurred())
+			Expect(b.Add(fmt.Sprintf("file://%s", recursiveRepo), false, false)).NotTo(HaveOccurred())
 		})
 
 		It("runs bob clone", func() {

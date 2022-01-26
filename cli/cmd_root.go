@@ -29,6 +29,8 @@ func init() {
 	rootCmd.AddCommand(cleanCmd)
 
 	// workspace
+	cmdAdd.Flags().Bool("https-only", false, "Set to true to use only https url for the repository")
+	cmdAdd.Flags().Bool("ssh-only", false, "Set to true to use only ssh for the repository")
 	cmdWorkspace.AddCommand(cmdWorkspaceNew)
 	cmdWorkspace.AddCommand(cmdAdd)
 	rootCmd.AddCommand(cmdWorkspace)

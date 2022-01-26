@@ -4,7 +4,7 @@ import (
 	"github.com/Benchkram/errz"
 )
 
-func (b *B) Add(rawurl string) (err error) {
+func (b *B) Add(rawurl string, httpsonly bool, sshonly bool) (err error) {
 	defer errz.Recover(&err)
 
 	// Check if it is a valid git repo
@@ -21,11 +21,21 @@ func (b *B) Add(rawurl string) (err error) {
 		}
 	}
 
+	httpsstr := repo.HTTPS.String()
+	if sshonly {
+		httpsstr = ""
+	}
+
+	sshstr := repo.SSH.String()
+	if httpsonly {
+		sshstr = ""
+	}
+
 	b.Repositories = append(b.Repositories,
 		Repo{
 			Name:     name,
-			HTTPSUrl: repo.HTTPS.String(),
-			SSHUrl:   repo.SSH.String(),
+			HTTPSUrl: httpsstr,
+			SSHUrl:   sshstr,
 			LocalUrl: repo.Local,
 		},
 	)

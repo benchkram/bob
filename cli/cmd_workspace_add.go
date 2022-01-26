@@ -16,13 +16,23 @@ var cmdAdd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		httpsOnly, err := cmd.Flags().GetBool("https-only")
+		errz.Fatal(err)
+
+		sshOnly, err := cmd.Flags().GetBool("ssh-only")
+		errz.Fatal(err)
+
 		repoURL := args[0]
-		runAdd(repoURL)
+		runAdd(repoURL, httpsOnly, sshOnly)
 	},
 }
 
-func runAdd(repoURL string) {
-	err := add.Add(repoURL)
+func runAdd(repoURL string, https bool, ssh bool) {
+	err := add.Add(
+		repoURL,
+		add.WithHttpsOnly(https),
+		add.WithSSHOnly(ssh),
+	)
 	errz.Fatal(err)
 
 	fmt.Printf("%s\n", aurora.Green("Repo added"))

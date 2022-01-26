@@ -19,16 +19,16 @@ var _ = Describe("Test bob add", func() {
 		})
 
 		It("adds HTTPS repo to bob", func() {
-			Expect(b.Add("https://github.com/pkg/errors.git")).NotTo(HaveOccurred())
+			Expect(b.Add("https://github.com/pkg/errors.git", false, false)).NotTo(HaveOccurred())
 		})
 
 		It("adds SSH repo to bob", func() {
-			Expect(b.Add("git@github.com:Benchkram/bob.git")).NotTo(HaveOccurred())
+			Expect(b.Add("git@github.com:Benchkram/bob.git", false, false)).NotTo(HaveOccurred())
 		})
 
 		It("adds local repos to bob", func() {
 			for _, child := range childs {
-				Expect(b.Add(fmt.Sprintf("file://%s", child))).NotTo(HaveOccurred())
+				Expect(b.Add(fmt.Sprintf("file://%s", child), false, false)).NotTo(HaveOccurred())
 			}
 		})
 
