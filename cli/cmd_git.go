@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 
 	"github.com/Benchkram/bob/bobgit"
@@ -69,6 +70,9 @@ func runGitCommit(m string) {
 	if err != nil {
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
+			os.Exit(1)
+		} else if errors.Is(err, bobgit.ErrEmptyCommitMessage) {
+			fmt.Printf("%s\n\n  %s\n\n", "bob git requires a commit message", aurora.Bold("bob git commit -m \"msg\""))
 			os.Exit(1)
 		} else {
 			errz.Fatal(err)

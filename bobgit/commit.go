@@ -27,7 +27,7 @@ func Commit(message string) (s string, err error) {
 	defer errz.Recover(&err)
 
 	if message == "" {
-		return "", usererror.Wrapm(ErrEmptyCommitMessage, "Aborting commit")
+		return "", ErrEmptyCommitMessage
 	}
 
 	bobRoot, err := bobutil.FindBobRoot()
