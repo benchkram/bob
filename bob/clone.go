@@ -10,25 +10,23 @@ import (
 
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/bob/pkg/file"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 
 	"github.com/logrusorgru/aurora"
 )
 
+var ErrNoValidURLToClone = fmt.Errorf("No valid URL to clone found.")
+
 // Clone repos which are not yet in the workspace.
-// Uses ssh with a fallback on https.
+// Uses priority urls ssh >> https >> file.
 func (b *B) Clone() (err error) {
 	defer errz.Recover(&err)
 
 	for _, repo := range b.Repositories {
 
-		// Check if it is a valid git repo,
-		// as someone might changed it on disk.
-		repoFromHTTPS, err := Parse(repo.HTTPSUrl)
+		prioritylist, err := makeURLPriorityList(repo)
 		errz.Fatal(err)
-		repoFromSSH, err := Parse(repo.SSHUrl)
-		errz.Fatal(err)
-		localUrl := repo.LocalUrl
 
 		// Check if repository is already checked out.
 		if file.Exists(repo.Name) {
@@ -36,27 +34,26 @@ func (b *B) Clone() (err error) {
 			continue
 		}
 
-		var output *[]byte
-		// Try to clone from ssh, if it fails try https
-		out, err := cmdutil.RunGitWithOutput(b.dir, "clone", repoFromSSH.SSH.String(), "--progress")
-		output = &out
-		if err != nil {
-			fmt.Printf("%s\n", aurora.Yellow(fmt.Sprintf("Failed to clone %s using ssh", repo.Name)))
-
-			// Let's try https
-			out, err := cmdutil.RunGitWithOutput(b.dir, "clone", repoFromHTTPS.HTTPS.String(), "--progress")
-			output = &out
-			if err != nil {
-				fmt.Printf("%s\n", aurora.Yellow(fmt.Sprintf("Failed to clone %s using https", repo.Name)))
-
-				out, err := cmdutil.RunGitWithOutput(b.dir, "clone", localUrl, "--progress")
-				output = &out
-				errz.Fatal(err)
-			}
+		// returns user error if no possible url found
+		if len(prioritylist) == 0 {
+			return usererror.Wrapm(ErrNoValidURLToClone, "Failed to clone repository")
 		}
 
-		if output != nil && len(*output) > 0 {
-			buf := FprintCloneOutput(repo.Name, *output, err == nil)
+		var out []byte
+		// starts cloning from the first item of the priority list,
+		// break for successfull cloning and continue in case of failure
+		for _, url := range prioritylist {
+			out, err = cmdutil.RunGitWithOutput(b.dir, "clone", url, "--progress")
+			// if err != nil keep iterating through the url lists
+			if err == nil {
+				break
+			}
+		}
+		// log the last order if has err and block the execution
+		errz.Fatal(err)
+
+		if len(out) > 0 {
+			buf := FprintCloneOutput(repo.Name, out, err == nil)
 			fmt.Println(buf.String())
 		}
 
@@ -109,6 +106,50 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 	}
 
 	return repoName, nil
+}
+
+// makeURLPriorityList returns list of urls from forwarded repo,
+// sorted by the priority, ssh >> https >> file.
+//
+// It ignores ssh/http if any of them set to ""
+//
+// It als Checks if it is a valid git repo,
+// as someone might changed it on disk.
+func makeURLPriorityList(repo Repo) ([]string, error) {
+	var ignorehttp bool = false
+	var ignoressh bool = false
+
+	var urls []string
+
+	if repo.SSHUrl == "" {
+		ignoressh = true
+	}
+
+	if repo.HTTPSUrl == "" {
+		ignorehttp = true
+	}
+
+	if !ignoressh {
+		repoFromSSH, err := Parse(repo.HTTPSUrl)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, repoFromSSH.SSH.String())
+	}
+
+	if !ignorehttp {
+		repoFromHTTPS, err := Parse(repo.HTTPSUrl)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, repoFromHTTPS.HTTPS.String())
+	}
+
+	if repo.LocalUrl != "" {
+		urls = append(urls, repo.LocalUrl)
+	}
+
+	return urls, nil
 }
 
 // FprintCloneOutput returns formatted output buffer with repository title
