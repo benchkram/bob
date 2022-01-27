@@ -16,22 +16,18 @@ var cmdAdd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		httpsOnly, err := cmd.Flags().GetBool("https-only")
-		errz.Fatal(err)
-
-		sshOnly, err := cmd.Flags().GetBool("ssh-only")
+		explicit, err := cmd.Flags().GetBool("explicit-protocol")
 		errz.Fatal(err)
 
 		repoURL := args[0]
-		runAdd(repoURL, httpsOnly, sshOnly)
+		runAdd(repoURL, explicit)
 	},
 }
 
-func runAdd(repoURL string, https bool, ssh bool) {
+func runAdd(repoURL string, explcitprotcl bool) {
 	err := add.Add(
 		repoURL,
-		add.WithHttpsOnly(https),
-		add.WithSSHOnly(ssh),
+		add.WithExplicitProtocol(explcitprotcl),
 	)
 	errz.Fatal(err)
 

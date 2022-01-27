@@ -1,10 +1,12 @@
 package bob
 
 import (
+	"strings"
+
 	"github.com/Benchkram/errz"
 )
 
-func (b *B) Add(rawurl string, httpsonly bool, sshonly bool) (err error) {
+func (b *B) Add(rawurl string, explcitprotcl bool) (err error) {
 	defer errz.Recover(&err)
 
 	// Check if it is a valid git repo
@@ -22,13 +24,15 @@ func (b *B) Add(rawurl string, httpsonly bool, sshonly bool) (err error) {
 	}
 
 	httpsstr := repo.HTTPS.String()
-	if sshonly {
-		httpsstr = ""
-	}
-
 	sshstr := repo.SSH.String()
-	if httpsonly {
+
+	// if explicit protocol set to true,
+	// set the sshurl to "" if url starts with http,
+	// else http url set to ""
+	if explcitprotcl && checkIfHttp(rawurl) {
 		sshstr = ""
+	} else if explcitprotcl {
+		httpsstr = ""
 	}
 
 	b.Repositories = append(b.Repositories,
@@ -44,4 +48,11 @@ func (b *B) Add(rawurl string, httpsonly bool, sshonly bool) (err error) {
 	errz.Fatal(err)
 
 	return b.write()
+}
+
+// checkIfHttp returns true if url is http,
+//
+// It is easier to detect if the url is http/s protocol.
+func checkIfHttp(rawurl string) bool {
+	return strings.HasPrefix(rawurl, "http")
 }

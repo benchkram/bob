@@ -78,7 +78,7 @@ func RecursiveRepo(basePath string) (_ string, err error) {
 	err = b.Init()
 	errz.Fatal(err)
 
-	err = b.Add("https://github.com/pkg/errors.git", false, false)
+	err = b.Add("https://github.com/pkg/errors.git", false)
 	errz.Fatal(err)
 
 	repo, err := git.PlainOpen(path)

@@ -21,6 +21,7 @@ func (b *B) Clone() (err error) {
 	defer errz.Recover(&err)
 
 	for _, repo := range b.Repositories {
+
 		// Check if it is a valid git repo,
 		// as someone might changed it on disk.
 		repoFromHTTPS, err := Parse(repo.HTTPSUrl)
@@ -35,28 +36,29 @@ func (b *B) Clone() (err error) {
 			continue
 		}
 
-		var buf *bytes.Buffer
+		var output *[]byte
 		// Try to clone from ssh, if it fails try https
 		out, err := cmdutil.RunGitWithOutput(b.dir, "clone", repoFromSSH.SSH.String(), "--progress")
+		output = &out
 		if err != nil {
 			fmt.Printf("%s\n", aurora.Yellow(fmt.Sprintf("Failed to clone %s using ssh", repo.Name)))
 
 			// Let's try https
 			out, err := cmdutil.RunGitWithOutput(b.dir, "clone", repoFromHTTPS.HTTPS.String(), "--progress")
+			output = &out
 			if err != nil {
 				fmt.Printf("%s\n", aurora.Yellow(fmt.Sprintf("Failed to clone %s using https", repo.Name)))
 
 				out, err := cmdutil.RunGitWithOutput(b.dir, "clone", localUrl, "--progress")
+				output = &out
 				errz.Fatal(err)
-				buf = FprintCloneOutput(repo.Name, out, err == nil)
-			} else {
-				buf = FprintCloneOutput(repo.Name, out, err == nil)
 			}
-		} else {
-			buf = FprintCloneOutput(repo.Name, out, err == nil)
 		}
 
-		fmt.Println(buf.String())
+		if output != nil && len(*output) > 0 {
+			buf := FprintCloneOutput(repo.Name, *output, err == nil)
+			fmt.Println(buf.String())
+		}
 
 		err = b.gitignoreAdd(repo.Name)
 		errz.Fatal(err)
@@ -83,9 +85,15 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 	absRepoPath, err := filepath.Abs(repoName)
 	errz.Fatal(err)
 
+	wd, err := os.Getwd()
+	errz.Fatal(err)
+
 	// change currenct directory to inside the repository
 	err = os.Chdir(absRepoPath)
 	errz.Fatal(err)
+
+	// change revert back to current working directory
+	defer func() { _ = os.Chdir(wd) }()
 
 	bob, err := Bob(
 		WithDir(absRepoPath),

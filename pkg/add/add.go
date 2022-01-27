@@ -6,22 +6,15 @@ import (
 )
 
 type AddParams struct {
-	repoUrl   string
-	httpsOnly bool
-	sshOnly   bool
+	repoUrl  string
+	explicit bool
 }
 
 type Option func(a *AddParams)
 
-func WithHttpsOnly(https bool) Option {
+func WithExplicitProtocol(explicit bool) Option {
 	return func(a *AddParams) {
-		a.httpsOnly = https
-	}
-}
-
-func WithSSHOnly(ssh bool) Option {
-	return func(a *AddParams) {
-		a.sshOnly = ssh
+		a.explicit = explicit
 	}
 }
 
@@ -32,9 +25,8 @@ func Add(repoURL string, opts ...Option) (err error) {
 	errz.Fatal(err)
 
 	params := &AddParams{
-		repoUrl:   repoURL,
-		httpsOnly: false,
-		sshOnly:   false,
+		repoUrl:  repoURL,
+		explicit: false,
 	}
 
 	for _, opt := range opts {
@@ -44,7 +36,7 @@ func Add(repoURL string, opts ...Option) (err error) {
 		opt(params)
 	}
 
-	err = bob.Add(params.repoUrl, params.httpsOnly, params.sshOnly)
+	err = bob.Add(params.repoUrl, params.explicit)
 	errz.Fatal(err)
 
 	return nil
