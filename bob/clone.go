@@ -18,6 +18,13 @@ import (
 
 var ErrNoValidURLToClone = fmt.Errorf("No valid URL to clone found.")
 
+// cloneURLItem used to map URL item from the `makeURLPriorityList`
+// with it's protocol for logging purpuse
+type cloneURLItem struct {
+	url      string
+	protocol string
+}
+
 // Clone repos which are not yet in the workspace.
 // Uses priority urls ssh >> https >> file.
 func (b *B) Clone() (err error) {
@@ -41,13 +48,16 @@ func (b *B) Clone() (err error) {
 
 		var out []byte
 		// starts cloning from the first item of the priority list,
-		// break for successfull cloning and continue in case of failure
-		for _, url := range prioritylist {
-			out, err = cmdutil.RunGitWithOutput(b.dir, "clone", url, "--progress")
+		// break for successfull cloning and fallback to next item in
+		// the map in case of failure
+		for _, item := range prioritylist {
+			out, err = cmdutil.RunGitWithOutput(b.dir, "clone", item.url, "--progress")
 			// if err != nil keep iterating through the url lists
 			if err == nil {
 				break
 			}
+
+			fmt.Printf("%s\n", aurora.Yellow(fmt.Sprintf("Failed to clone %s using %s", repo.Name, item.protocol)))
 		}
 		// log the last order if has err and block the execution
 		errz.Fatal(err)
@@ -108,18 +118,18 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 	return repoName, nil
 }
 
-// makeURLPriorityList returns list of urls from forwarded repo,
-// sorted by the priority, ssh >> https >> file.
+// makeURLPriorityList returns list of cloneURLItem from forwarded repo,
+// ordered by the priority type, ssh >> https >> file.
 //
 // It ignores ssh/http if any of them set to ""
 //
 // It als Checks if it is a valid git repo,
 // as someone might changed it on disk.
-func makeURLPriorityList(repo Repo) ([]string, error) {
+func makeURLPriorityList(repo Repo) ([]cloneURLItem, error) {
 	var ignorehttp bool = false
 	var ignoressh bool = false
 
-	var urls []string
+	var urls []cloneURLItem
 
 	if repo.SSHUrl == "" {
 		ignoressh = true
@@ -134,7 +144,10 @@ func makeURLPriorityList(repo Repo) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		urls = append(urls, repoFromSSH.SSH.String())
+		urls = append(urls, cloneURLItem{
+			url:      repoFromSSH.SSH.String(),
+			protocol: "ssh",
+		})
 	}
 
 	if !ignorehttp {
@@ -142,11 +155,17 @@ func makeURLPriorityList(repo Repo) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		urls = append(urls, repoFromHTTPS.HTTPS.String())
+		urls = append(urls, cloneURLItem{
+			url:      repoFromHTTPS.HTTPS.String(),
+			protocol: "https",
+		})
 	}
 
 	if repo.LocalUrl != "" {
-		urls = append(urls, repo.LocalUrl)
+		urls = append(urls, cloneURLItem{
+			url:      repo.LocalUrl,
+			protocol: "local",
+		})
 	}
 
 	return urls, nil
