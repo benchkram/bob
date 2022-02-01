@@ -38,6 +38,16 @@ var _ = Describe("Test bob clone", func() {
 			Expect(b.Add(fmt.Sprintf("file://%s", recursiveRepo), false)).NotTo(HaveOccurred())
 		})
 
+		// adds https repo with explicit https url for cloning
+		It("adds HTTPS repo to bob, with explicit protocol", func() {
+			Expect(b.Add("https://github.com/derekmolloy/test.git", true)).NotTo(HaveOccurred())
+		})
+
+		// adds git repo with explicit ssh url for cloning
+		It("adds SSH repo to bob, with explicit protocol", func() {
+			Expect(b.Add("git@github.com:zpqrtbnk/test-repo.git", true)).NotTo(HaveOccurred())
+		})
+
 		It("runs bob clone", func() {
 			Expect(b.Clone()).NotTo(HaveOccurred())
 

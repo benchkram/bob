@@ -140,7 +140,7 @@ func makeURLPriorityList(repo Repo) ([]cloneURLItem, error) {
 	}
 
 	if !ignoressh {
-		repoFromSSH, err := Parse(repo.HTTPSUrl)
+		repoFromSSH, err := Parse(repo.SSHUrl)
 		if err != nil {
 			return nil, err
 		}
