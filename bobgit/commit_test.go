@@ -193,6 +193,8 @@ func TestCommit(t *testing.T) {
 					assert.Nil(t, os.MkdirAll(repo, 0775))
 					assert.Nil(t, cmdutil.RunGit(repo, "init"))
 					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					err = cmdutil.RunGit(repo, "add", ".")
+					assert.Nil(t, err)
 
 					err = cmdutil.RunGit(dir, "add", ".")
 					assert.Nil(t, err)
@@ -264,6 +266,37 @@ func TestCommit(t *testing.T) {
 			"",
 			"exec commit after commiting one time",
 			CleanWorkingDirMessage,
+		},
+
+		// exec commit without a tracking on subrepository
+		// execution should return a User message about untracked repository name
+		{
+			"exec_commit_without_tracking_one_repo",
+			input{
+				func(dir string) {
+					err := cmdutil.RunGit(dir, "init")
+					assert.Nil(t, err)
+
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+
+					err = cmdutil.RunGit(dir, "add", ".")
+					assert.Nil(t, err)
+
+					err = cmdutil.RunGit(dir, "commit", "-m", "All changes commited")
+					assert.Nil(t, err)
+				},
+			},
+			"",
+			"exec commit after commiting one time",
+			UntrackedRepoMessage([]string{"repo"}),
 		},
 	}
 
