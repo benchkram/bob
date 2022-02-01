@@ -16,7 +16,7 @@ import (
 
 var ErrEmptyCommitMessage = fmt.Errorf("use bob git commit -m \"your message\".")
 
-var CleanWorkingDirMessage = fmt.Sprint("nothing to commit, working trees are clean.")
+var CleanWorkingDirMessage = "nothing to commit, working trees are clean."
 
 func UntrackedRepoMessage(repolist []string) string {
 	formattedRepos := []string{}
