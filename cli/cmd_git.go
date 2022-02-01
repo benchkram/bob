@@ -78,7 +78,10 @@ func runGitCommit(m string) {
 			errz.Fatal(err)
 		}
 	}
-	fmt.Println(s)
+
+	if s != "" {
+		fmt.Println(s)
+	}
 }
 
 func runGitStatus() {

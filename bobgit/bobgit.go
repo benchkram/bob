@@ -71,3 +71,16 @@ func findRepos(root string) ([]string, error) {
 
 	return repoNames, nil
 }
+
+// formatRepoNameForOutput returns formatted reponame for output.
+//
+// Example: "." => "/", "second-level" => "second-level/"
+func formatRepoNameForOutput(reponame string) string {
+	repopath := reponame
+	if reponame == "." {
+		repopath = "/"
+	} else if repopath[len(repopath)-1:] != "/" {
+		repopath = repopath + "/"
+	}
+	return repopath
+}

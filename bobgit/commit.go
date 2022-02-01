@@ -16,13 +16,25 @@ import (
 
 var ErrEmptyCommitMessage = fmt.Errorf("use bob git commit -m \"your message\".")
 
+var CleanWorkingDirMessage = fmt.Sprint("nothing to commit, working trees are clean.")
+
+func UntrackedRepoMessage(repolist []string) string {
+	formattedRepos := []string{}
+
+	for _, repo := range repolist {
+		formattedRepos = append(formattedRepos, formatRepoNameForOutput(repo))
+	}
+
+	return fmt.Sprint("nothing to commit, untracked files present in \"", strings.Join(formattedRepos, "\", \""), "\" repositories")
+}
+
 // Commit executes `git commit -m ${message}` in all repositories.
 //
 // indifferent of the subdirectories and subrepositories,
 // it walks through all the repositories starting from bobroot
 // and run `git commit -m {message}` command.
 //
-// Only shows user messages in case of nothing to commit.
+// Only returns user messages in case of nothing to commit.
 func Commit(message string) (s string, err error) {
 	defer errz.Recover(&err)
 
@@ -56,9 +68,9 @@ func Commit(message string) (s string, err error) {
 
 	// throw some user message for untracked repositories
 	if len(filteredRepo) == 0 {
-		s := "nothing to commit, working trees are clean."
+		s := CleanWorkingDirMessage
 		if len(untrackedRepo) > 0 {
-			s = "nothing to commit, untracked files present in working tree."
+			s = UntrackedRepoMessage(untrackedRepo)
 		}
 		return s, nil
 	}
@@ -79,14 +91,16 @@ func Commit(message string) (s string, err error) {
 		}
 	}
 
-	outbuf := bytes.NewBuffer(nil)
 	for _, name := range filteredRepo {
 		output, err := cmdutil.GitCommit(name, message)
 		buf := FprintCommitOutput(name, output, maxRepoLen, err == nil)
-		fmt.Fprintln(outbuf, buf)
+		// instead of returnting the git output prints it here
+		if len(output) > 0 {
+			fmt.Println(buf.String())
+		}
 	}
 
-	return outbuf.String(), nil
+	return "", nil
 }
 
 // filterModifiedRepos filters the repositories with changes
