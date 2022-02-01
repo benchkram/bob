@@ -33,11 +33,11 @@ var _ = Describe("Test bob add", func() {
 		})
 
 		It("adds HTTPS repo to bob, with explicit protocol", func() {
-			Expect(b.Add("https://github.com/derekmolloy/test.git", true)).NotTo(HaveOccurred())
+			Expect(b.Add("https://github.com/pkg/requests", true)).NotTo(HaveOccurred())
 		})
 
 		It("adds SSH repo to bob, with explicit protocol", func() {
-			Expect(b.Add("git@github.com:zpqrtbnk/test-repo.git", true)).NotTo(HaveOccurred())
+			Expect(b.Add("git@github.com:pkg/exec.git", true)).NotTo(HaveOccurred())
 		})
 
 		It("verifies that adding a duplicate repo fails on a new bob instance", func() {
