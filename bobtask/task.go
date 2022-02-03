@@ -58,7 +58,7 @@ type Task struct {
 	// Parent tasks can take the files and copy them
 	// to a place they like to
 	// ???
-	TargetDirty string `yaml:"target,omitempty"`
+	TargetDirty TargetEntry `yaml:"target,omitempty"`
 	target      *target.T
 
 	// Exports other tasks can reuse.
@@ -102,6 +102,8 @@ type Task struct {
 	// skippedInputs is a lists of skipped input files
 	skippedInputs []string
 }
+
+type TargetEntry interface{}
 
 func Make(opts ...TaskOption) Task {
 	t := Task{
@@ -222,21 +224,68 @@ func (t *Task) LogSkippedInput() []string {
 }
 
 func (t *Task) parseTargets() error {
-	targetDirty := split(t.TargetDirty)
 	targets := []string{}
+	targetType := target.DefaultType // DefaultType set to Path currently
+	var err error
+	switch t.TargetDirty.(type) {
+	case string:
+		targets, err = parseTargetPath(t.TargetDirty)
+	case map[string]interface{}:
+		targets, targetType, err = parseTargetMap(t.TargetDirty)
+	default:
+		targets, err = parseTargetPath(t.TargetDirty)
+	}
 
-	for _, targetPath := range unique(targetDirty) {
-		if strings.Contains(targetPath, "../") {
-			return fmt.Errorf("'../' not allowed in file path %q", targetPath)
-		}
-
-		targets = append(targets, targetPath)
+	if err != nil {
+		return err
 	}
 
 	if len(targets) > 0 {
 		t.target = target.New()
 		t.target.Paths = targets
+		t.target.Type = targetType
 	}
 
 	return nil
+}
+
+func parseTargetMap(t interface{}) ([]string, target.TargetType, error) {
+	mapped := t.(map[string]interface{})
+	pathsI, ok := mapped["paths"]
+	if !ok {
+		return nil, target.DefaultType, fmt.Errorf("Can't find 'paths' on Target properties")
+	}
+
+	targets, err := parseTargetPath(pathsI)
+	if err != nil {
+		return nil, target.DefaultType, err
+	}
+
+	targetType := target.DefaultType
+	typeI, ok := mapped["type"]
+	if ok {
+		typeStr := fmt.Sprintf("%v", typeI)
+		targetType, err = target.ParseType(typeStr)
+		if err != nil {
+			return targets, target.DefaultType, err
+		}
+	}
+
+	return targets, targetType, nil
+}
+
+func parseTargetPath(p interface{}) ([]string, error) {
+	targetStr := fmt.Sprintf("%v", p)
+	targetDirty := split(targetStr)
+	targets := []string{}
+
+	for _, targetPath := range unique(targetDirty) {
+		if strings.Contains(targetPath, "../") {
+			return targets, fmt.Errorf("'../' not allowed in file path %q", targetPath)
+		}
+
+		targets = append(targets, targetPath)
+	}
+
+	return targets, nil
 }

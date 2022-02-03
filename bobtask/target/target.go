@@ -1,5 +1,7 @@
 package target
 
+import "fmt"
+
 type Target interface {
 	Hash() (string, error)
 	Verify() bool
@@ -45,6 +47,8 @@ const (
 	Docker TargetType = "docker-image"
 )
 
+const DefaultType = Path
+
 func (t *T) clone() *T {
 	target := new()
 	target.dir = t.dir
@@ -62,4 +66,15 @@ func (t *T) WithHash(hash string) Target {
 	target := t.clone()
 	target.hash = hash
 	return target
+}
+
+func ParseType(str string) (TargetType, error) {
+	switch {
+	case str == string(Path):
+		return Path, nil
+	case str == string(Docker):
+		return Docker, nil
+	default:
+		return DefaultType, fmt.Errorf("Invalid Target type. Only supports 'path' and 'docker-image' as type.")
+	}
 }
