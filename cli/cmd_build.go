@@ -85,6 +85,16 @@ func runBuild(dummy bool, taskname string, noCache bool) {
 		cancel()
 	}()
 
+	// make sure packages are installed
+	err = b.InstallPackages(ctx)
+	if err != nil {
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
+	}
+
 	err = b.Build(ctx, taskname)
 	if errors.As(err, &usererror.Err) {
 		boblog.Log.UserError(err)

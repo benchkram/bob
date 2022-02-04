@@ -12,9 +12,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const AQUA_ROOT = ".bob/.aqua"
-const AQUA_VERSION = "v0.13.0"
-const AQUA_FILE_PATH = ".bob/.aqua/aqua.yaml"
+// Constants used internally
+const (
+	AQUA_ROOT      = ".bob/.aqua"
+	AQUA_VERSION   = "v0.13.0"
+	AQUA_FILE_PATH = ".bob/.aqua/aqua.yaml"
+
+	ENV_AQUA_GLOBAL_CONFIG = "AQUA_GLOBAL_CONFIG"
+	ENV_AQUA_ROOT_DIR      = "AQUA_ROOT_DIR"
+	ENV_PATH               = "PATH"
+)
 
 // This is the standard aqua registry
 var defaultRegistry = Registry{
@@ -37,6 +44,13 @@ type Registry struct {
 // Packages holds info about a package to be installed/managed by aqua
 type Package struct {
 	Name string `yaml:"name"`
+}
+
+// EnvironmentVariables holds paths necessary for aqua runtime environment
+type EnvionmentVariables struct {
+	AquaRoot   string
+	AquaBin    string
+	AquaConfig string
 }
 
 // New aqua definition
@@ -63,35 +77,70 @@ func (d *Definition) Add(packages ...packagemanager.Package) {
 func (d *Definition) Install(ctx context.Context) (err error) {
 	defer errz.Recover(&err)
 	// Create local .aqua dir and reference to that
-	os.MkdirAll(AQUA_ROOT, os.ModePerm)
-	os.Setenv("AQUA_ROOT_DIR", AQUA_ROOT)
+	err = os.MkdirAll(AQUA_ROOT, os.ModePerm)
+	errz.Fatal(err)
 
-	aquabin, err := filepath.Abs(fmt.Sprintf("%s/bin", AQUA_ROOT))
+	// Setup envirionment
+	err = d.SetEnvirionment()
 	errz.Fatal(err)
 
 	// Create aqua.yaml file used inside aqua controller install call
 	err = d.createDefinitionFile()
 	errz.Fatal(err)
 
-	// Add aqua bin to PATH
-	os.Setenv("PATH", fmt.Sprintf("%s:%s", aquabin, os.Getenv("PATH")))
-
 	param := &controller.Param{
-		// TODO: checkout contents of config file
-
-		ConfigFilePath: AQUA_FILE_PATH, // This could be nested somewhere inside .bob dir
+		ConfigFilePath: AQUA_FILE_PATH, // This should be nested somewhere inside .bob dir
 		IsTest:         false,
 		All:            true,
-		AQUAVersion:    AQUA_VERSION,
+		AQUAVersion:    AQUA_VERSION, // we need to regularly check and update this version
 	}
 
 	ctrl, err := controller.New(ctx, param)
 	errz.Fatal(err)
 
+	// Finally call installation
 	err = ctrl.Install(context.Background(), param)
 	errz.Fatal(err)
 
 	return nil
+}
+
+// Setup run/build environment so that packages can be accessed
+func (d *Definition) SetEnvirionment() error {
+	// Will hide internally used paths
+	_, err := d.setEnvirionment()
+	return err
+}
+
+func (d *Definition) setEnvirionment() (env EnvionmentVariables, err error) {
+	defer errz.Recover(&err)
+
+	// Add aqua root to env
+	aquaRoot, err := filepath.Abs(AQUA_ROOT)
+	errz.Fatal(err)
+
+	err = os.Setenv(ENV_AQUA_ROOT_DIR, aquaRoot)
+	errz.Fatal(err)
+
+	// Add global aqua config file to env
+	aquaConfig, err := filepath.Abs(AQUA_FILE_PATH)
+	errz.Fatal(err)
+
+	err = os.Setenv(ENV_AQUA_GLOBAL_CONFIG, aquaConfig)
+
+	// Add aqua bin to PATH
+	aquaBin, err := filepath.Abs(fmt.Sprintf("%s/bin", aquaRoot))
+	errz.Fatal(err)
+
+	err = os.Setenv(ENV_PATH, fmt.Sprintf("%s:%s", aquaBin, os.Getenv(ENV_PATH)))
+	errz.Fatal(err)
+
+	env = EnvionmentVariables{
+		AquaRoot:   aquaRoot,
+		AquaBin:    aquaBin,
+		AquaConfig: aquaConfig,
+	}
+	return env, err
 }
 
 // createDefinitionFile as aqua.yaml holding information stored in Definition object

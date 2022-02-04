@@ -3,11 +3,11 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
 
 	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
-	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
 
@@ -22,9 +22,6 @@ var aquaCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		defer errz.Recover(&err)
-
-		boblog.Log.Info(aurora.Green("Installing packages...").String())
-		fmt.Println()
 
 		b, err := bob.Bob()
 		if err != nil {
@@ -44,7 +41,27 @@ var aquaCmd = &cobra.Command{
 		}
 
 		fmt.Println()
-		boblog.Log.Info(aurora.Green("All packages successfully installed").String())
+
+		for _, cmd := range args {
+			fmt.Printf("Test if comamnd \"%s\" can be executed\n", cmd)
+			ex := exec.Command(cmd, "--version")
+			ex.Stdout = os.Stdout
+			err = ex.Start()
+			if err != nil {
+				// TODO: usererror
+				fmt.Println("can't run command")
+				errz.Log(err)
+				return
+			}
+			err = ex.Wait()
+			if err != nil {
+				// TODO: usererror
+				fmt.Println("command did not exit correctly")
+				errz.Log(err)
+				return
+			}
+			fmt.Println()
+		}
 
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

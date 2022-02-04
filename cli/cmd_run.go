@@ -55,6 +55,16 @@ func run(taskname string, noCache bool) {
 		return
 	}
 
+	// make sure packages are installed
+	err = b.InstallPackages(ctx)
+	if err != nil {
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
+	}
+
 	commander, err := b.Run(ctx, taskname)
 	if err != nil {
 		switch err {

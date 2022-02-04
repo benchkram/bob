@@ -61,3 +61,8 @@ func (p *Packages) Sanitize() error {
 func (p *Packages) Install(ctx context.Context) error {
 	return p.manager.Install(ctx)
 }
+
+// SetEnvirionment passes down call to internal packagemanager
+func (p *Packages) SetEnvirionment() error {
+	return p.manager.SetEnvirionment()
+}
