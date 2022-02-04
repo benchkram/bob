@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 
 	"github.com/Benchkram/bob/bobgit"
@@ -24,6 +25,25 @@ var CmdGit = &cobra.Command{
 	},
 }
 
+var CmdGitAdd = &cobra.Command{
+	Use:   "add",
+	Short: "Run git add on all child repos",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		runGitAdd(args...)
+	},
+}
+
+var CmdGitCommit = &cobra.Command{
+	Use:   "commit",
+	Short: "Run git commit on all child repos using the given message",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		message, _ := cmd.Flags().GetString("message")
+		runGitCommit(message)
+	},
+}
+
 var CmdGitStatus = &cobra.Command{
 	Use:   "status",
 	Short: "Run git status on all child repos",
@@ -33,13 +53,35 @@ var CmdGitStatus = &cobra.Command{
 	},
 }
 
-var CmdGitAdd = &cobra.Command{
-	Use:   "add",
-	Short: "Run git add on all child repos",
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		runGitAdd(args...)
-	},
+func runGitAdd(targets ...string) {
+	err := bobgit.Add(targets...)
+	if err != nil {
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+			os.Exit(1)
+		} else {
+			errz.Fatal(err)
+		}
+	}
+}
+
+func runGitCommit(m string) {
+	s, err := bobgit.Commit(m)
+	if err != nil {
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+			os.Exit(1)
+		} else if errors.Is(err, bobgit.ErrEmptyCommitMessage) {
+			fmt.Printf("%s\n\n  %s\n\n", "bob git requires a commit message", aurora.Bold("bob git commit -m \"msg\""))
+			os.Exit(1)
+		} else {
+			errz.Fatal(err)
+		}
+	}
+
+	if s != "" {
+		fmt.Println(s)
+	}
 }
 
 var CmdGitPush = &cobra.Command{
@@ -65,18 +107,6 @@ func runGitStatus() {
 		errz.Fatal(err)
 	}
 	fmt.Println(s.String())
-}
-
-func runGitAdd(targets ...string) {
-	err := bobgit.Add(targets...)
-	if err != nil {
-		if errors.As(err, &usererror.Err) {
-			boblog.Log.UserError(err)
-			os.Exit(1)
-		} else {
-			errz.Fatal(err)
-		}
-	}
 }
 
 func runGitPush() {
