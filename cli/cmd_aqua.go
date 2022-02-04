@@ -3,16 +3,13 @@ package cli
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 
+	"github.com/Benchkram/bob/bob"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
-	"github.com/aquaproj/aqua/pkg/controller"
+	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
-
-const AQUA_ROOT = ".bob/.aqua"
 
 var aquaCmd = &cobra.Command{
 	Use:   "aqua",
@@ -23,44 +20,32 @@ var aquaCmd = &cobra.Command{
 		UnknownFlags: true,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("I'm aqua")
+		var err error
+		defer errz.Recover(&err)
 
-		// Create local .aqua dir and reference to that
-		os.MkdirAll(AQUA_ROOT, os.ModePerm)
-		os.Setenv("AQUA_ROOT_DIR", AQUA_ROOT)
+		boblog.Log.Info(aurora.Green("Installing packages...").String())
+		fmt.Println()
 
-		aquabin, err := filepath.Abs(fmt.Sprintf("%s/bin", AQUA_ROOT))
-		errz.Fatal(err)
-
-		fmt.Println(os.Getenv("PATH"))
-
-		// Add aqua bin to PATH
-		os.Setenv("PATH", fmt.Sprintf("%s:%s", aquabin, os.Getenv("PATH")))
-
-		fmt.Println(os.Getenv("PATH"))
-
-		ctx := context.Background()
-		param := &controller.Param{
-			// TODO: checkout contents of config file
-
-			ConfigFilePath: "aqua.yaml", // This could be nested somewhere inside .bob dir
-			IsTest:         false,
-			All:            true,
-			AQUAVersion:    "v0.13.0",
+		b, err := bob.Bob()
+		if err != nil {
+			// TODO: usererror
+			fmt.Println("can't create bob")
+			errz.Log(err)
+			return
 		}
 
-		// TODO: remove/reinstall packages
+		ctx := context.Background()
+		err = b.InstallPackages(ctx)
+		if err != nil {
+			// TODO: usererror
+			fmt.Println("can't install packages")
+			errz.Log(err)
+			return
+		}
 
-		ctrl, err := controller.New(ctx, param)
-		errz.Fatal(err)
+		fmt.Println()
+		boblog.Log.Info(aurora.Green("All packages successfully installed").String())
 
-		err = ctrl.Install(context.Background(), param)
-		errz.Fatal(err)
-
-		command := exec.Command("whereis", "fzf")
-		command.Stdout = os.Stdout
-		err = command.Start()
-		errz.Fatal(err)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return nil, cobra.ShellCompDirectiveDefault

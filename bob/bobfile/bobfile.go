@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Benchkram/bob/pkg/packagemanager"
 	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/Benchkram/errz"
 
+	"github.com/Benchkram/bob/bob/bobpackages"
 	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/bob/bobrun"
 	"github.com/Benchkram/bob/bobtask"
@@ -51,6 +53,9 @@ type Bobfile struct {
 
 	Runs bobrun.RunMap
 
+	// using inline so that there's no double "packages" part in bob.yaml
+	Packages bobpackages.Packages `yaml:",inline"`
+
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
 	dir string
@@ -63,6 +68,9 @@ func NewBobfile() *Bobfile {
 		Variables: make(VariableMap),
 		Tasks:     make(bobtask.Map),
 		Runs:      make(bobrun.RunMap),
+		Packages: bobpackages.Packages{
+			Packages: make(map[string]packagemanager.Package),
+		},
 	}
 	return b
 }
@@ -108,6 +116,10 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		bobfile.Runs = bobrun.RunMap{}
 	}
 
+	if bobfile.Packages.Packages == nil {
+		bobfile.Packages.Packages = make(map[string]packagemanager.Package)
+	}
+
 	// Assure tasks are initialized with their defaults
 	for key, task := range bobfile.Tasks {
 		task.SetDir(bobfile.dir)
@@ -147,6 +159,9 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 	errz.Fatal(err)
 
 	b.Tasks.Sanitize()
+
+	err = b.Packages.Sanitize()
+	errz.Fatal(err)
 
 	return b, nil
 }

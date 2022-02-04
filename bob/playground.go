@@ -11,6 +11,7 @@ import (
 	"github.com/Benchkram/errz"
 
 	"github.com/Benchkram/bob/bob/bobfile"
+	"github.com/Benchkram/bob/bob/bobpackages"
 	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/bob/bobrun"
 	"github.com/Benchkram/bob/bobtask"
@@ -236,6 +237,12 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	bobfile := bobfile.NewBobfile()
 
 	bobfile.Variables["helloworld"] = "Hello World!"
+
+	bobfile.Packages = bobpackages.Packages{
+		ListDirty: []string{
+			"junegunn/fzf@0.29.0",
+		},
+	}
 
 	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
 		InputDirty:   "./main1.go" + "\n" + "go.mod",

@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/Benchkram/errz v0.0.0-20180520163740-571a80a661f2
 	github.com/aquaproj/aqua v0.10.0
+	github.com/blang/semver v3.5.1+incompatible
 	github.com/charmbracelet/bubbles v0.9.0
 	github.com/charmbracelet/bubbletea v0.19.1
 	github.com/charmbracelet/lipgloss v0.3.0

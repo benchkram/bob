@@ -148,6 +148,22 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		}
 	}
 
+	// Merge packages into one Bobfile
+	for _, bobfile := range bobs {
+		// Skip the aggregate
+		if bobfile.Dir() == aggregate.Dir() {
+			continue
+		}
+
+		// Also merge dirty inputs
+		aggregate.Packages.ListDirty = append(aggregate.Packages.ListDirty, bobfile.Packages.ListDirty...)
+
+		// Since key also contains version it is safe to just overwrite
+		for key, val := range bobfile.Packages.Packages {
+			aggregate.Packages.Packages[key] = val
+		}
+	}
+
 	// TODO: Gather missing tasks from remote  & Unpack?
 
 	// Gather environment from dependent tasks.
