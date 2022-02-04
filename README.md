@@ -106,9 +106,7 @@ Here is an example of `bob git status` in a workspace:
 Highlighted directories indicate child Git repositories and therefore `bob git add` and `bob git commit` will only
 operate on the repository a file belongs to allowing to create repository overlapping commits all together.
 
-⚠️ So far only `bob clone` and `bob git status` are implemented.
-
-Take a look into the [git package's README](./bobgit/README.md) for the current status of `bob git`
+Take a look into the [bob git README](./bobgit/README.md) for the current status.
 
 #### Setting Up a Workspace
 
