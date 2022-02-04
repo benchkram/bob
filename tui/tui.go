@@ -2,11 +2,12 @@ package tui
 
 import (
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/Benchkram/bob/pkg/ctl"
 	"github.com/Benchkram/errz"
 	tea "github.com/charmbracelet/bubbletea"
-	"os"
-	"time"
 )
 
 type TUI struct {
@@ -30,6 +31,7 @@ func New() (*TUI, error) {
 		return nil, err
 	}
 
+	// Redirect of stderr and stdout to cache all logging until tui is either started or restored
 	os.Stdout = wout
 	os.Stderr = wout
 

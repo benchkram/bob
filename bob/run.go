@@ -37,7 +37,7 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 
 	b.PrintVersionCompatibility(aggregate)
 
-	runTask, ok := aggregate.Runs[runName]
+	runTask, ok := aggregate.RTasks[runName]
 	if !ok {
 		return nil, ErrRunDoesNotExist
 	}
@@ -56,7 +56,7 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 	// generate run controls to steer the run cmd.
 	runCtls := []ctl.Command{}
 	for _, name := range interactiveTasks {
-		interactiveTask := aggregate.Runs[name]
+		interactiveTask := aggregate.RTasks[name]
 
 		rc, err := interactiveTask.Run(ctx)
 		errz.Fatal(err)
@@ -78,7 +78,7 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 func (b *B) interactiveTasksInChain(runName string, aggregate *bobfile.Bobfile) []string {
 	runTasks := []string{}
 
-	run, ok := aggregate.Runs[runName]
+	run, ok := aggregate.RTasks[runName]
 	if !ok {
 		return nil
 	}
@@ -125,7 +125,7 @@ func normalize(tasks []string) []string {
 }
 
 func isInteractive(name string, aggregate *bobfile.Bobfile) bool {
-	_, ok := aggregate.Runs[name]
+	_, ok := aggregate.RTasks[name]
 	return ok
 }
 
@@ -138,7 +138,7 @@ func isInteractive(name string, aggregate *bobfile.Bobfile) bool {
 func buildNonInteractive(ctx context.Context, runname string, aggregate *bobfile.Bobfile) (err error) {
 	defer errz.Recover(&err)
 
-	interactive, ok := aggregate.Runs[runname]
+	interactive, ok := aggregate.RTasks[runname]
 	if !ok {
 		return ErrRunDoesNotExist
 	}

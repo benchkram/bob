@@ -18,11 +18,13 @@ import (
 	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
 	"github.com/mholt/archiver/v3"
+	"gopkg.in/yaml.v3"
 )
 
 const __targets = "targets"
 const __exports = "exports"
 const __summary = "__summary"
+const __metadata = "__metadata"
 
 var ErrInvalidTarHeaderType = fmt.Errorf("invalid tar header type")
 
@@ -49,7 +51,26 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	exports := []string{}
 	if t.target != nil {
 		for _, path := range t.target.Paths {
-			targets = append(targets, filepath.Join(t.dir, path))
+			stat, err := os.Stat(filepath.Join(t.dir, path))
+			errz.Fatal(err)
+			if stat.IsDir() {
+				// TODO: Read all files from dir.
+				root := filepath.Join(t.dir, path)
+				_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+					if err != nil {
+						return err
+					}
+					if d.IsDir() {
+						return nil
+					}
+
+					targets = append(targets, path)
+					return nil
+				})
+			} else {
+				targets = append(targets, filepath.Join(t.dir, path))
+			}
+
 		}
 	}
 	for _, path := range t.Exports {
@@ -70,9 +91,9 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		info, err := os.Stat(fname)
 		errz.Fatal(err)
 
-		// get file's name for the inside of the archive
-		internalName, err := archiver.NameInArchive(info, fname, fname)
-		errz.Fatal(err)
+		// trim the tasks directory from the internal name
+		internalName := strings.TrimPrefix(fname, t.dir)
+		internalName = strings.TrimPrefix(internalName, "/")
 
 		// open the file
 		file, err := os.Open(fname)
@@ -128,6 +149,23 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		err = file.Close()
 		errz.Fatal(err)
 	}
+
+	metadata := NewArtifactMetadata()
+	metadata.Taskname = t.name
+	metadata.Project = t.project //TODO: use a globaly unique identifier for remote stores
+	metadata.Builder = t.builder
+	metadata.InputHash = artifactName.String()
+	bin, err := yaml.Marshal(metadata)
+	errz.Fatal(err)
+
+	err = archiveWriter.Write(archiver.File{
+		FileInfo: fileInfo{
+			name: __metadata,
+			data: bin,
+		},
+		ReadCloser: io.NopCloser(bytes.NewBuffer(bin)),
+	})
+	errz.Fatal(err)
 
 	return nil
 }

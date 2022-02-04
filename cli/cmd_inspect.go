@@ -1,21 +1,30 @@
-//go:build dev
-// +build dev
-
 package cli
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/Benchkram/errz"
 	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
 
+var inspectArtifactId string
+
 func init() {
+
+	inspectArtifactCmd.Flags().StringVarP(&inspectArtifactId, "id", "",
+		inspectArtifactId, "inspect artifact with id")
+
 	inspectCmd.AddCommand(envCmd)
 	inspectCmd.AddCommand(exportCmd)
+	inspectArtifactCmd.AddCommand(inspectArtifactListCmd)
+	inspectCmd.AddCommand(inspectArtifactCmd)
 	rootCmd.AddCommand(inspectCmd)
 }
 
@@ -54,7 +63,7 @@ func runEnv(taskname string) {
 	bobfile, err := b.Aggregate()
 	boblog.Log.Error(err, "Unable to aggregate bob file")
 
-	task, ok := bobfile.Tasks[taskname]
+	task, ok := bobfile.BTasks[taskname]
 	if !ok {
 		fmt.Printf("%s\n", aurora.Red("Task does not exists"))
 		os.Exit(1)
@@ -91,7 +100,7 @@ func runExport(taskname string) {
 	bobfile, err := b.Aggregate()
 	boblog.Log.Error(err, "Unable to aggregate bob file")
 
-	task, ok := bobfile.Tasks[taskname]
+	task, ok := bobfile.BTasks[taskname]
 	if !ok {
 		fmt.Printf("%s\n", aurora.Red("Task does not exists"))
 		os.Exit(1)
@@ -100,4 +109,65 @@ func runExport(taskname string) {
 	for exportname, export := range task.GetExports() {
 		fmt.Printf("%s (%s)\n", exportname, export)
 	}
+}
+
+var inspectArtifactCmd = &cobra.Command{
+	Use:   "artifact",
+	Short: "Inspect artifacts by id",
+	//Args:  cobra.ExactArgs(1),
+	Long: ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		if inspectArtifactId == "" {
+			fmt.Printf("%s", aurora.Red("failed to set artifact id"))
+			os.Exit(1)
+		}
+		runInspectArtifact(inspectArtifactId)
+	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		tasks, err := getTasks()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+
+		return tasks, cobra.ShellCompDirectiveDefault
+	},
+}
+
+func runInspectArtifact(artifactID string) {
+	b, err := bob.Bob()
+	boblog.Log.Error(err, "Unable to initialize bob")
+
+	info, err := b.ArtifactInspect(artifactID)
+	if err != nil {
+		if errors.As(err, &usererror.Err) {
+			fmt.Printf("%s\n", errors.Unwrap(err).Error())
+			os.Exit(1)
+		}
+		errz.Log(err)
+	}
+
+	fmt.Printf("%s", info.String())
+}
+
+var inspectArtifactListCmd = &cobra.Command{
+	Use:   "ls",
+	Short: "List artifacts",
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		runInspectArtifactList()
+	},
+}
+
+// runinspectArtifactList list artifacts in relation to tasks
+func runInspectArtifactList() {
+	b, err := bob.Bob()
+	if err != nil {
+		boblog.Log.Error(err, "Unable to initialize bob")
+	}
+
+	out, err := b.ArtifactList(context.TODO())
+	if err != nil {
+		boblog.Log.Error(err, "Unable to generate artifact list")
+	}
+	fmt.Println(out)
 }

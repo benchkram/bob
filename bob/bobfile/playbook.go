@@ -11,7 +11,7 @@ func (b *Bobfile) Playbook(taskname string, opts ...playbook.Option) (*playbook.
 		opts...,
 	)
 
-	err := b.Tasks.Walk(taskname, "", func(tn string, task bobtask.Task, err error) error {
+	err := b.BTasks.Walk(taskname, "", func(tn string, task bobtask.Task, err error) error {
 		if err != nil {
 			return err
 		}

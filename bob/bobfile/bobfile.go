@@ -49,9 +49,10 @@ type Bobfile struct {
 
 	Variables VariableMap
 
-	Tasks bobtask.Map
-
-	Runs bobrun.RunMap
+	// BTasks build tasks
+	BTasks bobtask.Map `yaml:"build"`
+	// RTasks run tasks
+	RTasks bobrun.RunMap `yaml:"run"`
 
 	// using inline so that there's no double "packages" part in bob.yaml
 	Packages bobpackages.Packages `yaml:",inline"`
@@ -66,8 +67,8 @@ type Bobfile struct {
 func NewBobfile() *Bobfile {
 	b := &Bobfile{
 		Variables: make(VariableMap),
-		Tasks:     make(bobtask.Map),
-		Runs:      make(bobrun.RunMap),
+		BTasks:    make(bobtask.Map),
+		RTasks:    make(bobrun.RunMap),
 		Packages: bobpackages.Packages{
 			Packages: make(map[string]packagemanager.Package),
 		},
@@ -108,12 +109,12 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		bobfile.Variables = VariableMap{}
 	}
 
-	if bobfile.Tasks == nil {
-		bobfile.Tasks = bobtask.Map{}
+	if bobfile.BTasks == nil {
+		bobfile.BTasks = bobtask.Map{}
 	}
 
-	if bobfile.Runs == nil {
-		bobfile.Runs = bobrun.RunMap{}
+	if bobfile.RTasks == nil {
+		bobfile.RTasks = bobrun.RunMap{}
 	}
 
 	if bobfile.Packages.Packages == nil {
@@ -121,7 +122,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	}
 
 	// Assure tasks are initialized with their defaults
-	for key, task := range bobfile.Tasks {
+	for key, task := range bobfile.BTasks {
 		task.SetDir(bobfile.dir)
 		task.SetName(key)
 
@@ -133,15 +134,18 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		task.SetEnv([]string{})
 		task.SetRebuildStrategy(bobtask.RebuildOnChange)
 
-		bobfile.Tasks[key] = task
+		// TODO: todoproject
+		task.SetProject(dir)
+
+		bobfile.BTasks[key] = task
 	}
 
 	// Assure runs are initialized with their defaults
-	for key, run := range bobfile.Runs {
+	for key, run := range bobfile.RTasks {
 		run.SetDir(bobfile.dir)
 		run.SetName(key)
 
-		bobfile.Runs[key] = run
+		bobfile.RTasks[key] = run
 	}
 
 	return bobfile, nil
@@ -158,7 +162,7 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 	err = b.Validate()
 	errz.Fatal(err)
 
-	b.Tasks.Sanitize()
+	b.BTasks.Sanitize()
 
 	err = b.Packages.Sanitize()
 	errz.Fatal(err)
@@ -178,7 +182,7 @@ func (b *Bobfile) Validate() (err error) {
 	// use for duplicate names validation
 	names := map[string]bool{}
 
-	for name, task := range b.Tasks {
+	for name, task := range b.BTasks {
 		// validate no duplicate name
 		if names[name] {
 			return errors.WithMessage(ErrDuplicateTaskName, name)
@@ -194,7 +198,7 @@ func (b *Bobfile) Validate() (err error) {
 		}
 	}
 
-	for name, run := range b.Runs {
+	for name, run := range b.RTasks {
 		// validate no duplicate name
 		if names[name] {
 			return errors.WithMessage(ErrDuplicateTaskName, name)
@@ -240,7 +244,7 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 
 	bobfile := NewBobfile()
 
-	bobfile.Tasks[global.DefaultBuildTask] = bobtask.Task{
+	bobfile.BTasks[global.DefaultBuildTask] = bobtask.Task{
 		InputDirty:  "./main.go",
 		CmdDirty:    "go build -o run",
 		TargetDirty: "run",

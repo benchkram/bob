@@ -1,16 +1,17 @@
 package bobfile_test
 
 import (
+	"testing"
+
 	"github.com/Benchkram/bob/bob/bobfile"
 	"github.com/Benchkram/bob/bobrun"
 	"github.com/Benchkram/bob/bobtask"
-	"testing"
 )
 
 func TestBobfileValidateSelReference(t *testing.T) {
 	b := bobfile.NewBobfile()
 
-	b.Tasks["one"] = bobtask.Task{
+	b.BTasks["one"] = bobtask.Task{
 		DependsOn: []string{"one"},
 	}
 
@@ -22,9 +23,9 @@ func TestBobfileValidateSelReference(t *testing.T) {
 func TestBobfileValidateDuplicateName(t *testing.T) {
 	b := bobfile.NewBobfile()
 
-	b.Tasks["one"] = bobtask.Task{}
+	b.BTasks["one"] = bobtask.Task{}
 
-	b.Runs["one"] = &bobrun.Run{}
+	b.RTasks["one"] = &bobrun.Run{}
 
 	if err := b.Validate(); err == nil {
 		t.Error("Expected error, got nil")

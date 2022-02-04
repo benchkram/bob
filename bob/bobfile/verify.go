@@ -23,7 +23,7 @@ func (b *Bobfile) VerifyAfter() error {
 func (b *Bobfile) verifyBefore() (err error) {
 	defer errz.Recover(&err)
 
-	for _, task := range b.Tasks {
+	for _, task := range b.BTasks {
 		err = task.VerifyBefore()
 		errz.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func (b *Bobfile) verifyBefore() (err error) {
 func (b *Bobfile) verifyAfter() (err error) {
 	defer errz.Recover(&err)
 
-	for _, task := range b.Tasks {
+	for _, task := range b.BTasks {
 		err = task.VerifyAfter()
 		errz.Fatal(err)
 	}

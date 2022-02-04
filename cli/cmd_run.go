@@ -40,6 +40,9 @@ var runCmd = &cobra.Command{
 }
 
 func run(taskname string, noCache bool) {
+	var err error
+	defer errz.Recover(&err)
+
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
 	)
@@ -54,6 +57,7 @@ func run(taskname string, noCache bool) {
 
 		return
 	}
+	defer t.Restore()
 
 	// make sure packages are installed
 	err = b.InstallPackages(ctx)
@@ -72,6 +76,7 @@ func run(taskname string, noCache bool) {
 		default:
 			if errors.As(err, &usererror.Err) {
 				boblog.Log.UserError(err)
+				return
 			} else {
 				errz.Fatal(err)
 			}
@@ -87,8 +92,6 @@ func run(taskname string, noCache bool) {
 	if commander != nil {
 		<-commander.Done()
 	}
-
-	t.Restore()
 }
 
 func getRuns() ([]string, error) {

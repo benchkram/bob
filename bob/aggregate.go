@@ -72,12 +72,12 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		}
 
 		for variable, value := range boblet.Variables {
-			for key, task := range boblet.Tasks {
+			for key, task := range boblet.BTasks {
 				// TODO: Create and use envvar sanitizer
 
 				task.AddEnvironment(strings.ToUpper(variable), value)
 
-				boblet.Tasks[key] = task
+				boblet.BTasks[key] = task
 			}
 		}
 
@@ -97,7 +97,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			continue
 		}
 
-		for taskname, task := range bobfile.Tasks {
+		for taskname, task := range bobfile.BTasks {
 			dir := bobfile.Dir()
 
 			// Use a relative path as task prefix.
@@ -116,7 +116,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			}
 			task.DependsOn = dependsOn
 
-			aggregate.Tasks[taskname] = task
+			aggregate.BTasks[taskname] = task
 		}
 	}
 
@@ -127,7 +127,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			continue
 		}
 
-		for runname, run := range bobfile.Runs {
+		for runname, run := range bobfile.RTasks {
 			dir := bobfile.Dir()
 
 			// Use a relative path as task prefix.
@@ -144,7 +144,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			}
 			run.DependsOn = dependsOn
 
-			aggregate.Runs[name] = run
+			aggregate.RTasks[name] = run
 		}
 	}
 
@@ -178,10 +178,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// TODO: Exports should be part of a packed file and should be evaluated when running a playbook or at least after Unpack().
 	// Looks like this is the wrong place to presume that all child tasks are comming from child bobfiles
 	// must exist.
-	for i, task := range aggregate.Tasks {
+	for i, task := range aggregate.BTasks {
 		for _, dependentTaskName := range task.DependsOn {
 
-			dependentTask, ok := aggregate.Tasks[dependentTaskName]
+			dependentTask, ok := aggregate.BTasks[dependentTaskName]
 			if !ok {
 				return nil, ErrTaskDoesNotExist
 			}
@@ -204,21 +204,22 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 				task.AddEnvironment(envvar, value)
 
-				aggregate.Tasks[i] = task
+				aggregate.BTasks[i] = task
 			}
 		}
 	}
 
 	// Assure tasks are correctly initialised.
-	for i, task := range aggregate.Tasks {
+	for i, task := range aggregate.BTasks {
 		task.WithLocalstore(b.local)
 		task.WithBuildinfoStore(b.buildInfoStore)
+		task.SetBuilder(b.dir) // TODO: todoproject, use project name instead of dir
 
 		// a task must always-rebuild when caching is disabled
 		if !b.enableCaching {
 			task.SetRebuildStrategy(bobtask.RebuildAlways)
 		}
-		aggregate.Tasks[i] = task
+		aggregate.BTasks[i] = task
 	}
 
 	return aggregate, aggregate.Verify()
