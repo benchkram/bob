@@ -62,6 +62,11 @@ func (p *Packages) Install(ctx context.Context) error {
 	return p.manager.Install(ctx)
 }
 
+// Prune passes down prune call to internal packagemanager
+func (p *Packages) Prune(ctx context.Context) error {
+	return p.manager.Prune(ctx)
+}
+
 // SetEnvirionment passes down call to internal packagemanager
 func (p *Packages) SetEnvirionment() error {
 	return p.manager.SetEnvirionment()

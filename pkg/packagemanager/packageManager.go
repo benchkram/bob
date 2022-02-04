@@ -20,9 +20,12 @@ type PackageManager interface {
 	// Add Packages to be installed
 	Add(...Package)
 
-	// Insall all defined packages
+	// Install all defined packages
 	Install(context.Context) error
 
 	// Setup run/build environment so that packages can be accessed
 	SetEnvirionment() error
+
+	// Prune - remove all packages and undelying structures
+	Prune(context.Context) error
 }

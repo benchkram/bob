@@ -105,6 +105,19 @@ func (d *Definition) Install(ctx context.Context) (err error) {
 	return nil
 }
 
+// Prune - remove all packages and undelying structures
+func (d *Definition) Prune(ctx context.Context) (err error) {
+	defer errz.Recover(&err)
+
+	aquaRoot, err := filepath.Abs(AQUA_ROOT)
+	errz.Fatal(err)
+
+	err = os.RemoveAll(aquaRoot)
+	errz.Fatal(err)
+
+	return nil
+}
+
 // Setup run/build environment so that packages can be accessed
 func (d *Definition) SetEnvirionment() error {
 	// Will hide internally used paths

@@ -2,18 +2,21 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 
 	"github.com/Benchkram/bob/bob"
+	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 	"github.com/spf13/cobra"
 )
 
-var aquaCmd = &cobra.Command{
-	Use:   "aqua",
-	Short: "aqua test",
+var packageCmd = &cobra.Command{
+	Use:   "package",
+	Short: "package manager",
 	Args:  cobra.MinimumNArgs(0),
 	Long:  ``,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{
@@ -31,7 +34,32 @@ var aquaCmd = &cobra.Command{
 			return
 		}
 
-		ctx := context.Background()
+		prune, err := cmd.Flags().GetBool("prune")
+		if err != nil {
+			boblog.Log.Error(err, "parsing Flags")
+			return
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		// Handle prune call
+		if prune {
+			err = b.PrunePackages(ctx)
+			if err != nil {
+				if errors.As(err, &usererror.Err) {
+					boblog.Log.UserError(err)
+				} else {
+					errz.Fatal(err)
+				}
+			}
+			return
+		}
+
+		// Handle add call
+		// TODO
+
+		// Handle get/find call
 		err = b.InstallPackages(ctx)
 		if err != nil {
 			// TODO: usererror
