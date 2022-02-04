@@ -14,7 +14,7 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
-var ErrEmptyCommitMessage = fmt.Errorf("use bob git commit -m \"your message\".")
+var ErrEmptyCommitMessage = fmt.Errorf("aaaaaa")
 
 var CleanWorkingDirMessage = "nothing to commit, working trees are clean."
 
@@ -25,7 +25,7 @@ func UntrackedRepoMessage(repolist []string) string {
 		formattedRepos = append(formattedRepos, formatRepoNameForOutput(repo))
 	}
 
-	return fmt.Sprint("nothing to commit, untracked files present in \"", strings.Join(formattedRepos, "\", \""), "\" repositories")
+	return fmt.Sprint("nothing to commit but untracked files present in repositories [", strings.Join(formattedRepos, ", "), "]")
 }
 
 // Commit executes `git commit -m ${message}` in all repositories.

@@ -2,6 +2,7 @@ package bobgit
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -35,6 +36,8 @@ func TestCommit(t *testing.T) {
 		message string
 		// output string from Commit function
 		output string
+
+		expectedErr error
 	}
 
 	tests := []test{
@@ -60,6 +63,7 @@ func TestCommit(t *testing.T) {
 			"",
 			"test commmits with untracked files",
 			UntrackedRepoMessage([]string{".", "repo"}),
+			nil,
 		},
 		// all files should be commited except files in `repo` sub-directory
 		{
@@ -86,6 +90,7 @@ func TestCommit(t *testing.T) {
 			"",
 			"test commmits with tracked files in bobroot",
 			"",
+			nil,
 		},
 		// all files should be commited even files in `repo` sub-directory
 		{
@@ -114,6 +119,7 @@ func TestCommit(t *testing.T) {
 			"",
 			"test commmits with tracked files",
 			"",
+			nil,
 		},
 		// only files in `repo` sub-directory should be commited
 		// files in bobroot should be unmodified
@@ -145,6 +151,7 @@ func TestCommit(t *testing.T) {
 			"",
 			"test commmits with tracked files in repo subdir",
 			"",
+			nil,
 		},
 		// execute git commit from repo sub repository
 		// should work as same as executing from bobroot
@@ -174,6 +181,7 @@ func TestCommit(t *testing.T) {
 			"repo",
 			"test commmits from sub-repository",
 			"",
+			nil,
 		},
 		// exec commit from subdirectory
 		// should work as same as executing from bobroot
@@ -203,6 +211,7 @@ func TestCommit(t *testing.T) {
 			"subdirectory",
 			"test commmits from subdirectory",
 			"",
+			nil,
 		},
 		// exec commit without a message
 		// execution should return a ErrEmptyCommitMessage error
@@ -217,19 +226,12 @@ func TestCommit(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-
-					repo := filepath.Join(dir, "subdirectory", "repo")
-					assert.Nil(t, os.MkdirAll(repo, 0775))
-					assert.Nil(t, cmdutil.RunGit(repo, "init"))
-					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
-
-					err = cmdutil.RunGit(dir, "add", ".")
-					assert.Nil(t, err)
 				},
 			},
 			"",
 			"",
 			"",
+			ErrEmptyCommitMessage,
 		},
 		// exec commit without a nothing to update
 		// execution should return a User message about nothing to update
@@ -266,6 +268,7 @@ func TestCommit(t *testing.T) {
 			"",
 			"exec commit after commiting one time",
 			CleanWorkingDirMessage,
+			nil,
 		},
 
 		// exec commit without a tracking on subrepository
@@ -297,6 +300,7 @@ func TestCommit(t *testing.T) {
 			"",
 			"exec commit after commiting one time",
 			UntrackedRepoMessage([]string{"repo"}),
+			nil,
 		},
 	}
 
@@ -327,6 +331,13 @@ func TestCommit(t *testing.T) {
 		assert.Nil(t, err)
 
 		s, err := executeCommit(execdir, test.message)
+		if test.expectedErr != nil {
+			if errors.Is(err, test.expectedErr) {
+				continue
+			}
+			assert.Fail(t, fmt.Sprintf("expected error [%s] got [%s]", test.expectedErr.Error(), err.Error()))
+		}
+
 		// ignore the error caused by test.message nill
 		if err != nil && !errors.Is(err, ErrEmptyCommitMessage) {
 			assert.Nil(t, err)
@@ -338,6 +349,11 @@ func TestCommit(t *testing.T) {
 		assert.Nil(t, err)
 
 		if update {
+			// tests expecting a error don't need to compare their before and after putputs
+			if test.expectedErr != nil {
+				continue
+			}
+
 			err = os.RemoveAll(filepath.Join(commitTestDataPath, statusBeforeFile))
 			assert.Nil(t, err)
 			err = os.RemoveAll(filepath.Join(commitTestDataPath, statusAfterFile))
