@@ -52,8 +52,10 @@ func init() {
 	rootCmd.AddCommand(CmdGit)
 
 	// aqua test
-	rootCmd.AddCommand(packageCmd)
+	packageCmd.AddCommand(packageAddCmd)
 	packageCmd.Flags().Bool("prune", false, "Remove packages and package archives")
+	rootCmd.AddCommand(packageCmd)
+
 }
 
 var rootCmd = &cobra.Command{

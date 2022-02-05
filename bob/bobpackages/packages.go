@@ -3,13 +3,11 @@ package bobpackages
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/Benchkram/bob/pkg/aqua"
 	"github.com/Benchkram/bob/pkg/packagemanager"
 	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/blang/semver"
 )
 
 var (
@@ -33,11 +31,7 @@ func (p *Packages) Sanitize() error {
 		if len(splits) != 2 {
 			return usererror.Wrap(ErrInvalidPackageDefinition)
 		}
-		name, versionStr := splits[0], splits[1]
-		version, err := semver.Parse(versionStr)
-		if err != nil {
-			return usererror.Wrapm(err, fmt.Sprintf("bad package version format: %s", versionStr))
-		}
+		name, version := splits[0], splits[1]
 
 		p.Packages[pkg] = packagemanager.Package{
 			Name:    name,
@@ -70,4 +64,9 @@ func (p *Packages) Prune(ctx context.Context) error {
 // SetEnvirionment passes down call to internal packagemanager
 func (p *Packages) SetEnvirionment() error {
 	return p.manager.SetEnvirionment()
+}
+
+// Search returns a set of possible packages to add
+func (p *Packages) Search(ctx context.Context) ([]string, error) {
+	return p.manager.Search(ctx)
 }

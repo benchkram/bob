@@ -56,10 +56,6 @@ var packageCmd = &cobra.Command{
 			return
 		}
 
-		// Handle add call
-		// TODO
-
-		// Handle get/find call
 		err = b.InstallPackages(ctx)
 		if err != nil {
 			// TODO: usererror
@@ -95,4 +91,63 @@ var packageCmd = &cobra.Command{
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return nil, cobra.ShellCompDirectiveDefault
 	},
+}
+
+var packageAddCmd = &cobra.Command{
+	Use:   "add",
+	Short: "package manager",
+	Args:  cobra.MinimumNArgs(1),
+	Long:  ``,
+	FParseErrWhitelist: cobra.FParseErrWhitelist{
+		UnknownFlags: true,
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+
+		// No packages to add
+		if len(args) < 1 {
+			return
+		}
+
+		b, err := bob.Bob()
+		if err != nil {
+			fmt.Println("can't create bob")
+			errz.Log(err)
+			return
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err = b.AddPackages(ctx, args...)
+		if err != nil {
+			fmt.Println("can't add packages to bobfile")
+			errz.Log(err)
+			return
+		}
+
+	},
+	ValidArgsFunction: packageSearch,
+}
+
+// Use packageMangagers Search functionality to return available packages
+func packageSearch(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	b, err := bob.Bob()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	aggregate, err := b.Aggregate()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	res, err := aggregate.Packages.Search(ctx)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return res, cobra.ShellCompDirectiveDefault
 }
