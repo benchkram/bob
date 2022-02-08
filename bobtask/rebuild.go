@@ -2,9 +2,12 @@ package bobtask
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Benchkram/bob/bobtask/hash"
+	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/buildinfostore"
+	"github.com/Benchkram/bob/pkg/dockermoby"
 	"github.com/Benchkram/errz"
 )
 
@@ -21,6 +24,21 @@ func (t *Task) NeedsRebuild(options *RebuildOptions) (_ bool, err error) {
 		if options.HashIn != nil {
 			hashIn = options.HashIn
 		}
+	}
+
+	if t.target.Type == target.Docker {
+		registry, err := dockermoby.New()
+		errz.Fatal(err)
+
+		fmt.Println(t.target.Paths[0])
+		imHash, err := registry.FetchImageHash(t.target.Paths[0])
+		errz.Fatal(err)
+
+		fmt.Println(imHash)
+
+		// fmt.Println(imHash)
+		// _, err = registry.SaveImage(imHash, t.target.Paths[0])
+		// errz.Fatal(err)
 	}
 
 	if hashIn == nil {
