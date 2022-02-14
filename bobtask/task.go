@@ -11,6 +11,7 @@ import (
 	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/buildinfostore"
+	"github.com/Benchkram/bob/pkg/dockermoby"
 	"github.com/Benchkram/bob/pkg/store"
 )
 
@@ -99,6 +100,9 @@ type Task struct {
 	// color is used to color the task's name on the terminal
 	color aurora.Color
 
+	// Handle all the request with docker local registry
+	dockerRegistry dockermoby.RegistryHandler
+
 	// skippedInputs is a lists of skipped input files
 	skippedInputs []string
 }
@@ -107,12 +111,13 @@ type TargetEntry interface{}
 
 func Make(opts ...TaskOption) Task {
 	t := Task{
-		inputs:    []string{},
-		cmds:      []string{},
-		DependsOn: []string{},
-		Exports:   make(export.Map),
-		env:       []string{},
-		rebuild:   RebuildOnChange,
+		inputs:         []string{},
+		cmds:           []string{},
+		DependsOn:      []string{},
+		Exports:        make(export.Map),
+		env:            []string{},
+		rebuild:        RebuildOnChange,
+		dockerRegistry: dockermoby.New(),
 	}
 
 	for _, opt := range opts {
@@ -176,6 +181,10 @@ func (t *Task) SetProject(proj string) {
 
 func (t *Task) SetBuilder(builder string) {
 	t.builder = builder
+}
+
+func (t *Task) SetDockerRegistry() {
+	t.dockerRegistry = dockermoby.New()
 }
 
 // Set the rebuild strategy for the task

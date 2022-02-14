@@ -40,5 +40,24 @@ func (t *T) verifyFile(groundTruth string) bool {
 }
 
 func (t *T) verifyDocker(groundTruth string) bool {
-	return true
+	if len(t.Paths) == 0 {
+		return true
+	}
+
+	if t.hash == "" {
+		return true
+	}
+
+	// check plain existence
+	if !t.existsDocker() {
+		return false
+	}
+
+	hash, err := t.Hash()
+	if err != nil {
+		boblog.Log.Error(err, "Unable to check target target docker image hash")
+		return false
+	}
+
+	return groundTruth == hash
 }

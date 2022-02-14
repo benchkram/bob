@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Benchkram/bob/bobtask/hash"
+	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/errz"
 	"github.com/mholt/archiver/v3"
@@ -49,33 +50,28 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	targets := []string{}
 	exports := []string{}
+	tempdir := ""
 	if t.target != nil {
-		for _, path := range t.target.Paths {
-			stat, err := os.Stat(filepath.Join(t.dir, path))
+		if t.target.Type == target.Docker {
+			targets, tempdir, err = t.getDockerImageTarget()
 			errz.Fatal(err)
-			if stat.IsDir() {
-				// TODO: Read all files from dir.
-				root := filepath.Join(t.dir, path)
-				_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-					if err != nil {
-						return err
-					}
-					if d.IsDir() {
-						return nil
-					}
-
-					targets = append(targets, path)
-					return nil
-				})
-			} else {
-				targets = append(targets, filepath.Join(t.dir, path))
-			}
-
+		} else {
+			targets, err = t.getPathTargets()
+			errz.Fatal(err)
 		}
 	}
 	for _, path := range t.Exports {
 		exports = append(exports, filepath.Join(t.dir, path.String()))
 	}
+
+	// clear newly created temp directory for images after
+	// archiving it in artifacts
+	defer func() {
+		if tempdir != "" {
+			err := os.RemoveAll(tempdir)
+			errz.Fatal(err)
+		}
+	}()
 
 	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
 	errz.Fatal(err)
@@ -93,6 +89,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 		// trim the tasks directory from the internal name
 		internalName := strings.TrimPrefix(fname, t.dir)
+		internalName = strings.TrimPrefix(fname, tempdir)
 		internalName = strings.TrimPrefix(internalName, "/")
 
 		// open the file
@@ -168,6 +165,65 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	errz.Fatal(err)
 
 	return nil
+}
+
+func (t *Task) getPathTargets() ([]string, error) {
+	targets := []string{}
+	for _, path := range t.target.Paths {
+		stat, err := os.Stat(filepath.Join(t.dir, path))
+		if err != nil {
+			return targets, err
+		}
+
+		if stat.IsDir() {
+			// TODO: Read all files from dir.
+			root := filepath.Join(t.dir, path)
+			_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+				if d.IsDir() {
+					return nil
+				}
+
+				targets = append(targets, path)
+				return nil
+			})
+		} else {
+			targets = append(targets, filepath.Join(t.dir, path))
+		}
+
+	}
+	return targets, nil
+}
+
+func (t *Task) getDockerImageTarget() ([]string, string, error) {
+	targets := []string{}
+
+	dir, err := os.MkdirTemp("", "docker-archive-")
+	if err != nil {
+		return targets, dir, err
+	}
+	// defer os.Remove(dir)
+
+	// to do: change this path based implementation to docker tag
+	for _, path := range t.target.Paths {
+		hashid, err := t.dockerRegistry.FetchImageHash(path)
+		if err != nil {
+			return targets, dir, err
+		}
+
+		if hashid != "" {
+			target, err := t.dockerRegistry.SaveImage(hashid, dir, path)
+			if err != nil {
+				return targets, dir, err
+			}
+
+			targets = append(targets, target)
+		}
+	}
+
+	return targets, dir, nil
 }
 
 // ArtifactUnpack unpacks a artifact from the localstore if it exists.

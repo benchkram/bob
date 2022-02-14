@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Benchkram/errz"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )
@@ -18,7 +19,8 @@ var (
 	ErrImageNotFoundByTag = fmt.Errorf("Image not found by tag")
 )
 
-type DockerRegistry interface {
+type RegistryHandler interface {
+	ImageExists(repotag string) (bool, error)
 	FetchImageHash(repotag string) (string, error)
 	SaveImage(imageID string, savedir string, imgtag string) (string, error)
 	DeleteImage(imageID string) error
@@ -30,17 +32,26 @@ type R struct {
 	client *client.Client
 }
 
-func New() (DockerRegistry, error) {
+func New() RegistryHandler {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		return nil, err
+		errz.Fatal(err)
 	}
 
 	r := &R{
 		client: cli,
 	}
 
-	return r, nil
+	return r
+}
+
+func (r *R) ImageExists(repotag string) (bool, error) {
+	_, err := r.FetchImageHash(repotag)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *R) FetchImageHash(repotag string) (string, error) {

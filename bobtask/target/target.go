@@ -1,6 +1,10 @@
 package target
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Benchkram/bob/pkg/dockermoby"
+)
 
 type Target interface {
 	Hash() (string, error)
@@ -18,14 +22,18 @@ type T struct {
 	// last computed hash of target
 	hash string
 
+	// to check if docker image exists
+	dockerRegistry dockermoby.RegistryHandler
+
 	Paths []string   `yaml:"Paths"`
 	Type  TargetType `yaml:"Type"`
 }
 
 func Make() T {
 	return T{
-		Paths: []string{},
-		Type:  Path,
+		dockerRegistry: dockermoby.New(),
+		Paths:          []string{},
+		Type:           Path,
 	}
 }
 
@@ -35,8 +43,9 @@ func New() *T {
 
 func new() *T {
 	return &T{
-		Paths: []string{},
-		Type:  Path,
+		dockerRegistry: dockermoby.New(),
+		Paths:          []string{},
+		Type:           Path,
 	}
 }
 
