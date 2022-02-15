@@ -152,6 +152,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	metadata.Project = t.project //TODO: use a globaly unique identifier for remote stores
 	metadata.Builder = t.builder
 	metadata.InputHash = artifactName.String()
+	metadata.TargetType = t.target.Type
 	bin, err := yaml.Marshal(metadata)
 	errz.Fatal(err)
 
@@ -231,6 +232,9 @@ func (t *Task) getDockerImageTarget() ([]string, string, error) {
 func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 	defer errz.Recover(&err)
 
+	meta, err := t.GetArtifactMetadata(artifactName.String())
+	errz.Fatal(err)
+
 	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
 	if err != nil {
 		_, ok := err.(*fs.PathError)
@@ -262,6 +266,7 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 
 		// targets
 		if strings.HasPrefix(header.Name, __targets) {
+
 			filename := strings.TrimPrefix(header.Name, __targets+"/")
 
 			// create directory structure
@@ -273,13 +278,35 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 
 			// create dst
 			dst := filepath.Join(t.dir, filename)
+			tempdir := ""
+			if meta.TargetType == target.Docker {
+				tempdir, err = os.MkdirTemp("", "docker-archive-")
+				errz.Fatal(err)
+				dst = filepath.Join(tempdir, filename)
+			}
+			// clear newly created temp directory for images after
+			// archiving it in artifacts
+			defer func() {
+				if tempdir != "" {
+					err := os.RemoveAll(tempdir)
+					errz.Fatal(err)
+				}
+			}()
+
 			f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
 			errz.Fatal(err)
 			defer f.Close()
 
-			// copy
 			_, err = io.Copy(f, archiveFile)
 			errz.Fatal(err)
+
+			// load the docker image from destrination
+			if meta.TargetType == target.Docker {
+				nameparts := strings.Split(filename, ".")
+				err = t.dockerRegistry.LoadImage(tempdir, nameparts[0])
+				errz.Fatal(err)
+			}
+
 		}
 
 		// exports
@@ -297,6 +324,26 @@ func (t *Task) ArtifactExists(artifactName hash.In) bool {
 	}
 	artifact.Close()
 	return true
+}
+
+// GetArtifactMetadata creates a new artifact instance to retrive Metadata
+// separately and returns ArtifactMetadata, close the artifacts before returning
+func (t *Task) GetArtifactMetadata(artifactName string) (_ *ArtifactMetadata, err error) {
+	artifact, err := t.local.GetArtifact(context.TODO(), artifactName)
+	if err != nil {
+		_, ok := err.(*fs.PathError)
+		if ok {
+			return nil, nil
+		}
+	}
+	defer artifact.Close()
+
+	artifactInfo, err := ArtifactInspectFromReader(artifact)
+	if err != nil {
+		return nil, err
+	}
+
+	return artifactInfo.Metadata(), nil
 }
 
 type fileInfo struct {

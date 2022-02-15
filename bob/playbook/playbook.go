@@ -111,8 +111,6 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 		return true, TaskInputChanged, nil
 	}
 
-	fmt.Println("did not Came here")
-
 	var Done = fmt.Errorf("done")
 	// Check if task needs a rebuild due to its dependencies changing
 	err = p.Tasks.walk(task.Name(), func(tn string, t *Status, err error) error {
@@ -152,7 +150,6 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 		if target != nil {
 			// fmt.Println(hashIn)
 			// On a invalid traget a rebuild is required
-			fmt.Println(target)
 			rebuildRequired = !target.Verify()
 
 			// Try to load a target from the store when a rebuild is required.

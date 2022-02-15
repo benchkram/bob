@@ -42,7 +42,7 @@ func (t *T) existsDocker() bool {
 
 	exists, err := t.dockerRegistry.ImageExists(t.Paths[0])
 	if err != nil {
-		boblog.Log.Error(err, "Unable to check target target docker image hash")
+		boblog.Log.Error(err, "Unable to find target docker image hash")
 		return false
 	}
 
