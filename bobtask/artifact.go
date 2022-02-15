@@ -60,18 +60,18 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 			errz.Fatal(err)
 		}
 	}
+
+	// in case of docker images, clear newly created targets by
+	// images after archiving it in artifacts
+	if t.target.Type == target.Docker {
+		for _, t := range targets {
+			defer deleter(t)
+		}
+	}
+
 	for _, path := range t.Exports {
 		exports = append(exports, filepath.Join(t.dir, path.String()))
 	}
-
-	// clear newly created temp directory for images after
-	// archiving it in artifacts
-	defer func() {
-		if tempdir != "" {
-			err := os.RemoveAll(tempdir)
-			errz.Fatal(err)
-		}
-	}()
 
 	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
 	errz.Fatal(err)
@@ -89,7 +89,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 		// trim the tasks directory from the internal name
 		internalName := strings.TrimPrefix(fname, t.dir)
-		internalName = strings.TrimPrefix(fname, tempdir)
+		internalName = strings.TrimPrefix(internalName, tempdir)
 		internalName = strings.TrimPrefix(internalName, "/")
 
 		// open the file
@@ -201,11 +201,7 @@ func (t *Task) getPathTargets() ([]string, error) {
 func (t *Task) getDockerImageTarget() ([]string, string, error) {
 	targets := []string{}
 
-	dir, err := os.MkdirTemp("", "docker-archive-")
-	if err != nil {
-		return targets, dir, err
-	}
-	// defer os.Remove(dir)
+	dir := t.dockerRegistry.GetArchiveDir()
 
 	// to do: change this path based implementation to docker tag
 	for _, path := range t.target.Paths {
@@ -215,7 +211,7 @@ func (t *Task) getDockerImageTarget() ([]string, string, error) {
 		}
 
 		if hashid != "" {
-			target, err := t.dockerRegistry.SaveImage(hashid, dir, path)
+			target, err := t.dockerRegistry.SaveImage(hashid, path)
 			if err != nil {
 				return targets, dir, err
 			}
@@ -278,20 +274,11 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 
 			// create dst
 			dst := filepath.Join(t.dir, filename)
-			tempdir := ""
 			if meta.TargetType == target.Docker {
-				tempdir, err = os.MkdirTemp("", "docker-archive-")
-				errz.Fatal(err)
+				// use to registry archive directory to unpack docker image
+				tempdir := t.dockerRegistry.GetArchiveDir()
 				dst = filepath.Join(tempdir, filename)
 			}
-			// clear newly created temp directory for images after
-			// archiving it in artifacts
-			defer func() {
-				if tempdir != "" {
-					err := os.RemoveAll(tempdir)
-					errz.Fatal(err)
-				}
-			}()
 
 			f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
 			errz.Fatal(err)
@@ -302,9 +289,12 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 
 			// load the docker image from destrination
 			if meta.TargetType == target.Docker {
-				nameparts := strings.Split(filename, ".")
-				err = t.dockerRegistry.LoadImage(tempdir, nameparts[0])
+				err = t.dockerRegistry.LoadImage(dst)
 				errz.Fatal(err)
+
+				// delete the target docker image after
+				// loading it from the artifacts
+				defer deleter(dst)
 			}
 
 		}
@@ -344,6 +334,15 @@ func (t *Task) GetArtifactMetadata(artifactName string) (_ *ArtifactMetadata, er
 	}
 
 	return artifactInfo.Metadata(), nil
+}
+
+// deleter checks if provided dir is not empty,
+// if not removed the directory with all its content
+func deleter(dir string) {
+	if dir != "" {
+		err := os.RemoveAll(dir)
+		errz.Fatal(err)
+	}
 }
 
 type fileInfo struct {

@@ -1,6 +1,8 @@
 package target
 
-import "github.com/Benchkram/bob/pkg/boblog"
+import (
+	"github.com/Benchkram/bob/pkg/boblog"
+)
 
 // Verify existence and integrity of targets.
 // Returns true when no targets defined.
@@ -40,6 +42,7 @@ func (t *T) verifyFile(groundTruth string) bool {
 }
 
 func (t *T) verifyDocker(groundTruth string) bool {
+
 	if len(t.Paths) == 0 {
 		return true
 	}
@@ -59,5 +62,5 @@ func (t *T) verifyDocker(groundTruth string) bool {
 		return false
 	}
 
-	return groundTruth == hash
+	return hash == groundTruth
 }

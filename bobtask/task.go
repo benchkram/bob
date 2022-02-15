@@ -233,9 +233,11 @@ func (t *Task) LogSkippedInput() []string {
 }
 
 func (t *Task) parseTargets() error {
-	targets := []string{}
 	targetType := target.DefaultType // DefaultType set to Path currently
+
+	var targets []string
 	var err error
+
 	switch t.TargetDirty.(type) {
 	case string:
 		targets, err = parseTargetPath(t.TargetDirty)
@@ -284,9 +286,13 @@ func parseTargetMap(t interface{}) ([]string, target.TargetType, error) {
 }
 
 func parseTargetPath(p interface{}) ([]string, error) {
+	targets := []string{}
+	if p == nil {
+		return targets, nil
+	}
+
 	targetStr := fmt.Sprintf("%v", p)
 	targetDirty := split(targetStr)
-	targets := []string{}
 
 	for _, targetPath := range unique(targetDirty) {
 		if strings.Contains(targetPath, "../") {

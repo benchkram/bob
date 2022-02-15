@@ -19,17 +19,22 @@ var (
 	ErrImageNotFoundByTag = fmt.Errorf("Image not found by tag")
 )
 
+const DefaultArchiveDir = "/tmp/docker-archives"
+
 type RegistryHandler interface {
+	GetArchiveDir() string
 	ImageExists(repotag string) (bool, error)
 	FetchImageHash(repotag string) (string, error)
-	SaveImage(imageID string, savedir string, imgtag string) (string, error)
+	SaveImageToPath(imageID string, savedir string, imgtag string) (string, error)
+	SaveImage(imageID string, imgtag string) (string, error)
 	DeleteImage(imageID string) error
-	LoadImage(dir string, imgtag string) error
+	LoadImage(imgpath string) error
 	TagImage(source, target string) error
 }
 
 type R struct {
-	client *client.Client
+	client     *client.Client
+	archiveDir string
 }
 
 func New() RegistryHandler {
@@ -39,10 +44,20 @@ func New() RegistryHandler {
 	}
 
 	r := &R{
-		client: cli,
+		client:     cli,
+		archiveDir: DefaultArchiveDir,
+	}
+
+	err = os.MkdirAll(r.archiveDir, os.ModePerm)
+	if err != nil {
+		errz.Fatal(err)
 	}
 
 	return r
+}
+
+func (r *R) GetArchiveDir() string {
+	return r.archiveDir
 }
 
 func (r *R) ImageExists(repotag string) (bool, error) {
@@ -77,7 +92,7 @@ func (r *R) FetchImageHash(repotag string) (string, error) {
 	return selected.ID, nil
 }
 
-func (r *R) SaveImage(imageID string, savedir string, imgtag string) (string, error) {
+func (r *R) SaveImageToPath(imageID string, savedir string, imgtag string) (string, error) {
 	reader, err := r.client.ImageSave(context.Background(), []string{imageID})
 	if err != nil {
 		return "", err
@@ -103,6 +118,10 @@ func (r *R) SaveImage(imageID string, savedir string, imgtag string) (string, er
 	return imagePath, nil
 }
 
+func (r *R) SaveImage(imageID string, imgtag string) (string, error) {
+	return r.SaveImageToPath(imageID, r.archiveDir, imgtag)
+}
+
 func (r *R) DeleteImage(imageID string) error {
 	options := types.ImageRemoveOptions{
 		Force:         true,
@@ -116,10 +135,12 @@ func (r *R) DeleteImage(imageID string) error {
 	return nil
 }
 
-func (r *R) LoadImage(dir string, imgtag string) error {
-	filename := filepath.Join(dir, imgtag+".tar")
+func (r *R) LoadImage(imgpath string) error {
+	filename := filepath.Base(imgpath)
+	nameparts := strings.Split(filename, ".")
+	imgtag := nameparts[0]
 
-	f, err := os.Open(filename)
+	f, err := os.Open(imgpath)
 	if err != nil {
 		return err
 	}
@@ -130,9 +151,12 @@ func (r *R) LoadImage(dir string, imgtag string) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	imageID, err := getImageIDFromResponse(resp.Body)
-	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
 
 	// set the image tag for the newly loaded images
 	err = r.TagImage(imageID, imgtag)
