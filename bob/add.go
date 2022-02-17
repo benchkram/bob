@@ -9,19 +9,17 @@ import (
 )
 
 // Add, adds the rawurl as a repositoroy to bob workspace. Set all url if
-// explicit url set to false.
+// `plain` variable set to false.
 //
-// if explicit protocol set to true,
+// if plain set to true,
 //
 // set the sshurl & localurl to "" if url is a valid http,
-//
-// set the httpurl and sshurl to "" if url is a filepath
-//
-// else it presumes url type as ssh and set http url to ""
-func (b *B) Add(rawurl string, explcitprotcl bool) (err error) {
+// set the httpurl and sshurl to "" if url is a filepath,
+// else it presumes url type as ssh and set http url to "".
+func (b *B) Add(rawurl string, plain bool) (err error) {
 	defer errz.Recover(&err)
 
-	// check if url ends with `.git`
+	// check if remote url ends with `.git`
 	isValid := checkIfURLEndsWithGit(rawurl)
 	if !isValid {
 		return usererror.Wrapm(ErrInvalidURL, "GIT url Add failed")
@@ -45,13 +43,13 @@ func (b *B) Add(rawurl string, explcitprotcl bool) (err error) {
 	sshstr := repo.SSH.String()
 	localstr := repo.Local
 
-	if explcitprotcl && checkIfHttp(rawurl) {
+	if plain && checkIfHttp(rawurl) {
 		sshstr = ""
 		localstr = ""
-	} else if explcitprotcl && checkIfFile(rawurl) {
+	} else if plain && checkIfFile(rawurl) {
 		httpsstr = ""
 		sshstr = ""
-	} else if explcitprotcl {
+	} else if plain {
 		httpsstr = ""
 	}
 

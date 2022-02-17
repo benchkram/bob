@@ -126,20 +126,10 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 // It als Checks if it is a valid git repo,
 // as someone might changed it on disk.
 func makeURLPriorityList(repo Repo) ([]cloneURLItem, error) {
-	var ignorehttp bool = false
-	var ignoressh bool = false
 
 	var urls []cloneURLItem
 
-	if repo.SSHUrl == "" {
-		ignoressh = true
-	}
-
-	if repo.HTTPSUrl == "" {
-		ignorehttp = true
-	}
-
-	if !ignoressh {
+	if repo.SSHUrl != "" {
 		repoFromSSH, err := Parse(repo.SSHUrl)
 		if err != nil {
 			return nil, err
@@ -150,7 +140,7 @@ func makeURLPriorityList(repo Repo) ([]cloneURLItem, error) {
 		})
 	}
 
-	if !ignorehttp {
+	if repo.HTTPSUrl != "" {
 		repoFromHTTPS, err := Parse(repo.HTTPSUrl)
 		if err != nil {
 			return nil, err

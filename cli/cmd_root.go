@@ -29,7 +29,7 @@ func init() {
 	rootCmd.AddCommand(cleanCmd)
 
 	// workspace
-	cmdAdd.Flags().Bool("explicit-protocol", false, "Set to repository protocol explicit to https/ssh depending on the given url")
+	cmdAdd.Flags().Bool("plain", false, "Don't infer contrary protocol url (git/https) from scheme")
 	cmdWorkspace.AddCommand(cmdWorkspaceNew)
 	cmdWorkspace.AddCommand(cmdAdd)
 	rootCmd.AddCommand(cmdWorkspace)

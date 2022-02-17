@@ -40,7 +40,7 @@ var _ = Describe("Test bob clone", func() {
 
 		// adds https repo with explicit https url for cloning
 		It("adds HTTPS repo to bob, with explicit protocol", func() {
-			Expect(b.Add("https://github.com/pkg/requests", true)).NotTo(HaveOccurred())
+			Expect(b.Add("https://github.com/pkg/requests.git", true)).NotTo(HaveOccurred())
 		})
 
 		// TODO: Fails to clone on CI.

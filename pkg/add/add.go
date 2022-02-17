@@ -6,15 +6,15 @@ import (
 )
 
 type AddParams struct {
-	repoUrl  string
-	explicit bool
+	repoUrl string
+	plain   bool
 }
 
 type Option func(a *AddParams)
 
-func WithExplicitProtocol(explicit bool) Option {
+func WithPlainProtocol(explicit bool) Option {
 	return func(a *AddParams) {
-		a.explicit = explicit
+		a.plain = explicit
 	}
 }
 
@@ -25,8 +25,8 @@ func Add(repoURL string, opts ...Option) (err error) {
 	errz.Fatal(err)
 
 	params := &AddParams{
-		repoUrl:  repoURL,
-		explicit: false,
+		repoUrl: repoURL,
+		plain:   false,
 	}
 
 	for _, opt := range opts {
@@ -36,7 +36,7 @@ func Add(repoURL string, opts ...Option) (err error) {
 		opt(params)
 	}
 
-	err = bob.Add(params.repoUrl, params.explicit)
+	err = bob.Add(params.repoUrl, params.plain)
 	errz.Fatal(err)
 
 	return nil

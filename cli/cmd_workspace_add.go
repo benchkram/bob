@@ -20,18 +20,18 @@ var cmdAdd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		explicit, err := cmd.Flags().GetBool("explicit-protocol")
+		plain, err := cmd.Flags().GetBool("plain")
 		errz.Fatal(err)
 
 		repoURL := args[0]
-		runAdd(repoURL, explicit)
+		runAdd(repoURL, plain)
 	},
 }
 
-func runAdd(repoURL string, explcitprotcl bool) {
+func runAdd(repoURL string, plain bool) {
 	err := add.Add(
 		repoURL,
-		add.WithExplicitProtocol(explcitprotcl),
+		add.WithPlainProtocol(plain),
 	)
 
 	if errors.As(err, &usererror.Err) {
