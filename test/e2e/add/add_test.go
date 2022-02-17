@@ -33,11 +33,11 @@ var _ = Describe("Test bob add", func() {
 			}
 		})
 
-		It("adds HTTPS repo to bob, with explicit protocol", func() {
+		It("adds HTTPS repo to bob, with plain protocol", func() {
 			Expect(b.Add("https://github.com/pkg/requests.git", true)).NotTo(HaveOccurred())
 		})
 
-		It("adds SSH repo to bob, with explicit protocol", func() {
+		It("adds SSH repo to bob, with plain protocol", func() {
 			Expect(b.Add("git@github.com:pkg/exec.git", true)).NotTo(HaveOccurred())
 		})
 
@@ -58,7 +58,7 @@ var _ = Describe("Test bob add", func() {
 		})
 
 		It("Invalid https url without .git on its end, must be failed", func() {
-			err := b.Add("https://github.com/pkg/browser", true)
+			err := b.Add("https://github.com/pkg/browser", false)
 			Expect(err).To(HaveOccurred())
 			Expect(errors.Is(err, bob.ErrInvalidURL)).To(BeTrue())
 		})
