@@ -28,16 +28,39 @@ var _ = Describe("Test bob add", func() {
 
 		It("adds local repos to bob", func() {
 			for _, child := range childs {
+				fmt.Println(child)
 				Expect(b.Add(fmt.Sprintf("file://%s", child), false)).NotTo(HaveOccurred())
 			}
 		})
 
 		It("adds HTTPS repo to bob, with explicit protocol", func() {
-			Expect(b.Add("https://github.com/pkg/requests", true)).NotTo(HaveOccurred())
+			Expect(b.Add("https://github.com/pkg/requests.git", true)).NotTo(HaveOccurred())
 		})
 
 		It("adds SSH repo to bob, with explicit protocol", func() {
 			Expect(b.Add("git@github.com:pkg/exec.git", true)).NotTo(HaveOccurred())
+		})
+
+		It("adds Empty url, must be failed", func() {
+			Expect(b.Add("", true)).To(HaveOccurred())
+		})
+
+		It("adds Empty https url, must be failed", func() {
+			err := b.Add("https://", true)
+			Expect(err).To(HaveOccurred())
+			Expect(errors.Is(err, bob.ErrInvalidURL)).To(BeTrue())
+		})
+
+		It("adds Empty git url, must return Invalid URL error", func() {
+			err := b.Add("git@", true)
+			Expect(err).To(HaveOccurred())
+			Expect(errors.Is(err, bob.ErrInvalidURL)).To(BeTrue())
+		})
+
+		It("Invalid https url without .git on its end, must be failed", func() {
+			err := b.Add("https://github.com/pkg/browser", true)
+			Expect(err).To(HaveOccurred())
+			Expect(errors.Is(err, bob.ErrInvalidURL)).To(BeTrue())
 		})
 
 		It("verifies that adding a duplicate repo fails on a new bob instance", func() {

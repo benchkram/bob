@@ -1,9 +1,13 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/Benchkram/bob/pkg/add"
+	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 
 	"github.com/logrusorgru/aurora"
@@ -29,7 +33,13 @@ func runAdd(repoURL string, explcitprotcl bool) {
 		repoURL,
 		add.WithExplicitProtocol(explcitprotcl),
 	)
-	errz.Fatal(err)
+
+	if errors.As(err, &usererror.Err) {
+		boblog.Log.UserError(err)
+		os.Exit(1)
+	} else {
+		errz.Fatal(err)
+	}
 
 	fmt.Printf("%s\n", aurora.Green("Repo added"))
 }

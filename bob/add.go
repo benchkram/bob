@@ -2,7 +2,9 @@ package bob
 
 import (
 	"net/url"
+	"strings"
 
+	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
 )
 
@@ -19,6 +21,12 @@ import (
 func (b *B) Add(rawurl string, explcitprotcl bool) (err error) {
 	defer errz.Recover(&err)
 
+	// check if url ends with `.git`
+	isValid := checkIfURLEndsWithGit(rawurl)
+	if !isValid {
+		return usererror.Wrapm(ErrInvalidURL, "GIT url Add failed")
+	}
+
 	// Check if it is a valid git repo
 	repo, err := Parse(rawurl)
 	errz.Fatal(err)
@@ -29,7 +37,7 @@ func (b *B) Add(rawurl string, explcitprotcl bool) (err error) {
 	// Check for duplicates
 	for _, existingRepo := range b.Repositories {
 		if existingRepo.Name == name {
-			return ErrRepoAlreadyAdded
+			return usererror.Wrapm(ErrRepoAlreadyAdded, "GIT url Add failed")
 		}
 	}
 
@@ -60,6 +68,23 @@ func (b *B) Add(rawurl string, explcitprotcl bool) (err error) {
 	errz.Fatal(err)
 
 	return b.write()
+}
+
+// checkIfURLEndsWithGit checks if the provided url string
+// has `.git` or `.git/` suffix on its end.
+//
+// Ignores local urls.
+func checkIfURLEndsWithGit(rawurl string) bool {
+	if checkIfFile(rawurl) {
+		return true
+	}
+
+	trimmed := strings.TrimSuffix(rawurl, "/")
+	if strings.HasSuffix(trimmed, ".git") {
+		return true
+	} else {
+		return false
+	}
 }
 
 // checkIfHttp returns true if url is http,
