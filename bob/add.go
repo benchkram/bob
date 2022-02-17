@@ -19,12 +19,6 @@ import (
 func (b *B) Add(rawurl string, plain bool) (err error) {
 	defer errz.Recover(&err)
 
-	// check if remote url ends with `.git`
-	isValid := checkIfURLEndsWithGit(rawurl)
-	if !isValid {
-		return usererror.Wrapm(ErrInvalidURL, "GIT url Add failed")
-	}
-
 	// Check if it is a valid git repo
 	repo, err := Parse(rawurl)
 	errz.Fatal(err)
@@ -80,33 +74,6 @@ func (b *B) Add(rawurl string, plain bool) (err error) {
 	return b.write()
 }
 
-// checkIfURLEndsWithGit checks if the provided url string
-// has `.git` or `.git/` suffix on its end.
-//
-// Ignores local urls.
-func checkIfURLEndsWithGit(rawurl string) bool {
-	if checkIfFile(rawurl) {
-		return true
-	}
-
-	trimmed := strings.TrimSuffix(rawurl, "/")
-	if strings.HasSuffix(trimmed, ".git") {
-		return true
-	} else {
-		return false
-	}
-}
-
-// checkIfFile returns true if url is filepath
-func checkIfFile(rawurl string) bool {
-	scheme, err := getScheme(rawurl)
-	if err != nil {
-		return false
-	}
-
-	return scheme == "file"
-}
-
 // getScheme check if the url is valid,
 // if valid returns the url scheme
 func getScheme(rawurl string) (string, error) {
@@ -115,6 +82,8 @@ func getScheme(rawurl string) (string, error) {
 		return "", err
 	}
 
+	// giturl parse detects url like `git@github.com` without `:` as files
+	// which is a wrong URL but logically a `ssh`
 	if strings.Contains(rawurl, "git@") {
 		return "ssh", nil
 	}

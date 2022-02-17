@@ -28,7 +28,6 @@ var _ = Describe("Test bob add", func() {
 
 		It("adds local repos to bob", func() {
 			for _, child := range childs {
-				fmt.Println(child)
 				Expect(b.Add(fmt.Sprintf("file://%s", child), false)).NotTo(HaveOccurred())
 			}
 		})
@@ -45,22 +44,9 @@ var _ = Describe("Test bob add", func() {
 			Expect(b.Add("", true)).To(HaveOccurred())
 		})
 
-		It("adds Empty https url, must be failed", func() {
+		It("adds Empty https url, does not fail with strings starts with valid protocol", func() {
 			err := b.Add("https://", true)
-			Expect(err).To(HaveOccurred())
-			Expect(errors.Is(err, bob.ErrInvalidURL)).To(BeTrue())
-		})
-
-		It("adds Empty git url, must return Invalid URL error", func() {
-			err := b.Add("git@", true)
-			Expect(err).To(HaveOccurred())
-			Expect(errors.Is(err, bob.ErrInvalidURL)).To(BeTrue())
-		})
-
-		It("Invalid https url without .git on its end, must be failed", func() {
-			err := b.Add("https://github.com/pkg/browser", false)
-			Expect(err).To(HaveOccurred())
-			Expect(errors.Is(err, bob.ErrInvalidURL)).To(BeTrue())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("verifies that adding a duplicate repo fails on a new bob instance", func() {
