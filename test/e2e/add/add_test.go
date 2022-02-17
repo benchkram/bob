@@ -7,6 +7,7 @@ import (
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/pkg/add"
+	giturls "github.com/whilp/git-urls"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -33,11 +34,27 @@ var _ = Describe("Test bob add", func() {
 		})
 
 		It("adds HTTPS repo to bob, with plain protocol", func() {
-			Expect(b.Add("https://github.com/pkg/requests.git", true)).NotTo(HaveOccurred())
+			targeturl := "https://github.com/pkg/requests.git"
+			Expect(b.Add(targeturl, true)).NotTo(HaveOccurred())
+
+			repo, err := getRepositoryByUrlFromBob(b, targeturl)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(repo.SSHUrl).To(Equal(""))
+			Expect(repo.LocalUrl).To(Equal(""))
+			Expect(repo.HTTPSUrl).To(Equal(targeturl))
 		})
 
 		It("adds SSH repo to bob, with plain protocol", func() {
-			Expect(b.Add("git@github.com:pkg/exec.git", true)).NotTo(HaveOccurred())
+			targeturl := "git@github.com:pkg/exec.git"
+			Expect(b.Add(targeturl, true)).NotTo(HaveOccurred())
+
+			repo, err := getRepositoryByUrlFromBob(b, targeturl)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(repo.HTTPSUrl).To(Equal(""))
+			Expect(repo.LocalUrl).To(Equal(""))
+			Expect(repo.SSHUrl).To(Equal(targeturl))
 		})
 
 		It("adds Empty url, must be failed", func() {
@@ -65,3 +82,21 @@ var _ = Describe("Test bob add", func() {
 		})
 	})
 })
+
+func getRepositoryByUrlFromBob(b *bob.B, url string) (*bob.Repo, error) {
+	repourl, err := giturls.Parse(url)
+	if err != nil {
+		return nil, err
+	}
+
+	name := bob.RepoName(repourl)
+
+	for _, r := range b.Repositories {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+
+	return nil, fmt.Errorf("url not found to be added on repositorues")
+
+}
