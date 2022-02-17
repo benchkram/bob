@@ -1,11 +1,11 @@
 package bob
 
 import (
-	"net/url"
 	"strings"
 
 	"github.com/Benchkram/bob/pkg/usererror"
 	"github.com/Benchkram/errz"
+	giturls "github.com/whilp/git-urls"
 )
 
 // Add, adds the rawurl as a repositoroy to bob workspace. Set all url if
@@ -43,14 +43,26 @@ func (b *B) Add(rawurl string, plain bool) (err error) {
 	sshstr := repo.SSH.String()
 	localstr := repo.Local
 
-	if plain && checkIfHttp(rawurl) {
-		sshstr = ""
-		localstr = ""
-	} else if plain && checkIfFile(rawurl) {
-		httpsstr = ""
-		sshstr = ""
-	} else if plain {
-		httpsstr = ""
+	if plain {
+		scheme, err := getScheme(rawurl)
+		errz.Fatal(err)
+
+		switch scheme {
+		case "http":
+			return usererror.Wrapm(ErrInsecuredHTTPURL, "GIT url Add failed")
+		case "https":
+			sshstr = ""
+			localstr = ""
+		case "file":
+			httpsstr = ""
+			sshstr = ""
+		case "ssh":
+			httpsstr = ""
+			localstr = ""
+		default:
+			// should not do anything
+		}
+
 	}
 
 	b.Repositories = append(b.Repositories,
@@ -85,42 +97,27 @@ func checkIfURLEndsWithGit(rawurl string) bool {
 	}
 }
 
-// checkIfHttp returns true if url is http,
-func checkIfHttp(rawurl string) bool {
-	err := isValidUrl(rawurl)
-	if err != nil {
-		return false
-	}
-
-	u, err := url.Parse(rawurl)
-	if err != nil {
-		return false
-	}
-
-	return u.Scheme == "http" || u.Scheme == "https"
-}
-
 // checkIfFile returns true if url is filepath
 func checkIfFile(rawurl string) bool {
-	err := isValidUrl(rawurl)
+	scheme, err := getScheme(rawurl)
 	if err != nil {
 		return false
 	}
 
-	u, err := url.Parse(rawurl)
-	if err != nil {
-		return false
-	}
-
-	return u.Scheme == "file"
+	return scheme == "file"
 }
 
-// isValidUrl tests a string to determine if it is a well-structured url or not.
-func isValidUrl(toTest string) error {
-	_, err := url.ParseRequestURI(toTest)
+// getScheme check if the url is valid,
+// if valid returns the url scheme
+func getScheme(rawurl string) (string, error) {
+	u, err := giturls.Parse(rawurl)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	if strings.Contains(rawurl, "git@") {
+		return "ssh", nil
+	}
+
+	return u.Scheme, nil
 }

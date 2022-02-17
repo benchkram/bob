@@ -182,7 +182,7 @@ func FprintCloneOutput(reponame string, output []byte, success bool) *bytes.Buff
 func FprintRepoTitle(reponame string, maxlen int, success bool) *bytes.Buffer {
 	buf := bytes.NewBuffer(nil)
 	spacing := "%-" + fmt.Sprint(maxlen) + "s"
-	repopath := fmt.Sprintf(spacing, formatRepoNameForOutput(reponame))
+	repopath := fmt.Sprintf(spacing, sanitizeReponame(reponame))
 	title := fmt.Sprint(repopath, "\t", aurora.Green("success"))
 	if !success {
 		title = fmt.Sprint(repopath, "\t", aurora.Red("error"))
@@ -193,10 +193,10 @@ func FprintRepoTitle(reponame string, maxlen int, success bool) *bytes.Buffer {
 	return buf
 }
 
-// formatRepoNameForOutput returns formatted reponame for output.
+// sanitizeReponame returns sanitized reponame.
 //
 // Example: "." => "/", "second-level" => "second-level/"
-func formatRepoNameForOutput(reponame string) string {
+func sanitizeReponame(reponame string) string {
 	repopath := reponame
 	if reponame == "." {
 		repopath = "/"

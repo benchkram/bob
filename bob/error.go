@@ -12,4 +12,5 @@ var (
 	ErrCouldNotFindTopLevelBobfile = fmt.Errorf("Could not find top-level Bobfile")
 	ErrInvalidVersion              = fmt.Errorf("invalid version")
 	ErrInvalidURL                  = fmt.Errorf("Provided URL is not a Valid URL.")
+	ErrInsecuredHTTPURL            = fmt.Errorf("Insecured HTTP url not supported")
 )
