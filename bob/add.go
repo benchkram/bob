@@ -1,6 +1,7 @@
 package bob
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/Benchkram/bob/pkg/usererror"
@@ -8,33 +9,39 @@ import (
 	giturls "github.com/whilp/git-urls"
 )
 
-// Add, adds the rawurl as a repositoroy to bob workspace. Set all url if
-// `plain` variable set to false.
+// Add, adds a repositoroy to a workspace.
 //
-// if plain set to true,
-//
-// set the sshurl & localurl to "" if url is a valid http,
-// set the httpurl and sshurl to "" if url is a filepath,
-// else it presumes url type as ssh and set http url to "".
+// Automatically tries to guess the contrary url (git/https)
+// from the given rawurl. This behavior can be deactivated
+// if plain is set to true.
 func (b *B) Add(rawurl string, plain bool) (err error) {
 	defer errz.Recover(&err)
 
 	// Check if it is a valid git repo
 	repo, err := Parse(rawurl)
-	errz.Fatal(err)
-
-	// TODO: let repoName be handled by Parse().
-	name := RepoName(repo.HTTPS.URL)
-
-	// Check for duplicates
-	for _, existingRepo := range b.Repositories {
-		if existingRepo.Name == name {
-			return usererror.Wrapm(ErrRepoAlreadyAdded, "GIT url Add failed")
+	if err != nil {
+		if errors.Is(err, ErrInvalidGitUrl) {
+			return usererror.Wrap(err)
+		} else {
+			errz.Fatal(err)
 		}
 	}
 
-	httpsstr := repo.HTTPS.String()
-	sshstr := repo.SSH.String()
+	// Check for duplicates
+	for _, existingRepo := range b.Repositories {
+		if existingRepo.Name == repo.Name() {
+			return usererror.Wrapm(ErrRepoAlreadyAdded, "failed to add repository")
+		}
+	}
+
+	var httpsstr string
+	if repo.HTTPS != nil {
+		httpsstr = repo.HTTPS.String()
+	}
+	var sshstr string
+	if repo.SSH != nil {
+		sshstr = repo.SSH.String()
+	}
 	localstr := repo.Local
 
 	if plain {
@@ -43,7 +50,7 @@ func (b *B) Add(rawurl string, plain bool) (err error) {
 
 		switch scheme {
 		case "http":
-			return usererror.Wrapm(ErrInsecuredHTTPURL, "GIT url Add failed")
+			return usererror.Wrapm(ErrInsecuredHTTPURL, "failed to add repository")
 		case "https":
 			sshstr = ""
 			localstr = ""
@@ -54,21 +61,21 @@ func (b *B) Add(rawurl string, plain bool) (err error) {
 			httpsstr = ""
 			localstr = ""
 		default:
-			// should not do anything
+			return usererror.Wrap(ErrInvalidScheme)
 		}
 
 	}
 
 	b.Repositories = append(b.Repositories,
 		Repo{
-			Name:     name,
+			Name:     repo.Name(),
 			HTTPSUrl: httpsstr,
 			SSHUrl:   sshstr,
 			LocalUrl: localstr,
 		},
 	)
 
-	err = b.gitignoreAdd(name)
+	err = b.gitignoreAdd(repo.Name())
 	errz.Fatal(err)
 
 	return b.write()

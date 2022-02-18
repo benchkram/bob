@@ -86,10 +86,7 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 	repo, err := Parse(repoURL)
 	errz.Fatal(err)
 
-	// TODO: let repoName be handled by Parse().
-	repoName := RepoName(repo.HTTPS.URL)
-
-	absRepoPath, err := filepath.Abs(repoName)
+	absRepoPath, err := filepath.Abs(repo.Name())
 	errz.Fatal(err)
 
 	wd, err := os.Getwd()
@@ -115,7 +112,7 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 		return "", err
 	}
 
-	return repoName, nil
+	return repo.Name(), nil
 }
 
 // makeURLPriorityList returns list of cloneURLItem from forwarded repo,
