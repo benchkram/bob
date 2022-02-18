@@ -6,8 +6,11 @@ import (
 	"strings"
 
 	"github.com/Benchkram/bob/pkg/aqua"
+	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/packagemanager"
 	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/Benchkram/errz"
+	"github.com/logrusorgru/aurora"
 )
 
 var (
@@ -52,8 +55,21 @@ func (p *Packages) Sanitize() error {
 }
 
 // Install passes down install call to internal packagemanager
-func (p *Packages) Install(ctx context.Context) error {
-	return p.manager.Install(ctx)
+func (p *Packages) Install(ctx context.Context) (err error) {
+	defer errz.Recover(&err)
+	// If no packages defined just return
+	if len(p.Packages) == 0 {
+		return nil
+	}
+
+	boblog.Log.Info(aurora.Green("Installing packages...").String())
+
+	err = p.manager.Install(ctx)
+	errz.Fatal(err)
+
+	boblog.Log.Info(aurora.Green("All packages successfully installed").String())
+
+	return nil
 }
 
 // Prune passes down prune call to internal packagemanager

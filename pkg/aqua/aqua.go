@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Benchkram/bob/bob/global"
 	"github.com/Benchkram/bob/pkg/packagemanager"
 	"github.com/Benchkram/errz"
 	"github.com/aquaproj/aqua/pkg/controller"
@@ -17,9 +18,8 @@ import (
 
 // Constants used internally
 const (
-	AQUA_ROOT      = ".bob/.aqua"
 	AQUA_VERSION   = "v0.13.0"
-	AQUA_FILE_PATH = ".bob/.aqua/aqua.yaml"
+	AQUA_FILE_NAME = "aqua.yaml"
 
 	ENV_AQUA_GLOBAL_CONFIG = "AQUA_GLOBAL_CONFIG"
 	ENV_AQUA_ROOT_DIR      = "AQUA_ROOT_DIR"
@@ -60,9 +60,16 @@ type EnvionmentVariables struct {
 
 // New aqua definition
 func New() *Definition {
+
+	reg, err := getDefaultRegistry()
+	// Fallback to predifined registry
+	if err != nil {
+		errz.Log(err)
+		reg = defaultRegistry
+	}
 	return &Definition{
 		Registries: []Registry{
-			defaultRegistry,
+			reg,
 		},
 		Packages: []Package{},
 	}
@@ -81,8 +88,12 @@ func (d *Definition) Add(packages ...packagemanager.Package) {
 // to the PATH environment variable
 func (d *Definition) Install(ctx context.Context) (err error) {
 	defer errz.Recover(&err)
+
+	home, err := os.UserHomeDir()
+	errz.Fatal(err)
+
 	// Create local .aqua dir and reference to that
-	err = os.MkdirAll(AQUA_ROOT, os.ModePerm)
+	err = os.MkdirAll(filepath.Join(home, global.BobPackagesDir), os.ModePerm)
 	errz.Fatal(err)
 
 	// Setup envirionment
@@ -114,7 +125,10 @@ func (d *Definition) Install(ctx context.Context) (err error) {
 func (d *Definition) Prune(ctx context.Context) (err error) {
 	defer errz.Recover(&err)
 
-	aquaRoot, err := filepath.Abs(AQUA_ROOT)
+	home, err := os.UserHomeDir()
+	errz.Fatal(err)
+
+	aquaRoot, err := filepath.Abs(filepath.Join(home, global.BobPackagesDir))
 	errz.Fatal(err)
 
 	err = os.RemoveAll(aquaRoot)
@@ -132,8 +146,12 @@ func (d *Definition) SetEnvirionment() error {
 
 func (d *Definition) Search(ctx context.Context) (pckgs []string, err error) {
 	defer errz.Recover(&err)
+
+	home, err := os.UserHomeDir()
+	errz.Fatal(err)
+
 	// Create local .aqua dir and reference to that
-	err = os.MkdirAll(AQUA_ROOT, os.ModePerm)
+	err = os.MkdirAll(filepath.Join(home, global.BobPackagesDir), os.ModePerm)
 	errz.Fatal(err)
 
 	// Setup envirionment
@@ -195,15 +213,18 @@ func (d *Definition) Search(ctx context.Context) (pckgs []string, err error) {
 func (d *Definition) setEnvirionment() (env EnvionmentVariables, err error) {
 	defer errz.Recover(&err)
 
+	home, err := os.UserHomeDir()
+	errz.Fatal(err)
+
 	// Add aqua root to env
-	aquaRoot, err := filepath.Abs(AQUA_ROOT)
+	aquaRoot, err := filepath.Abs(filepath.Join(home, global.BobPackagesDir))
 	errz.Fatal(err)
 
 	err = os.Setenv(ENV_AQUA_ROOT_DIR, aquaRoot)
 	errz.Fatal(err)
 
 	// Add global aqua config file to env
-	aquaConfig, err := filepath.Abs(AQUA_FILE_PATH)
+	aquaConfig, err := filepath.Abs(filepath.Join(home, global.BobPackagesDir, AQUA_FILE_NAME))
 	errz.Fatal(err)
 
 	err = os.Setenv(ENV_AQUA_GLOBAL_CONFIG, aquaConfig)
