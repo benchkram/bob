@@ -20,7 +20,7 @@ var _ = Describe("Test bob clone", func() {
 		})
 
 		It("adds HTTPS repo to bob", func() {
-			Expect(b.Add("https://github.com/pkg/errors.git", false)).NotTo(HaveOccurred())
+			Expect(b.Add("https://github.com/pkg/errors.git", true)).NotTo(HaveOccurred())
 		})
 
 		// TODO: Reenable. Fails to clone on CI.
