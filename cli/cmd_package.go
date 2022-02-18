@@ -16,7 +16,7 @@ import (
 
 var packageCmd = &cobra.Command{
 	Use:   "package",
-	Short: "package manager",
+	Short: "Manage third party packages",
 	Args:  cobra.MinimumNArgs(0),
 	Long:  ``,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{
