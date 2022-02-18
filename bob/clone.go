@@ -1,6 +1,7 @@
 package bob
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"os"
@@ -26,7 +27,12 @@ type cloneURLItem struct {
 
 // Clone repos which are not yet in the workspace.
 // Uses priority urls ssh >> https >> file.
-func (b *B) Clone() (err error) {
+//
+// failFast will not prompt the user in case of an error.
+//
+// TODO: it might still happens that https prompts for user input
+// in case of a missing password.
+func (b *B) Clone(failFast bool) (err error) {
 	defer errz.Recover(&err)
 
 	for _, repo := range b.Repositories {
@@ -46,20 +52,57 @@ func (b *B) Clone() (err error) {
 		}
 
 		var out []byte
-		// starts cloning from the first item of the priority list,
+		// Starts cloning from the first item of the priority list,
 		// break for successfull cloning and fallback to next item in
 		// the map in case of failure
-		for _, item := range prioritylist {
+		for i, item := range prioritylist {
 			out, err = cmdutil.RunGitWithOutput(b.dir, "clone", item.url, "--progress")
-			// if err != nil keep iterating through the url lists
 			if err == nil {
 				break
 			}
 
+			fmt.Println(err.Error())
+			err = nil
+
+			// fail early, useful when used on ci.
+			if failFast {
+				return usererror.Wrap(fmt.Errorf("abort"))
+			}
+
+			// Get user feedback in case of a failure before trying the
+			// next clone method.
 			fmt.Printf("%s\n", aurora.Yellow(fmt.Sprintf("Failed to clone %s using %s", repo.Name, item.protocol)))
+			if i < len(prioritylist)-1 {
+
+				wd, _ := os.Getwd()
+				target := filepath.Join(b.dir, repo.Name)
+				target, _ = filepath.Rel(wd, target)
+
+				fmt.Printf("[%s] is likely in an invalid state. Want to delete [%s] and clone using [%s]: (y/(a)bort/(i)ignore) ",
+					aurora.Bold(target),
+					aurora.Bold(target),
+					aurora.Bold(prioritylist[i+1].protocol),
+				)
+				reader := bufio.NewReader(os.Stdin)
+				text, _ := reader.ReadString('\n')
+				text = strings.Replace(text, "\n", "", -1)
+				text = strings.ToLower(text)
+
+				if text == "y" {
+					fmt.Println()
+					if file.Exists(target) {
+						_ = os.RemoveAll(target)
+					}
+				} else if text == "i" {
+					fmt.Printf("ignoring %s\n\n", target)
+					// Clear output as it's already been printed.
+					out = []byte{}
+					break
+				} else {
+					return usererror.Wrap(fmt.Errorf("abort"))
+				}
+			}
 		}
-		// log the last order if has err and block the execution
-		errz.Fatal(err)
 
 		if len(out) > 0 {
 			buf := FprintCloneOutput(repo.Name, out, err == nil)
@@ -73,7 +116,9 @@ func (b *B) Clone() (err error) {
 	return b.write()
 }
 
-func (b *B) CloneRepo(repoURL string) (_ string, err error) {
+// CloneRepo repo and sub repositories recursively.
+// failFast will not prompt the user in case of an error.
+func (b *B) CloneRepo(repoURL string, failFast bool) (_ string, err error) {
 	defer errz.Recover(&err)
 
 	out, err := cmdutil.RunGitWithOutput(b.dir, "clone", repoURL, "--progress")
@@ -104,7 +149,7 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 	)
 	errz.Fatal(err)
 
-	if err := bob.Clone(); err != nil {
+	if err := bob.Clone(failFast); err != nil {
 		return "", err
 	}
 
@@ -116,7 +161,7 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 //
 // It ignores ssh/http if any of them set to ""
 //
-// It als Checks if it is a valid git repo,
+// It als checks if it is a valid git repo,
 // as someone might changed it on disk.
 func makeURLPriorityList(repo Repo) ([]cloneURLItem, error) {
 

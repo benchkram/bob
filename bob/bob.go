@@ -20,9 +20,6 @@ import (
 var Version = "0.0.0"
 
 type B struct {
-	// DefaultCloneSchema used for cloning repos, `ssh` | `https`
-	DefaultCloneSchema CloneSchema
-
 	// Repositories to track.
 	Repositories []Repo `yaml:"repositories"`
 
@@ -53,9 +50,8 @@ func newBob(opts ...Option) *B {
 	}
 
 	b := &B{
-		DefaultCloneSchema: SSH,
-		dir:                wd,
-		enableCaching:      true,
+		dir:           wd,
+		enableCaching: true,
 	}
 
 	for _, opt := range opts {

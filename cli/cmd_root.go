@@ -25,8 +25,11 @@ func init() {
 	rootCmd.Flags().Bool("version", false, "Show the CLI's version")
 
 	rootCmd.AddCommand(verifyCmd)
-	rootCmd.AddCommand(CmdClone)
 	rootCmd.AddCommand(cleanCmd)
+
+	// clone
+	CmdClone.Flags().Bool("fail-fast", false, "Fail on first error without user prompt")
+	rootCmd.AddCommand(CmdClone)
 
 	// workspace
 	cmdAdd.Flags().Bool("plain", false, "Do not infer contrary protocol url")

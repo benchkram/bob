@@ -50,7 +50,7 @@ var _ = Describe("Test bob clone", func() {
 		// })
 
 		It("runs bob clone", func() {
-			Expect(b.Clone()).NotTo(HaveOccurred())
+			Expect(b.Clone(true)).NotTo(HaveOccurred())
 
 			// Children
 			for _, child := range reposetup.Childs {
@@ -66,7 +66,7 @@ var _ = Describe("Test bob clone", func() {
 		})
 
 		It("runs bob clone to clone a bob repo", func() {
-			_, err := b.CloneRepo(fmt.Sprintf("file://%s", playgroundRepo))
+			_, err := b.CloneRepo(fmt.Sprintf("file://%s", playgroundRepo), true)
 			Expect(err).NotTo(HaveOccurred())
 
 			f := filepath.Join(playgroundRepo, "second-level", "third-level", global.BobFileName)
@@ -74,7 +74,7 @@ var _ = Describe("Test bob clone", func() {
 		})
 
 		It("runs bob clone to clone a bob repo recursively", func() {
-			_, err := b.CloneRepo(fmt.Sprintf("file://%s", recursiveRepo))
+			_, err := b.CloneRepo(fmt.Sprintf("file://%s", recursiveRepo), true)
 			Expect(err).NotTo(HaveOccurred())
 
 			childProjectGit := filepath.Join(top, reposetup.ChildRecursive, "errors", ".git")
