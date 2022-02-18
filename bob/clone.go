@@ -30,8 +30,8 @@ type cloneURLItem struct {
 //
 // failFast will not prompt the user in case of an error.
 //
-// TODO: it might still happens that https prompts for user input
-// in case of a missing password.
+// TODO: it still happens that git prompts for user input
+// in case of a missing password on https.
 func (b *B) Clone(failFast bool) (err error) {
 	defer errz.Recover(&err)
 
