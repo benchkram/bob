@@ -11,9 +11,10 @@ import (
 
 // Add, adds a repositoroy to a workspace.
 //
-// Automatically tries to guess the contrary url (git/https)
+// Automatically tries to guess the contrary url (git@/https://)
 // from the given rawurl. This behavior can be deactivated
-// if plain is set to true.
+// if plain is set to true. In case of a local path (file://)
+// plain has no effect.
 func (b *B) Add(rawurl string, plain bool) (err error) {
 	defer errz.Recover(&err)
 

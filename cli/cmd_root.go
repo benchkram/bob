@@ -29,7 +29,7 @@ func init() {
 	rootCmd.AddCommand(cleanCmd)
 
 	// workspace
-	cmdAdd.Flags().Bool("plain", false, "Don't infer contrary protocol url (git/https) from scheme")
+	cmdAdd.Flags().Bool("plain", false, "Do not infer contrary protocol url")
 	cmdWorkspace.AddCommand(cmdWorkspaceNew)
 	cmdWorkspace.AddCommand(cmdAdd)
 	rootCmd.AddCommand(cmdWorkspace)
