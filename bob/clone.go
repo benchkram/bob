@@ -3,7 +3,6 @@ package bob
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -106,9 +105,6 @@ func (b *B) CloneRepo(repoURL string) (_ string, err error) {
 	errz.Fatal(err)
 
 	if err := bob.Clone(); err != nil {
-		if err := os.RemoveAll(absRepoPath); err != nil {
-			log.Printf("failed to remove cloned repo: %v\n", err)
-		}
 		return "", err
 	}
 

@@ -91,7 +91,7 @@ func getScheme(rawurl string) (string, error) {
 	}
 
 	// giturl parse detects url like `git@github.com` without `:` as files
-	// which is a wrong URL but logically a `ssh`
+	// which is usually done using `ssh`.
 	if strings.Contains(rawurl, "git@") {
 		return "ssh", nil
 	}
