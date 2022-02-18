@@ -14,4 +14,5 @@ var (
 	ErrInsecuredHTTPURL            = fmt.Errorf("insecured http url not supported")
 	ErrInvalidScheme               = fmt.Errorf("invalid scheme")
 	ErrInvalidGitUrl               = fmt.Errorf("invalid git url")
+	ErrInvalidRepositoryName       = fmt.Errorf("invalid repository name")
 )
