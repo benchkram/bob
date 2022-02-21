@@ -90,6 +90,14 @@ func RunGit(root string, args ...string) error {
 	return r.Run()
 }
 
+func RunGitWithOutput(root string, args ...string) ([]byte, error) {
+	r, err := gitprepare(root, args...)
+	if err != nil {
+		return nil, err
+	}
+	return r.OutputCombined()
+}
+
 func GitStatus(root string) ([]byte, error) {
 	r, err := gitprepare(root, "status", "--porcelain")
 	if err != nil {

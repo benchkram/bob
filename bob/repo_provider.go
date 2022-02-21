@@ -3,6 +3,7 @@ package bob
 import (
 	"fmt"
 	"net/url"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -29,9 +30,45 @@ type GitProvider struct {
 type GitRepo struct {
 	Provider GitProvider
 
+	// SSH stores git@
+	SSH *GitURL
+	// HTTPS stores https://
 	HTTPS *GitURL
-	SSH   *GitURL
+	// Local stores file://
 	Local string
+}
+
+// Name of the repository, usually part
+// after the last "/".
+func (gr *GitRepo) Name() string {
+
+	if gr.SSH != nil && gr.SSH.URL != nil {
+		return Name(gr.SSH.URL.String())
+	}
+	if gr.HTTPS != nil && gr.HTTPS.URL != nil {
+		return Name(gr.HTTPS.URL.String())
+	}
+	if gr.Local != "" {
+		return Name(gr.Local)
+	}
+
+	return ""
+
+}
+
+// RepoName returns the base part of the repo
+// as the name. Suffix excluded.
+func Name(repoURL string) (name string) {
+
+	base := path.Base(repoURL)
+	ext := path.Ext(repoURL)
+
+	name = base
+	if ext == ".git" {
+		name = strings.TrimSuffix(base, ext)
+	}
+
+	return name
 }
 
 type Parsers map[string]Parser
@@ -45,7 +82,7 @@ func NewParsers() Parsers {
 
 type Parser func(string) (*GitRepo, error)
 
-// Parse a rawurl string and return a GitRepo object containing
+// Parse a rawurl and return a GitRepo object containing
 // the specific https and ssh protocol urls.
 func Parse(rawurl string) (repo *GitRepo, err error) {
 	for _, parser := range parsers {
@@ -63,6 +100,7 @@ func Parse(rawurl string) (repo *GitRepo, err error) {
 // git@ssh.dev.azure.com:v3/xxx/Yyy/zzz.zzz.zzz",
 func ParseAzure(rawurl string) (repo *GitRepo, err error) {
 	defer errz.Recover(&err)
+
 	if !strings.Contains(rawurl, azureGitProvider.Name) {
 		return nil, fmt.Errorf("Could not parse %s as %s-repo", rawurl, azureGitProvider.Name)
 	}
@@ -204,7 +242,7 @@ func ParseGeneral(rawurl string) (repo *GitRepo, err error) {
 		return repo, nil
 	}
 
-	return nil, fmt.Errorf("Could not detect a valid %s url", generalGitProvider.Name)
+	return nil, ErrInvalidGitUrl
 }
 
 func ParseLocal(rawurl string) (repo *GitRepo, err error) {
@@ -217,11 +255,11 @@ func ParseLocal(rawurl string) (repo *GitRepo, err error) {
 		Provider: localGitProvider,
 	}
 
-	u, err := giturls.Parse(rawurl)
-	errz.Fatal(err)
+	// u, err := giturls.Parse(rawurl)
+	// errz.Fatal(err)
 
-	repo.HTTPS = FromURL(u)
-	repo.SSH = FromURL(u)
+	// repo.HTTPS = FromURL(u)
+	// repo.SSH = FromURL(u)
 	repo.Local = strings.TrimPrefix(rawurl, "file://")
 
 	return repo, nil

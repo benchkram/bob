@@ -20,26 +20,37 @@ var _ = Describe("Test bob clone", func() {
 		})
 
 		It("adds HTTPS repo to bob", func() {
-			Expect(b.Add("https://github.com/pkg/errors.git")).NotTo(HaveOccurred())
+			Expect(b.Add("https://github.com/pkg/errors.git", true)).NotTo(HaveOccurred())
 		})
 
 		// TODO: Reenable. Fails to clone on CI.
 		/*It("adds SSH repo to bob", func() {
-			Expect(b.Add("git@github.com:Benchkram/bob.git")).NotTo(HaveOccurred())
+			Expect(b.Add("git@github.com:Benchkram/bob.git", false)).NotTo(HaveOccurred())
 		})*/
 
 		It("adds local repos to bob", func() {
 			// Children
 			for _, child := range childs {
-				Expect(b.Add(fmt.Sprintf("file://%s", child))).NotTo(HaveOccurred())
+				Expect(b.Add(fmt.Sprintf("file://%s", child), false)).NotTo(HaveOccurred())
 			}
 
 			// Recursive
-			Expect(b.Add(fmt.Sprintf("file://%s", recursiveRepo))).NotTo(HaveOccurred())
+			Expect(b.Add(fmt.Sprintf("file://%s", recursiveRepo), false)).NotTo(HaveOccurred())
 		})
 
+		// adds https repo with plain https url for cloning
+		It("adds HTTPS repo to bob, with plain protocol", func() {
+			Expect(b.Add("https://github.com/pkg/requests.git", true)).NotTo(HaveOccurred())
+		})
+
+		// TODO: Fails to clone on CI.
+		// adds git repo with explicit ssh url for cloning
+		// It("adds SSH repo to bob, with explicit protocol", func() {
+		// 	Expect(b.Add("git@github.com:pkg/exec.git", true)).NotTo(HaveOccurred())
+		// })
+
 		It("runs bob clone", func() {
-			Expect(b.Clone()).NotTo(HaveOccurred())
+			Expect(b.Clone(true)).NotTo(HaveOccurred())
 
 			// Children
 			for _, child := range reposetup.Childs {
@@ -55,7 +66,7 @@ var _ = Describe("Test bob clone", func() {
 		})
 
 		It("runs bob clone to clone a bob repo", func() {
-			_, err := b.CloneRepo(fmt.Sprintf("file://%s", playgroundRepo))
+			_, err := b.CloneRepo(fmt.Sprintf("file://%s", playgroundRepo), true)
 			Expect(err).NotTo(HaveOccurred())
 
 			f := filepath.Join(playgroundRepo, "second-level", "third-level", global.BobFileName)
@@ -63,7 +74,7 @@ var _ = Describe("Test bob clone", func() {
 		})
 
 		It("runs bob clone to clone a bob repo recursively", func() {
-			_, err := b.CloneRepo(fmt.Sprintf("file://%s", recursiveRepo))
+			_, err := b.CloneRepo(fmt.Sprintf("file://%s", recursiveRepo), true)
 			Expect(err).NotTo(HaveOccurred())
 
 			childProjectGit := filepath.Join(top, reposetup.ChildRecursive, "errors", ".git")
