@@ -20,6 +20,11 @@ import (
 func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
+	err = t.PreRun(namePad)
+	if err != nil {
+		return usererror.Wrapm(err, "Pre run command execute error")
+	}
+
 	for _, run := range t.cmds {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
 		if err != nil {
@@ -60,9 +65,24 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 
 		err = r.Run(ctx, p)
 		if err != nil {
-			return usererror.Wrapm(err, "shell command execute error")
+			return usererror.Wrapm(err, "shell commands execution error")
 		}
 	}
 
+	err = t.PostRun(namePad)
+	if err != nil {
+		return usererror.Wrapm(err, "Post run commands execution error")
+	}
+
+	return nil
+}
+
+func (t *Task) PreRun(namePad int) error {
+	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint("Pre run Command are running")))
+	return nil
+}
+
+func (t *Task) PostRun(namePad int) error {
+	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint("Post run Commands are running")))
 	return nil
 }
