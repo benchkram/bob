@@ -23,7 +23,7 @@ require (
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
-	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5 // indirect
+	github.com/phayes/freeport v0.0.0-20220201140144-74d24b5ae9f5
 	github.com/pkg/errors v0.9.1
 	github.com/sanity-io/litter v1.5.0
 	github.com/smartystreets/assertions v1.0.0 // indirect
