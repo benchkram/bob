@@ -19,6 +19,10 @@ var debug = false
 // Usful to debug the created repo structure.
 var createTestDirs = false
 
+// disable running tests for status,
+// helpful while writing other tests
+var runStatusTests = false
+
 func TestStatus(t *testing.T) {
 
 	type input struct {
@@ -345,43 +349,45 @@ func TestStatus(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		dir, err := ioutil.TempDir("", test.name+"-*")
-		assert.Nil(t, err)
-
-		// Don't cleanup in testdir mode
-		if !createTestDirs {
-			defer os.RemoveAll(dir)
-		}
-
-		if debug || createTestDirs {
-			println("Using test dir " + dir)
-		}
-
-		test.input.environment(dir)
-
-		if createTestDirs {
-			continue
-		}
-
-		status, err := getStatus(filepath.Join(dir, test.execdir))
-		assert.Nil(t, err)
-
-		if update {
-			err = os.RemoveAll(filepath.Join("testdata", test.name))
+	if runStatusTests {
+		for _, test := range tests {
+			dir, err := ioutil.TempDir("", test.name+"-*")
 			assert.Nil(t, err)
-			err = os.MkdirAll("testdata", 0775)
+
+			// Don't cleanup in testdir mode
+			if !createTestDirs {
+				defer os.RemoveAll(dir)
+			}
+
+			if debug || createTestDirs {
+				println("Using test dir " + dir)
+			}
+
+			test.input.environment(dir)
+
+			if createTestDirs {
+				continue
+			}
+
+			status, err := getStatus(filepath.Join(dir, test.execdir))
 			assert.Nil(t, err)
-			err = os.WriteFile(filepath.Join("testdata", test.name), []byte(status.String()), 0664)
-			assert.Nil(t, err)
-			continue
+
+			if update {
+				err = os.RemoveAll(filepath.Join("testdata", test.name))
+				assert.Nil(t, err)
+				err = os.MkdirAll("testdata", 0775)
+				assert.Nil(t, err)
+				err = os.WriteFile(filepath.Join("testdata", test.name), []byte(status.String()), 0664)
+				assert.Nil(t, err)
+				continue
+			}
+
+			expect, err := os.ReadFile(filepath.Join("testdata", test.name))
+			assert.Nil(t, err, test.name)
+
+			diff := cmp.Diff(status.String(), string(expect))
+			assert.Equal(t, "", diff, test.name)
 		}
-
-		expect, err := os.ReadFile(filepath.Join("testdata", test.name))
-		assert.Nil(t, err, test.name)
-
-		diff := cmp.Diff(status.String(), string(expect))
-		assert.Equal(t, "", diff, test.name)
 	}
 
 	if createTestDirs || update {

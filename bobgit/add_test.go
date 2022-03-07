@@ -14,6 +14,10 @@ import (
 
 var addTestDataPath = "testdata/add"
 
+// disable running tests for add,
+// helpful while writing other tests
+var runAddTests = false
+
 func TestGitAdd(t *testing.T) {
 	type input struct {
 		// environment holds a function creating
@@ -335,65 +339,68 @@ func TestGitAdd(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		dir, err := ioutil.TempDir("", test.name+"-*")
-		assert.Nil(t, err)
+	if runAddTests {
 
-		statusBeforeFile := test.name + "_before"
-		statusAfterFile := test.name + "_after"
+		for _, test := range tests {
+			dir, err := ioutil.TempDir("", test.name+"-*")
+			assert.Nil(t, err)
 
-		// Don't cleanup in testdir mode
-		if !createTestDirs {
-			defer os.RemoveAll(dir)
+			statusBeforeFile := test.name + "_before"
+			statusAfterFile := test.name + "_after"
+
+			// Don't cleanup in testdir mode
+			if !createTestDirs {
+				defer os.RemoveAll(dir)
+			}
+
+			if debug || createTestDirs {
+				println("Using test dir " + dir)
+			}
+
+			test.input.environment(dir)
+
+			if createTestDirs {
+				continue
+			}
+
+			execdir := filepath.Join(dir, test.execdir)
+
+			statusBefore, err := getStatus(execdir)
+			assert.Nil(t, err)
+
+			targets := strings.Split(test.target, " ")
+			err = executeAdd(execdir, targets...)
+			assert.Nil(t, err)
+
+			statusAfter, err := getStatus(execdir)
+			assert.Nil(t, err)
+
+			if update {
+				err = os.RemoveAll(filepath.Join(addTestDataPath, statusBeforeFile))
+				assert.Nil(t, err)
+				err = os.RemoveAll(filepath.Join(addTestDataPath, statusAfterFile))
+				assert.Nil(t, err)
+				err = os.MkdirAll(addTestDataPath, 0775)
+				assert.Nil(t, err)
+				err = os.WriteFile(filepath.Join(addTestDataPath, statusBeforeFile), []byte(statusBefore.String()), 0664)
+				assert.Nil(t, err)
+				err = os.WriteFile(filepath.Join(addTestDataPath, statusAfterFile), []byte(statusAfter.String()), 0664)
+				assert.Nil(t, err)
+				continue
+			}
+
+			expectBefore, err := os.ReadFile(filepath.Join(addTestDataPath, statusBeforeFile))
+			assert.Nil(t, err, test.name)
+
+			diff := cmp.Diff(statusBefore.String(), string(expectBefore))
+			assert.Equal(t, "", diff, statusBeforeFile)
+
+			expectAfter, err := os.ReadFile(filepath.Join(addTestDataPath, statusAfterFile))
+			assert.Nil(t, err, test.name)
+
+			diff = cmp.Diff(statusAfter.String(), string(expectAfter))
+			assert.Equal(t, "", diff, statusAfterFile)
 		}
-
-		if debug || createTestDirs {
-			println("Using test dir " + dir)
-		}
-
-		test.input.environment(dir)
-
-		if createTestDirs {
-			continue
-		}
-
-		execdir := filepath.Join(dir, test.execdir)
-
-		statusBefore, err := getStatus(execdir)
-		assert.Nil(t, err)
-
-		targets := strings.Split(test.target, " ")
-		err = executeAdd(execdir, targets...)
-		assert.Nil(t, err)
-
-		statusAfter, err := getStatus(execdir)
-		assert.Nil(t, err)
-
-		if update {
-			err = os.RemoveAll(filepath.Join(addTestDataPath, statusBeforeFile))
-			assert.Nil(t, err)
-			err = os.RemoveAll(filepath.Join(addTestDataPath, statusAfterFile))
-			assert.Nil(t, err)
-			err = os.MkdirAll(addTestDataPath, 0775)
-			assert.Nil(t, err)
-			err = os.WriteFile(filepath.Join(addTestDataPath, statusBeforeFile), []byte(statusBefore.String()), 0664)
-			assert.Nil(t, err)
-			err = os.WriteFile(filepath.Join(addTestDataPath, statusAfterFile), []byte(statusAfter.String()), 0664)
-			assert.Nil(t, err)
-			continue
-		}
-
-		expectBefore, err := os.ReadFile(filepath.Join(addTestDataPath, statusBeforeFile))
-		assert.Nil(t, err, test.name)
-
-		diff := cmp.Diff(statusBefore.String(), string(expectBefore))
-		assert.Equal(t, "", diff, statusBeforeFile)
-
-		expectAfter, err := os.ReadFile(filepath.Join(addTestDataPath, statusAfterFile))
-		assert.Nil(t, err, test.name)
-
-		diff = cmp.Diff(statusAfter.String(), string(expectAfter))
-		assert.Equal(t, "", diff, statusAfterFile)
 	}
 
 	if createTestDirs || update {

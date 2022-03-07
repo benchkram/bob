@@ -15,6 +15,10 @@ import (
 
 var commitTestDataPath = "testdata/commit"
 
+// disable running tests for commit,
+// helpful while writing other tests
+var runCommitTests = false
+
 func TestCommit(t *testing.T) {
 
 	type input struct {
@@ -304,80 +308,83 @@ func TestCommit(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		dir, err := ioutil.TempDir("", test.name+"-*")
-		assert.Nil(t, err)
+	if runCommitTests {
 
-		// Don't cleanup in testdir mode
-		if !createTestDirs {
-			defer os.RemoveAll(dir)
-		}
+		for _, test := range tests {
+			dir, err := ioutil.TempDir("", test.name+"-*")
+			assert.Nil(t, err)
 
-		if debug || createTestDirs {
-			println("Using test dir " + dir)
-		}
+			// Don't cleanup in testdir mode
+			if !createTestDirs {
+				defer os.RemoveAll(dir)
+			}
 
-		test.input.environment(dir)
+			if debug || createTestDirs {
+				println("Using test dir " + dir)
+			}
 
-		if createTestDirs {
-			continue
-		}
+			test.input.environment(dir)
 
-		execdir := filepath.Join(dir, test.execdir)
-		statusBeforeFile := test.name + "_before"
-		statusAfterFile := test.name + "_after"
-
-		statusBefore, err := getStatus(execdir)
-		assert.Nil(t, err)
-
-		s, err := executeCommit(execdir, test.message)
-		if test.expectedErr != nil {
-			if errors.Is(err, test.expectedErr) {
+			if createTestDirs {
 				continue
 			}
-			assert.Fail(t, fmt.Sprintf("expected error [%s] got [%s]", test.expectedErr.Error(), err.Error()))
-		}
 
-		// ignore the error caused by test.message nill
-		if err != nil && !errors.Is(err, ErrEmptyCommitMessage) {
+			execdir := filepath.Join(dir, test.execdir)
+			statusBeforeFile := test.name + "_before"
+			statusAfterFile := test.name + "_after"
+
+			statusBefore, err := getStatus(execdir)
 			assert.Nil(t, err)
-		}
 
-		assert.Equal(t, s, test.output, test.name)
-
-		statusAfter, err := getStatus(execdir)
-		assert.Nil(t, err)
-
-		if update {
-			// tests expecting a error don't need to compare their before and after putputs
+			s, err := executeCommit(execdir, test.message)
 			if test.expectedErr != nil {
+				if errors.Is(err, test.expectedErr) {
+					continue
+				}
+				assert.Fail(t, fmt.Sprintf("expected error [%s] got [%s]", test.expectedErr.Error(), err.Error()))
+			}
+
+			// ignore the error caused by test.message nill
+			if err != nil && !errors.Is(err, ErrEmptyCommitMessage) {
+				assert.Nil(t, err)
+			}
+
+			assert.Equal(t, s, test.output, test.name)
+
+			statusAfter, err := getStatus(execdir)
+			assert.Nil(t, err)
+
+			if update {
+				// tests expecting a error don't need to compare their before and after putputs
+				if test.expectedErr != nil {
+					continue
+				}
+
+				err = os.RemoveAll(filepath.Join(commitTestDataPath, statusBeforeFile))
+				assert.Nil(t, err)
+				err = os.RemoveAll(filepath.Join(commitTestDataPath, statusAfterFile))
+				assert.Nil(t, err)
+				err = os.MkdirAll(commitTestDataPath, 0775)
+				assert.Nil(t, err)
+				err = os.WriteFile(filepath.Join(commitTestDataPath, statusBeforeFile), []byte(statusBefore.String()), 0664)
+				assert.Nil(t, err)
+				err = os.WriteFile(filepath.Join(commitTestDataPath, statusAfterFile), []byte(statusAfter.String()), 0664)
+				assert.Nil(t, err)
 				continue
 			}
 
-			err = os.RemoveAll(filepath.Join(commitTestDataPath, statusBeforeFile))
-			assert.Nil(t, err)
-			err = os.RemoveAll(filepath.Join(commitTestDataPath, statusAfterFile))
-			assert.Nil(t, err)
-			err = os.MkdirAll(commitTestDataPath, 0775)
-			assert.Nil(t, err)
-			err = os.WriteFile(filepath.Join(commitTestDataPath, statusBeforeFile), []byte(statusBefore.String()), 0664)
-			assert.Nil(t, err)
-			err = os.WriteFile(filepath.Join(commitTestDataPath, statusAfterFile), []byte(statusAfter.String()), 0664)
-			assert.Nil(t, err)
-			continue
+			expectBefore, err := os.ReadFile(filepath.Join(commitTestDataPath, statusBeforeFile))
+			assert.Nil(t, err, test.name)
+
+			diff := cmp.Diff(statusBefore.String(), string(expectBefore))
+			assert.Equal(t, "", diff, statusBeforeFile)
+
+			expectAfter, err := os.ReadFile(filepath.Join(commitTestDataPath, statusAfterFile))
+			assert.Nil(t, err, test.name)
+
+			diff = cmp.Diff(statusAfter.String(), string(expectAfter))
+			assert.Equal(t, "", diff, statusAfterFile)
 		}
-
-		expectBefore, err := os.ReadFile(filepath.Join(commitTestDataPath, statusBeforeFile))
-		assert.Nil(t, err, test.name)
-
-		diff := cmp.Diff(statusBefore.String(), string(expectBefore))
-		assert.Equal(t, "", diff, statusBeforeFile)
-
-		expectAfter, err := os.ReadFile(filepath.Join(commitTestDataPath, statusAfterFile))
-		assert.Nil(t, err, test.name)
-
-		diff = cmp.Diff(statusAfter.String(), string(expectAfter))
-		assert.Equal(t, "", diff, statusAfterFile)
 	}
 
 	if createTestDirs || update {
