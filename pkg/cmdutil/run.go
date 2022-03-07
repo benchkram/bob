@@ -1,14 +1,11 @@
 package cmdutil
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 
 	"github.com/cli/cli/git"
 )
@@ -17,7 +14,6 @@ type Runnable interface {
 	Run() error
 	Output() ([]byte, error)
 	OutputCombined() ([]byte, error)
-	RunPipe() error
 }
 
 type run struct {
@@ -75,79 +71,6 @@ func (run *run) OutputCombined() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func (run *run) RunPipe() error {
-	stdin, err := run.cmd.StdinPipe()
-	if err != nil {
-		panic(err)
-	}
-	_, err = run.cmd.StdoutPipe()
-	if err != nil {
-		panic(err)
-	}
-
-	stderr, err := run.cmd.StderrPipe()
-	if err != nil {
-		panic(err)
-	}
-
-	// Wait for prompt
-	promptDetected := func(bytes []byte) bool {
-		frags := strings.Split(string(bytes), "\n")
-		if len(frags) == 0 {
-			return false
-		}
-
-		// fmt.Println(frags)
-
-		last := frags[len(frags)-1]
-		return strings.HasPrefix(last, "Are you sure you want to continue connecting (yes/no/[fingerprint])?")
-	}
-
-	prompt := make(chan bool, 1)
-
-	go func(ch chan<- bool) {
-		scanner := bufio.NewScanner(stderr)
-		scanner.Split(bufio.ScanBytes)
-
-		buff := []byte{}
-		for scanner.Scan() {
-			bytes := scanner.Bytes()
-			buff = append(buff, bytes...)
-			// fmt.Println(string(buff))
-			if promptDetected(buff) {
-				ch <- true
-			}
-		}
-		ch <- true
-	}(prompt)
-
-	if err := run.cmd.Start(); err != nil {
-		panic(err)
-	}
-
-	defer run.cmd.Wait()
-
-	<-prompt
-
-	// Send input to the prompt
-	io.WriteString(stdin, "yes")
-	io.WriteString(stdin, "\n")
-
-	return nil
-}
-
-func RunAddToKnownHost(host string, port int) ([]byte, error) {
-	cmd := exec.Command("ssh-keyscan", "-p", fmt.Sprint(port), "-H", host, ">>", "~/.ssh/known_hosts")
-
-	cmd.Env = os.Environ()
-
-	r := &run{cmd}
-
-	fmt.Println(cmd)
-
-	return r.OutputCombined()
-}
-
 func RemoveFromKnownHost(host string, port int) ([]byte, error) {
 	hostkey := fmt.Sprintf("[%s]:%d", host, port)
 	cmd := exec.Command("ssh-keygen", "-R", hostkey)
@@ -179,14 +102,16 @@ func RunGit(root string, args ...string) error {
 	return r.Run()
 }
 
-func RunGitPipe(root string, args ...string) error {
-	cmd := exec.Command("git", args...)
-	cmd.Env = os.Environ()
-	cmd.Dir = root
+func RunGitSSHFirstPush(root string, remote string, branch string) error {
 
-	r := &run{cmd}
+	sshcommand := "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+	err := RunGit(root, "config", "core.sshCommand", sshcommand)
+	if err != nil {
+		return fmt.Errorf("failed to config git command: %w", err)
+	}
 
-	return r.RunPipe()
+	args := []string{"push", "-u", remote, branch}
+	return RunGit(root, args...)
 }
 
 func RunGitWithOutput(root string, args ...string) ([]byte, error) {
