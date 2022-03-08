@@ -102,18 +102,6 @@ func RunGit(root string, args ...string) error {
 	return r.Run()
 }
 
-func RunGitSSHFirstPush(root string, remote string, branch string) error {
-
-	sshcommand := "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-	err := RunGit(root, "config", "core.sshCommand", sshcommand)
-	if err != nil {
-		return fmt.Errorf("failed to config git command: %w", err)
-	}
-
-	args := []string{"push", "-u", remote, branch}
-	return RunGit(root, args...)
-}
-
 func RunGitWithOutput(root string, args ...string) ([]byte, error) {
 	r, err := gitprepare(root, args...)
 	if err != nil {
@@ -189,4 +177,33 @@ func GitPush(root string, remote string, ref string) ([]byte, error) {
 	}
 
 	return r.OutputCombined()
+}
+
+// GitPushFirstTime, runs git push command for the first time with remote and branch name and
+// disable ssh checking if ssh set to true
+func GitPushFirstTime(root string, remote string, branch string, ssh bool) error {
+	if ssh {
+		err := DisableSSHChecking(root)
+		if err != nil {
+			return err
+		}
+	}
+
+	r, err := gitprepare(root, "push", "-u", remote, branch)
+	if err != nil {
+		return fmt.Errorf("failed to make git command: %w", err)
+	}
+
+	return r.Run()
+}
+
+func DisableSSHChecking(root string) error {
+	sshcommand := "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+
+	r, err := gitprepare(root, "config", "core.sshCommand", sshcommand)
+	if err != nil {
+		return fmt.Errorf("failed to config git command: %w", err)
+	}
+
+	return r.Run()
 }

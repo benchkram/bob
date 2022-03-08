@@ -25,6 +25,10 @@ import (
 var sshSeverStoragePath = "/tmp/soft"
 var pushTestDataPath = "testdata/push"
 
+// disable running tests for push,
+// helpful while writing other tests
+var runPushTests = true
+
 var cfg *config.Config
 var s *server.Server
 
@@ -69,7 +73,7 @@ func TestPush(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "'Initial Commit'"))
-					err = cmdutil.RunGitSSHFirstPush(dir, "origin", "master")
+					err = cmdutil.GitPushFirstTime(dir, "origin", "master", true)
 					if err != nil {
 						fmt.Println(err)
 					}
@@ -95,7 +99,7 @@ func TestPush(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
-					err := cmdutil.RunGitSSHFirstPush(dir, "origin", "master")
+					err := cmdutil.GitPushFirstTime(dir, "origin", "master", true)
 					assert.Nil(t, err)
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file2"), []byte("file"), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "New File Added"))
@@ -108,7 +112,7 @@ func TestPush(t *testing.T) {
 					err = createGitDirWithRemote(repo, u.String())
 					assert.Nil(t, err)
 					assert.Nil(t, addAllWithCommit(repo, "Initial Commit"))
-					err = cmdutil.RunGitSSHFirstPush(repo, "origin", "master")
+					err = cmdutil.GitPushFirstTime(repo, "origin", "master", true)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file2"), []byte("file"), 0664))
@@ -133,7 +137,7 @@ func TestPush(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
-					err := cmdutil.RunGitSSHFirstPush(dir, "origin", "master")
+					err := cmdutil.GitPushFirstTime(dir, "origin", "master", true)
 					assert.Nil(t, err)
 
 					u, _ = url.Parse(sshpath)
@@ -144,90 +148,179 @@ func TestPush(t *testing.T) {
 					err = createGitDirWithRemote(repo, u.String())
 					assert.Nil(t, err)
 					assert.Nil(t, addAllWithCommit(repo, "Initial Commit"))
-					err = cmdutil.RunGitSSHFirstPush(repo, "origin", "master")
+					err = cmdutil.GitPushFirstTime(repo, "origin", "master", true)
 					assert.Nil(t, err)
 				},
 			},
 			"",
 			ErrUptodateAllRepo,
 		},
+		{
+			"multi_repo_with_one_repo_push",
+			input{
+				func(dir string) {
+
+					testname := filepath.Base(dir)
+
+					u, _ := url.Parse(sshpath)
+					u.Path = path.Join(u.Path, testname)
+
+					assert.Nil(t, createGitDirWithRemote(dir, u.String()))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
+					err := cmdutil.GitPushFirstTime(dir, "origin", "master", true)
+					assert.Nil(t, err)
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file2"), []byte("file"), 0664))
+					assert.Nil(t, addAllWithCommit(dir, "New File Added"))
+
+					u, _ = url.Parse(sshpath)
+					u.Path = path.Join(u.Path, testname+"_repo")
+
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					err = createGitDirWithRemote(repo, u.String())
+					assert.Nil(t, err)
+					assert.Nil(t, addAllWithCommit(repo, "Initial Commit"))
+					err = cmdutil.GitPushFirstTime(repo, "origin", "master", true)
+					assert.Nil(t, err)
+				},
+			},
+			"repo",
+			nil,
+		},
+		{
+			"single_repo_with_no_configured_remote",
+			input{
+				func(dir string) {
+					assert.Nil(t, os.MkdirAll(dir, 0775))
+					assert.Nil(t, cmdutil.RunGit(dir, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
+				},
+			},
+			"",
+			ErrInsufficientConfig,
+		},
+		{
+			"multi_repo_with_no_configured_remote",
+			input{
+				func(dir string) {
+
+					testname := filepath.Base(dir)
+
+					u, _ := url.Parse(sshpath)
+					u.Path = path.Join(u.Path, testname)
+
+					assert.Nil(t, createGitDirWithRemote(dir, u.String()))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
+					err := cmdutil.GitPushFirstTime(dir, "origin", "master", true)
+					assert.Nil(t, err)
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file2"), []byte("file"), 0664))
+					assert.Nil(t, addAllWithCommit(dir, "New File Added"))
+
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					assert.Nil(t, cmdutil.RunGit(repo, "init"))
+					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file"), []byte("file"), 0664))
+					assert.Nil(t, addAllWithCommit(repo, "Initial Commit"))
+				},
+			},
+			"",
+			ErrInsufficientConfig,
+		},
+		// normal bob push should fail, as no branch in remote exists in
+		// configured remote
+		{
+			"single_repo_for_first_time_push",
+			input{
+				func(dir string) {
+
+					testname := filepath.Base(dir)
+
+					u, _ := url.Parse(sshpath)
+					u.Path = path.Join(u.Path, testname)
+
+					assert.Nil(t, createGitDirWithRemote(dir, u.String()))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file2"), []byte("file"), 0664))
+					assert.Nil(t, addAllWithCommit(dir, "New File Added"))
+				},
+			},
+			"",
+			ErrInsufficientConfig,
+		},
 	}
 
-	err := initServer()
-	assert.Nil(t, err)
-
-	for _, test := range tests {
-		dir, err := ioutil.TempDir("", test.name+"-*")
+	if runPushTests {
+		err := initServer()
 		assert.Nil(t, err)
 
-		// Don't cleanup in testdir mode
-		if !createTestDirs {
-			defer os.RemoveAll(dir)
-		}
+		for _, test := range tests {
+			dir, err := ioutil.TempDir("", test.name+"-*")
+			assert.Nil(t, err)
 
-		if debug || createTestDirs {
-			println("Using test dir " + dir)
-		}
+			// Don't cleanup in testdir mode
+			if !createTestDirs {
+				defer os.RemoveAll(dir)
+			}
 
-		test.input.environment(dir)
+			if debug || createTestDirs {
+				println("Using test dir " + dir)
+			}
 
-		if createTestDirs {
-			continue
-		}
+			test.input.environment(dir)
 
-		execdir := filepath.Join(dir, test.execdir)
-		statusBeforeFile := test.name + "_before"
-		statusAfterFile := test.name + "_after"
-
-		statusBefore, err := getStatus(execdir)
-		assert.Nil(t, err)
-
-		err = executePush(execdir)
-		if test.expectederr != nil {
-			if errors.Is(err, test.expectederr) {
+			if createTestDirs {
 				continue
 			}
-			assert.Fail(t, fmt.Sprintf("expected error [%s] got [%s]", test.expectederr.Error(), err.Error()))
-		}
 
-		statusAfter, err := getStatus(execdir)
-		assert.Nil(t, err)
+			execdir := filepath.Join(dir, test.execdir)
 
-		if update {
-			// tests expecting a error don't need to compare their before and after outputs
+			err = executePush(execdir)
 			if test.expectederr != nil {
+				if errors.Is(err, test.expectederr) {
+					continue
+				}
+				assert.Fail(t, fmt.Sprintf("expected error [%s] got [%s]", test.expectederr.Error(), err.Error()))
+			}
+
+			assert.Nil(t, err)
+
+			statusAfter, err := getStatus(execdir)
+			assert.Nil(t, err)
+
+			if update {
+				// tests expecting a error don't need to compare their before and after outputs
+				if test.expectederr != nil {
+					continue
+				}
+
+				err = os.RemoveAll(filepath.Join(pushTestDataPath, test.name))
+				assert.Nil(t, err)
+				err = os.MkdirAll(pushTestDataPath, 0775)
+				assert.Nil(t, err)
+				err = os.WriteFile(filepath.Join(pushTestDataPath, test.name), []byte(statusAfter.String()), 0664)
+				assert.Nil(t, err)
 				continue
 			}
 
-			err = os.RemoveAll(filepath.Join(pushTestDataPath, statusBeforeFile))
-			assert.Nil(t, err)
-			err = os.RemoveAll(filepath.Join(pushTestDataPath, statusAfterFile))
-			assert.Nil(t, err)
-			err = os.MkdirAll(pushTestDataPath, 0775)
-			assert.Nil(t, err)
-			err = os.WriteFile(filepath.Join(pushTestDataPath, statusBeforeFile), []byte(statusBefore.String()), 0664)
-			assert.Nil(t, err)
-			err = os.WriteFile(filepath.Join(pushTestDataPath, statusAfterFile), []byte(statusAfter.String()), 0664)
-			assert.Nil(t, err)
-			continue
+			expectAfter, err := os.ReadFile(filepath.Join(pushTestDataPath, test.name))
+			assert.Nil(t, err, test.name)
+
+			diff := cmp.Diff(statusAfter.String(), string(expectAfter))
+			assert.Equal(t, "", diff, test.name)
 		}
 
-		expectBefore, err := os.ReadFile(filepath.Join(pushTestDataPath, statusBeforeFile))
-		assert.Nil(t, err, test.name)
-
-		diff := cmp.Diff(statusBefore.String(), string(expectBefore))
-		assert.Equal(t, "", diff, statusBeforeFile)
-
-		expectAfter, err := os.ReadFile(filepath.Join(pushTestDataPath, statusAfterFile))
-		assert.Nil(t, err, test.name)
-
-		diff = cmp.Diff(statusAfter.String(), string(expectAfter))
-		assert.Equal(t, "", diff, statusAfterFile)
-
+		assert.Nil(t, stopServer())
+		assert.Nil(t, cleanups())
 	}
-
-	assert.Nil(t, stopServer())
-	assert.Nil(t, cleanups())
 
 	if createTestDirs || update {
 		t.FailNow()
@@ -283,12 +376,12 @@ func createCustomConfig(temppath string) *config.Config {
 		errz.Fatal(err)
 	}
 
-	err = os.MkdirAll(repopath, 0777)
+	err = os.MkdirAll(repopath, 0775)
 	if err != nil {
 		errz.Fatal(err)
 	}
 
-	err = os.MkdirAll(sshpath, 0777)
+	err = os.MkdirAll(sshpath, 0775)
 	if err != nil {
 		errz.Fatal(err)
 	}
@@ -317,7 +410,7 @@ func executePush(dir string) (err error) {
 	}
 	defer func() { _ = os.Chdir(wd) }()
 
-	return Push()
+	return Push(EnableTesting())
 }
 
 func createGitDirWithRemote(dir string, remotepath string) error {

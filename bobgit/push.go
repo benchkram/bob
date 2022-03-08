@@ -23,13 +23,38 @@ var ErrUptodateAllRepo = fmt.Errorf("All repositories up to date.")
 const configureInstruction string = "Either specify the URL from the command-line or configure a remote " +
 	"repository and then push using the remote name."
 
+type PO struct {
+	testing bool
+}
+
+type PushOption func(p *PO)
+
+func EnableTesting() PushOption {
+	return func(p *PO) {
+		p.testing = true
+	}
+}
+
 // Push run `git push` commands iteratively
 // in all the git repositories under bob workspace.
 //
 // Run through all the repositories with a confirm dialog in case of
 // not configured remote.
-func Push() (err error) {
+func Push(opts ...PushOption) (err error) {
 	defer errz.Recover(&err)
+
+	o := &PO{
+		testing: false,
+	}
+
+	// iterate through options for testings and other
+	// properties
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(o)
+	}
 
 	bobRoot, err := bobutil.FindBobRoot()
 	errz.Fatal(err)
@@ -50,7 +75,7 @@ func Push() (err error) {
 	// pre-compute maximum repository name length for proper formatting
 	maxlen := strutil.LongestStrLen(repoNames)
 
-	filteredRepo, err := filterReadyToPushRepos(bobRoot, repoNames, maxlen)
+	filteredRepo, err := filterReadyToPushRepos(bobRoot, repoNames, maxlen, o)
 	if errors.Is(err, ErrInsufficientConfig) {
 		return usererror.Wrapm(ErrInsufficientConfig, "Git push failed")
 	}
@@ -92,7 +117,7 @@ func Push() (err error) {
 //
 // ask for confirmation in case of not configured remote. If confirmed with `no` rejects the whole
 // command.
-func filterReadyToPushRepos(root string, repolist []string, maxlen int) ([]string, error) {
+func filterReadyToPushRepos(root string, repolist []string, maxlen int, opt *PO) ([]string, error) {
 	filtered := []string{}
 	for _, repo := range repolist {
 		repoConfig, err := getRepoConfig(root, repo)
@@ -109,11 +134,18 @@ func filterReadyToPushRepos(root string, repolist []string, maxlen int) ([]strin
 		} else {
 			buf := FprintErrorPushDestination(repo, maxlen)
 			fmt.Println(buf.String())
+
+			// in case of testing return the error without confirmation
+			if opt.testing {
+				return nil, ErrInsufficientConfig
+			}
+
 			resp := askForConfirmation("Sure want to continue with the rest of the repositories? (yes/no): ")
 			if !resp {
 				return nil, ErrInsufficientConfig
 			}
 			fmt.Println()
+
 		}
 	}
 
