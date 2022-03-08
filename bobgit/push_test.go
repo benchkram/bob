@@ -1,7 +1,6 @@
 package bobgit
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -10,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/errz"
@@ -341,14 +339,14 @@ func initServer() error {
 }
 
 func stopServer() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer func() {
-		cancel()
-	}()
-	err := s.Shutdown(ctx)
-	if err != nil {
-		return err
-	}
+	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// defer func() {
+	// 	cancel()
+	// }()
+	// err := s.Shutdown(ctx)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
