@@ -16,7 +16,7 @@ var addTestDataPath = "testdata/add"
 
 // disable running tests for add,
 // helpful while writing other tests
-var runAddTests = false
+var runAddTests = true
 
 func TestGitAdd(t *testing.T) {
 	type input struct {

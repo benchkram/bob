@@ -17,7 +17,7 @@ var commitTestDataPath = "testdata/commit"
 
 // disable running tests for commit,
 // helpful while writing other tests
-var runCommitTests = false
+var runCommitTests = true
 
 func TestCommit(t *testing.T) {
 

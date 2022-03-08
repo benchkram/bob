@@ -17,11 +17,13 @@ import (
 	"github.com/charmbracelet/soft-serve/config"
 	"github.com/charmbracelet/soft-serve/server"
 	"github.com/gliderlabs/ssh"
+	"github.com/google/go-cmp/cmp"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 )
 
 var sshSeverStoragePath = "/tmp/soft"
+var pushTestDataPath = "testdata/push"
 
 var cfg *config.Config
 var s *server.Server
@@ -42,6 +44,9 @@ func TestPush(t *testing.T) {
 		// relative to the repo root.
 		// reporoot is used when empty.
 		execdir string
+
+		// test returned errors
+		expectederr error
 	}
 
 	cfg = createCustomConfig(sshSeverStoragePath)
@@ -74,6 +79,7 @@ func TestPush(t *testing.T) {
 				},
 			},
 			"",
+			nil,
 		},
 		{
 			"multi_repo_push",
@@ -111,48 +117,44 @@ func TestPush(t *testing.T) {
 				},
 			},
 			"",
+			nil,
 		},
-		// {
-		// 	"multi_repo_nothing_to_push",
-		// 	input{
-		// 		func(dir string) {
+		{
+			"multi_repo_nothing_to_push",
+			input{
+				func(dir string) {
 
-		// 			testname := filepath.Base(dir)
+					testname := filepath.Base(dir)
 
-		// 			u, _ := url.Parse(sshpath)
-		// 			u.Path = path.Join(u.Path, testname)
+					u, _ := url.Parse(sshpath)
+					u.Path = path.Join(u.Path, testname)
 
-		// 			assert.Nil(t, createGitDirWithRemote(dir, u.String()))
-		// 			assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
-		// 			assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
-		// 			assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
-		// 			err := cmdutil.RunGitSSHFirstPush(dir, "origin", "master")
-		// 			assert.Nil(t, err)
+					assert.Nil(t, createGitDirWithRemote(dir, u.String()))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
+					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
+					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
+					err := cmdutil.RunGitSSHFirstPush(dir, "origin", "master")
+					assert.Nil(t, err)
 
-		// 			u, _ = url.Parse(sshpath)
-		// 			u.Path = path.Join(u.Path, testname+"_repo")
+					u, _ = url.Parse(sshpath)
+					u.Path = path.Join(u.Path, testname+"_repo")
 
-		// 			repo := filepath.Join(dir, "repo")
-		// 			assert.Nil(t, os.MkdirAll(repo, 0775))
-		// 			err = createGitDirWithRemote(repo, u.String())
-		// 			assert.Nil(t, err)
-		// 			assert.Nil(t, addAllWithCommit(repo, "Initial Commit"))
-		// 			err = cmdutil.RunGitSSHFirstPush(dir, "origin", "master")
-		// 			assert.Nil(t, err)
-		// 		},
-		// 	},
-		// 	"",
-		// },
+					repo := filepath.Join(dir, "repo")
+					assert.Nil(t, os.MkdirAll(repo, 0775))
+					err = createGitDirWithRemote(repo, u.String())
+					assert.Nil(t, err)
+					assert.Nil(t, addAllWithCommit(repo, "Initial Commit"))
+					err = cmdutil.RunGitSSHFirstPush(repo, "origin", "master")
+					assert.Nil(t, err)
+				},
+			},
+			"",
+			ErrUptodateAllRepo,
+		},
 	}
 
 	err := initServer()
 	assert.Nil(t, err)
-
-	// _, err = cmdutil.RunAddToKnownHost("localhost", cfg.Port)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// assert.Nil(t, err)
 
 	for _, test := range tests {
 		dir, err := ioutil.TempDir("", test.name+"-*")
@@ -174,16 +176,62 @@ func TestPush(t *testing.T) {
 		}
 
 		execdir := filepath.Join(dir, test.execdir)
+		statusBeforeFile := test.name + "_before"
+		statusAfterFile := test.name + "_after"
 
-		// _, err = getStatus(execdir)
-		// assert.Nil(t, err)
+		statusBefore, err := getStatus(execdir)
+		assert.Nil(t, err)
 
 		err = executePush(execdir)
+		if test.expectederr != nil {
+			if errors.Is(err, test.expectederr) {
+				continue
+			}
+			assert.Fail(t, fmt.Sprintf("expected error [%s] got [%s]", test.expectederr.Error(), err.Error()))
+		}
+
+		statusAfter, err := getStatus(execdir)
 		assert.Nil(t, err)
+
+		if update {
+			// tests expecting a error don't need to compare their before and after outputs
+			if test.expectederr != nil {
+				continue
+			}
+
+			err = os.RemoveAll(filepath.Join(pushTestDataPath, statusBeforeFile))
+			assert.Nil(t, err)
+			err = os.RemoveAll(filepath.Join(pushTestDataPath, statusAfterFile))
+			assert.Nil(t, err)
+			err = os.MkdirAll(pushTestDataPath, 0775)
+			assert.Nil(t, err)
+			err = os.WriteFile(filepath.Join(pushTestDataPath, statusBeforeFile), []byte(statusBefore.String()), 0664)
+			assert.Nil(t, err)
+			err = os.WriteFile(filepath.Join(pushTestDataPath, statusAfterFile), []byte(statusAfter.String()), 0664)
+			assert.Nil(t, err)
+			continue
+		}
+
+		expectBefore, err := os.ReadFile(filepath.Join(pushTestDataPath, statusBeforeFile))
+		assert.Nil(t, err, test.name)
+
+		diff := cmp.Diff(statusBefore.String(), string(expectBefore))
+		assert.Equal(t, "", diff, statusBeforeFile)
+
+		expectAfter, err := os.ReadFile(filepath.Join(pushTestDataPath, statusAfterFile))
+		assert.Nil(t, err, test.name)
+
+		diff = cmp.Diff(statusAfter.String(), string(expectAfter))
+		assert.Equal(t, "", diff, statusAfterFile)
+
 	}
 
 	assert.Nil(t, stopServer())
 	assert.Nil(t, cleanups())
+
+	if createTestDirs || update {
+		t.FailNow()
+	}
 }
 
 func initServer() error {

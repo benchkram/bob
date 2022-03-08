@@ -21,7 +21,7 @@ var createTestDirs = false
 
 // disable running tests for status,
 // helpful while writing other tests
-var runStatusTests = false
+var runStatusTests = true
 
 func TestStatus(t *testing.T) {
 
