@@ -355,13 +355,13 @@ func stopServer() error {
 }
 
 func cleanups() error {
-	out, err := cmdutil.RemoveFromKnownHost("localhost", cfg.Port)
-	fmt.Println(string(out))
-	if err != nil {
-		return err
-	}
+	// out, err := cmdutil.RemoveFromKnownHost("localhost", cfg.Port)
+	// fmt.Println(string(out))
+	// if err != nil {
+	// 	return err
+	// }
 
-	err = os.RemoveAll(sshSeverStoragePath)
+	err := os.RemoveAll(sshSeverStoragePath)
 	if err != nil {
 		return err
 	}
