@@ -262,9 +262,9 @@ func (t *Task) parseTargets() error {
 
 func parseTargetMap(t interface{}) ([]string, target.TargetType, error) {
 	mapped := t.(map[string]interface{})
-	pathsI, ok := mapped["paths"]
+	pathsI, ok := mapped["path"]
 	if !ok {
-		return nil, target.DefaultType, fmt.Errorf("Can't find 'paths' on Target properties")
+		return nil, target.DefaultType, fmt.Errorf("Can't find 'path' on Target properties")
 	}
 
 	targets, err := parseTargetPath(pathsI)
