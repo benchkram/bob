@@ -3,7 +3,6 @@ package target
 import (
 	"path/filepath"
 
-	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/file"
 )
 
@@ -42,7 +41,8 @@ func (t *T) existsDocker() bool {
 
 	exists, err := t.dockerRegistry.ImageExists(t.Paths[0])
 	if err != nil {
-		boblog.Log.Error(err, "Unable to find target docker image hash")
+		// ignoring unable to find image hash message
+		// boblog.Log.Error(err, "Unable to find target docker image hash")
 		return false
 	}
 
