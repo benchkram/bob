@@ -25,10 +25,14 @@ func init() {
 	rootCmd.Flags().Bool("version", false, "Show the CLI's version")
 
 	rootCmd.AddCommand(verifyCmd)
-	rootCmd.AddCommand(CmdClone)
 	rootCmd.AddCommand(cleanCmd)
 
+	// clone
+	CmdClone.Flags().Bool("fail-fast", false, "Fail on first error without user prompt")
+	rootCmd.AddCommand(CmdClone)
+
 	// workspace
+	cmdAdd.Flags().Bool("plain", false, "Do not infer contrary protocol url")
 	cmdWorkspace.AddCommand(cmdWorkspaceNew)
 	cmdWorkspace.AddCommand(cmdAdd)
 	rootCmd.AddCommand(cmdWorkspace)
@@ -45,8 +49,10 @@ func init() {
 	rootCmd.AddCommand(buildCmd)
 
 	// gitCmd
-	CmdGit.AddCommand(CmdGitStatus)
+	CmdGitCommit.Flags().StringP("message", "m", "", "Set the commit message for all repository")
 	CmdGit.AddCommand(CmdGitAdd)
+	CmdGit.AddCommand(CmdGitCommit)
+	CmdGit.AddCommand(CmdGitStatus)
 	rootCmd.AddCommand(CmdGit)
 }
 
