@@ -198,7 +198,7 @@ func GitPushFirstTime(root string, remote string, branch string, ssh bool) error
 }
 
 func DisableSSHChecking(root string) error {
-	sshcommand := "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+	sshcommand := "ssh -i /tmp/soft/.ssh/soft_serve_server_ed25519 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 	r, err := gitprepare(root, "config", "core.sshCommand", sshcommand)
 	if err != nil {

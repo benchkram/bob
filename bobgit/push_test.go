@@ -329,12 +329,13 @@ func TestPush(t *testing.T) {
 
 func initServer() error {
 	s = server.NewServer(cfg)
-	fmt.Println("Server is running on " + fmt.Sprint(s.Config.Port))
 	go func() {
 		err := s.Start()
 		if err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+			fmt.Println("Could not start the server:")
 			errz.Fatal(err)
 		}
+		fmt.Println("Server successfully started on: " + fmt.Sprint(s.Config.Port))
 	}()
 
 	return nil
@@ -354,7 +355,8 @@ func stopServer() error {
 }
 
 func cleanups() error {
-	_, err := cmdutil.RemoveFromKnownHost("localhost", cfg.Port)
+	out, err := cmdutil.RemoveFromKnownHost("localhost", cfg.Port)
+	fmt.Println(string(out))
 	if err != nil {
 		return err
 	}
