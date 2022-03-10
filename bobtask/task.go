@@ -232,8 +232,36 @@ func (t *Task) LogSkippedInput() []string {
 	return t.skippedInputs
 }
 
+const (
+	pathSelector string = "path"
+	typeSelector string = "type"
+)
+
+// parseTargets parses target definitions from yaml.
+//
+// Example yaml input:
+//
+//   target:
+//     path: aaaa
+//   -----
+//   target:
+//     type: path
+//     path: |-
+//       aaa
+//       bbb/
+//   -----
+//   target:
+//     type: docker-image
+//     path: image1
+//   -----
+//   target:
+//     type: docker-image
+//     path:
+//       image1
+//       image2
+//
 func (t *Task) parseTargets() error {
-	targetType := target.DefaultType // DefaultType set to Path currently
+	targetType := target.DefaultType
 
 	var targets []string
 	var err error
@@ -260,22 +288,26 @@ func (t *Task) parseTargets() error {
 	return nil
 }
 
-func parseTargetMap(t interface{}) ([]string, target.TargetType, error) {
-	mapped := t.(map[string]interface{})
-	pathsI, ok := mapped["path"]
+func parseTargetMap(raw interface{}) ([]string, target.TargetType, error) {
+	targetMap, ok := raw.(map[string]interface{})
+	if !ok {
+		return nil, "", ErrInvalidInput
+	}
+
+	paths, ok := targetMap[pathSelector]
 	if !ok {
 		return nil, target.DefaultType, fmt.Errorf("Can't find 'path' on Target properties")
 	}
 
-	targets, err := parseTargetPath(pathsI)
+	targets, err := parseTargetPath(paths)
 	if err != nil {
 		return nil, target.DefaultType, err
 	}
 
 	targetType := target.DefaultType
-	typeI, ok := mapped["type"]
+	t, ok := targetMap[typeSelector]
 	if ok {
-		typeStr := fmt.Sprintf("%v", typeI)
+		typeStr := fmt.Sprintf("%v", t)
 		targetType, err = target.ParseType(typeStr)
 		if err != nil {
 			return targets, target.DefaultType, err
