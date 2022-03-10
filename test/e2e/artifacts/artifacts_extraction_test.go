@@ -143,6 +143,12 @@ var _ = Describe("Test artifact creation and extraction from docker targets", fu
 			Expect(err).NotTo(HaveOccurred())
 		})
 
+		It("should check that the docker image was created correctly", func() {
+			exists, err := mobyClient.ImageExists(bob.BuildTargetBobTestImage)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(exists).To(BeTrue())
+		})
+
 		It("cleanup", func() {
 			err := b.CleanBuildInfoStore()
 			Expect(err).NotTo(HaveOccurred())
