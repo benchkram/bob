@@ -29,14 +29,18 @@ var pushTestDataPath = "testdata/push"
 // helpful while writing other tests
 var runPushTests = true
 
-var cfg *config.Config
-var s *server.Server
+// formatSSHPath, returns formatted ssh path using configs integer port.
+//
+// e.g., ssh://localhost:2233/
+func formatSSHPath(cfg *config.Config) string {
+	return fmt.Sprintf("ssh://localhost:%s/", fmt.Sprint(cfg.Port))
+}
 
 func TestPush(t *testing.T) {
 	type input struct {
 		// environment holds a function creating
 		// the testing folder structure.
-		environment func(dir string)
+		environment func(dir string, cfg *config.Config)
 	}
 
 	type test struct {
@@ -53,14 +57,13 @@ func TestPush(t *testing.T) {
 		expectederr error
 	}
 
-	cfg = createCustomConfig(sshSeverStoragePath)
-	var sshpath string = fmt.Sprintf("ssh://localhost:%s/", fmt.Sprint(cfg.Port))
-
 	tests := []test{
 		{
 			"single_repo_push",
 			input{
-				func(dir string) {
+				func(dir string, cnf *config.Config) {
+
+					sshpath := formatSSHPath(cnf)
 
 					testname := filepath.Base(dir)
 
@@ -73,11 +76,9 @@ func TestPush(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "'Initial Commit'"))
-					err = cmdutil.GitPushFirstTime(dir, "origin", "master", true)
-					if err != nil {
-						fmt.Println(err)
-					}
-					assert.Nil(t, err)
+					assert.Nil(t, cmdutil.GitConfigSSHPublicKey(dir, cnf.KeyPath))
+					assert.Nil(t, cmdutil.GitPushInitial(dir, "origin", "master"))
+
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file2"), []byte("file"), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "New File Added"))
 				},
@@ -88,9 +89,10 @@ func TestPush(t *testing.T) {
 		{
 			"multi_repo_push",
 			input{
-				func(dir string) {
+				func(dir string, cnf *config.Config) {
 
 					testname := filepath.Base(dir)
+					sshpath := formatSSHPath(cnf)
 
 					u, _ := url.Parse(sshpath)
 					u.Path = path.Join(u.Path, testname)
@@ -99,8 +101,8 @@ func TestPush(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
-					err := cmdutil.GitPushFirstTime(dir, "origin", "master", true)
-					assert.Nil(t, err)
+					assert.Nil(t, cmdutil.GitConfigSSHPublicKey(dir, cnf.KeyPath))
+					assert.Nil(t, cmdutil.GitPushInitial(dir, "origin", "master"))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file2"), []byte("file"), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "New File Added"))
 
@@ -109,15 +111,13 @@ func TestPush(t *testing.T) {
 
 					repo := filepath.Join(dir, "repo")
 					assert.Nil(t, os.MkdirAll(repo, 0775))
-					err = createGitDirWithRemote(repo, u.String())
-					assert.Nil(t, err)
+					assert.Nil(t, createGitDirWithRemote(repo, u.String()))
 					assert.Nil(t, addAllWithCommit(repo, "Initial Commit"))
-					err = cmdutil.GitPushFirstTime(repo, "origin", "master", true)
-					assert.Nil(t, err)
+					assert.Nil(t, cmdutil.GitConfigSSHPublicKey(repo, cnf.KeyPath))
+					assert.Nil(t, cmdutil.GitPushInitial(repo, "origin", "master"))
 
 					assert.Nil(t, os.WriteFile(filepath.Join(repo, "file2"), []byte("file"), 0664))
 					assert.Nil(t, addAllWithCommit(repo, "New File Added"))
-
 				},
 			},
 			"",
@@ -126,9 +126,10 @@ func TestPush(t *testing.T) {
 		{
 			"multi_repo_nothing_to_push",
 			input{
-				func(dir string) {
+				func(dir string, cnf *config.Config) {
 
 					testname := filepath.Base(dir)
+					sshpath := formatSSHPath(cnf)
 
 					u, _ := url.Parse(sshpath)
 					u.Path = path.Join(u.Path, testname)
@@ -137,19 +138,18 @@ func TestPush(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
-					err := cmdutil.GitPushFirstTime(dir, "origin", "master", true)
-					assert.Nil(t, err)
+					assert.Nil(t, cmdutil.GitConfigSSHPublicKey(dir, cnf.KeyPath))
+					assert.Nil(t, cmdutil.GitPushInitial(dir, "origin", "master"))
 
 					u, _ = url.Parse(sshpath)
 					u.Path = path.Join(u.Path, testname+"_repo")
 
 					repo := filepath.Join(dir, "repo")
 					assert.Nil(t, os.MkdirAll(repo, 0775))
-					err = createGitDirWithRemote(repo, u.String())
-					assert.Nil(t, err)
+					assert.Nil(t, createGitDirWithRemote(repo, u.String()))
 					assert.Nil(t, addAllWithCommit(repo, "Initial Commit"))
-					err = cmdutil.GitPushFirstTime(repo, "origin", "master", true)
-					assert.Nil(t, err)
+					assert.Nil(t, cmdutil.GitConfigSSHPublicKey(repo, cnf.KeyPath))
+					assert.Nil(t, cmdutil.GitPushInitial(repo, "origin", "master"))
 				},
 			},
 			"",
@@ -158,9 +158,10 @@ func TestPush(t *testing.T) {
 		{
 			"multi_repo_with_one_repo_push",
 			input{
-				func(dir string) {
+				func(dir string, cnf *config.Config) {
 
 					testname := filepath.Base(dir)
+					sshpath := formatSSHPath(cnf)
 
 					u, _ := url.Parse(sshpath)
 					u.Path = path.Join(u.Path, testname)
@@ -169,8 +170,8 @@ func TestPush(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
-					err := cmdutil.GitPushFirstTime(dir, "origin", "master", true)
-					assert.Nil(t, err)
+					assert.Nil(t, cmdutil.GitConfigSSHPublicKey(dir, cnf.KeyPath))
+					assert.Nil(t, cmdutil.GitPushInitial(dir, "origin", "master"))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file2"), []byte("file"), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "New File Added"))
 
@@ -179,20 +180,20 @@ func TestPush(t *testing.T) {
 
 					repo := filepath.Join(dir, "repo")
 					assert.Nil(t, os.MkdirAll(repo, 0775))
-					err = createGitDirWithRemote(repo, u.String())
-					assert.Nil(t, err)
+					assert.Nil(t, createGitDirWithRemote(repo, u.String()))
 					assert.Nil(t, addAllWithCommit(repo, "Initial Commit"))
-					err = cmdutil.GitPushFirstTime(repo, "origin", "master", true)
-					assert.Nil(t, err)
+					assert.Nil(t, cmdutil.GitConfigSSHPublicKey(repo, cnf.KeyPath))
+					assert.Nil(t, cmdutil.GitPushInitial(repo, "origin", "master"))
 				},
 			},
 			"repo",
 			nil,
 		},
+		// should fail with no configured remote
 		{
 			"single_repo_with_no_configured_remote",
 			input{
-				func(dir string) {
+				func(dir string, cnf *config.Config) {
 					assert.Nil(t, os.MkdirAll(dir, 0775))
 					assert.Nil(t, cmdutil.RunGit(dir, "init"))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file"), []byte("file"), 0664))
@@ -204,12 +205,14 @@ func TestPush(t *testing.T) {
 			"",
 			ErrInsufficientConfig,
 		},
+		// should fail with no configured remote
 		{
 			"multi_repo_with_no_configured_remote",
 			input{
-				func(dir string) {
+				func(dir string, cnf *config.Config) {
 
 					testname := filepath.Base(dir)
+					sshpath := formatSSHPath(cnf)
 
 					u, _ := url.Parse(sshpath)
 					u.Path = path.Join(u.Path, testname)
@@ -218,8 +221,8 @@ func TestPush(t *testing.T) {
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("repo/"), 0664))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, ".bob.workspace"), []byte(""), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "Initial Commit"))
-					err := cmdutil.GitPushFirstTime(dir, "origin", "master", true)
-					assert.Nil(t, err)
+					assert.Nil(t, cmdutil.GitConfigSSHPublicKey(dir, cnf.KeyPath))
+					assert.Nil(t, cmdutil.GitPushInitial(dir, "origin", "master"))
 					assert.Nil(t, os.WriteFile(filepath.Join(dir, "file2"), []byte("file"), 0664))
 					assert.Nil(t, addAllWithCommit(dir, "New File Added"))
 
@@ -233,14 +236,15 @@ func TestPush(t *testing.T) {
 			"",
 			ErrInsufficientConfig,
 		},
-		// normal bob push should fail, as no branch in remote exists in
-		// configured remote
+		// // normal bob push should fail, as no branch in remote exists in
+		// // configured remote
 		{
 			"single_repo_for_first_time_push",
 			input{
-				func(dir string) {
+				func(dir string, cnf *config.Config) {
 
 					testname := filepath.Base(dir)
+					sshpath := formatSSHPath(cnf)
 
 					u, _ := url.Parse(sshpath)
 					u.Path = path.Join(u.Path, testname)
@@ -258,8 +262,11 @@ func TestPush(t *testing.T) {
 		},
 	}
 
+	// initialize the config with default parameters for testing
+	cfg := createTestingConfig(sshSeverStoragePath)
+
 	if runPushTests {
-		err := initServer()
+		s, err := initServer(cfg)
 		assert.Nil(t, err)
 
 		for _, test := range tests {
@@ -275,7 +282,7 @@ func TestPush(t *testing.T) {
 				println("Using test dir " + dir)
 			}
 
-			test.input.environment(dir)
+			test.input.environment(dir, cfg)
 
 			if createTestDirs {
 				continue
@@ -318,8 +325,8 @@ func TestPush(t *testing.T) {
 			assert.Equal(t, "", diff, test.name)
 		}
 
-		assert.Nil(t, stopServer())
-		assert.Nil(t, cleanups())
+		assert.Nil(t, stopServer(s))
+		assert.Nil(t, cleanups(sshSeverStoragePath))
 	}
 
 	if createTestDirs || update {
@@ -327,26 +334,26 @@ func TestPush(t *testing.T) {
 	}
 }
 
-func initServer() error {
-	s = server.NewServer(cfg)
+func initServer(cnf *config.Config) (*server.Server, error) {
+	server := server.NewServer(cnf)
+
+	fmt.Println("Starting SSH Server on: localhost:" + fmt.Sprint(server.Config.Port))
 	go func() {
-		err := s.Start()
+		err := server.Start()
 		if err != nil && !errors.Is(err, ssh.ErrServerClosed) {
-			fmt.Println("Could not start the server:")
 			errz.Fatal(err)
 		}
-		fmt.Println("Server successfully started on: " + fmt.Sprint(s.Config.Port))
 	}()
 
-	return nil
+	return server, nil
 }
 
-func stopServer() error {
+func stopServer(server *server.Server) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer func() {
 		cancel()
 	}()
-	err := s.SSHServer.Shutdown(ctx)
+	err := server.SSHServer.Shutdown(ctx)
 	if err != nil {
 		return err
 	}
@@ -354,14 +361,18 @@ func stopServer() error {
 	return nil
 }
 
-func cleanups() error {
+func cleanups(storatePath string) error {
+
+	// if requires, hosts can be removed here from the knownHosts list in
+	// environment. Does not applicable for testing in CI
+	//
 	// out, err := cmdutil.RemoveFromKnownHost("localhost", cfg.Port)
 	// fmt.Println(string(out))
 	// if err != nil {
 	// 	return err
 	// }
 
-	err := os.RemoveAll(sshSeverStoragePath)
+	err := os.RemoveAll(storatePath)
 	if err != nil {
 		return err
 	}
@@ -369,7 +380,9 @@ func cleanups() error {
 	return nil
 }
 
-func createCustomConfig(temppath string) *config.Config {
+// createTestingConfig, creates custom config for testing
+// using the forwared path to store repository and ssh public keys.
+func createTestingConfig(temppath string) *config.Config {
 	repopath := filepath.Join(temppath, ".repos")
 	sshpath := filepath.Join(temppath, ".ssh")
 
@@ -415,6 +428,9 @@ func executePush(dir string) (err error) {
 	return Push(EnableTesting())
 }
 
+// createGitDirWithRemote
+//
+// creates the directory >> Run git init >> create file >> add remote using remote path
 func createGitDirWithRemote(dir string, remotepath string) error {
 	if err := os.MkdirAll(dir, 0775); err != nil {
 		return err
@@ -435,6 +451,9 @@ func createGitDirWithRemote(dir string, remotepath string) error {
 	return nil
 }
 
+// addAllWithCommit
+//
+// run git add all >> perform commits using commit message
 func addAllWithCommit(dir string, message string) error {
 	if err := cmdutil.RunGit(dir, "add", "--all"); err != nil {
 		return err

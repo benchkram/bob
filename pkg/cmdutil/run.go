@@ -71,17 +71,6 @@ func (run *run) OutputCombined() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func RemoveFromKnownHost(host string, port int) ([]byte, error) {
-	hostkey := fmt.Sprintf("[%s]:%d", host, port)
-	cmd := exec.Command("ssh-keygen", "-R", hostkey)
-
-	cmd.Env = os.Environ()
-
-	r := &run{cmd}
-
-	return r.OutputCombined()
-}
-
 // gitprepare inits git cmd with `root` as the working dir.
 func gitprepare(root string, args ...string) (r Runnable, _ error) {
 	cmd, err := git.GitCommand(args...)
@@ -179,16 +168,11 @@ func GitPush(root string, remote string, ref string) ([]byte, error) {
 	return r.OutputCombined()
 }
 
-// GitPushFirstTime, runs git push command for the first time with remote and branch name and
-// disable ssh checking if ssh set to true
-func GitPushFirstTime(root string, remote string, branch string, ssh bool) error {
-	if ssh {
-		err := DisableSSHChecking(root)
-		if err != nil {
-			return err
-		}
-	}
-
+// GitPushInitial, runs git push command for the first time with remote and branch name.
+//
+// Does not do any changes to git repo config. Configeration for SSH server
+// needs to be modified by other methods
+func GitPushInitial(root string, remote string, branch string) error {
 	r, err := gitprepare(root, "push", "-u", remote, branch)
 	if err != nil {
 		return fmt.Errorf("failed to make git command: %w", err)
@@ -197,8 +181,11 @@ func GitPushFirstTime(root string, remote string, branch string, ssh bool) error
 	return r.Run()
 }
 
-func DisableSSHChecking(root string) error {
-	sshcommand := "ssh -i /tmp/soft/.ssh/soft_serve_server_ed25519 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+// GitConfigSSHPublicKey, add public key path for ssh server
+// on git local repo config and disbale StrictHostKeyChecking
+func GitConfigSSHPublicKey(root, keypath string) error {
+	//  /tmp/soft/.ssh/soft_serve_server_ed25519
+	sshcommand := fmt.Sprintf("ssh -i %s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no", keypath)
 
 	r, err := gitprepare(root, "config", "core.sshCommand", sshcommand)
 	if err != nil {
@@ -206,4 +193,18 @@ func DisableSSHChecking(root string) error {
 	}
 
 	return r.Run()
+
+}
+
+// RemoveFromKnownHost, run os exec commands to remove provied hosts from
+// enviroments known hosts list.
+func RemoveFromKnownHost(host string, port int) ([]byte, error) {
+	hostkey := fmt.Sprintf("[%s]:%d", host, port)
+	cmd := exec.Command("ssh-keygen", "-R", hostkey)
+
+	cmd.Env = os.Environ()
+
+	r := &run{cmd}
+
+	return r.OutputCombined()
 }
