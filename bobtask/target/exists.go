@@ -39,12 +39,18 @@ func (t *T) existsDocker() bool {
 		return true
 	}
 
-	exists, err := t.dockerRegistryClient.ImageExists(t.Paths[0])
-	if err != nil {
-		// ignoring unable to find image hash message
-		// boblog.Log.Error(err, "Unable to find target docker image hash")
-		return false
+	for _, f := range t.Paths {
+		exists, err := t.dockerRegistryClient.ImageExists(f)
+		if err != nil {
+			// ignoring unable to find image hash message
+			// boblog.Log.Error(err, "Unable to find target docker image hash")
+			return false
+		}
+
+		if !exists {
+			return false
+		}
 	}
 
-	return exists
+	return true
 }
