@@ -326,9 +326,9 @@ func TestPush(t *testing.T) {
 		}
 
 		assert.Nil(t, stopServer(s))
-		assert.Nil(t, cleanups(sshSeverStoragePath))
 	}
 
+	assert.Nil(t, cleanups(sshSeverStoragePath))
 	if createTestDirs || update {
 		t.FailNow()
 	}
