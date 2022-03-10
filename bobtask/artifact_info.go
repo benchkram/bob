@@ -49,6 +49,7 @@ func (ai *artifactInfo) String() string {
 		fmt.Fprintf(buf, "%s%s%s\n", i, "taskname: ", ai.metadata.Taskname)
 		fmt.Fprintf(buf, "%s%s%s\n", i, "inputHash: ", ai.metadata.InputHash)
 		fmt.Fprintf(buf, "%s%s%s\n", i, "createdAt: ", ai.metadata.CreatedAt.Format(time.RFC822Z))
+		fmt.Fprintf(buf, "%s%s%s\n", i, "targetType: ", ai.metadata.TargetType)
 	}
 
 	return buf.String()

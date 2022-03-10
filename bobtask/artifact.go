@@ -277,6 +277,7 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
 				errz.Fatal(err)
 				_, err = io.Copy(f, archiveFile)
+				_ = f.Close()
 				errz.Fatal(err)
 
 				boblog.Log.V(2).Info(fmt.Sprintf("[task:%s] loading docker image from %s", t.name, dst))
@@ -286,7 +287,6 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 				// delete the unpacked docker image archive
 				// after `docker load`
 				defer func() { _ = os.Remove(dst) }()
-				defer f.Close() // close file handle before delete
 			case target.Path:
 				fallthrough
 			default:

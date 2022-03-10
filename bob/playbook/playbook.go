@@ -148,7 +148,6 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 			return true, "", err
 		}
 		if target != nil {
-			// fmt.Println(hashIn)
 			// On a invalid traget a rebuild is required
 			rebuildRequired = !target.Verify()
 
