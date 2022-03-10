@@ -2,6 +2,7 @@ package dockermobyutil
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -50,6 +51,9 @@ func NewRegistryClient() RegistryClient {
 func (r *R) ImageExists(image string) (bool, error) {
 	_, err := r.ImageHash(image)
 	if err != nil {
+		if errors.Is(err, ErrImageNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
 
