@@ -3,6 +3,7 @@ package target
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -21,7 +22,7 @@ func (t *T) Hash() (empty string, _ error) {
 	case Path:
 		return t.filepathHash()
 	case Docker:
-		return t.dockerImageHash()
+		return t.dockerImagesHash()
 	default:
 		return t.filepathHash()
 	}
@@ -85,17 +86,22 @@ func (t *T) filepathHash() (empty string, _ error) {
 	return hex.EncodeToString(h), nil
 }
 
-func (t *T) dockerImageHash() (empty string, _ error) {
-	imagetag := t.Paths[0]
+func (t *T) dockerImagesHash() (string, error) {
 
-	h, err := t.dockerRegistryClient.ImageHash(imagetag)
-	if err != nil {
-		if err == dockermobyutil.ErrImageNotFound {
-			return empty, usererror.Wrapm(err, "failed to fetch docker image hash")
-		} else {
-			return empty, fmt.Errorf("failed to get docker image hash info %q: %w", imagetag, err)
+	var hash string
+
+	for _, image := range t.Paths {
+		h, err := t.dockerRegistryClient.ImageHash(image)
+		if err != nil {
+			if errors.Is(err, dockermobyutil.ErrImageNotFound) {
+				return "", usererror.Wrapm(err, "failed to fetch docker image hash")
+			} else {
+				return "", fmt.Errorf("failed to get docker image hash info %q: %w", image, err)
+			}
 		}
+		hash = hash + h
+
 	}
 
-	return h, nil
+	return hash, nil
 }

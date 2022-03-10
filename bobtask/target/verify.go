@@ -56,6 +56,7 @@ func (t *T) verifyDocker(groundTruth string) bool {
 		return false
 	}
 
+	// check integrity by comparing hash
 	hash, err := t.Hash()
 	if err != nil {
 		boblog.Log.Error(err, "Unable to verify target docker image hash")
