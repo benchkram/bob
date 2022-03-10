@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Benchkram/errz"
@@ -93,6 +94,8 @@ func (r *R) imageSaveToPath(image string, savedir string) (pathToArchive string,
 	// rndExtension is added to the archive name. It prevents overwrite of images in tmp directory in case
 	// of a image beeing used as target in multiple tasks (which should be avoided).
 	rndExtension := randStringRunes(8)
+
+	image = strings.ReplaceAll(image, "/", "-")
 
 	pathToArchive = filepath.Join(savedir, image+"-"+rndExtension+".tar")
 	err = ioutil.WriteFile(pathToArchive, body, 0644)
