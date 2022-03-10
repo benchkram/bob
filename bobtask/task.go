@@ -11,7 +11,7 @@ import (
 	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/buildinfostore"
-	"github.com/Benchkram/bob/pkg/dockermoby"
+	"github.com/Benchkram/bob/pkg/dockermobyutil"
 	"github.com/Benchkram/bob/pkg/store"
 )
 
@@ -100,8 +100,8 @@ type Task struct {
 	// color is used to color the task's name on the terminal
 	color aurora.Color
 
-	// Handle all the request with docker local registry
-	dockerRegistry dockermoby.RegistryHandler
+	// dockerRegistryClient utility functions to handle requests with local docker registry
+	dockerRegistryClient dockermobyutil.RegistryClient
 
 	// skippedInputs is a lists of skipped input files
 	skippedInputs []string
@@ -111,13 +111,13 @@ type TargetEntry interface{}
 
 func Make(opts ...TaskOption) Task {
 	t := Task{
-		inputs:         []string{},
-		cmds:           []string{},
-		DependsOn:      []string{},
-		Exports:        make(export.Map),
-		env:            []string{},
-		rebuild:        RebuildOnChange,
-		dockerRegistry: dockermoby.New(),
+		inputs:               []string{},
+		cmds:                 []string{},
+		DependsOn:            []string{},
+		Exports:              make(export.Map),
+		env:                  []string{},
+		rebuild:              RebuildOnChange,
+		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
 	}
 
 	for _, opt := range opts {
@@ -183,8 +183,8 @@ func (t *Task) SetBuilder(builder string) {
 	t.builder = builder
 }
 
-func (t *Task) SetDockerRegistry() {
-	t.dockerRegistry = dockermoby.New()
+func (t *Task) SetDockerRegistryClient() {
+	t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
 }
 
 // Set the rebuild strategy for the task

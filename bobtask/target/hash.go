@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/pkg/dockermoby"
+	"github.com/Benchkram/bob/pkg/dockermobyutil"
 	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/Benchkram/bob/pkg/file"
@@ -88,10 +88,10 @@ func (t *T) filepathHash() (empty string, _ error) {
 func (t *T) dockerImageHash() (empty string, _ error) {
 	imagetag := t.Paths[0]
 
-	h, err := t.dockerRegistry.FetchImageHash(imagetag)
+	h, err := t.dockerRegistryClient.ImageHash(imagetag)
 	if err != nil {
-		if err == dockermoby.ErrImageNotFoundByTag {
-			return empty, usererror.Wrapm(dockermoby.ErrImageNotFoundByTag, "Failed to fetch docker image Hash")
+		if err == dockermobyutil.ErrImageNotFound {
+			return empty, usererror.Wrapm(err, "failed to fetch docker image hash")
 		} else {
 			return empty, fmt.Errorf("failed to get docker image hash info %q: %w", imagetag, err)
 		}

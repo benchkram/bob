@@ -3,7 +3,7 @@ package target
 import (
 	"fmt"
 
-	"github.com/Benchkram/bob/pkg/dockermoby"
+	"github.com/Benchkram/bob/pkg/dockermobyutil"
 )
 
 type Target interface {
@@ -22,8 +22,8 @@ type T struct {
 	// last computed hash of target
 	hash string
 
-	// to check if docker image exists
-	dockerRegistry dockermoby.RegistryHandler
+	// dockerRegistryClient utility functions to handle requests with local docker registry
+	dockerRegistryClient dockermobyutil.RegistryClient
 
 	Paths []string   `yaml:"Paths"`
 	Type  TargetType `yaml:"Type"`
@@ -31,9 +31,9 @@ type T struct {
 
 func Make() T {
 	return T{
-		dockerRegistry: dockermoby.New(),
-		Paths:          []string{},
-		Type:           Path,
+		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
+		Paths:                []string{},
+		Type:                 Path,
 	}
 }
 
@@ -43,9 +43,9 @@ func New() *T {
 
 func new() *T {
 	return &T{
-		dockerRegistry: dockermoby.New(),
-		Paths:          []string{},
-		Type:           Path,
+		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
+		Paths:                []string{},
+		Type:                 Path,
 	}
 }
 

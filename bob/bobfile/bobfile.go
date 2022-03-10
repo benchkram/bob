@@ -126,7 +126,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		task.SetProject(dir)
 
 		// initialize docker registry for task
-		task.SetDockerRegistry()
+		task.SetDockerRegistryClient()
 
 		bobfile.BTasks[key] = task
 	}

@@ -53,10 +53,10 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	tempdir := ""
 	if t.target != nil {
 		if t.target.Type == target.Docker {
-			targets, tempdir, err = t.getDockerImageTarget()
+			targets, err = t.saveDockerImageTargets()
 			errz.Fatal(err)
 		} else {
-			targets, err = t.getPathTargets()
+			targets, err = t.pathTargets()
 			errz.Fatal(err)
 		}
 	}
@@ -64,8 +64,8 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	// in case of docker images, clear newly created targets by
 	// images after archiving it in artifacts
 	if t.target.Type == target.Docker {
-		for _, t := range targets {
-			defer deleter(t)
+		for _, target := range targets {
+			defer func(dst string) { _ = os.Remove(dst) }(target)
 		}
 	}
 
@@ -89,6 +89,9 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 		// trim the tasks directory from the internal name
 		internalName := strings.TrimPrefix(fname, t.dir)
+		// saved docker images are temporarly stored in the tmp dir,
+		// this assures it's not added as prefix.
+		internalName = strings.TrimPrefix(internalName, os.TempDir())
 		internalName = strings.TrimPrefix(internalName, tempdir)
 		internalName = strings.TrimPrefix(internalName, "/")
 
@@ -168,7 +171,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	return nil
 }
 
-func (t *Task) getPathTargets() ([]string, error) {
+func (t *Task) pathTargets() ([]string, error) {
 	targets := []string{}
 	for _, path := range t.target.Paths {
 		stat, err := os.Stat(filepath.Join(t.dir, path))
@@ -198,29 +201,22 @@ func (t *Task) getPathTargets() ([]string, error) {
 	return targets, nil
 }
 
-func (t *Task) getDockerImageTarget() ([]string, string, error) {
+// saveDockerImageTargets calls `docker save` and returns a path to the tar archive.
+func (t *Task) saveDockerImageTargets() ([]string, error) {
 	targets := []string{}
 
-	dir := t.dockerRegistry.GetArchiveDir()
-
-	// to do: change this path based implementation to docker tag
-	for _, path := range t.target.Paths {
-		hashid, err := t.dockerRegistry.FetchImageHash(path)
+	// TODO: change this path based implementation to docker tag
+	for _, image := range t.target.Paths {
+		boblog.Log.V(2).Info(fmt.Sprintf("[image:%s] saving docker image", image))
+		target, err := t.dockerRegistryClient.ImageSave(image)
 		if err != nil {
-			return targets, dir, err
+			return targets, err
 		}
 
-		if hashid != "" {
-			target, err := t.dockerRegistry.SaveImage(hashid, path)
-			if err != nil {
-				return targets, dir, err
-			}
-
-			targets = append(targets, target)
-		}
+		targets = append(targets, target)
 	}
 
-	return targets, dir, nil
+	return targets, nil
 }
 
 // ArtifactUnpack unpacks a artifact from the localstore if it exists.
@@ -272,31 +268,37 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 				errz.Fatal(err)
 			}
 
-			// create dst
-			dst := filepath.Join(t.dir, filename)
-			if meta.TargetType == target.Docker {
-				// use to registry archive directory to unpack docker image
-				tempdir := t.dockerRegistry.GetArchiveDir()
-				dst = filepath.Join(tempdir, filename)
-			}
+			switch meta.TargetType {
+			case target.Docker:
+				// load the docker image from destination
+				dst := filepath.Join(os.TempDir(), filename)
 
-			f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
-			errz.Fatal(err)
-			defer f.Close()
-
-			_, err = io.Copy(f, archiveFile)
-			errz.Fatal(err)
-
-			// load the docker image from destrination
-			if meta.TargetType == target.Docker {
-				err = t.dockerRegistry.LoadImage(dst)
+				// extract to destination
+				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
+				errz.Fatal(err)
+				_, err = io.Copy(f, archiveFile)
 				errz.Fatal(err)
 
-				// delete the target docker image after
-				// loading it from the artifacts
-				defer deleter(dst)
-			}
+				boblog.Log.V(2).Info(fmt.Sprintf("[task:%s] loading docker image from %s", t.name, dst))
+				err = t.dockerRegistryClient.ImageLoad(dst)
+				errz.Fatal(err)
 
+				// delete the unpacked docker image archive
+				// after `docker load`
+				defer func() { _ = os.Remove(dst) }()
+				defer f.Close() // close file handle before delete
+			case target.Path:
+				fallthrough
+			default:
+				dst := filepath.Join(t.dir, filename)
+
+				// extract to destination
+				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
+				errz.Fatal(err)
+				defer f.Close()
+				_, err = io.Copy(f, archiveFile)
+				errz.Fatal(err)
+			}
 		}
 
 		// exports
@@ -334,15 +336,6 @@ func (t *Task) GetArtifactMetadata(artifactName string) (_ *ArtifactMetadata, er
 	}
 
 	return artifactInfo.Metadata(), nil
-}
-
-// deleter checks if provided dir is not empty,
-// if not removed the directory with all its content
-func deleter(dir string) {
-	if dir != "" {
-		err := os.RemoveAll(dir)
-		errz.Fatal(err)
-	}
 }
 
 type fileInfo struct {
