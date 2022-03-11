@@ -35,5 +35,19 @@ func (t *T) existsFile() bool {
 }
 
 func (t *T) existsDocker() bool {
+	if len(t.Paths) == 0 {
+		return true
+	}
+
+	for _, f := range t.Paths {
+		exists, err := t.dockerRegistryClient.ImageExists(f)
+		if err != nil {
+			return false
+		}
+		if !exists {
+			return false
+		}
+	}
+
 	return true
 }
