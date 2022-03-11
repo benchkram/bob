@@ -101,7 +101,7 @@ var _ = Describe("Test artifact and target invalidation", func() {
 })
 
 //  docker targets
-var _ = FDescribe("Test artifact and docker-target invalidation", func() {
+var _ = Describe("Test artifact and docker-target invalidation", func() {
 	Context("in a fresh playground", func() {
 
 		mobyClient := dockermobyutil.NewRegistryClient()
