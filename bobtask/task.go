@@ -251,11 +251,11 @@ const (
 //       bbb/
 //   -----
 //   target:
-//     type: docker-image
+//     type: docker
 //     path: image1
 //   -----
 //   target:
-//     type: docker-image
+//     type: docker
 //     path:
 //       image1
 //       image2

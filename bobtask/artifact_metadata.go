@@ -26,7 +26,7 @@ type ArtifactMetadata struct {
 	// CreatedAt timestamp the artifact was created
 	CreatedAt time.Time `yaml:"created_at,omitempty"`
 
-	// TargetType sets the type of target, path/docker-image,
+	// TargetType sets the type of target, path/docker,
 	// default sets to `path`
 	TargetType target.TargetType `yaml:"target_type,omitempty"`
 }

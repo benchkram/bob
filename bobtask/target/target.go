@@ -53,7 +53,7 @@ type TargetType string
 
 const (
 	Path   TargetType = "path"
-	Docker TargetType = "docker-image"
+	Docker TargetType = "docker"
 )
 
 const DefaultType = Path
