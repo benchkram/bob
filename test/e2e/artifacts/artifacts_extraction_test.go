@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Benchkram/bob/bob"
+	"github.com/Benchkram/bob/bob/playbook"
 	"github.com/Benchkram/bob/bobtask"
 	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/dockermobyutil"
@@ -56,8 +57,9 @@ var _ = Describe("Test artifact creation and extraction", func() {
 		})
 
 		It("extract artifact from store on rebuild", func() {
-			err := b.Build(context.Background(), bob.BuildTargetwithdirsTargetName)
+			state, err := buildTask(b, bob.BuildTargetwithdirsTargetName)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
 		})
 
 		It("cleanup", func() {
@@ -139,11 +141,13 @@ var _ = Describe("Test artifact creation and extraction from docker targets", fu
 		})
 
 		It("should extract artifact from store on rebuild", func() {
-			err := b.Build(context.Background(), bob.BuildTargetDockerImageName)
+			state, err := buildTask(b, bob.BuildTargetDockerImageName)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
 		})
 
 		It("should check that the docker image was created correctly", func() {
+			// TODO: check tasks for cached !@!
 			exists, err := mobyClient.ImageExists(bob.BuildTargetBobTestImage)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(exists).To(BeTrue())

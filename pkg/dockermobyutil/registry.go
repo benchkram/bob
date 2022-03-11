@@ -25,6 +25,7 @@ type RegistryClient interface {
 	ImageHash(image string) (string, error)
 	ImageSave(image string) (pathToArchive string, _ error)
 	ImageRemove(image string) error
+	ImageTag(src string, target string) error
 
 	ImageLoad(pathToArchive string) error
 }
@@ -144,6 +145,11 @@ func (r *R) ImageLoad(imgpath string) error {
 	}
 
 	return resp.Body.Close()
+}
+
+// ImageLoad from tar archive
+func (r *R) ImageTag(src string, target string) error {
+	return r.client.ImageTag(context.Background(), src, target)
 }
 
 // https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-go

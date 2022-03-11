@@ -24,11 +24,13 @@ const (
 	BuildTargetwithdirsTargetName = "targetwithdirs"
 	BuildAlwaysTargetName         = "always-build"
 
-	BuildTargetDockerImageName = "docker-image"
+	BuildTargetDockerImageName     = "docker-image"
+	BuildTargetDockerImagePlusName = "docker-image-plus"
 	// BuildTargetBobTestImage intentionaly has a path separator
 	// in the image name to assure temporary tar archive generation
 	// works as intended (uses the image name as filename).
-	BuildTargetBobTestImage = "bob/testimage:latest"
+	BuildTargetBobTestImage     = "bob/testimage:latest"
+	BuildTargetBobTestImagePlus = "bob/testimage/plus:latest"
 )
 
 func maingo(ver int) []byte {
@@ -95,7 +97,11 @@ paths:
           description: Service Unavailable
 `)
 
-var dockerfile = []byte(`FROM alpine
+var dockerfileAlpine = []byte(`FROM alpine
+`)
+
+var dockerfileAlpinePlus = []byte(`FROM alpine
+RUN touch file
 `)
 
 const SecondLevelDir = "second-level"
@@ -122,7 +128,9 @@ func CreatePlayground(dir string) error {
 	errz.Fatal(err)
 	err = ioutil.WriteFile("docker-compose.whoami.yml", dockercomposewhoami, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("Dockerfile", dockerfile, 0644)
+	err = ioutil.WriteFile("Dockerfile", dockerfileAlpine, 0644)
+	errz.Fatal(err)
+	err = ioutil.WriteFile("Dockerfile.plus", dockerfileAlpinePlus, 0644)
 	errz.Fatal(err)
 
 	err = createPlaygroundBobfile(".", true)
@@ -358,6 +366,16 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	bobfile.BTasks[BuildTargetDockerImageName] = bobtask.Task{
 		CmdDirty: strings.Join([]string{
 			fmt.Sprintf("docker build -t %s .", BuildTargetBobTestImage),
+		}, "\n"),
+		TargetDirty: m,
+	}
+
+	m = make(map[string]interface{})
+	m["type"] = "docker-image"
+	m["path"] = BuildTargetBobTestImagePlus
+	bobfile.BTasks[BuildTargetDockerImagePlusName] = bobtask.Task{
+		CmdDirty: strings.Join([]string{
+			fmt.Sprintf("docker build -f Dockerfile.plus -t %s .", BuildTargetBobTestImagePlus),
 		}, "\n"),
 		TargetDirty: m,
 	}
