@@ -1,5 +1,11 @@
 package target
 
+import (
+	"fmt"
+
+	"github.com/Benchkram/bob/pkg/dockermobyutil"
+)
+
 type Target interface {
 	Hash() (string, error)
 	Verify() bool
@@ -16,14 +22,18 @@ type T struct {
 	// last computed hash of target
 	hash string
 
+	// dockerRegistryClient utility functions to handle requests with local docker registry
+	dockerRegistryClient dockermobyutil.RegistryClient
+
 	Paths []string   `yaml:"Paths"`
 	Type  TargetType `yaml:"Type"`
 }
 
 func Make() T {
 	return T{
-		Paths: []string{},
-		Type:  Path,
+		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
+		Paths:                []string{},
+		Type:                 Path,
 	}
 }
 
@@ -33,8 +43,9 @@ func New() *T {
 
 func new() *T {
 	return &T{
-		Paths: []string{},
-		Type:  Path,
+		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
+		Paths:                []string{},
+		Type:                 Path,
 	}
 }
 
@@ -42,8 +53,10 @@ type TargetType string
 
 const (
 	Path   TargetType = "path"
-	Docker TargetType = "docker-image"
+	Docker TargetType = "docker"
 )
+
+const DefaultType = Path
 
 func (t *T) clone() *T {
 	target := new()
@@ -62,4 +75,15 @@ func (t *T) WithHash(hash string) Target {
 	target := t.clone()
 	target.hash = hash
 	return target
+}
+
+func ParseType(str string) (TargetType, error) {
+	switch {
+	case str == string(Path):
+		return Path, nil
+	case str == string(Docker):
+		return Docker, nil
+	default:
+		return DefaultType, fmt.Errorf("Invalid Target type. Only supports 'path' and 'docker-image' as type.")
+	}
 }

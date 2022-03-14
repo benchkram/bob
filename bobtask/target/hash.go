@@ -3,11 +3,14 @@ package target
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
-	"github.com/Benchkram/bob/pkg/usererror"
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/Benchkram/bob/pkg/dockermobyutil"
+	"github.com/Benchkram/bob/pkg/usererror"
 
 	"github.com/Benchkram/bob/pkg/file"
 	"github.com/Benchkram/bob/pkg/filehash"
@@ -15,6 +18,17 @@ import (
 
 // Hash creates a hash for the entire target
 func (t *T) Hash() (empty string, _ error) {
+	switch t.Type {
+	case Path:
+		return t.filepathHash()
+	case Docker:
+		return t.dockerImagesHash()
+	default:
+		return t.filepathHash()
+	}
+}
+
+func (t *T) filepathHash() (empty string, _ error) {
 	aggregatedHashes := bytes.NewBuffer([]byte{})
 	for _, f := range t.Paths {
 		target := filepath.Join(t.dir, f)
@@ -70,4 +84,24 @@ func (t *T) Hash() (empty string, _ error) {
 	}
 
 	return hex.EncodeToString(h), nil
+}
+
+func (t *T) dockerImagesHash() (string, error) {
+
+	var hash string
+
+	for _, image := range t.Paths {
+		h, err := t.dockerRegistryClient.ImageHash(image)
+		if err != nil {
+			if errors.Is(err, dockermobyutil.ErrImageNotFound) {
+				return "", usererror.Wrapm(err, "failed to fetch docker image hash")
+			} else {
+				return "", fmt.Errorf("failed to get docker image hash info %q: %w", image, err)
+			}
+		}
+		hash = hash + h
+
+	}
+
+	return hash, nil
 }

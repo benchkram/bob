@@ -1,6 +1,8 @@
 package target
 
-import "github.com/Benchkram/bob/pkg/boblog"
+import (
+	"github.com/Benchkram/bob/pkg/boblog"
+)
 
 // Verify existence and integrity of targets.
 // Returns true when no targets defined.
@@ -40,5 +42,26 @@ func (t *T) verifyFile(groundTruth string) bool {
 }
 
 func (t *T) verifyDocker(groundTruth string) bool {
-	return true
+
+	if len(t.Paths) == 0 {
+		return true
+	}
+
+	if t.hash == "" {
+		return true
+	}
+
+	// check plain existence
+	if !t.existsDocker() {
+		return false
+	}
+
+	// check integrity by comparing hash
+	hash, err := t.Hash()
+	if err != nil {
+		boblog.Log.Error(err, "Unable to verify target docker image hash")
+		return false
+	}
+
+	return hash == groundTruth
 }
