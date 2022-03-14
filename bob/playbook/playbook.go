@@ -93,11 +93,6 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 	task := ts.Task
 	coloredName := task.ColoredName()
 
-	// Check if task itself needs a rebuild
-	// println("taskname:" + task.Name())
-	// println("hashin:" + hashIn)
-	// println("task dir:" + task.Dir())
-
 	// returns true if rebuild strategy set to `always`
 	if task.Rebuild() == bobtask.RebuildAlways {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tREBUILDING\t(rebuild set to always)", p.namePad, coloredName))
@@ -142,7 +137,6 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 	}
 
 	if !rebuildRequired {
-
 		// check rebuild due to invalidated targets
 		target, err := task.Target()
 		if err != nil {
@@ -358,6 +352,7 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 		if err != nil {
 			return err
 		}
+
 		buildInfo.Targets[hashIn] = targetHash
 
 		// gather target hashes of dependent tasks

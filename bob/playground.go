@@ -15,6 +15,7 @@ import (
 	"github.com/Benchkram/bob/bobrun"
 	"github.com/Benchkram/bob/bobtask"
 	"github.com/Benchkram/bob/bobtask/export"
+	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/bob/pkg/file"
 )
@@ -23,6 +24,14 @@ const (
 	BuildAllTargetName            = "all"
 	BuildTargetwithdirsTargetName = "targetwithdirs"
 	BuildAlwaysTargetName         = "always-build"
+
+	BuildTargetDockerImageName     = "docker-image"
+	BuildTargetDockerImagePlusName = "docker-image-plus"
+	// BuildTargetBobTestImage intentionaly has a path separator
+	// in the image name to assure temporary tar archive generation
+	// works as intended (uses the image name as filename).
+	BuildTargetBobTestImage     = "bob/testimage:latest"
+	BuildTargetBobTestImagePlus = "bob/testimage/plus:latest"
 )
 
 func maingo(ver int) []byte {
@@ -89,6 +98,13 @@ paths:
           description: Service Unavailable
 `)
 
+var dockerfileAlpine = []byte(`FROM alpine
+`)
+
+var dockerfileAlpinePlus = []byte(`FROM alpine
+RUN touch file
+`)
+
 const SecondLevelDir = "second-level"
 const SecondLevelOpenapiProviderDir = "openapi-provider-project"
 const ThirdLevelDir = "third-level"
@@ -112,6 +128,10 @@ func CreatePlayground(dir string) error {
 	err = ioutil.WriteFile("docker-compose.yml", dockercompose, 0644)
 	errz.Fatal(err)
 	err = ioutil.WriteFile("docker-compose.whoami.yml", dockercomposewhoami, 0644)
+	errz.Fatal(err)
+	err = ioutil.WriteFile("Dockerfile", dockerfileAlpine, 0644)
+	errz.Fatal(err)
+	err = ioutil.WriteFile("Dockerfile.plus", dockerfileAlpinePlus, 0644)
 	errz.Fatal(err)
 
 	err = createPlaygroundBobfile(".", true)
@@ -339,6 +359,26 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 			"touch .bbuild/dirone/dirtwo/filetwo",
 		}, "\n"),
 		TargetDirty: ".bbuild/dirone/",
+	}
+
+	m := make(map[string]interface{})
+	m["type"] = target.Docker
+	m["path"] = BuildTargetBobTestImage
+	bobfile.BTasks[BuildTargetDockerImageName] = bobtask.Task{
+		CmdDirty: strings.Join([]string{
+			fmt.Sprintf("docker build -t %s .", BuildTargetBobTestImage),
+		}, "\n"),
+		TargetDirty: m,
+	}
+
+	m = make(map[string]interface{})
+	m["type"] = target.Docker
+	m["path"] = BuildTargetBobTestImagePlus
+	bobfile.BTasks[BuildTargetDockerImagePlusName] = bobtask.Task{
+		CmdDirty: strings.Join([]string{
+			fmt.Sprintf("docker build -f Dockerfile.plus -t %s .", BuildTargetBobTestImagePlus),
+		}, "\n"),
+		TargetDirty: m,
 	}
 
 	return bobfile.BobfileSave(dir)

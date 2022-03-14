@@ -15,8 +15,10 @@ require (
 	github.com/cli/cli v1.12.1
 	github.com/compose-spec/compose-go v1.0.8
 	github.com/containerd/console v1.0.3 // indirect
+	github.com/containerd/containerd v1.5.9 // indirect
 	github.com/docker/cli v20.10.11+incompatible
 	github.com/docker/compose/v2 v2.2.0
+	github.com/docker/docker v20.10.12+incompatible
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gliderlabs/ssh v0.3.3
@@ -43,11 +45,11 @@ require (
 	github.com/xanzy/ssh-agent v0.3.1 // indirect
 	github.com/xlab/treeprint v1.1.0
 	github.com/yargevad/filepathx v1.0.0
-	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220307203707-22a9840ba4d7 // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/genproto v0.0.0-20220204002441-d6cc3cc0770e // indirect
+	google.golang.org/grpc v1.44.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	mvdan.cc/sh v2.6.4+incompatible

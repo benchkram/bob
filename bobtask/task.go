@@ -11,6 +11,7 @@ import (
 	"github.com/Benchkram/bob/bobtask/hash"
 	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/buildinfostore"
+	"github.com/Benchkram/bob/pkg/dockermobyutil"
 	"github.com/Benchkram/bob/pkg/store"
 )
 
@@ -58,7 +59,7 @@ type Task struct {
 	// Parent tasks can take the files and copy them
 	// to a place they like to
 	// ???
-	TargetDirty string `yaml:"target,omitempty"`
+	TargetDirty TargetEntry `yaml:"target,omitempty"`
 	target      *target.T
 
 	// Exports other tasks can reuse.
@@ -99,18 +100,24 @@ type Task struct {
 	// color is used to color the task's name on the terminal
 	color aurora.Color
 
+	// dockerRegistryClient utility functions to handle requests with local docker registry
+	dockerRegistryClient dockermobyutil.RegistryClient
+
 	// skippedInputs is a lists of skipped input files
 	skippedInputs []string
 }
 
+type TargetEntry interface{}
+
 func Make(opts ...TaskOption) Task {
 	t := Task{
-		inputs:    []string{},
-		cmds:      []string{},
-		DependsOn: []string{},
-		Exports:   make(export.Map),
-		env:       []string{},
-		rebuild:   RebuildOnChange,
+		inputs:               []string{},
+		cmds:                 []string{},
+		DependsOn:            []string{},
+		Exports:              make(export.Map),
+		env:                  []string{},
+		rebuild:              RebuildOnChange,
+		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
 	}
 
 	for _, opt := range opts {
@@ -176,6 +183,10 @@ func (t *Task) SetBuilder(builder string) {
 	t.builder = builder
 }
 
+func (t *Task) SetDockerRegistryClient() {
+	t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
+}
+
 // Set the rebuild strategy for the task
 // defaults to `on-change`.
 func (t *Task) SetRebuildStrategy(rebuild RebuildType) {
@@ -221,22 +232,107 @@ func (t *Task) LogSkippedInput() []string {
 	return t.skippedInputs
 }
 
+const (
+	pathSelector string = "path"
+	typeSelector string = "type"
+)
+
+// parseTargets parses target definitions from yaml.
+//
+// Example yaml input:
+//
+//   target:
+//     path: aaaa
+//   -----
+//   target:
+//     type: path
+//     path: |-
+//       aaa
+//       bbb/
+//   -----
+//   target:
+//     type: docker
+//     path: image1
+//   -----
+//   target:
+//     type: docker
+//     path:
+//       image1
+//       image2
+//
 func (t *Task) parseTargets() error {
-	targetDirty := split(t.TargetDirty)
-	targets := []string{}
+	targetType := target.DefaultType
 
-	for _, targetPath := range unique(targetDirty) {
-		if strings.Contains(targetPath, "../") {
-			return fmt.Errorf("'../' not allowed in file path %q", targetPath)
-		}
+	var targets []string
+	var err error
 
-		targets = append(targets, targetPath)
+	switch t.TargetDirty.(type) {
+	case string:
+		targets, err = parseTargetPath(t.TargetDirty)
+	case map[string]interface{}:
+		targets, targetType, err = parseTargetMap(t.TargetDirty)
+	default:
+		targets, err = parseTargetPath(t.TargetDirty)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	if len(targets) > 0 {
 		t.target = target.New()
 		t.target.Paths = targets
+		t.target.Type = targetType
 	}
 
 	return nil
+}
+
+func parseTargetMap(raw interface{}) ([]string, target.TargetType, error) {
+	targetMap, ok := raw.(map[string]interface{})
+	if !ok {
+		return nil, "", ErrInvalidInput
+	}
+
+	paths, ok := targetMap[pathSelector]
+	if !ok {
+		return nil, target.DefaultType, fmt.Errorf("Can't find 'path' on Target properties")
+	}
+
+	targets, err := parseTargetPath(paths)
+	if err != nil {
+		return nil, target.DefaultType, err
+	}
+
+	targetType := target.DefaultType
+	t, ok := targetMap[typeSelector]
+	if ok {
+		typeStr := fmt.Sprintf("%v", t)
+		targetType, err = target.ParseType(typeStr)
+		if err != nil {
+			return targets, target.DefaultType, err
+		}
+	}
+
+	return targets, targetType, nil
+}
+
+func parseTargetPath(p interface{}) ([]string, error) {
+	targets := []string{}
+	if p == nil {
+		return targets, nil
+	}
+
+	targetStr := fmt.Sprintf("%v", p)
+	targetDirty := split(targetStr)
+
+	for _, targetPath := range unique(targetDirty) {
+		if strings.Contains(targetPath, "../") {
+			return targets, fmt.Errorf("'../' not allowed in file path %q", targetPath)
+		}
+
+		targets = append(targets, targetPath)
+	}
+
+	return targets, nil
 }
