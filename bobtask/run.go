@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/Benchkram/bob/pkg/boblog"
 	"github.com/Benchkram/bob/pkg/usererror"
@@ -54,8 +55,10 @@ func (t *Task) PostRun(ctx context.Context, namePad int) (err error) {
 	return nil
 }
 
+// runCmds, runs all the commands from the cmdilst prints the output on different go routines
+// under single waitgroup. wait until all the task under wait group finished before return.
 func (t *Task) runCmds(ctx context.Context, taskstr string, cmdlist []string) error {
-	// var wtmanager sync.WaitGroup
+	var wg sync.WaitGroup
 
 	for _, run := range cmdlist {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
@@ -75,7 +78,7 @@ func (t *Task) runCmds(ctx context.Context, taskstr string, cmdlist []string) er
 		s := bufio.NewScanner(pr)
 		s.Split(bufio.ScanLines)
 
-		// wtmanager.Add(1)
+		wg.Add(1)
 
 		go func() {
 			for s.Scan() {
@@ -86,8 +89,7 @@ func (t *Task) runCmds(ctx context.Context, taskstr string, cmdlist []string) er
 
 				boblog.Log.V(1).Info(fmt.Sprintf("%s\t  %s", taskstr, aurora.Faint(s.Text())))
 			}
-
-			// wtmanager.Done()
+			wg.Done()
 		}()
 
 		r, err := interp.New(
@@ -104,11 +106,9 @@ func (t *Task) runCmds(ctx context.Context, taskstr string, cmdlist []string) er
 			return usererror.Wrapm(err, "shell commands execution error")
 		}
 
-		// wtmanager.Done()
+		pw.Close()
 	}
 
-	// wtmanager.Wait()
-	// fmt.Println(fmt.Sprintf("%s\tcompleted...", taskstr))
-
+	wg.Wait()
 	return nil
 }
