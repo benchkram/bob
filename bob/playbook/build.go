@@ -186,6 +186,10 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		boblog.Log.V(1).Info("")
 		didWriteBuildOutput = true
 	}
+
+	err = task.PreRun(ctx, p.namePad)
+	errz.Fatal(err)
+
 	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\trunning task...", p.namePad, coloredName))
 
 	err = task.Clean()
@@ -222,6 +226,9 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 			}
 		}
 	}
+
+	err = task.PostRun(ctx, p.namePad)
+	errz.Fatal(err)
 
 	err = p.TaskCompleted(task.Name())
 	errz.Fatal(err)

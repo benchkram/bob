@@ -31,9 +31,19 @@ type Task struct {
 	// inputs is filtered by ignored & sanitized
 	inputs []string
 
+	// lists of cmd runs before the final run
+	PreRunDirty string `yaml:"prerun,omitempty"`
+	// cmds passed to os.Exec before run
+	precmds []string
+
 	CmdDirty string `yaml:"cmd"`
 	// The cmds passed to os.Exec
 	cmds []string
+
+	// lists of cmd runs after the final run
+	PostRunDirty string `yaml:"postrun,omitempty"`
+	// cmds passed to os.Exec before run
+	postcmds []string
 
 	// DependsOn are task which must succeede before this task
 	// can run.
@@ -149,6 +159,10 @@ func (t *Task) SetColor(color aurora.Color) {
 
 func (t *Task) ColoredName() string {
 	return aurora.Colorize(t.Name(), t.color).String()
+}
+
+func (t *Task) ColoredNameWithSuffix(suff string) string {
+	return aurora.Colorize(t.Name()+suff, t.color).String()
 }
 
 func (t *Task) Env() []string {

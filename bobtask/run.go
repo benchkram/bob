@@ -20,12 +20,44 @@ import (
 func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
-	err = t.PreRun(namePad)
-	if err != nil {
-		return usererror.Wrapm(err, "Pre run command execute error")
+	taskstr := fmt.Sprintf("%-*s", namePad, t.ColoredName())
+
+	return t.runCmds(ctx, taskstr, t.cmds)
+}
+
+func (t *Task) PreRun(ctx context.Context, namePad int) (err error) {
+	defer errz.Recover(&err)
+
+	if len(t.precmds) > 0 {
+		// boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint("Pre run Command are running")))
+		taskstr := fmt.Sprintf("%-*s", namePad, t.ColoredNameWithSuffix(" (pre)"))
+		err = t.runCmds(ctx, taskstr, t.precmds)
+		if err != nil {
+			return usererror.Wrapm(err, "Failed while running the Pre-run commands")
+		}
 	}
 
-	for _, run := range t.cmds {
+	return nil
+}
+
+func (t *Task) PostRun(ctx context.Context, namePad int) (err error) {
+	defer errz.Recover(&err)
+
+	if len(t.postcmds) > 0 {
+		taskstr := fmt.Sprintf("%-*s", namePad, t.ColoredNameWithSuffix(" (post)"))
+		err = t.runCmds(ctx, taskstr, t.postcmds)
+		if err != nil {
+			return usererror.Wrapm(err, "Failed while running the Post-run commands")
+		}
+	}
+
+	return nil
+}
+
+func (t *Task) runCmds(ctx context.Context, taskstr string, cmdlist []string) error {
+	// var wtmanager sync.WaitGroup
+
+	for _, run := range cmdlist {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
 		if err != nil {
 			return usererror.Wrapm(err, "shell command parse error")
@@ -43,6 +75,8 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		s := bufio.NewScanner(pr)
 		s.Split(bufio.ScanLines)
 
+		// wtmanager.Add(1)
+
 		go func() {
 			for s.Scan() {
 				err := s.Err()
@@ -50,8 +84,10 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 					return
 				}
 
-				boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint(s.Text())))
+				boblog.Log.V(1).Info(fmt.Sprintf("%s\t  %s", taskstr, aurora.Faint(s.Text())))
 			}
+
+			// wtmanager.Done()
 		}()
 
 		r, err := interp.New(
@@ -67,22 +103,12 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		if err != nil {
 			return usererror.Wrapm(err, "shell commands execution error")
 		}
+
+		// wtmanager.Done()
 	}
 
-	err = t.PostRun(namePad)
-	if err != nil {
-		return usererror.Wrapm(err, "Post run commands execution error")
-	}
+	// wtmanager.Wait()
+	// fmt.Println(fmt.Sprintf("%s\tcompleted...", taskstr))
 
-	return nil
-}
-
-func (t *Task) PreRun(namePad int) error {
-	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint("Pre run Command are running")))
-	return nil
-}
-
-func (t *Task) PostRun(namePad int) error {
-	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint("Post run Commands are running")))
 	return nil
 }
