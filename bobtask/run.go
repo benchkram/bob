@@ -30,12 +30,13 @@ func (t *Task) PreRun(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
 	if len(t.precmds) > 0 {
-		// boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint("Pre run Command are running")))
 		taskstr := fmt.Sprintf("%-*s", namePad, t.ColoredNameWithSuffix(" (pre)"))
 		err = t.runCmds(ctx, taskstr, t.precmds)
 		if err != nil {
 			return usererror.Wrapm(err, "Failed while running the Pre-run commands")
 		}
+		// print a spacing after pre cmd runs output
+		boblog.Log.V(1).Info("")
 	}
 
 	return nil
@@ -45,6 +46,9 @@ func (t *Task) PostRun(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
 	if len(t.postcmds) > 0 {
+		// print a spacing before post cmd runs output
+		boblog.Log.V(1).Info("")
+
 		taskstr := fmt.Sprintf("%-*s", namePad, t.ColoredNameWithSuffix(" (post)"))
 		err = t.runCmds(ctx, taskstr, t.postcmds)
 		if err != nil {
@@ -110,5 +114,6 @@ func (t *Task) runCmds(ctx context.Context, taskstr string, cmdlist []string) er
 	}
 
 	wg.Wait()
+
 	return nil
 }

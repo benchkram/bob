@@ -3,6 +3,9 @@ package buildtest
 import (
 	"context"
 	"errors"
+	"io/ioutil"
+	"log"
+	"strings"
 
 	"github.com/Benchkram/bob/bob"
 	"github.com/Benchkram/bob/bob/playbook"
@@ -11,6 +14,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
+
+const buildGitOutput = `On branch master
+nothing to commit, working tree clean`
 
 var _ = Describe("Test bob build", func() {
 	Context("in a fresh environment", func() {
@@ -59,5 +65,30 @@ var _ = Describe("Test bob build", func() {
 			Expect(rebuildCause).To(Equal(playbook.TaskForcedRebuild))
 
 		})
+	})
+
+	It("runs git pre post cmd build with the git output file", func() {
+		ctx := context.Background()
+
+		targetTask := bob.BuildGitWithPrePostCmd
+		Expect(b.Build(ctx, targetTask)).NotTo(HaveOccurred())
+
+		Expect(file.Exists("git.out")).To(BeTrue(), "git output file should exist")
+
+		content, err := ioutil.ReadFile("git.out")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// remove all the tabspace from both texts
+		gitout := strings.Replace(buildGitOutput, "\t", "", -1)
+		text := strings.Replace(string(content), "\t", "", -1)
+
+		// remove all the newlines
+		gitout = strings.Replace(gitout, "\n", "", -1)
+		text = strings.Replace(text, "\n", "", -1)
+
+		diff := strings.Compare(text, string(gitout))
+		Expect(diff).To(Equal(0))
 	})
 })

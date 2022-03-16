@@ -23,6 +23,7 @@ import (
 const (
 	BuildAllTargetName            = "all"
 	BuildTargetwithdirsTargetName = "targetwithdirs"
+	BuildGitWithPrePostCmd        = "git-pre-post-run"
 	BuildAlwaysTargetName         = "always-build"
 
 	BuildTargetDockerImageName     = "docker-image"
@@ -359,6 +360,12 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 			"touch .bbuild/dirone/dirtwo/filetwo",
 		}, "\n"),
 		TargetDirty: ".bbuild/dirone/",
+	}
+
+	bobfile.BTasks[BuildGitWithPrePostCmd] = bobtask.Task{
+		PreRunDirty:  strings.Join([]string{"echo \"running git commands\"", "rm -f git.out", "touch git.out"}, "\n"),
+		CmdDirty:     strings.Join([]string{"echo \"Running git add command\"", "git add ."}, "\n"),
+		PostRunDirty: strings.Join([]string{"git commit -m \"initial commit\"", "git status > git.out"}, "\n"),
 	}
 
 	m := make(map[string]interface{})
