@@ -287,8 +287,15 @@ func (t *Task) parseTargets() error {
 }
 
 var ErrInvalidTargetDefinition = fmt.Errorf("invalid target definition, can't find 'path' or 'image' directive")
+var ErrBothTargetDefinition = fmt.Errorf("invalid target definition, can't have both 'path' or 'image' directive on a target")
 
 func parseTargetMap(tm map[string]interface{}) ([]string, target.TargetType, error) {
+
+	// check first if both directives are selected
+	if keyExists(tm, pathSelector) && keyExists(tm, imageSelector) {
+		return nil, target.DefaultType, ErrBothTargetDefinition
+	}
+
 	paths, ok := tm[pathSelector]
 	if ok {
 		targets, err := parseTargetPath(paths.(string))
@@ -336,4 +343,9 @@ func parseTargetImage(p string) []string {
 	targetDirty := split(targetStr)
 
 	return unique(targetDirty)
+}
+
+func keyExists(m map[string]interface{}, key string) bool {
+	_, ok := m[key]
+	return ok
 }
