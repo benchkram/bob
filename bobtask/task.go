@@ -266,13 +266,11 @@ func (t *Task) parseTargets() error {
 	var targets []string
 	var err error
 
-	switch t.TargetDirty.(type) {
+	switch td := t.TargetDirty.(type) {
 	case string:
-		targets, err = parseTargetPath(t.TargetDirty)
+		targets, err = parseTargetPath(td)
 	case map[string]interface{}:
-		targets, targetType, err = parseTargetMap(t.TargetDirty)
-	default:
-		targets, err = parseTargetPath(t.TargetDirty)
+		targets, targetType, err = parseTargetMap(td)
 	}
 
 	if err != nil {
@@ -288,15 +286,12 @@ func (t *Task) parseTargets() error {
 	return nil
 }
 
-func parseTargetMap(raw interface{}) ([]string, target.TargetType, error) {
-	targetMap, ok := raw.(map[string]interface{})
-	if !ok {
-		return nil, "", ErrInvalidInput
-	}
+var ErrInvalidTargetDefinition = fmt.Errorf("invalid target definition, can't find 'path' or 'image' directive")
 
-	paths, ok := targetMap[pathSelector]
+func parseTargetMap(tm map[string]interface{}) ([]string, target.TargetType, error) {
+	paths, ok := tm[pathSelector]
 	if ok {
-		targets, err := parseTargetPath(paths)
+		targets, err := parseTargetPath(paths.(string))
 		if err != nil {
 			return nil, target.DefaultType, err
 		}
@@ -304,18 +299,17 @@ func parseTargetMap(raw interface{}) ([]string, target.TargetType, error) {
 		return targets, target.Path, nil
 	}
 
-	images, ok := targetMap[imageSelector]
+	images, ok := tm[imageSelector]
 	if !ok {
-		return nil, target.DefaultType, fmt.Errorf("Can't find 'path' or 'image' on Target properties")
+		return nil, target.DefaultType, ErrInvalidTargetDefinition
 	}
 
-	targets := parseTargetImage(images)
-	return targets, target.Docker, nil
+	return parseTargetImage(images.(string)), target.Docker, nil
 }
 
-func parseTargetPath(p interface{}) ([]string, error) {
+func parseTargetPath(p string) ([]string, error) {
 	targets := []string{}
-	if p == nil {
+	if p == "" {
 		return targets, nil
 	}
 
@@ -333,16 +327,13 @@ func parseTargetPath(p interface{}) ([]string, error) {
 	return targets, nil
 }
 
-func parseTargetImage(p interface{}) []string {
-	targets := []string{}
-	if p == nil {
-		return targets
+func parseTargetImage(p string) []string {
+	if p == "" {
+		return []string{}
 	}
 
 	targetStr := fmt.Sprintf("%v", p)
 	targetDirty := split(targetStr)
 
-	targets = append(targets, unique(targetDirty)...)
-
-	return targets
+	return unique(targetDirty)
 }
