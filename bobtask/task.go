@@ -301,7 +301,7 @@ func parseTargetMap(raw interface{}) ([]string, target.TargetType, error) {
 			return nil, target.DefaultType, err
 		}
 
-		return targets, target.DefaultType, nil
+		return targets, target.Path, nil
 	}
 
 	images, ok := targetMap[imageSelector]
@@ -310,9 +310,7 @@ func parseTargetMap(raw interface{}) ([]string, target.TargetType, error) {
 	}
 
 	targets := parseTargetImage(images)
-	targetType := target.Docker
-
-	return targets, targetType, nil
+	return targets, target.Docker, nil
 }
 
 func parseTargetPath(p interface{}) ([]string, error) {
