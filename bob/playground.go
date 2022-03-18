@@ -15,7 +15,6 @@ import (
 	"github.com/Benchkram/bob/bobrun"
 	"github.com/Benchkram/bob/bobtask"
 	"github.com/Benchkram/bob/bobtask/export"
-	"github.com/Benchkram/bob/bobtask/target"
 	"github.com/Benchkram/bob/pkg/cmdutil"
 	"github.com/Benchkram/bob/pkg/file"
 )
@@ -362,8 +361,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	}
 
 	m := make(map[string]interface{})
-	m["type"] = target.Docker
-	m["path"] = BuildTargetBobTestImage
+	m["image"] = BuildTargetBobTestImage
 	bobfile.BTasks[BuildTargetDockerImageName] = bobtask.Task{
 		CmdDirty: strings.Join([]string{
 			fmt.Sprintf("docker build -t %s .", BuildTargetBobTestImage),
@@ -372,8 +370,7 @@ func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
 	}
 
 	m = make(map[string]interface{})
-	m["type"] = target.Docker
-	m["path"] = BuildTargetBobTestImagePlus
+	m["image"] = BuildTargetBobTestImagePlus
 	bobfile.BTasks[BuildTargetDockerImagePlusName] = bobtask.Task{
 		CmdDirty: strings.Join([]string{
 			fmt.Sprintf("docker build -f Dockerfile.plus -t %s .", BuildTargetBobTestImagePlus),

@@ -233,32 +233,32 @@ func (t *Task) LogSkippedInput() []string {
 }
 
 const (
-	pathSelector string = "path"
-	typeSelector string = "type"
+	pathSelector  string = "path"
+	imageSelector string = "image"
 )
 
 // parseTargets parses target definitions from yaml.
 //
 // Example yaml input:
 //
-//   target:
-//     path: aaaa
-//   -----
-//   target:
-//     type: path
-//     path: |-
-//       aaa
-//       bbb/
-//   -----
-//   target:
-//     type: docker
-//     path: image1
-//   -----
-//   target:
-//     type: docker
-//     path:
-//       image1
-//       image2
+// target: folder/
+//
+// target: |-
+//	folder/
+//	folder1/folder/file
+//
+// target:
+//   path: |-
+//		folder/
+//		folder1/folder/file
+//
+// target:
+//	image: docker-image-name
+//
+// target:
+//   image: |-
+//		docker-image-name
+//		docker-image2-name
 //
 func (t *Task) parseTargets() error {
 	targetType := target.DefaultType
@@ -295,24 +295,22 @@ func parseTargetMap(raw interface{}) ([]string, target.TargetType, error) {
 	}
 
 	paths, ok := targetMap[pathSelector]
-	if !ok {
-		return nil, target.DefaultType, fmt.Errorf("Can't find 'path' on Target properties")
-	}
-
-	targets, err := parseTargetPath(paths)
-	if err != nil {
-		return nil, target.DefaultType, err
-	}
-
-	targetType := target.DefaultType
-	t, ok := targetMap[typeSelector]
 	if ok {
-		typeStr := fmt.Sprintf("%v", t)
-		targetType, err = target.ParseType(typeStr)
+		targets, err := parseTargetPath(paths)
 		if err != nil {
-			return targets, target.DefaultType, err
+			return nil, target.DefaultType, err
 		}
+
+		return targets, target.DefaultType, nil
 	}
+
+	images, ok := targetMap[imageSelector]
+	if !ok {
+		return nil, target.DefaultType, fmt.Errorf("Can't find 'path' or 'image' on Target properties")
+	}
+
+	targets := parseTargetImage(images)
+	targetType := target.Docker
 
 	return targets, targetType, nil
 }
@@ -335,4 +333,18 @@ func parseTargetPath(p interface{}) ([]string, error) {
 	}
 
 	return targets, nil
+}
+
+func parseTargetImage(p interface{}) []string {
+	targets := []string{}
+	if p == nil {
+		return targets
+	}
+
+	targetStr := fmt.Sprintf("%v", p)
+	targetDirty := split(targetStr)
+
+	targets = append(targets, unique(targetDirty)...)
+
+	return targets
 }
