@@ -42,17 +42,9 @@ func (e *E) Unwrap() error {
 // Wrap an existing error and annotate it with the user error type
 // which is intended to be shown to the user on a cli.
 func Wrap(err error) *E {
-	if err == nil {
-		return nil
-	}
-
 	return &E{err: err}
 }
 
 func Wrapm(err error, msg string) *E {
-	if err == nil {
-		return nil
-	}
-
 	return &E{err: err, msg: msg}
 }

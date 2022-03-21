@@ -44,7 +44,9 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 
 // Sanitize task map and write filtered & sanitized
 // propertys from dirty members to plain (e.g. dirtyInputs -> filter&sanitize -> inputs)
-func (tm Map) Sanitize() {
+func (tm Map) Sanitize() (err error) {
+	defer errz.Recover(&err)
+
 	for key, task := range tm {
 
 		sanitizedExports, err := task.sanitizeExports(task.Exports)
@@ -63,6 +65,8 @@ func (tm Map) Sanitize() {
 
 		tm[key] = task
 	}
+
+	return nil
 }
 
 func (tm Map) String() string {

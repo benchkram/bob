@@ -153,9 +153,7 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 	err = b.Validate()
 	errz.Fatal(err)
 
-	b.BTasks.Sanitize()
-
-	return b, nil
+	return b, b.BTasks.Sanitize()
 }
 
 // Validate makes sure no task depends on itself (self-reference) or has the same name as another task

@@ -13,6 +13,7 @@ import (
 	"github.com/Benchkram/bob/pkg/buildinfostore"
 	"github.com/Benchkram/bob/pkg/dockermobyutil"
 	"github.com/Benchkram/bob/pkg/store"
+	"github.com/Benchkram/bob/pkg/usererror"
 )
 
 type RebuildType string
@@ -233,32 +234,32 @@ func (t *Task) LogSkippedInput() []string {
 }
 
 const (
-	pathSelector string = "path"
-	typeSelector string = "type"
+	pathSelector  string = "path"
+	imageSelector string = "image"
 )
 
 // parseTargets parses target definitions from yaml.
 //
 // Example yaml input:
 //
-//   target:
-//     path: aaaa
-//   -----
-//   target:
-//     type: path
-//     path: |-
-//       aaa
-//       bbb/
-//   -----
-//   target:
-//     type: docker
-//     path: image1
-//   -----
-//   target:
-//     type: docker
-//     path:
-//       image1
-//       image2
+// target: folder/
+//
+// target: |-
+//	folder/
+//	folder1/folder/file
+//
+// target:
+//   path: |-
+//		folder/
+//		folder1/folder/file
+//
+// target:
+//	image: docker-image-name
+//
+// target:
+//   image: |-
+//		docker-image-name
+//		docker-image2-name
 //
 func (t *Task) parseTargets() error {
 	targetType := target.DefaultType
@@ -266,13 +267,14 @@ func (t *Task) parseTargets() error {
 	var targets []string
 	var err error
 
-	switch t.TargetDirty.(type) {
+	switch td := t.TargetDirty.(type) {
 	case string:
-		targets, err = parseTargetPath(t.TargetDirty)
+		targets, err = parseTargetPath(td)
 	case map[string]interface{}:
-		targets, targetType, err = parseTargetMap(t.TargetDirty)
-	default:
-		targets, err = parseTargetPath(t.TargetDirty)
+		targets, targetType, err = parseTargetMap(td)
+		if err != nil {
+			err = usererror.Wrapm(err, fmt.Sprintf("[task:%s]", t.name))
+		}
 	}
 
 	if err != nil {
@@ -288,38 +290,34 @@ func (t *Task) parseTargets() error {
 	return nil
 }
 
-func parseTargetMap(raw interface{}) ([]string, target.TargetType, error) {
-	targetMap, ok := raw.(map[string]interface{})
-	if !ok {
-		return nil, "", ErrInvalidInput
+func parseTargetMap(tm map[string]interface{}) ([]string, target.TargetType, error) {
+
+	// check first if both directives are selected
+	if keyExists(tm, pathSelector) && keyExists(tm, imageSelector) {
+		return nil, target.DefaultType, ErrAmbigousTargetDefinition
 	}
 
-	paths, ok := targetMap[pathSelector]
-	if !ok {
-		return nil, target.DefaultType, fmt.Errorf("Can't find 'path' on Target properties")
-	}
-
-	targets, err := parseTargetPath(paths)
-	if err != nil {
-		return nil, target.DefaultType, err
-	}
-
-	targetType := target.DefaultType
-	t, ok := targetMap[typeSelector]
+	paths, ok := tm[pathSelector]
 	if ok {
-		typeStr := fmt.Sprintf("%v", t)
-		targetType, err = target.ParseType(typeStr)
+		targets, err := parseTargetPath(paths.(string))
 		if err != nil {
-			return targets, target.DefaultType, err
+			return nil, target.DefaultType, err
 		}
+
+		return targets, target.Path, nil
 	}
 
-	return targets, targetType, nil
+	images, ok := tm[imageSelector]
+	if !ok {
+		return nil, target.DefaultType, ErrInvalidTargetDefinition
+	}
+
+	return parseTargetImage(images.(string)), target.Docker, nil
 }
 
-func parseTargetPath(p interface{}) ([]string, error) {
+func parseTargetPath(p string) ([]string, error) {
 	targets := []string{}
-	if p == nil {
+	if p == "" {
 		return targets, nil
 	}
 
@@ -335,4 +333,20 @@ func parseTargetPath(p interface{}) ([]string, error) {
 	}
 
 	return targets, nil
+}
+
+func parseTargetImage(p string) []string {
+	if p == "" {
+		return []string{}
+	}
+
+	targetStr := fmt.Sprintf("%v", p)
+	targetDirty := split(targetStr)
+
+	return unique(targetDirty)
+}
+
+func keyExists(m map[string]interface{}, key string) bool {
+	_, ok := m[key]
+	return ok
 }

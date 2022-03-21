@@ -9,4 +9,7 @@ var (
 	ErrHashInDoesNotExist     = fmt.Errorf("input-hash does not exist")
 	ErrTaskDoesNotExist       = fmt.Errorf("task does not exist")
 	ErrInvalidInput           = fmt.Errorf("invalid input")
+
+	ErrInvalidTargetDefinition  = fmt.Errorf("invalid target definition, can't find 'path' or 'image' directive")
+	ErrAmbigousTargetDefinition = fmt.Errorf("ambigous target definition, can't have 'path' and 'image' directive on same target")
 )
