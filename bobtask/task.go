@@ -13,6 +13,7 @@ import (
 	"github.com/Benchkram/bob/pkg/buildinfostore"
 	"github.com/Benchkram/bob/pkg/dockermobyutil"
 	"github.com/Benchkram/bob/pkg/store"
+	"github.com/Benchkram/bob/pkg/usererror"
 )
 
 type RebuildType string
@@ -271,6 +272,9 @@ func (t *Task) parseTargets() error {
 		targets, err = parseTargetPath(td)
 	case map[string]interface{}:
 		targets, targetType, err = parseTargetMap(td)
+		if err != nil {
+			err = usererror.Wrapm(err, fmt.Sprintf("[task:%s]", t.name))
+		}
 	}
 
 	if err != nil {
@@ -286,14 +290,11 @@ func (t *Task) parseTargets() error {
 	return nil
 }
 
-var ErrInvalidTargetDefinition = fmt.Errorf("invalid target definition, can't find 'path' or 'image' directive")
-var ErrBothTargetDefinition = fmt.Errorf("invalid target definition, can't have both 'path' or 'image' directive on a target")
-
 func parseTargetMap(tm map[string]interface{}) ([]string, target.TargetType, error) {
 
 	// check first if both directives are selected
 	if keyExists(tm, pathSelector) && keyExists(tm, imageSelector) {
-		return nil, target.DefaultType, ErrBothTargetDefinition
+		return nil, target.DefaultType, ErrAmbigousTargetDefinition
 	}
 
 	paths, ok := tm[pathSelector]
