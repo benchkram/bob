@@ -12,6 +12,11 @@ import (
 	"github.com/Benchkram/bob/bobtask/export"
 )
 
+var (
+	BackwardPathError = fmt.Errorf("'../' not allowed in file path")
+	OutsideDirError   = fmt.Errorf("filepath outside of project")
+)
+
 func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {
 	projectRoot, err := resolve(t.dir)
 	if err != nil {
@@ -22,7 +27,7 @@ func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {
 	resolved := make(map[string]struct{})
 	for _, f := range inputs {
 		if strings.Contains(f, "../") {
-			return nil, fmt.Errorf("'../' not allowed in file path %q", f)
+			return nil, fmt.Errorf("%w %q", BackwardPathError, f)
 		}
 
 		resolvedPath, err := resolve(f)
@@ -36,7 +41,7 @@ func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {
 
 		if _, ok := resolved[resolvedPath]; !ok {
 			if isOutsideOfProject(projectRoot, resolvedPath) {
-				return nil, fmt.Errorf("file %q is outside of project", resolvedPath)
+				return nil, fmt.Errorf("%q: %w", resolvedPath, OutsideDirError)
 			}
 
 			resolved[resolvedPath] = struct{}{}
@@ -51,7 +56,7 @@ func (t *Task) sanitizeExports(exports export.Map) (export.Map, error) {
 	sanitizedExports := make(export.Map)
 	for name, export := range exports {
 		if strings.Contains(string(export), "..") {
-			return nil, fmt.Errorf("'..' not allowed in file path %q", string(export))
+			return nil, fmt.Errorf("%w %q", BackwardPathError, string(export))
 		}
 		sanitizedExports[name] = export
 	}
