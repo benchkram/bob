@@ -3,6 +3,7 @@ package cmdutil
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 
@@ -123,7 +124,7 @@ func GitCommit(root string, message string) ([]byte, error) {
 }
 
 func GitAddDry(root string, targetDir string) ([]byte, error) {
-	r, err := gitprepare(root, "add", targetDir, "--dry-run")
+	r, err := gitprepare(root, "add", targetDir, "--dry-run", "--verbose")
 	if err != nil {
 		return nil, err
 	}
@@ -138,4 +139,72 @@ func GitAdd(root string, targetDir string) error {
 	}
 
 	return r.Run()
+}
+
+func GitUnpushedCommits(root string) ([]byte, error) {
+	r, err := gitprepare(root, "cherry", "-v")
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Output()
+}
+
+func GitPushDry(root string, remote string, ref string) ([]byte, error) {
+	r, err := gitprepare(root, "push", "--set-upstream", remote, ref, "--dry-run")
+	if err != nil {
+		return nil, fmt.Errorf("failed to make git command: %w", err)
+	}
+
+	return r.OutputCombined()
+}
+
+func GitPush(root string, remote string, ref string) ([]byte, error) {
+	r, err := gitprepare(root, "push", "--set-upstream", remote, ref)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make git command: %w", err)
+	}
+
+	return r.OutputCombined()
+}
+
+// GitPushInitial, runs git push command for the first time with remote and branch name.
+//
+// Does not do any changes to git repo config. Configeration for SSH server
+// needs to be modified by other methods
+func GitPushInitial(root string, remote string, branch string) error {
+	r, err := gitprepare(root, "push", "-u", remote, branch)
+	if err != nil {
+		return fmt.Errorf("failed to make git command: %w", err)
+	}
+
+	return r.Run()
+}
+
+// GitConfigSSHPublicKey, add public key path for ssh server
+// on git local repo config and disbale StrictHostKeyChecking
+func GitConfigSSHPublicKey(root, keypath string) error {
+	//  /tmp/soft/.ssh/soft_serve_server_ed25519
+	sshcommand := fmt.Sprintf("ssh -i %s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no", keypath)
+
+	r, err := gitprepare(root, "config", "core.sshCommand", sshcommand)
+	if err != nil {
+		return fmt.Errorf("failed to config git command: %w", err)
+	}
+
+	return r.Run()
+
+}
+
+// RemoveFromKnownHost, run os exec commands to remove provied hosts from
+// enviroments known hosts list.
+func RemoveFromKnownHost(host string, port int) ([]byte, error) {
+	hostkey := fmt.Sprintf("[%s]:%d", host, port)
+	cmd := exec.Command("ssh-keygen", "-R", hostkey)
+
+	cmd.Env = os.Environ()
+
+	r := &run{cmd}
+
+	return r.OutputCombined()
 }
