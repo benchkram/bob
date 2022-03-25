@@ -95,6 +95,9 @@ type Task struct {
 	// local store for artifacts
 	local store.Store
 
+	// remote store for artifacts
+	remote store.Store
+
 	// buildInfoStore stores buildinfos.
 	buildInfoStore buildinfostore.Store
 
