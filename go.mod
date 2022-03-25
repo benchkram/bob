@@ -11,6 +11,7 @@ require (
 	github.com/cli/cli v1.12.1
 	github.com/compose-spec/compose-go v1.0.8
 	github.com/containerd/containerd v1.5.9 // indirect
+	github.com/deepmap/oapi-codegen v1.9.1
 	github.com/docker/cli v20.10.11+incompatible
 	github.com/docker/compose/v2 v2.2.0
 	github.com/docker/docker v20.10.12+incompatible
@@ -20,7 +21,6 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/hashicorp/go-version v1.3.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mholt/archiver/v3 v3.5.0
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
 	github.com/muesli/ansi v0.0.0-20211031195517-c9f0611b6c70 // indirect
