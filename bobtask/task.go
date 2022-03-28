@@ -202,6 +202,11 @@ func (t *Task) WithLocalstore(s store.Store) *Task {
 	return t
 }
 
+func (t *Task) WithRemotestore(s store.Store) *Task {
+	t.remote = s
+	return t
+}
+
 func (t *Task) WithBuildinfoStore(s buildinfostore.Store) *Task {
 	t.buildInfoStore = s
 	return t

@@ -8,6 +8,7 @@ import (
 	"github.com/Benchkram/bob/pkg/buildinfostore"
 	"github.com/Benchkram/bob/pkg/store"
 	"github.com/Benchkram/bob/pkg/store/filestore"
+	"github.com/Benchkram/bob/pkg/store/remotestore"
 	"github.com/Benchkram/errz"
 )
 
@@ -22,6 +23,19 @@ func DefaultFilestore() (s store.Store, err error) {
 	errz.Fatal(err)
 
 	return filestore.New(storeDir), nil
+}
+
+func Defaultremotestore() (s store.Store, err error) {
+	defer errz.Recover(&err)
+
+	// home, err := os.UserHomeDir()
+	// errz.Fatal(err)
+
+	// storeDir := filepath.Join(home, global.BobCacheArtifactsDir)
+	// err = os.MkdirAll(storeDir, 0775)
+	// errz.Fatal(err)
+
+	return remotestore.New(storeDir), nil
 }
 
 func Filestore(dir string) (s store.Store, err error) {

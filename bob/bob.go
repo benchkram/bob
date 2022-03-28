@@ -28,8 +28,9 @@ type B struct {
 
 	// local the place to store artifacts localy
 	local store.Store
-	// TODO: add a remote store
-	// remotestore cas.Store
+
+	// remotestore  add a remote store
+	remote store.Store
 
 	buildInfoStore buildinfostore.Store
 

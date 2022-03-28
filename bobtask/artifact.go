@@ -168,6 +168,10 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	})
 	errz.Fatal(err)
 
+	if t.remote != nil {
+		// TODO: sync with remote store
+	}
+
 	return nil
 }
 
