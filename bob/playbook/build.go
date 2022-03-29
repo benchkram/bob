@@ -8,9 +8,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/Benchkram/bob/bobtask"
-	"github.com/Benchkram/bob/pkg/boblog"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 )
 

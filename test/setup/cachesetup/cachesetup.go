@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bob/global"
+	"github.com/benchkram/bob/bob/global"
 )
 
 // Setup creates cache directory structure to be used in a test setup.

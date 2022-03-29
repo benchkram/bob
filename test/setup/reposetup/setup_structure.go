@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bob"
+	"github.com/benchkram/bob/bob"
 
 	git "github.com/go-git/go-git/v5"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 const (

@@ -2,7 +2,7 @@ package execctl
 
 import (
 	"context"
-	"github.com/Benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/ctl"
 	"golang.org/x/sync/errgroup"
 )
 

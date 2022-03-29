@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Benchkram/bob/bob/playbook"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob/playbook"
+	"github.com/benchkram/errz"
 )
 
 var (

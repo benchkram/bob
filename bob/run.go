@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Benchkram/bob/bob/bobfile"
-	"github.com/Benchkram/bob/pkg/ctl"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/errz"
 )
 
 // Examples of possible interactive usecase

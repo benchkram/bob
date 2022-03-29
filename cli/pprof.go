@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 const _cpuprofile = "cpuprofile.prof"

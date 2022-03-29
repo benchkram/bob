@@ -11,10 +11,10 @@ import (
 
 	git "github.com/go-git/go-git/v5"
 
-	"github.com/Benchkram/bob/bobgit/status"
-	"github.com/Benchkram/bob/pkg/bobutil"
-	"github.com/Benchkram/bob/pkg/cmdutil"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobgit/status"
+	"github.com/benchkram/bob/pkg/bobutil"
+	"github.com/benchkram/bob/pkg/cmdutil"
+	"github.com/benchkram/errz"
 )
 
 // Status executes `git status -porcelain` in all repositories

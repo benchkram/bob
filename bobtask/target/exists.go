@@ -3,7 +3,7 @@ package target
 import (
 	"path/filepath"
 
-	"github.com/Benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/file"
 )
 
 // Exists determines if the target exists without

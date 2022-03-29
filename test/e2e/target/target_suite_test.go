@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/bob/global"
-	"github.com/Benchkram/bob/pkg/buildinfostore"
-	"github.com/Benchkram/bob/test/setup"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/test/setup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

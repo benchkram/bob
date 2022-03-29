@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 const gitignore = ".gitignore"

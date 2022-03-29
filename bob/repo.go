@@ -5,7 +5,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 type Repo struct {

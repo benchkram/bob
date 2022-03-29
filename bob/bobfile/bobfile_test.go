@@ -3,9 +3,9 @@ package bobfile_test
 import (
 	"testing"
 
-	"github.com/Benchkram/bob/bob/bobfile"
-	"github.com/Benchkram/bob/bobrun"
-	"github.com/Benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/bobrun"
+	"github.com/benchkram/bob/bobtask"
 )
 
 func TestBobfileValidateSelReference(t *testing.T) {

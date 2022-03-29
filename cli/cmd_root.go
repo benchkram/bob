@@ -6,9 +6,9 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/boblog"
 
-	"github.com/Benchkram/bob/bob"
+	"github.com/benchkram/bob/bob"
 	"github.com/spf13/cobra"
 )
 

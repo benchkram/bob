@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/test/setup"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/test/setup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

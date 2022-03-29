@@ -1,8 +1,8 @@
 package bobfile
 
 import (
-	"github.com/Benchkram/bob/bob/playbook"
-	"github.com/Benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bob/playbook"
+	"github.com/benchkram/bob/bobtask"
 )
 
 func (b *Bobfile) Playbook(taskname string, opts ...playbook.Option) (*playbook.Playbook, error) {

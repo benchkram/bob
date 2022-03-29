@@ -8,15 +8,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 
-	"github.com/Benchkram/bob/bob/bobfile"
-	"github.com/Benchkram/bob/bob/global"
-	"github.com/Benchkram/bob/bobrun"
-	"github.com/Benchkram/bob/bobtask"
-	"github.com/Benchkram/bob/bobtask/export"
-	"github.com/Benchkram/bob/pkg/cmdutil"
-	"github.com/Benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/bobrun"
+	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask/export"
+	"github.com/benchkram/bob/pkg/cmdutil"
+	"github.com/benchkram/bob/pkg/file"
 )
 
 const (

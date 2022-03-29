@@ -3,7 +3,7 @@ package bobtask
 import (
 	"time"
 
-	"github.com/Benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/bobtask/target"
 )
 
 type ArtifactMetadata struct {

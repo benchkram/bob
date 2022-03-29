@@ -7,19 +7,19 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
 	"github.com/pkg/errors"
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 
-	"github.com/Benchkram/bob/bob/global"
-	"github.com/Benchkram/bob/bobrun"
-	"github.com/Benchkram/bob/bobtask"
-	"github.com/Benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/bobrun"
+	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/pkg/file"
 )
 
 var (

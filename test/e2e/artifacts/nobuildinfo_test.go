@@ -4,10 +4,10 @@ import (
 	"context"
 	"os"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/bob/playbook"
-	"github.com/Benchkram/bob/pkg/dockermobyutil"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/bob/playbook"
+	"github.com/benchkram/bob/pkg/dockermobyutil"
+	"github.com/benchkram/errz"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

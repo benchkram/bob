@@ -7,14 +7,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Benchkram/bob/pkg/boblog"
-	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
 	"mvdan.cc/sh/interp"
 	"mvdan.cc/sh/syntax"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 func (t *Task) Run(ctx context.Context, namePad int) (err error) {

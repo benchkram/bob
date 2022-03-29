@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/Benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/file"
 )
 
 var _ = Describe("Test bob init", func() {

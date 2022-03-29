@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask"
 )
 
 // Status holds the state of a task

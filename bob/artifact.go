@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/Benchkram/bob/bobtask"
-	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 )
 
 // ArtifactList list artifacts belonging to each tasks.

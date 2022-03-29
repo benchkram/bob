@@ -5,15 +5,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Benchkram/bob/bobtask"
-	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/logrusorgru/aurora"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 
-	"github.com/Benchkram/bob/bob/bobfile"
-	"github.com/Benchkram/bob/pkg/filepathutil"
+	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/hashicorp/go-version"
 )
 

@@ -9,11 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/pkg/dockermobyutil"
-	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/pkg/dockermobyutil"
+	"github.com/benchkram/bob/pkg/usererror"
 
-	"github.com/Benchkram/bob/pkg/file"
-	"github.com/Benchkram/bob/pkg/filehash"
+	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/filehash"
 )
 
 // Hash creates a hash for the entire target

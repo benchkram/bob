@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bobtask/buildinfo"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobtask/buildinfo"
+	"github.com/benchkram/errz"
 )
 
 // var ErrBuildInfoDoesNotExist = fmt.Errorf("build info does not exist")

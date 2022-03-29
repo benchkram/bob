@@ -1,7 +1,7 @@
 package tasktest
 
 import (
-	"github.com/Benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
