@@ -73,7 +73,9 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		exports = append(exports, filepath.Join(t.dir, path.String()))
 	}
 
-	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
+	// TODO: reestablish the local store.
+	// artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
+	artifact, err := t.remote.NewArtifact(context.TODO(), artifactName.String())
 	errz.Fatal(err)
 	defer artifact.Close()
 
@@ -125,6 +127,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		},
 		ReadCloser: io.NopCloser(bytes.NewBuffer(exportSummary)),
 	})
+
 	for _, fname := range exports {
 		info, err := os.Stat(fname)
 		errz.Fatal(err)

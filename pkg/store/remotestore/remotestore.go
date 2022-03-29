@@ -11,24 +11,24 @@ import (
 )
 
 type s struct {
-	dir string
-
 	// client to call the remote store.
 	client storeclient.I
 }
 
 // New creates a remote store. The caller is responsible to pass a
 // existing directory.
-func New(dir string, opts ...Option) store.Store {
-	s := &s{
-		dir: dir,
-	}
+func New(opts ...Option) store.Store {
+	s := &s{}
 
 	for _, opt := range opts {
 		if opt == nil {
 			continue
 		}
 		opt(s)
+	}
+
+	if s.client == nil {
+		panic(fmt.Errorf("no client"))
 	}
 
 	return s
@@ -43,7 +43,6 @@ func (s *s) NewArtifact(ctx context.Context, id string) (io.WriteCloser, error) 
 		err := s.client.Upload(ctx,
 			"projectID:TODO:XXX",
 			id,
-			"contentType:TODO",
 			id, /*TODO:*/
 			reader,
 		)

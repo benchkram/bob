@@ -7,6 +7,7 @@ import (
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/store"
+	storeclient "github.com/benchkram/bob/pkg/store-client"
 	"github.com/benchkram/bob/pkg/store/filestore"
 	"github.com/benchkram/bob/pkg/store/remotestore"
 	"github.com/benchkram/errz"
@@ -18,24 +19,7 @@ func DefaultFilestore() (s store.Store, err error) {
 	home, err := os.UserHomeDir()
 	errz.Fatal(err)
 
-	storeDir := filepath.Join(home, global.BobCacheArtifactsDir)
-	err = os.MkdirAll(storeDir, 0775)
-	errz.Fatal(err)
-
-	return filestore.New(storeDir), nil
-}
-
-func Defaultremotestore() (s store.Store, err error) {
-	defer errz.Recover(&err)
-
-	// home, err := os.UserHomeDir()
-	// errz.Fatal(err)
-
-	// storeDir := filepath.Join(home, global.BobCacheArtifactsDir)
-	// err = os.MkdirAll(storeDir, 0775)
-	// errz.Fatal(err)
-
-	return remotestore.New("TODO:"), nil
+	return Filestore(home)
 }
 
 func Filestore(dir string) (s store.Store, err error) {
@@ -46,6 +30,15 @@ func Filestore(dir string) (s store.Store, err error) {
 	errz.Fatal(err)
 
 	return filestore.New(storeDir), nil
+}
+
+func Remotestore() (s store.Store) {
+	s = remotestore.New(
+		remotestore.WithClient(
+			storeclient.New("http://localhost:8100"),
+		),
+	)
+	return s
 }
 
 func MustDefaultFilestore() store.Store {
@@ -59,11 +52,7 @@ func DefaultBuildinfoStore() (s buildinfostore.Store, err error) {
 	home, err := os.UserHomeDir()
 	errz.Fatal(err)
 
-	storeDir := filepath.Join(home, global.BobCacheBuildinfoDir)
-	err = os.MkdirAll(storeDir, 0775)
-	errz.Fatal(err)
-
-	return buildinfostore.New(storeDir), nil
+	return BuildinfoStore(home)
 }
 
 func BuildinfoStore(dir string) (s buildinfostore.Store, err error) {

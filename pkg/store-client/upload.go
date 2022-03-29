@@ -15,7 +15,6 @@ func (c *c) Upload(
 	ctx context.Context,
 	projectID string,
 	artifactID string,
-	contentType string,
 	filename string,
 	src io.Reader,
 ) (err error) {
@@ -37,7 +36,7 @@ func (c *c) Upload(
 
 	response, err := c.clientWithResponses.CreateProjectArtifactWithBodyWithResponse(ctx,
 		projectID,
-		contentType,
+		w.FormDataContentType(),
 		&b,
 		func(ctx context.Context, req *http.Request) (err error) {
 			req.ContentLength = -1

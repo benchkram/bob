@@ -27,6 +27,12 @@ func WithFilestore(store store.Store) Option {
 	}
 }
 
+func WithRemotestore(store store.Store) Option {
+	return func(b *B) {
+		b.remote = store
+	}
+}
+
 func WithBuildinfoStore(store buildinfostore.Store) Option {
 	return func(b *B) {
 		b.buildInfoStore = store

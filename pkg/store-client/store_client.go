@@ -13,7 +13,6 @@ type I interface {
 		_ context.Context,
 		projectID string,
 		artifactID string,
-		contentType string,
 		filename string,
 		src io.Reader,
 	) error
