@@ -1,4 +1,4 @@
-module github.com/Benchkram/bob
+module github.com/benchkram/bob
 
 go 1.16
 
