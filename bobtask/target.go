@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bobtask/target"
-	"github.com/Benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/pkg/buildinfostore"
 )
 
 // Target takes care of populating the targets members correctly.

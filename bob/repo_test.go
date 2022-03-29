@@ -93,10 +93,10 @@ func TestParseGeneral(t *testing.T) {
 		{
 			name: "github-https",
 			input: input{
-				rawurl: "https://github.com/Benchkram/bob.git",
+				rawurl: "https://github.com/benchkram/bob.git",
 			},
 			result: result{
-				https: "https://github.com/Benchkram/bob.git",
+				https: "https://github.com/benchkram/bob.git",
 				ssh:   "git@github.com:Benchkram/bob.git",
 			},
 		},
@@ -106,7 +106,7 @@ func TestParseGeneral(t *testing.T) {
 				rawurl: "git@github.com:Benchkram/bob.git",
 			},
 			result: result{
-				https: "https://github.com/Benchkram/bob.git",
+				https: "https://github.com/benchkram/bob.git",
 				ssh:   "git@github.com:Benchkram/bob.git",
 			},
 		},
@@ -147,7 +147,7 @@ func TestParseGeneral(t *testing.T) {
 // 	// Gathering of http + ssh urls
 // 	//
 // 	// Github:
-// 	//   https://github.com/Benchkram/bob.git
+// 	//   https://github.com/benchkram/bob.git
 // 	//   git@github.com:Benchkram/bob.git
 // 	// Azure:
 // 	//   https://xxx@dev.azure.com/xxx/Yyy/_git/zzz.zzz.zzz
@@ -171,7 +171,7 @@ func TestParseGeneral(t *testing.T) {
 // 		{
 // 			name: "github",
 // 			input: input{
-// 				https: "https://github.com/Benchkram/bob.git",
+// 				https: "https://github.com/benchkram/bob.git",
 // 				ssh:   "git@github.com:Benchkram/bob.git",
 // 			},
 // 			result: "",

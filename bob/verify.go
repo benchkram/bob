@@ -3,7 +3,7 @@ package bob
 import (
 	"context"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 func (b *B) Verify(ctx context.Context) (err error) {

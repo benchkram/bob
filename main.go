@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/cli"
-	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/cli"
+	"github.com/benchkram/bob/pkg/boblog"
 )
 
 var Version = "0.0.0"

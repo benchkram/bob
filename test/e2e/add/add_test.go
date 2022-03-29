@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/pkg/add"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/pkg/add"
 	giturls "github.com/whilp/git-urls"
 
 	. "github.com/onsi/ginkgo"

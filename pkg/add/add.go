@@ -1,8 +1,8 @@
 package add
 
 import (
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/errz"
 )
 
 type AddParams struct {

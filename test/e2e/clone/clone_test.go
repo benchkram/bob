@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bob/global"
-	"github.com/Benchkram/bob/pkg/file"
-	"github.com/Benchkram/bob/test/setup/reposetup"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/test/setup/reposetup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

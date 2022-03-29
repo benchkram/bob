@@ -1,6 +1,6 @@
 package cli
 
-import "github.com/Benchkram/bob/pkg/boblog"
+import "github.com/benchkram/bob/pkg/boblog"
 
 func logInit(level int) {
 	// Log levels

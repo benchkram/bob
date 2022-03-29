@@ -1,8 +1,8 @@
 package bob
 
 import (
-	"github.com/Benchkram/bob/pkg/buildinfostore"
-	"github.com/Benchkram/bob/pkg/store"
+	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/pkg/store"
 )
 
 type Option func(b *B)

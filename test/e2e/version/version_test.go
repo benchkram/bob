@@ -3,8 +3,8 @@ package version_test
 import (
 	"context"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/errz"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

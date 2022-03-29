@@ -9,7 +9,7 @@ import (
 
 	giturls "github.com/whilp/git-urls"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 var generalGitProvider = GitProvider{Name: "general"}
@@ -173,7 +173,7 @@ func ParseAzure(rawurl string) (repo *GitRepo, err error) {
 // corresponding to most (github, gitlab) domain specifications.
 //
 // github
-// https://github.com/Benchkram/bob.git
+// https://github.com/benchkram/bob.git
 // git@github.com:Benchkram/bob.git
 // gitlab
 // git@gitlab.com:gitlab-org/gitlab.git

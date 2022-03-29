@@ -12,8 +12,8 @@ import (
 
 	"github.com/logrusorgru/aurora"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/errz"
 
 	"github.com/spf13/cobra"
 )

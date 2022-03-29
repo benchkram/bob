@@ -3,14 +3,14 @@ package cli
 import (
 	"context"
 
-	"github.com/Benchkram/bob/pkg/boblog"
-	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/Benchkram/bob/tui"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/tui"
 	"github.com/pkg/errors"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/bob/global"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/errz"
 	"github.com/spf13/cobra"
 )
 

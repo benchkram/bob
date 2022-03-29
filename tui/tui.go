@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Benchkram/bob/pkg/ctl"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/errz"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -7,12 +7,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/Benchkram/bob/bobtask"
-	"github.com/Benchkram/bob/bobtask/buildinfo"
-	"github.com/Benchkram/bob/bobtask/hash"
-	"github.com/Benchkram/bob/pkg/boblog"
-	"github.com/Benchkram/bob/pkg/buildinfostore"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask/buildinfo"
+	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 )
 

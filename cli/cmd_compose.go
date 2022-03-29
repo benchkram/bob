@@ -10,9 +10,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Benchkram/bob/pkg/composectl"
-	"github.com/Benchkram/bob/pkg/composeutil"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/composectl"
+	"github.com/benchkram/bob/pkg/composeutil"
+	"github.com/benchkram/errz"
 	"github.com/spf13/cobra"
 )
 

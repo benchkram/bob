@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/bob/playbook"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/bob/playbook"
+	"github.com/benchkram/errz"
 )
 
 // artifactRemove a artifact from the local artifact store

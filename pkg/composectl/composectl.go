@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 	"io"
 	"os"
 

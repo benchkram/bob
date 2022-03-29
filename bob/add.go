@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 	giturls "github.com/whilp/git-urls"
 )
 

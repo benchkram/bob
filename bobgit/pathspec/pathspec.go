@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Benchkram/bob/pkg/filepathutil"
+	"github.com/benchkram/bob/pkg/filepathutil"
 )
 
 // map the repo as key and pathspec as value

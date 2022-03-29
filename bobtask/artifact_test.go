@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Benchkram/bob/pkg/file"
-	"github.com/Benchkram/bob/pkg/store/filestore"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/store/filestore"
+	"github.com/benchkram/errz"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -2,7 +2,7 @@ package composeutil
 
 import (
 	"fmt"
-	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
 	"math"

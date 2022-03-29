@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/bobtask/buildinfo"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/bobtask/buildinfo"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

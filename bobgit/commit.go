@@ -6,10 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Benchkram/bob/pkg/bobutil"
-	"github.com/Benchkram/bob/pkg/cmdutil"
-	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/bobutil"
+	"github.com/benchkram/bob/pkg/cmdutil"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 	git "github.com/go-git/go-git/v5"
 	"github.com/logrusorgru/aurora"
 )

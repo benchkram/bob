@@ -3,8 +3,8 @@ package bob
 import (
 	"context"
 
-	"github.com/Benchkram/bob/bob/bobfile"
-	"github.com/Benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/pkg/ctl"
 )
 
 var _ ctl.Builder = (*builder)(nil)

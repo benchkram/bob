@@ -3,9 +3,9 @@ package bobtask
 import (
 	"errors"
 
-	"github.com/Benchkram/bob/bobtask/hash"
-	"github.com/Benchkram/bob/pkg/buildinfostore"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/errz"
 )
 
 type RebuildOptions struct {

@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Benchkram/bob/pkg/cmdutil"
-	"github.com/Benchkram/bob/pkg/file"
-	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/cmdutil"
+	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 
 	"github.com/logrusorgru/aurora"
 )

@@ -3,10 +3,10 @@ package bob
 import (
 	"path/filepath"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 
-	"github.com/Benchkram/bob/bob/global"
-	"github.com/Benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/file"
 )
 
 func (b *B) Init() (err error) {

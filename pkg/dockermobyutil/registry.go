@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 )

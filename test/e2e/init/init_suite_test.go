@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/Benchkram/bob/bob"
+	"github.com/benchkram/bob/bob"
 )
 
 var (

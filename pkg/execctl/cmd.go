@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Benchkram/bob/pkg/ctl"
-	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 var (

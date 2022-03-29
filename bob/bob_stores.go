@@ -4,11 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bob/global"
-	"github.com/Benchkram/bob/pkg/buildinfostore"
-	"github.com/Benchkram/bob/pkg/store"
-	"github.com/Benchkram/bob/pkg/store/filestore"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/pkg/store"
+	"github.com/benchkram/bob/pkg/store/filestore"
+	"github.com/benchkram/errz"
 )
 
 func DefaultFilestore() (s store.Store, err error) {

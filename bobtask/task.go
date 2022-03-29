@@ -7,13 +7,13 @@ import (
 
 	"github.com/logrusorgru/aurora"
 
-	"github.com/Benchkram/bob/bobtask/export"
-	"github.com/Benchkram/bob/bobtask/hash"
-	"github.com/Benchkram/bob/bobtask/target"
-	"github.com/Benchkram/bob/pkg/buildinfostore"
-	"github.com/Benchkram/bob/pkg/dockermobyutil"
-	"github.com/Benchkram/bob/pkg/store"
-	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/bobtask/export"
+	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/pkg/dockermobyutil"
+	"github.com/benchkram/bob/pkg/store"
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 type RebuildType string

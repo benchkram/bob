@@ -1,7 +1,7 @@
 package target
 
 import (
-	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/boblog"
 )
 
 // Verify existence and integrity of targets.
