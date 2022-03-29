@@ -97,17 +97,17 @@ func TestParseGeneral(t *testing.T) {
 			},
 			result: result{
 				https: "https://github.com/benchkram/bob.git",
-				ssh:   "git@github.com:Benchkram/bob.git",
+				ssh:   "git@github.com:benchkram/bob.git",
 			},
 		},
 		{
 			name: "github-ssh",
 			input: input{
-				rawurl: "git@github.com:Benchkram/bob.git",
+				rawurl: "git@github.com:benchkram/bob.git",
 			},
 			result: result{
 				https: "https://github.com/benchkram/bob.git",
-				ssh:   "git@github.com:Benchkram/bob.git",
+				ssh:   "git@github.com:benchkram/bob.git",
 			},
 		},
 		{
@@ -148,7 +148,7 @@ func TestParseGeneral(t *testing.T) {
 // 	//
 // 	// Github:
 // 	//   https://github.com/benchkram/bob.git
-// 	//   git@github.com:Benchkram/bob.git
+// 	//   git@github.com:benchkram/bob.git
 // 	// Azure:
 // 	//   https://xxx@dev.azure.com/xxx/Yyy/_git/zzz.zzz.zzz
 // 	//   git@ssh.dev.azure.com:v3/xxx/Yyy/zzz.zzz.zzz
@@ -172,7 +172,7 @@ func TestParseGeneral(t *testing.T) {
 // 			name: "github",
 // 			input: input{
 // 				https: "https://github.com/benchkram/bob.git",
-// 				ssh:   "git@github.com:Benchkram/bob.git",
+// 				ssh:   "git@github.com:benchkram/bob.git",
 // 			},
 // 			result: "",
 // 		},

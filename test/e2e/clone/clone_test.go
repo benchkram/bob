@@ -25,7 +25,7 @@ var _ = Describe("Test bob clone", func() {
 
 		// TODO: Reenable. Fails to clone on CI.
 		/*It("adds SSH repo to bob", func() {
-			Expect(b.Add("git@github.com:Benchkram/bob.git", false)).NotTo(HaveOccurred())
+			Expect(b.Add("git@github.com:benchkram/bob.git", false)).NotTo(HaveOccurred())
 		})*/
 
 		It("adds local repos to bob", func() {

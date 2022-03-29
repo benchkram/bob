@@ -174,7 +174,7 @@ func ParseAzure(rawurl string) (repo *GitRepo, err error) {
 //
 // github
 // https://github.com/benchkram/bob.git
-// git@github.com:Benchkram/bob.git
+// git@github.com:benchkram/bob.git
 // gitlab
 // git@gitlab.com:gitlab-org/gitlab.git
 // https://gitlab.com/gitlab-org/gitlab.git
