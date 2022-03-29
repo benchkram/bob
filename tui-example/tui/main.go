@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/Benchkram/bob/pkg/execctl"
-	"github.com/Benchkram/bob/tui"
+	"github.com/benchkram/bob/pkg/execctl"
+	"github.com/benchkram/bob/tui"
 )
 
 func main() {

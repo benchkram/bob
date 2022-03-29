@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 var (

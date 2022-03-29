@@ -14,10 +14,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Benchkram/bob/bobtask/hash"
-	"github.com/Benchkram/bob/bobtask/target"
-	"github.com/Benchkram/bob/pkg/boblog"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/errz"
 	"github.com/mholt/archiver/v3"
 	"gopkg.in/yaml.v3"
 )

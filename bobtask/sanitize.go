@@ -9,7 +9,7 @@ import (
 
 	"errors"
 
-	"github.com/Benchkram/bob/bobtask/export"
+	"github.com/benchkram/bob/bobtask/export"
 )
 
 func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {

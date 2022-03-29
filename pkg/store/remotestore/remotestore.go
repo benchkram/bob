@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Benchkram/bob/pkg/store"
-	storeclient "github.com/Benchkram/bob/pkg/store-client"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/store"
+	storeclient "github.com/benchkram/bob/pkg/store-client"
+	"github.com/benchkram/errz"
 )
 
 type s struct {

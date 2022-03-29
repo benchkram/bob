@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/bob/playbook"
-	"github.com/Benchkram/bob/pkg/file"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/bob/playbook"
+	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/errz"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

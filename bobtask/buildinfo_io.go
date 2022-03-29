@@ -1,8 +1,8 @@
 package bobtask
 
 import (
-	"github.com/Benchkram/bob/bobtask/buildinfo"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobtask/buildinfo"
+	"github.com/benchkram/errz"
 )
 
 // ReadBuildinfo indexed by the input hash from the store

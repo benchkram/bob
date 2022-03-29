@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/Benchkram/bob/pkg/multilinecmd"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/multilinecmd"
+	"github.com/benchkram/errz"
 )
 
 type Map map[string]Task

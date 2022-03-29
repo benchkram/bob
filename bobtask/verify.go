@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/file"
 )
 
 // Verify a bobfile before task runner.

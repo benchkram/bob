@@ -8,7 +8,7 @@ import (
 
 	_ "net/http/pprof"
 
-	"github.com/Benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/stretchr/testify/assert"
 )
 

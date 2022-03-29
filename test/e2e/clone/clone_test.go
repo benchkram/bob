@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bob/global"
-	"github.com/Benchkram/bob/pkg/file"
-	"github.com/Benchkram/bob/test/setup/reposetup"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/test/setup/reposetup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -25,7 +25,7 @@ var _ = Describe("Test bob clone", func() {
 
 		// TODO: Reenable. Fails to clone on CI.
 		/*It("adds SSH repo to bob", func() {
-			Expect(b.Add("git@github.com:Benchkram/bob.git", false)).NotTo(HaveOccurred())
+			Expect(b.Add("git@github.com:benchkram/bob.git", false)).NotTo(HaveOccurred())
 		})*/
 
 		It("adds local repos to bob", func() {

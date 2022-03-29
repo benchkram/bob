@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Benchkram/bob/bob"
+	"github.com/benchkram/bob/bob"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

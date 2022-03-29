@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Benchkram/bob/pkg/ctl"
-	"github.com/Benchkram/bob/pkg/execctl"
+	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/execctl"
 )
 
 var ErrInvalidRunType = fmt.Errorf("Invalid run type")

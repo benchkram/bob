@@ -3,8 +3,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/errz"
 )
 
 var cmdWorkspaceNew = &cobra.Command{

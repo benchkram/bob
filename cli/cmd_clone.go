@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 
 	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"

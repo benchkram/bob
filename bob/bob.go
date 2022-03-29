@@ -4,17 +4,17 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 
-	"github.com/Benchkram/bob/pkg/buildinfostore"
-	"github.com/Benchkram/bob/pkg/file"
-	"github.com/Benchkram/bob/pkg/store"
+	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/store"
 )
 
 var Version = "0.0.0"

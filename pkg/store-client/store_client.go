@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/Benchkram/bob/pkg/store-client/generated"
+	"github.com/benchkram/bob/pkg/store-client/generated"
 )
 
 type I interface {

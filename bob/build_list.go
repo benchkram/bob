@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 func (b *B) List() (err error) {

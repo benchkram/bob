@@ -8,11 +8,11 @@ import (
 	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 
-	"github.com/Benchkram/bob/bobgit"
-	"github.com/Benchkram/bob/pkg/boblog"
-	"github.com/Benchkram/bob/pkg/bobutil"
-	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobgit"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/bobutil"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 )
 
 var CmdGit = &cobra.Command{

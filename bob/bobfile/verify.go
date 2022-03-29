@@ -1,7 +1,7 @@
 package bobfile
 
 import (
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 // Verify a bobfile before task runner.

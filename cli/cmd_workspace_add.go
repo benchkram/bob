@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Benchkram/bob/pkg/add"
-	"github.com/Benchkram/bob/pkg/boblog"
-	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/add"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 
 	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"

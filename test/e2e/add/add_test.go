@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/pkg/add"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/pkg/add"
 	giturls "github.com/whilp/git-urls"
 
 	. "github.com/onsi/ginkgo"
@@ -24,7 +24,7 @@ var _ = Describe("Test bob add", func() {
 		})
 
 		It("should adds ssh repo to bob", func() {
-			Expect(b.Add("git@github.com:Benchkram/bob.git", false)).NotTo(HaveOccurred())
+			Expect(b.Add("git@github.com:benchkram/bob.git", false)).NotTo(HaveOccurred())
 		})
 
 		It("should add local repo to bob", func() {

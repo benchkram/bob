@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Benchkram/bob/bobgit/pathspec"
-	"github.com/Benchkram/bob/pkg/bobutil"
-	"github.com/Benchkram/bob/pkg/cmdutil"
-	"github.com/Benchkram/bob/pkg/usererror"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bobgit/pathspec"
+	"github.com/benchkram/bob/pkg/bobutil"
+	"github.com/benchkram/bob/pkg/cmdutil"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 )
 
 // pathspecItem stores a git pathspec with the repository

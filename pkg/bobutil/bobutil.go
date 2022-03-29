@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/bob/global"
+	"github.com/benchkram/bob/bob/global"
 )
 
 var ErrCouldNotFindBobWorkspace = fmt.Errorf("Could not find a .bob.workspace file")

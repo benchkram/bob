@@ -6,10 +6,10 @@ package boblog
 import (
 	"errors"
 	"fmt"
-	"github.com/Benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/pkg/usererror"
 	"unicode"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 )
 

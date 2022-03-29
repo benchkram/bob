@@ -8,7 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 )
 
 func (c *c) Upload(

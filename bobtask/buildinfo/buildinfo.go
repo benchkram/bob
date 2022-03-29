@@ -1,7 +1,7 @@
 package buildinfo
 
 import (
-	"github.com/Benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/bobtask/hash"
 )
 
 // Targets maps in(put) hashes to target hashes

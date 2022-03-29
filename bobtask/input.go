@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Benchkram/bob/bobtask/target"
-	"github.com/Benchkram/bob/pkg/filepathutil"
+	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/pkg/filepathutil"
 )
 
 func (t *Task) Inputs() []string {

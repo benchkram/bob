@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Benchkram/bob/bob"
-	"github.com/Benchkram/bob/pkg/boblog"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/errz"
 )
 
 var cmdWorkspace = &cobra.Command{

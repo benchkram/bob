@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/errz"
 
 	"github.com/fatih/structs"
 	"github.com/sanity-io/litter"

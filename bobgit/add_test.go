@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Benchkram/bob/pkg/cmdutil"
+	"github.com/benchkram/bob/pkg/cmdutil"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/spf13/cobra"
 )
 

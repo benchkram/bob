@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Benchkram/bob/pkg/store"
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/store"
+	"github.com/benchkram/errz"
 )
 
 type s struct {

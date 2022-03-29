@@ -3,7 +3,7 @@ package target
 import (
 	"fmt"
 
-	"github.com/Benchkram/bob/pkg/dockermobyutil"
+	"github.com/benchkram/bob/pkg/dockermobyutil"
 )
 
 type Target interface {
