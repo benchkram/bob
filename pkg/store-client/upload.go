@@ -1,52 +1,77 @@
 package storeclient
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"github.com/benchkram/errz"
+	"github.com/pkg/errors"
 	"io"
 	"mime/multipart"
 	"net/http"
-
-	"github.com/benchkram/errz"
+	"net/textproto"
 )
 
 func (c *c) Upload(
 	ctx context.Context,
 	projectID string,
 	artifactID string,
-	filename string,
 	src io.Reader,
 ) (err error) {
+	defer errz.Recover(&err)
 
-	var b bytes.Buffer
-	w := multipart.NewWriter(&b)
-
-	err = w.WriteField("id", artifactID)
-	errz.Fatal(err)
-
-	fieldWriter, err := w.CreateFormFile("file", filename)
-	errz.Fatal(err)
+	r, w := io.Pipe()
+	mpw := multipart.NewWriter(w)
 
 	go func() {
-		_, err = io.Copy(fieldWriter, src)
-		errz.Log(err)
-		w.Close()
+		err := attachMimeHeader(mpw, "id", artifactID)
+		if err != nil {
+			_ = w.CloseWithError(err)
+		}
+
+		pw, err0 := mpw.CreateFormFile("file", artifactID+".bin")
+		if err0 != nil {
+			_ = w.CloseWithError(err)
+		}
+
+		tr := io.TeeReader(src, pw)
+		buf := make([]byte, 256)
+		for {
+			_, err := tr.Read(buf)
+			if err == io.EOF {
+				_ = mpw.Close()
+				_ = w.Close()
+				break
+			}
+			if err != nil {
+				_ = w.CloseWithError(err)
+			}
+		}
 	}()
 
-	response, err := c.clientWithResponses.CreateProjectArtifactWithBodyWithResponse(ctx,
-		projectID,
-		w.FormDataContentType(),
-		&b,
-		func(ctx context.Context, req *http.Request) (err error) {
-			req.ContentLength = -1
-			return nil
-		},
-	)
+	resp, err := c.clientWithResponses.CreateProjectArtifactWithBodyWithResponse(
+		ctx, projectID, mpw.FormDataContentType(), r)
 	errz.Fatal(err)
 
-	if response.StatusCode() != 200 {
-		return fmt.Errorf("failed upload request [code: %d] [msg: %s]", response.StatusCode(), string(response.Body))
+	if resp.StatusCode() != http.StatusOK {
+		err = errors.Errorf("request failed [status: %d, msg: %q]", resp.StatusCode(), resp.Body)
+		errz.Fatal(err)
+	}
+
+	return nil
+}
+
+func attachMimeHeader(w *multipart.Writer, key, value string) error {
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"`, key))
+	h.Set("Content-Type", "text/plain")
+
+	p, err := w.CreatePart(h)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create form field [%s]", key)
+	}
+
+	if _, err := p.Write([]byte(value)); err != nil {
+		return errors.Wrapf(err, "failed to write form field [%s]", key)
 	}
 
 	return nil

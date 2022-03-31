@@ -12,7 +12,7 @@ type Artifact interface {
 }
 
 type Store interface {
-	NewArtifact(_ context.Context, id string) (io.WriteCloser, error)
+	NewArtifact(_ context.Context, projectID, artifactID string) (io.WriteCloser, error)
 	GetArtifact(_ context.Context, id string) (io.ReadCloser, error)
 
 	List(context.Context) ([]string, error)

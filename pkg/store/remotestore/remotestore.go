@@ -3,11 +3,10 @@ package remotestore
 import (
 	"context"
 	"fmt"
-	"io"
-
 	"github.com/benchkram/bob/pkg/store"
 	storeclient "github.com/benchkram/bob/pkg/store-client"
 	"github.com/benchkram/errz"
+	"io"
 )
 
 type s struct {
@@ -36,16 +35,17 @@ func New(opts ...Option) store.Store {
 
 // NewArtifact uploads an artifact. The caller is responsible to call Close().
 // Existing artifacts are overwritten.
-func (s *s) NewArtifact(ctx context.Context, id string) (io.WriteCloser, error) {
-
+func (s *s) NewArtifact(ctx context.Context, projectID, artifactID string) (wc io.WriteCloser, err error) {
 	reader, writer := io.Pipe()
+
 	go func() {
-		err := s.client.Upload(ctx,
-			"projectID:TODO:XXX",
-			id,
-			id, /*TODO:*/
+		err := s.client.Upload(
+			ctx,
+			projectID,
+			artifactID,
 			reader,
 		)
+
 		_ = writer.CloseWithError(err)
 	}()
 
