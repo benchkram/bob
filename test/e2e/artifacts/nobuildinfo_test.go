@@ -17,7 +17,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 	Context("in a fresh playground", func() {
 
 		It("should initialize bob playground", func() {
-			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(dir, "")).NotTo(HaveOccurred())
 		})
 
 		It("should build", func() {
@@ -107,7 +107,7 @@ var _ = Describe("Test artifact and target lifecycle for docker images without e
 		mobyClient := dockermobyutil.NewRegistryClient()
 
 		It("should initialize bob playground", func() {
-			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(dir, "")).NotTo(HaveOccurred())
 		})
 
 		It("should build", func() {
