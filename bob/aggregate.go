@@ -1,6 +1,7 @@
 package bob
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -61,16 +62,31 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	bobfiles, err := b.find()
 	errz.Fatal(err)
 
+	projectNames := map[string]bool{}
+
 	// Read & Find Bobfiles
 	bobs := []*bobfile.Bobfile{}
 	for _, bf := range bobfiles {
 		boblet, err := bobfile.BobfileRead(filepath.Dir(bf))
 		errz.Fatal(err)
 
+		fmt.Println(boblet.Project)
+
 		if boblet.Dir() == b.dir {
 			aggregate = boblet
 		}
 
+		// make sure project names are unique
+		//
+		// boblet.Project is guaranteed to either be an absolute path or
+		// a schema-less URL at this point
+		if _, ok := projectNames[boblet.Project]; ok {
+			err = errors.New("duplicate project name")
+			errz.Fatal(err)
+		}
+		projectNames[boblet.Project] = true
+
+		// add env vars and build tasks
 		for variable, value := range boblet.Variables {
 			for key, task := range boblet.BTasks {
 				// TODO: Create and use envvar sanitizer

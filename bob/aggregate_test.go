@@ -30,7 +30,7 @@ func BenchmarkAggregateOnPlayground(b *testing.B) {
 	testBob, err := Bob(WithDir(dir))
 	assert.Nil(b, err)
 
-	err = CreatePlayground(dir)
+	err = CreatePlayground(dir, "")
 	assert.Nil(b, err)
 
 	var bobfile *bobfile.Bobfile // to block compiler optimization
@@ -75,7 +75,7 @@ func benchmarkAggregate(b *testing.B, ignoredMultiplier int) {
 	testBob, err := Bob(WithDir(dir))
 	assert.Nil(b, err)
 
-	err = CreatePlayground(dir)
+	err = CreatePlayground(dir, "")
 	assert.Nil(b, err)
 
 	// Create a file structure  which Aggregate will completly travers
@@ -177,4 +177,51 @@ func createIgnoreFileSturcture(dir string, multiplier int) error {
 	}
 
 	return nil
+}
+
+func TestEmptyProjectName(t *testing.T) {
+	// Create playground
+	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	assert.Nil(t, err)
+
+	defer os.RemoveAll(dir)
+
+	err = os.Chdir(dir)
+	assert.Nil(t, err)
+
+	testBob, err := Bob(WithDir(dir))
+	assert.Nil(t, err)
+
+	err = CreatePlayground(dir, "")
+	assert.Nil(t, err)
+
+	bobfile, err := testBob.Aggregate()
+	assert.Nil(t, err)
+
+	assert.Equal(t, dir, bobfile.Project)
+}
+
+
+func TestProvidedProjectName(t *testing.T) {
+	// Create playground
+	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	assert.Nil(t, err)
+
+	defer os.RemoveAll(dir)
+
+	err = os.Chdir(dir)
+	assert.Nil(t, err)
+
+	testBob, err := Bob(WithDir(dir))
+	assert.Nil(t, err)
+
+	projectName := "example.com/test-user/test-project"
+
+	err = CreatePlayground(dir, projectName)
+	assert.Nil(t, err)
+
+	bobfile, err := testBob.Aggregate()
+	assert.Nil(t, err)
+
+	assert.Equal(t, projectName, bobfile.Project)
 }

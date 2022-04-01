@@ -43,7 +43,14 @@ var (
 )
 
 type Bobfile struct {
+	// Version is optional, and can be used to
 	Version string `yaml:"version,omitempty"`
+
+	// Project uniquely identifies the current project (optional). If supplied,
+	// aggregation makes sure the project does not depend on another instance
+	// of itself. If not provided, then the project name is set after the path
+	// of its bobfile.
+	Project string `yaml:"project,omitempty"`
 
 	Variables VariableMap
 
@@ -97,6 +104,10 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		return nil, usererror.Wrapm(err, "YAML unmarshal failed")
 	}
 
+	if bobfile.Project == "" {
+		bobfile.Project = dir
+	}
+
 	if bobfile.Variables == nil {
 		bobfile.Variables = VariableMap{}
 	}
@@ -122,8 +133,8 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		task.SetEnv([]string{})
 		task.SetRebuildStrategy(bobtask.RebuildOnChange)
 
-		// TODO: todoproject
-		task.SetProject(dir)
+		// pass the project name to the task for artifact packing/unpacking
+		task.SetProject(bobfile.Project)
 
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()

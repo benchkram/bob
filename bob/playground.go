@@ -109,8 +109,8 @@ const SecondLevelOpenapiProviderDir = "openapi-provider-project"
 const ThirdLevelDir = "third-level"
 
 // CreatePlayground creates a default playground
-// to test bob workflows.
-func CreatePlayground(dir string) error {
+// to test bob workflows. projectName is used in the top-level bobfile
+func CreatePlayground(dir string, projectName string) error {
 	// TODO: check if dir is empty
 	// TODO: empty dir after consent
 
@@ -133,7 +133,7 @@ func CreatePlayground(dir string) error {
 	err = ioutil.WriteFile("Dockerfile.plus", dockerfileAlpinePlus, 0644)
 	errz.Fatal(err)
 
-	err = createPlaygroundBobfile(".", true)
+	err = createPlaygroundBobfile(".", true, projectName)
 	errz.Fatal(err)
 
 	b := newBob()
@@ -247,13 +247,15 @@ func CreatePlayground(dir string) error {
 	return nil
 }
 
-func createPlaygroundBobfile(dir string, overwrite bool) (err error) {
+func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (err error) {
 	// Prevent accidential bobfile override
 	if file.Exists(global.BobFileName) && !overwrite {
 		return bobfile.ErrBobfileExists
 	}
 
 	bobfile := bobfile.NewBobfile()
+
+	bobfile.Project = projectName
 
 	bobfile.Variables["helloworld"] = "Hello World!"
 

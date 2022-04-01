@@ -78,8 +78,6 @@ type Task struct {
 	builder string
 
 	// project this tasks belongs to
-	// TODO: todoproject: Currently it's the path.. later
-	// we need globaly unique identifiers when using remote caching.
 	project string
 
 	// dir is the working directory for this task

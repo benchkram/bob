@@ -12,8 +12,8 @@ type Artifact interface {
 }
 
 type Store interface {
-	NewArtifact(_ context.Context, id string) (Artifact, error)
-	GetArtifact(_ context.Context, id string) (Artifact, error)
+	NewArtifact(_ context.Context, projectID, artifactID string) (Artifact, error)
+	GetArtifact(_ context.Context, projectID, artifactID string) (Artifact, error)
 
 	List(context.Context) ([]string, error)
 
