@@ -74,6 +74,6 @@ func runPlayground() {
 	wd, err := os.Getwd()
 	errz.Fatal(err)
 
-	err = bob.CreatePlayground(wd)
+	err = bob.CreatePlayground(wd, "")
 	errz.Fatal(err)
 }
