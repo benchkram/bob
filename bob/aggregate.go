@@ -70,16 +70,13 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		boblet, err := bobfile.BobfileRead(filepath.Dir(bf))
 		errz.Fatal(err)
 
-		fmt.Println(boblet.Project)
-
 		if boblet.Dir() == b.dir {
 			aggregate = boblet
 		}
 
-		// make sure project names are unique
-		//
-		// boblet.Project is guaranteed to either be an absolute path or
-		// a schema-less URL at this point
+		// Make sure project names are unique
+		//   boblet.Project is guaranteed to either be an absolute path or
+		//   a schema-less URL at this point
 		if _, ok := projectNames[boblet.Project]; ok {
 			err = errors.New("duplicate project name")
 			errz.Fatal(err)

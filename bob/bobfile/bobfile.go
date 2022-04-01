@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -37,6 +38,7 @@ var (
 	ErrBobfileExists          = fmt.Errorf("Bobfile exists")
 	ErrTaskDoesNotExist       = fmt.Errorf("Task does not exist")
 	ErrDuplicateTaskName      = fmt.Errorf("duplicate task name")
+	ErrInvalidProjectName     = fmt.Errorf("invalid project name")
 	ErrSelfReference          = fmt.Errorf("self reference")
 
 	ErrInvalidRunType = fmt.Errorf("Invalid run type")
@@ -173,6 +175,13 @@ func (b *Bobfile) Validate() (err error) {
 		_, err = version.NewVersion(b.Version)
 		if err != nil {
 			return fmt.Errorf("invalid version '%s' (%s)", b.Version, b.Dir())
+		}
+	}
+
+	if b.Project != "" {
+		_, err := url.Parse("https://" + b.Project)
+		if err != nil {
+			return errors.WithMessage(ErrInvalidProjectName, "names should be in the form 'example.com/user/project'")
 		}
 	}
 

@@ -201,8 +201,7 @@ func TestEmptyProjectName(t *testing.T) {
 	assert.Equal(t, dir, bobfile.Project)
 }
 
-
-func TestProvidedProjectName(t *testing.T) {
+func TestProjectName(t *testing.T) {
 	// Create playground
 	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
 	assert.Nil(t, err)
@@ -224,4 +223,26 @@ func TestProvidedProjectName(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, projectName, bobfile.Project)
+}
+
+func TestInvalidProjectName(t *testing.T) {
+	// Create playground
+	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	assert.Nil(t, err)
+
+	defer os.RemoveAll(dir)
+
+	err = os.Chdir(dir)
+	assert.Nil(t, err)
+
+	testBob, err := Bob(WithDir(dir))
+	assert.Nil(t, err)
+
+	projectName := "{}"
+
+	err = CreatePlayground(dir, projectName)
+	assert.Nil(t, err)
+
+	_, err = testBob.Aggregate()
+	assert.ErrorIs(t, err, bobfile.ErrInvalidProjectName)
 }
