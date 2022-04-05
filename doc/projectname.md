@@ -26,6 +26,7 @@ Desired functionality in case of:
 By default the project-name of the top most Bobfile is used. In case there is no projectname those will apply:
 * The remote cache is disabled.
 * The local directory of the top most Bobfile is used as project name even if a lower level Bobfile has a valid project-name.
+* The same projectname in a Bobfile hierachy is a user error.
 
 TODO: No matter on which level  `bob ....` is executed it should always behave as it was called from the top most level. (Not yet implemented) 
 
