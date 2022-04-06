@@ -53,7 +53,7 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 		for _, m := range metadataAll {
 			var match bool
 
-			if m.Project == task.Dir() && m.Taskname == task.Name() {
+			if m.Project == task.Project() && m.Taskname == task.Name() {
 				match = true
 			}
 
