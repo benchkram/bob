@@ -1,8 +1,8 @@
 package bob
 
 import (
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"path/filepath"
 	"strings"
 
@@ -16,6 +16,10 @@ import (
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/hashicorp/go-version"
+)
+
+var (
+	ErrDuplicateProjectName = errors.New("duplicate project name")
 )
 
 // find bobfiles recursively.
@@ -78,8 +82,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		//   boblet.Project is guaranteed to either be an absolute path or
 		//   a schema-less URL at this point
 		if _, ok := projectNames[boblet.Project]; ok {
-			err = errors.New("duplicate project name")
-			errz.Fatal(err)
+			return nil, usererror.Wrap(errors.WithMessage(ErrDuplicateProjectName, "boblet.Project is duplicated"))
 		}
 		projectNames[boblet.Project] = true
 
@@ -102,6 +105,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	}
 
 	aggregate.SetBobfiles(bobs)
+
+	// overwrite child project names with the parent bobfile project name
+	for _, bobFile := range bobs {
+		bobFile.Project = aggregate.Project
+	}
 
 	// Merge tasks into one Bobfile
 	for _, bobfile := range bobs {

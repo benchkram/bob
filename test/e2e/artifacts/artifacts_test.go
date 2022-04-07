@@ -19,7 +19,7 @@ var _ = Describe("Test artifact and target invalidation", func() {
 	Context("in a fresh playground", func() {
 
 		It("should initialize bob playground", func() {
-			Expect(bob.CreatePlayground(dir, "")).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		It("should build", func() {
@@ -107,7 +107,7 @@ var _ = Describe("Test artifact and docker-target invalidation", func() {
 		mobyClient := dockermobyutil.NewRegistryClient()
 
 		It("should initialize bob playground", func() {
-			Expect(bob.CreatePlayground(dir, "")).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		It("should build", func() {

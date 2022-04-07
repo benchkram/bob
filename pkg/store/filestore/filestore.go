@@ -33,13 +33,13 @@ func New(dir string, opts ...Option) store.Store {
 
 // NewArtifact creates a new file. The caller is responsible to call Close().
 // Existing artifacts are overwritten.
-func (s *s) NewArtifact(_ context.Context, projectID, artifactID string) (store.Artifact, error) {
-	return os.Create(filepath.Join(s.dir, artifactID))
+func (s *s) NewArtifact(_ context.Context, id string) (store.Artifact, error) {
+	return os.Create(filepath.Join(s.dir, id))
 }
 
 // GetArtifact opens a file
-func (s *s) GetArtifact(_ context.Context, projectID, artifactID string) (empty store.Artifact, _ error) {
-	return os.Open(filepath.Join(s.dir, artifactID))
+func (s *s) GetArtifact(_ context.Context, id string) (empty store.Artifact, _ error) {
+	return os.Open(filepath.Join(s.dir, id))
 }
 
 func (s *s) Clean(_ context.Context) (err error) {

@@ -30,7 +30,7 @@ func BenchmarkAggregateOnPlayground(b *testing.B) {
 	testBob, err := Bob(WithDir(dir))
 	assert.Nil(b, err)
 
-	err = CreatePlayground(dir, "")
+	err = CreatePlayground(PlaygroundOptions{Dir: dir})
 	assert.Nil(b, err)
 
 	var bobfile *bobfile.Bobfile // to block compiler optimization
@@ -75,7 +75,7 @@ func benchmarkAggregate(b *testing.B, ignoredMultiplier int) {
 	testBob, err := Bob(WithDir(dir))
 	assert.Nil(b, err)
 
-	err = CreatePlayground(dir, "")
+	err = CreatePlayground(PlaygroundOptions{Dir: dir})
 	assert.Nil(b, err)
 
 	// Create a file structure  which Aggregate will completly travers
@@ -192,7 +192,7 @@ func TestEmptyProjectName(t *testing.T) {
 	testBob, err := Bob(WithDir(dir))
 	assert.Nil(t, err)
 
-	err = CreatePlayground(dir, "")
+	err = CreatePlayground(PlaygroundOptions{Dir: dir})
 	assert.Nil(t, err)
 
 	bobfile, err := testBob.Aggregate()
@@ -216,7 +216,7 @@ func TestProjectName(t *testing.T) {
 
 	projectName := "example.com/test-user/test-project"
 
-	err = CreatePlayground(dir, projectName)
+	err = CreatePlayground(PlaygroundOptions{Dir: dir, ProjectName: projectName})
 	assert.Nil(t, err)
 
 	bobfile, err := testBob.Aggregate()
@@ -238,11 +238,99 @@ func TestInvalidProjectName(t *testing.T) {
 	testBob, err := Bob(WithDir(dir))
 	assert.Nil(t, err)
 
-	projectName := "{}"
+	projectName := "@"
 
-	err = CreatePlayground(dir, projectName)
+	err = CreatePlayground(PlaygroundOptions{Dir: dir, ProjectName: projectName})
 	assert.Nil(t, err)
 
 	_, err = testBob.Aggregate()
 	assert.ErrorIs(t, err, bobfile.ErrInvalidProjectName)
+}
+
+func TestDuplicateProjectNameSimple(t *testing.T) {
+	// Create playground
+	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	assert.Nil(t, err)
+
+	defer os.RemoveAll(dir)
+
+	err = os.Chdir(dir)
+	assert.Nil(t, err)
+
+	testBob, err := Bob(WithDir(dir))
+	assert.Nil(t, err)
+
+	projectName := "duplicated-name"
+	projectNameSecondLevel := "duplicated-name"
+	projectNameThirdLevel := "third-level"
+
+	err = CreatePlayground(
+		PlaygroundOptions{
+			Dir: dir, ProjectName: projectName, ProjectNameSecondLevel: projectNameSecondLevel, ProjectNameThirdLevel: projectNameThirdLevel,
+		},
+	)
+	assert.Nil(t, err)
+
+	_, err = testBob.Aggregate()
+	assert.ErrorIs(t, err, ErrDuplicateProjectName)
+}
+
+func TestDuplicateProjectNameComplex(t *testing.T) {
+	// Create playground
+	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	assert.Nil(t, err)
+
+	defer os.RemoveAll(dir)
+
+	err = os.Chdir(dir)
+	assert.Nil(t, err)
+
+	testBob, err := Bob(WithDir(dir))
+	assert.Nil(t, err)
+
+	projectName := "bob.build/benchkram/duplicated-name"
+	projectNameSecondLevel := "bob.build/benchkram/duplicated-name"
+	projectNameThirdLevel := "bob.build/benchkram/third-level"
+
+	err = CreatePlayground(
+		PlaygroundOptions{
+			Dir: dir, ProjectName: projectName, ProjectNameSecondLevel: projectNameSecondLevel, ProjectNameThirdLevel: projectNameThirdLevel,
+		},
+	)
+	assert.Nil(t, err)
+
+	_, err = testBob.Aggregate()
+	assert.ErrorIs(t, err, ErrDuplicateProjectName)
+}
+
+func TestMultiLevelBobfileSameProjectName(t *testing.T) {
+	// Create playground
+	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	assert.Nil(t, err)
+
+	defer os.RemoveAll(dir)
+
+	err = os.Chdir(dir)
+	assert.Nil(t, err)
+
+	testBob, err := Bob(WithDir(dir))
+	assert.Nil(t, err)
+
+	projectName := "first-level"
+	projectNameSecondLevel := "second-level"
+	projectNameThirdLevel := "third-level"
+
+	err = CreatePlayground(
+		PlaygroundOptions{
+			Dir: dir, ProjectName: projectName, ProjectNameSecondLevel: projectNameSecondLevel, ProjectNameThirdLevel: projectNameThirdLevel,
+		},
+	)
+	assert.Nil(t, err)
+
+	aggregate, err := testBob.Aggregate()
+	assert.Nil(t, err)
+
+	for _, bobFile := range aggregate.Bobfiles() {
+		assert.Equal(t, bobFile.Project, projectName)
+	}
 }

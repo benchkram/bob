@@ -108,13 +108,20 @@ const SecondLevelDir = "second-level"
 const SecondLevelOpenapiProviderDir = "openapi-provider-project"
 const ThirdLevelDir = "third-level"
 
+type PlaygroundOptions struct {
+	Dir                    string
+	ProjectName            string
+	ProjectNameSecondLevel string
+	ProjectNameThirdLevel  string
+}
+
 // CreatePlayground creates a default playground
 // to test bob workflows. projectName is used in the top-level bobfile
-func CreatePlayground(dir string, projectName string) error {
+func CreatePlayground(opts PlaygroundOptions) error {
 	// TODO: check if dir is empty
 	// TODO: empty dir after consent
 
-	err := os.Chdir(dir)
+	err := os.Chdir(opts.Dir)
 	errz.Fatal(err)
 
 	// first level
@@ -133,7 +140,7 @@ func CreatePlayground(dir string, projectName string) error {
 	err = ioutil.WriteFile("Dockerfile.plus", dockerfileAlpinePlus, 0644)
 	errz.Fatal(err)
 
-	err = createPlaygroundBobfile(".", true, projectName)
+	err = createPlaygroundBobfile(".", true, opts.ProjectName)
 	errz.Fatal(err)
 
 	b := newBob()
@@ -175,7 +182,7 @@ func CreatePlayground(dir string, projectName string) error {
 		}
 	}
 
-	err = createPlaygroundBobfileSecondLevel(b.dir, true)
+	err = createPlaygroundBobfileSecondLevel(b.dir, true, opts.ProjectNameSecondLevel)
 	errz.Fatal(err)
 
 	err = ioutil.WriteFile(filepath.Join(SecondLevelDir, "openapi.yaml"), openapiSecondLevel, 0644)
@@ -230,7 +237,7 @@ func CreatePlayground(dir string, projectName string) error {
 		}
 	}
 
-	err = createPlaygroundBobfileThirdLevel(b3.dir, true)
+	err = createPlaygroundBobfileThirdLevel(b3.dir, true, opts.ProjectNameThirdLevel)
 	errz.Fatal(err)
 
 	err = ioutil.WriteFile(filepath.Join(thirdDir, "openapi.yaml"), openapiSecondLevel, 0644)
@@ -400,7 +407,7 @@ func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite boo
 	return bobfile.BobfileSave(dir)
 }
 
-func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) {
+func createPlaygroundBobfileSecondLevel(dir string, overwrite bool, projectName string) (err error) {
 	// Prevent accidential bobfile override
 	if file.Exists(global.BobFileName) && !overwrite {
 		return bobfile.ErrBobfileExists
@@ -408,6 +415,7 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) 
 
 	bobfile := bobfile.NewBobfile()
 	bobfile.Version = "1.2.3"
+	bobfile.Project = projectName
 
 	bobfile.BTasks[fmt.Sprintf("%s2", global.DefaultBuildTask)] = bobtask.Task{
 		InputDirty: "./main2.go",
@@ -420,7 +428,7 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool) (err error) 
 	return bobfile.BobfileSave(dir)
 }
 
-func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
+func createPlaygroundBobfileThirdLevel(dir string, overwrite bool, projectName string) (err error) {
 	// Prevent accidential bobfile override
 	if file.Exists(global.BobFileName) && !overwrite {
 		return bobfile.ErrBobfileExists
@@ -428,6 +436,7 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool) (err error) {
 
 	bobfile := bobfile.NewBobfile()
 	bobfile.Version = "4.5.6"
+	bobfile.Project = projectName
 
 	bobfile.BTasks[fmt.Sprintf("%s3", global.DefaultBuildTask)] = bobtask.Task{
 		InputDirty:  "*",

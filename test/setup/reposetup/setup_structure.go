@@ -107,7 +107,7 @@ func PlaygroundRepo(basePath string) (_ string, err error) {
 	errz.Fatal(err)
 
 	path := filepath.Join(basePath, ChildPlayground)
-	err = bob.CreatePlayground(path, "")
+	err = bob.CreatePlayground(bob.PlaygroundOptions{Dir: path})
 	errz.Fatal(err)
 
 	repo, err := git.PlainOpen(path)

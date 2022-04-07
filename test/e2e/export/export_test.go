@@ -14,7 +14,7 @@ import (
 var _ = Describe("Test bob's file export validation", func() {
 	Context("in a fresh environment", func() {
 		It("initializes bob playground", func() {
-			Expect(bob.CreatePlayground(dir, "")).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		It("run verify", func() {

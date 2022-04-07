@@ -20,7 +20,7 @@ var _ = Describe("Test bob build", func() {
 			ignorefile = "fileToIgnore"
 		)
 		It("initializes bob playground", func() {
-			Expect(bob.CreatePlayground(dir, "")).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		It("create files for build task", func() {

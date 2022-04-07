@@ -15,7 +15,7 @@ var _ = Describe("Test bob's file export validation", func() {
 		It("initializes bob playground with bob v1.0.0", func() {
 			bob.Version = "1.0.0"
 
-			Expect(bob.CreatePlayground(dir, "")).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		It("run verify and make sure no warnings are shown", func() {

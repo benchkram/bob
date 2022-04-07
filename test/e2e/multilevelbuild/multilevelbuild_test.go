@@ -33,7 +33,7 @@ var _ = Describe("Test bob multilevel build", func() {
 	Context("in a fresh environment", func() {
 
 		It("initializes bob playground", func() {
-			Expect(bob.CreatePlayground(dir, "")).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		It("runs build all", func() {

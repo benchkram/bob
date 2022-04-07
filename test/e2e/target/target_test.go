@@ -17,7 +17,7 @@ var _ = Describe("Test bob's file target handling", func() {
 		var err error
 
 		It("initializes bob playground", func() {
-			Expect(bob.CreatePlayground(dir, "")).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		var hashInBeforeBuild string

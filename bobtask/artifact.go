@@ -73,7 +73,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		exports = append(exports, filepath.Join(t.dir, path.String()))
 	}
 
-	artifact, err := t.local.NewArtifact(context.TODO(), t.project, artifactName.String())
+	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
 	errz.Fatal(err)
 	defer artifact.Close()
 
@@ -227,7 +227,7 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 	meta, err := t.GetArtifactMetadata(artifactName.String())
 	errz.Fatal(err)
 
-	artifact, err := t.local.GetArtifact(context.TODO(), t.project, artifactName.String())
+	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
 	if err != nil {
 		_, ok := err.(*fs.PathError)
 		if ok {
@@ -310,7 +310,7 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 
 // ArtifactExists return true when the artifact exists in localstore
 func (t *Task) ArtifactExists(artifactName hash.In) bool {
-	artifact, err := t.local.GetArtifact(context.TODO(), t.project, artifactName.String())
+	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
 	if err != nil {
 		return false
 	}
@@ -321,7 +321,7 @@ func (t *Task) ArtifactExists(artifactName hash.In) bool {
 // GetArtifactMetadata creates a new artifact instance to retrive Metadata
 // separately and returns ArtifactMetadata, close the artifacts before returning
 func (t *Task) GetArtifactMetadata(artifactName string) (_ *ArtifactMetadata, err error) {
-	artifact, err := t.local.GetArtifact(context.TODO(), t.project, artifactName)
+	artifact, err := t.local.GetArtifact(context.TODO(), artifactName)
 	if err != nil {
 		_, ok := err.(*fs.PathError)
 		if ok {
