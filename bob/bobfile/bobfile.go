@@ -52,6 +52,8 @@ type Bobfile struct {
 	// RTasks run tasks
 	RTasks bobrun.RunMap `yaml:"run"`
 
+	Dependencies []string `yaml:"dependencies"`
+
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
 	dir string
@@ -138,6 +140,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 
 		bobfile.RTasks[key] = run
 	}
+
+	fmt.Println("DEPENDENCIES", bobfilePath)
+	fmt.Println(bobfile.Dependencies)
 
 	return bobfile, nil
 }

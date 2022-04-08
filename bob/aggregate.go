@@ -206,6 +206,17 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.BTasks[i] = task
 	}
 
+	allDependencies := make(map[string]bool)
+	for _, bobfile := range bobs {
+		for _, v := range bobfile.Dependencies {
+			allDependencies[v] = true
+		}
+	}
+	aggregate.Dependencies = make([]string, 0)
+	for k := range allDependencies {
+		aggregate.Dependencies = append(aggregate.Dependencies, k)
+	}
+
 	return aggregate, aggregate.Verify()
 }
 
