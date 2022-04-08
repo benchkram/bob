@@ -118,10 +118,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		bobfile.Project = aggregate.Project
 
 		for taskname, task := range bobfile.BTasks {
-			// set the project name. this should be the name of the topmost bobfile
+			// Should be the name of the umbrella-bobfile.
 			task.SetProject(aggregate.Project)
 
-			// overwrite value in build map
+			// Overwrite value in build map
 			bobfile.BTasks[taskname] = task
 		}
 	}
