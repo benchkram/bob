@@ -15,7 +15,7 @@ var _ = Describe("Test artifact and target on no cache build", func() {
 	Context("in a fresh playground", func() {
 
 		It("should initialize bob playground", func() {
-			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		It("should build both with and without cache", func() {

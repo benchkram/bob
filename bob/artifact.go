@@ -52,7 +52,7 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 		for _, m := range metadataAll {
 			var match bool
 
-			if m.Project == task.Dir() && m.Taskname == task.Name() {
+			if m.Project == task.Project() && m.Taskname == task.Name() {
 				match = true
 			}
 
@@ -75,7 +75,6 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 }
 
 func (b *B) ArtifactInspect(artifactID string) (ai bobtask.ArtifactInfo, err error) {
-
 	artifact, err := b.local.GetArtifact(context.TODO(), artifactID)
 	if err != nil {
 		_, ok := err.(*fs.PathError)

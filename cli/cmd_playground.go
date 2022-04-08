@@ -74,6 +74,6 @@ func runPlayground() {
 	wd, err := os.Getwd()
 	errz.Fatal(err)
 
-	err = bob.CreatePlayground(wd)
+	err = bob.CreatePlayground(bob.PlaygroundOptions{Dir: wd, ProjectName: "bob-playground", ProjectNameSecondLevel: "bob-playground-second-level"})
 	errz.Fatal(err)
 }

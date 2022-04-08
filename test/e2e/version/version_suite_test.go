@@ -46,7 +46,7 @@ var _ = AfterSuite(func() {
 
 func TestStatus(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "export-build suite")
+	RunSpecs(t, "version suite")
 }
 
 func capture() {

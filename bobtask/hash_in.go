@@ -54,6 +54,16 @@ func (t *Task) HashIn() (taskHash hash.In, _ error) {
 		return taskHash, fmt.Errorf("failed to write task description to aggregated hash: %w", err)
 	}
 
+	// Hash the project name
+	projectNameHash, err := filehash.HashBytes(bytes.NewBuffer([]byte(t.project)))
+	if err != nil {
+		return taskHash, fmt.Errorf("failed to write project name hash: %w", err)
+	}
+	_, err = aggregatedHashes.Write(projectNameHash)
+	if err != nil {
+		return taskHash, fmt.Errorf("failed to write task description to aggregated hash: %w", err)
+	}
+
 	// Hash the environment
 	sort.Strings(t.env)
 	environment := strings.Join(t.env, ",")
