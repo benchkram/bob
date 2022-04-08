@@ -216,7 +216,10 @@ func TestProjectName(t *testing.T) {
 
 	projectName := "example.com/test-user/test-project"
 
-	err = CreatePlayground(PlaygroundOptions{Dir: dir, ProjectName: projectName})
+	err = CreatePlayground(PlaygroundOptions{
+		Dir:         dir,
+		ProjectName: projectName,
+	})
 	assert.Nil(t, err)
 
 	bobfile, err := testBob.Aggregate()
@@ -240,68 +243,83 @@ func TestInvalidProjectName(t *testing.T) {
 
 	projectName := "@"
 
-	err = CreatePlayground(PlaygroundOptions{Dir: dir, ProjectName: projectName})
+	err = CreatePlayground(PlaygroundOptions{
+		Dir:         dir,
+		ProjectName: projectName,
+	})
 	assert.Nil(t, err)
 
 	_, err = testBob.Aggregate()
 	assert.ErrorIs(t, err, bobfile.ErrInvalidProjectName)
 }
 
-func TestDuplicateProjectNameSimple(t *testing.T) {
-	// Create playground
-	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
-	assert.Nil(t, err)
+// FIXME: As we don't refer to a child task by projectname but by path
+// it seems to be save to allow duplicate projectnames.
+//
+// func TestDuplicateProjectNameSimple(t *testing.T) {
+// 	// Create playground
+// 	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+// 	assert.Nil(t, err)
 
-	defer os.RemoveAll(dir)
+// 	defer os.RemoveAll(dir)
 
-	err = os.Chdir(dir)
-	assert.Nil(t, err)
+// 	err = os.Chdir(dir)
+// 	assert.Nil(t, err)
 
-	testBob, err := Bob(WithDir(dir))
-	assert.Nil(t, err)
+// 	testBob, err := Bob(WithDir(dir))
+// 	assert.Nil(t, err)
 
-	projectName := "duplicated-name"
-	projectNameSecondLevel := "duplicated-name"
-	projectNameThirdLevel := "third-level"
+// 	projectName := "duplicated-name"
+// 	projectNameSecondLevel := "duplicated-name"
+// 	projectNameThirdLevel := "third-level"
 
-	err = CreatePlayground(
-		PlaygroundOptions{
-			Dir: dir, ProjectName: projectName, ProjectNameSecondLevel: projectNameSecondLevel, ProjectNameThirdLevel: projectNameThirdLevel,
-		},
-	)
-	assert.Nil(t, err)
+// 	err = CreatePlayground(
+// 		PlaygroundOptions{
+// 			Dir:                    dir,
+// 			ProjectName:            projectName,
+// 			ProjectNameSecondLevel: projectNameSecondLevel,
+// 			ProjectNameThirdLevel:  projectNameThirdLevel,
+// 		},
+// 	)
+// 	assert.Nil(t, err)
 
-	_, err = testBob.Aggregate()
-	assert.ErrorIs(t, err, ErrDuplicateProjectName)
-}
+// 	_, err = testBob.Aggregate()
+// 	assert.ErrorIs(t, err, ErrDuplicateProjectName)
+// }
 
-func TestDuplicateProjectNameComplex(t *testing.T) {
-	// Create playground
-	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
-	assert.Nil(t, err)
+// FIXME: As we don't refer to a child task by projectname but by path
+// it seems to be save to allow duplicate projectnames.
+//
+// func TestDuplicateProjectNameComplex(t *testing.T) {
+// 	// Create playground
+// 	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+// 	assert.Nil(t, err)
 
-	defer os.RemoveAll(dir)
+// 	defer os.RemoveAll(dir)
 
-	err = os.Chdir(dir)
-	assert.Nil(t, err)
+// 	err = os.Chdir(dir)
+// 	assert.Nil(t, err)
 
-	testBob, err := Bob(WithDir(dir))
-	assert.Nil(t, err)
+// 	testBob, err := Bob(WithDir(dir))
+// 	assert.Nil(t, err)
 
-	projectName := "bob.build/benchkram/duplicated-name"
-	projectNameSecondLevel := "bob.build/benchkram/duplicated-name"
-	projectNameThirdLevel := "bob.build/benchkram/third-level"
+// 	projectName := "bob.build/benchkram/duplicated-name"
+// 	projectNameSecondLevel := "bob.build/benchkram/duplicated-name"
+// 	projectNameThirdLevel := "bob.build/benchkram/third-level"
 
-	err = CreatePlayground(
-		PlaygroundOptions{
-			Dir: dir, ProjectName: projectName, ProjectNameSecondLevel: projectNameSecondLevel, ProjectNameThirdLevel: projectNameThirdLevel,
-		},
-	)
-	assert.Nil(t, err)
+// 	err = CreatePlayground(
+// 		PlaygroundOptions{
+// 			Dir:                    dir,
+// 			ProjectName:            projectName,
+// 			ProjectNameSecondLevel: projectNameSecondLevel,
+// 			ProjectNameThirdLevel:  projectNameThirdLevel,
+// 		},
+// 	)
+// 	assert.Nil(t, err)
 
-	_, err = testBob.Aggregate()
-	assert.ErrorIs(t, err, ErrDuplicateProjectName)
-}
+// 	_, err = testBob.Aggregate()
+// 	assert.ErrorIs(t, err, ErrDuplicateProjectName)
+// }
 
 func TestMultiLevelBobfileSameProjectName(t *testing.T) {
 	// Create playground
@@ -322,7 +340,11 @@ func TestMultiLevelBobfileSameProjectName(t *testing.T) {
 
 	err = CreatePlayground(
 		PlaygroundOptions{
-			Dir: dir, ProjectName: projectName, ProjectNameSecondLevel: projectNameSecondLevel, ProjectNameThirdLevel: projectNameThirdLevel,
+			Dir: dir,
+
+			ProjectName:            projectName,
+			ProjectNameSecondLevel: projectNameSecondLevel,
+			ProjectNameThirdLevel:  projectNameThirdLevel,
 		},
 	)
 	assert.Nil(t, err)

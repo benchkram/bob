@@ -2,9 +2,10 @@ package bob
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"path/filepath"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -66,7 +67,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	bobfiles, err := b.find()
 	errz.Fatal(err)
 
-	projectNames := map[string]bool{}
+	//projectNames := map[string]bool{}
 
 	// Read & Find Bobfiles
 	bobs := []*bobfile.Bobfile{}
@@ -78,13 +79,16 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			aggregate = boblet
 		}
 
+		// FIXME: As we don't refer to a child task by projectname but by path
+		// it seems to be save to allow duplicate projectnames.
+		//
 		// Make sure project names are unique
-		if boblet.Project != "" {
-			if _, ok := projectNames[boblet.Project]; ok {
-				return nil, usererror.Wrap(errors.WithMessage(ErrDuplicateProjectName, "boblet.Project is duplicated"))
-			}
-			projectNames[boblet.Project] = true
-		}
+		// if boblet.Project != "" {
+		// 	if ok := projectNames[boblet.Project]; ok {
+		// 		return nil, usererror.Wrap(fmt.Errorf("%w found, [%s]", ErrDuplicateProjectName, boblet.Project))
+		// 	}
+		// 	projectNames[boblet.Project] = true
+		// }
 
 		// add env vars and build tasks
 		for variable, value := range boblet.Variables {
