@@ -79,12 +79,12 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		}
 
 		// Make sure project names are unique
-		//   boblet.Project is guaranteed to either be an absolute path or
-		//   a schema-less URL at this point
-		if _, ok := projectNames[boblet.Project]; ok {
-			return nil, usererror.Wrap(errors.WithMessage(ErrDuplicateProjectName, "boblet.Project is duplicated"))
+		if boblet.Project != "" {
+			if _, ok := projectNames[boblet.Project]; ok {
+				return nil, usererror.Wrap(errors.WithMessage(ErrDuplicateProjectName, "boblet.Project is duplicated"))
+			}
+			projectNames[boblet.Project] = true
 		}
-		projectNames[boblet.Project] = true
 
 		// add env vars and build tasks
 		for variable, value := range boblet.Variables {
@@ -104,12 +104,25 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
-	aggregate.SetBobfiles(bobs)
-
-	// overwrite child project names with the parent bobfile project name
-	for _, bobFile := range bobs {
-		bobFile.Project = aggregate.Project
+	if aggregate.Project == "" {
+		// TODO: maybe don't leak absolute path of environment
+		aggregate.Project = aggregate.Dir()
 	}
+
+	// set project names for all bobfiles and build tasks
+	for _, bobfile := range bobs {
+		bobfile.Project = aggregate.Project
+
+		for taskname, task := range bobfile.BTasks {
+			// set the project name. this should be the name of the topmost bobfile
+			task.SetProject(aggregate.Project)
+
+			// overwrite value in build map
+			bobfile.BTasks[taskname] = task
+		}
+	}
+
+	aggregate.SetBobfiles(bobs)
 
 	// Merge tasks into one Bobfile
 	for _, bobfile := range bobs {
@@ -124,8 +137,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			// Use a relative path as task prefix.
 			prefix := strings.TrimPrefix(dir, b.dir)
 			taskname := addTaskPrefix(prefix, taskname)
-
-			// fmt.Printf("aggreagted [dir:%s, bdir:%s prefix:%s] taskname %s\n", prefix, dir, b.dir, taskname)
 
 			// Alter the taskname.
 			task.SetName(taskname)
@@ -153,10 +164,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 			// Use a relative path as task prefix.
 			prefix := strings.TrimPrefix(dir, b.dir)
-			name := addTaskPrefix(prefix, runname)
+
+			runname = addTaskPrefix(prefix, runname)
 
 			// Alter the runname.
-			run.SetName(name)
+			run.SetName(runname)
 
 			// Rewrite dependents to global scope.
 			dependsOn := []string{}
@@ -165,7 +177,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			}
 			run.DependsOn = dependsOn
 
-			aggregate.RTasks[name] = run
+			aggregate.RTasks[runname] = run
 		}
 	}
 
