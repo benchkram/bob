@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/usererror"
 
@@ -20,7 +18,7 @@ import (
 )
 
 var (
-	ErrDuplicateProjectName = errors.New("duplicate project name")
+	ErrDuplicateProjectName = fmt.Errorf("duplicate project name")
 )
 
 // find bobfiles recursively.
@@ -67,6 +65,8 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	bobfiles, err := b.find()
 	errz.Fatal(err)
 
+	// FIXME: As we don't refer to a child task by projectname but by path
+	// it seems to be save to allow duplicate projectnames.
 	//projectNames := map[string]bool{}
 
 	// Read & Find Bobfiles
