@@ -141,9 +141,6 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		bobfile.RTasks[key] = run
 	}
 
-	fmt.Println("DEPENDENCIES", bobfilePath)
-	fmt.Println(bobfile.Dependencies)
-
 	return bobfile, nil
 }
 
