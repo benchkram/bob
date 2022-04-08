@@ -17,6 +17,10 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
+var (
+	ErrDuplicateProjectName = fmt.Errorf("duplicate project name")
+)
+
 // find bobfiles recursively.
 func (b *B) find() (bobfiles []string, err error) {
 	defer errz.Recover(&err)
@@ -61,6 +65,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	bobfiles, err := b.find()
 	errz.Fatal(err)
 
+	// FIXME: As we don't refer to a child task by projectname but by path
+	// it seems to be save to allow duplicate projectnames.
+	//projectNames := map[string]bool{}
+
 	// Read & Find Bobfiles
 	bobs := []*bobfile.Bobfile{}
 	for _, bf := range bobfiles {
@@ -71,6 +79,18 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			aggregate = boblet
 		}
 
+		// FIXME: As we don't refer to a child task by projectname but by path
+		// it seems to be save to allow duplicate projectnames.
+		//
+		// Make sure project names are unique
+		// if boblet.Project != "" {
+		// 	if ok := projectNames[boblet.Project]; ok {
+		// 		return nil, usererror.Wrap(fmt.Errorf("%w found, [%s]", ErrDuplicateProjectName, boblet.Project))
+		// 	}
+		// 	projectNames[boblet.Project] = true
+		// }
+
+		// add env vars and build tasks
 		for variable, value := range boblet.Variables {
 			for key, task := range boblet.BTasks {
 				// TODO: Create and use envvar sanitizer
@@ -88,6 +108,24 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
+	if aggregate.Project == "" {
+		// TODO: maybe don't leak absolute path of environment
+		aggregate.Project = aggregate.Dir()
+	}
+
+	// set project names for all bobfiles and build tasks
+	for _, bobfile := range bobs {
+		bobfile.Project = aggregate.Project
+
+		for taskname, task := range bobfile.BTasks {
+			// Should be the name of the umbrella-bobfile.
+			task.SetProject(aggregate.Project)
+
+			// Overwrite value in build map
+			bobfile.BTasks[taskname] = task
+		}
+	}
+
 	aggregate.SetBobfiles(bobs)
 
 	// Merge tasks into one Bobfile
@@ -103,8 +141,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			// Use a relative path as task prefix.
 			prefix := strings.TrimPrefix(dir, b.dir)
 			taskname := addTaskPrefix(prefix, taskname)
-
-			// fmt.Printf("aggreagted [dir:%s, bdir:%s prefix:%s] taskname %s\n", prefix, dir, b.dir, taskname)
 
 			// Alter the taskname.
 			task.SetName(taskname)
@@ -132,10 +168,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 			// Use a relative path as task prefix.
 			prefix := strings.TrimPrefix(dir, b.dir)
-			name := addTaskPrefix(prefix, runname)
+
+			runname = addTaskPrefix(prefix, runname)
 
 			// Alter the runname.
-			run.SetName(name)
+			run.SetName(runname)
 
 			// Rewrite dependents to global scope.
 			dependsOn := []string{}
@@ -144,7 +181,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			}
 			run.DependsOn = dependsOn
 
-			aggregate.RTasks[name] = run
+			aggregate.RTasks[runname] = run
 		}
 	}
 
@@ -197,7 +234,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	for i, task := range aggregate.BTasks {
 		task.WithLocalstore(b.local)
 		task.WithBuildinfoStore(b.buildInfoStore)
-		task.SetBuilder(b.dir) // TODO: todoproject, use project name instead of dir
 
 		// a task must always-rebuild when caching is disabled
 		if !b.enableCaching {
