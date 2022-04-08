@@ -76,7 +76,7 @@ func (b *Bobfile) Bobfiles() []*Bobfile {
 	return b.bobfiles
 }
 
-// bobfileRead reads a bobfile and intializes private fields.
+// bobfileRead reads a bobfile and initializes private fields.
 func bobfileRead(dir string) (_ *Bobfile, err error) {
 	defer errz.Recover(&err)
 
