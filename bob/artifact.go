@@ -26,7 +26,6 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 	metadataAll := []*bobtask.ArtifactMetadata{}
 	// prepare projectTasknameMap once from artifact store
 	for _, item := range items {
-		// pass empty project ID, local store doesn't care about the project
 		artifact, err := b.Localstore().GetArtifact(ctx, item)
 		errz.Fatal(err)
 		defer artifact.Close()
@@ -76,7 +75,6 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 }
 
 func (b *B) ArtifactInspect(artifactID string) (ai bobtask.ArtifactInfo, err error) {
-	// pass empty project ID, local store doesn't care about the project
 	artifact, err := b.local.GetArtifact(context.TODO(), artifactID)
 	if err != nil {
 		_, ok := err.(*fs.PathError)

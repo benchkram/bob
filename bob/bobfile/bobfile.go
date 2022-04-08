@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/usererror"
@@ -17,13 +16,12 @@ import (
 
 	"github.com/benchkram/errz"
 
+	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobrun"
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/file"
 )
-
-var projectRex = regexp.MustCompile(`^[a-zA-Z0-9/_.-]+$`)
 
 var (
 	defaultIgnores = fmt.Sprintf("!%s\n!%s",
@@ -31,7 +29,6 @@ var (
 		filepath.Join(global.BobCacheDir, "*"),
 	)
 )
-
 
 var (
 	ErrNotImplemented         = fmt.Errorf("Not implemented")
@@ -176,7 +173,7 @@ func (b *Bobfile) Validate() (err error) {
 
 	// validate project name if set
 	if b.Project != "" {
-		if !projectRex.MatchString(b.Project) {
+		if !project.RestrictedProjectNamePattern.MatchString(b.Project) {
 			return usererror.Wrap(errors.WithMessage(ErrInvalidProjectName,
 				"project name should be in the form 'project' or 'registry.com/user/project'",
 			))
