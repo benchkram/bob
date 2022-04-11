@@ -42,6 +42,8 @@ var (
 	ErrSelfReference          = fmt.Errorf("self reference")
 
 	ErrInvalidRunType = fmt.Errorf("Invalid run type")
+
+	ProjectNameFormatHint = "project name should be in the form 'project' or 'registry.com/user/project'"
 )
 
 type Bobfile struct {
@@ -174,9 +176,12 @@ func (b *Bobfile) Validate() (err error) {
 	// validate project name if set
 	if b.Project != "" {
 		if !project.RestrictedProjectNamePattern.MatchString(b.Project) {
-			return usererror.Wrap(errors.WithMessage(ErrInvalidProjectName,
-				"project name should be in the form 'project' or 'registry.com/user/project'",
-			))
+			return usererror.Wrap(errors.WithMessage(ErrInvalidProjectName, ProjectNameFormatHint))
+		}
+
+		// test for double slash (do not allow prepended schema)
+		if project.ProjectNameDoubleSlashPattern.MatchString(b.Project) {
+			return usererror.Wrap(errors.WithMessage(ErrInvalidProjectName, ProjectNameFormatHint))
 		}
 	}
 
