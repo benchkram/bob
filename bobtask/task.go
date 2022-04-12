@@ -106,6 +106,8 @@ type Task struct {
 
 	// skippedInputs is a lists of skipped input files
 	skippedInputs []string
+
+	Dependencies []string `yaml:"dependencies"`
 }
 
 type TargetEntry interface{}

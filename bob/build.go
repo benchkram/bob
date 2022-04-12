@@ -23,6 +23,7 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 	b.PrintVersionCompatibility(aggregate)
 
 	var storePaths []string
+	aggregate.Dependencies = append(aggregate.Dependencies, aggregate.BTasks[taskname].Dependencies...)
 	if len(aggregate.Dependencies) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
