@@ -3,6 +3,7 @@ package bob
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/errz"
 	"os"
@@ -14,7 +15,7 @@ var (
 )
 
 // Build a task and it's dependencies.
-func (b *B) Build(ctx context.Context, taskname string) (err error) {
+func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	defer errz.Recover(&err)
 
 	aggregate, err := b.Aggregate()
@@ -23,23 +24,22 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 	b.PrintVersionCompatibility(aggregate)
 
 	var storePaths []string
-	aggregate.Dependencies = append(aggregate.Dependencies, aggregate.BTasks[taskname].Dependencies...)
+	aggregate.Dependencies = append(aggregate.Dependencies, aggregate.BTasks[taskName].Dependencies...)
 	if len(aggregate.Dependencies) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
 		storePaths, err = NixBuild(aggregate.Dependencies)
 		errz.Fatal(err)
-		err = ClearNixBuildResults(aggregate.Dependencies)
-		errz.Fatal(err)
 	}
 
 	playbook, err := aggregate.Playbook(
-		taskname,
+		taskName,
 		playbook.WithCachingEnabled(b.enableCaching),
 	)
 	errz.Fatal(err)
 
 	if len(storePaths) > 0 {
+		fmt.Printf("Updating $PATH to: %s\n", StorePathsToPath(storePaths))
 		err = os.Setenv("PATH", StorePathsToPath(storePaths))
 		errz.Fatal(err)
 	}

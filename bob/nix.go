@@ -2,43 +2,37 @@ package bob
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 )
 
-// NixBuild builds nix packages: nix-build -E 'with import <nixpkgs> { }; [pkg-1 pkg-2 pkg-3]'
+// NixBuild builds nix packages: nix-build --no-out-link -E 'with import <nixpkgs> { }; [pkg-1 pkg-2 pkg-3]'
 // and returns the list of built store paths
 func NixBuild(packages []string) ([]string, error) {
-	nixExpression := fmt.Sprintf("with import <nixpkgs> { }; [%s]", strings.Join(packages, " "))
+	fmt.Println("Building nix dependencies...")
 
-	cmd := exec.Command("nix-build", "-E", nixExpression)
+	nixExpression := fmt.Sprintf("with import <nixpkgs> { }; [%s]", strings.Join(packages, " "))
+	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		if len(out) > 0 {
+			fmt.Println(string(out))
+		}
 		return []string{}, err
 	}
 
-	return strings.Split(string(out), "\n"), nil
-}
-
-// ClearNixBuildResults removes result files created after nix-build
-func ClearNixBuildResults(packages []string) error {
-	for k := range packages {
-		var fileName string
-		if k == 0 {
-			fileName = "result"
-		} else {
-			fileName = fmt.Sprintf("result-%d", k+1)
-		}
-		err := os.Remove(fileName)
-		if err != nil {
-			return err
+	fmt.Println(string(out))
+	var storePaths []string
+	for _, v := range strings.Split(string(out), "\n") {
+		if strings.HasPrefix(v, "/nix/store/") {
+			storePaths = append(storePaths, v)
 		}
 	}
-	return nil
+
+	return storePaths, nil
 }
 
 // StorePathsToPath creates a string ready to be added to $PATH appending /bin to each store path
 func StorePathsToPath(storePaths []string) string {
-	return strings.TrimSuffix(strings.Join(storePaths, "/bin:"), ":")
+	return strings.Join(storePaths, "/bin:") + "/bin"
 }
