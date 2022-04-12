@@ -218,9 +218,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		}
 	}
 	aggregate.Dependencies = make([]string, 0)
-	for _, v := range allDeps {
-		aggregate.Dependencies = append(aggregate.Dependencies, v)
-	}
+	aggregate.Dependencies = append(aggregate.Dependencies, allDeps...)
 
 	return aggregate, aggregate.Verify()
 }
