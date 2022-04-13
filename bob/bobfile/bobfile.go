@@ -52,8 +52,8 @@ type Bobfile struct {
 	// RTasks run tasks
 	RTasks bobrun.RunMap `yaml:"run"`
 
-	Dependencies       []string `yaml:"dependencies"`
-	ExperimentalUseNix bool     `yaml:"experimental-use-nix"`
+	Dependencies []string `yaml:"dependencies"`
+	UseNix       bool     `yaml:"use-nix"`
 
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().

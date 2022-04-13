@@ -25,7 +25,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	var storePaths []string
 	ag.Dependencies = append(ag.BTasks[taskName].Dependencies, ag.Dependencies...)
-	if ag.ExperimentalUseNix && len(ag.Dependencies) > 0 {
+	if ag.UseNix && len(ag.Dependencies) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
 		storePaths, err = NixBuild(ag.Dependencies)
@@ -38,7 +38,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	)
 	errz.Fatal(err)
 
-	if ag.ExperimentalUseNix && len(storePaths) > 0 {
+	if ag.UseNix && len(storePaths) > 0 {
 		fmt.Printf("Updating $PATH to: %s\n", StorePathsToPath(storePaths))
 		err = os.Setenv("PATH", StorePathsToPath(storePaths))
 		errz.Fatal(err)
