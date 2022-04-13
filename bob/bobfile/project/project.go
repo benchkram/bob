@@ -15,11 +15,16 @@ const RestrictedProjectNameChars = `[a-zA-Z0-9/_.\-:]`
 // RestrictedProjectNamePattern is a regular expression to validate projectnames.
 var RestrictedProjectNamePattern = regexp.MustCompile(`^` + RestrictedProjectNameChars + `+$`)
 
+// ProjectNameDoubleSlashPattern matches a string containing a double slash (useful to check for URL schema)
+var ProjectNameDoubleSlashPattern = regexp.MustCompile(`//+`)
+
 var (
 	ErrProjectIsLocal  = fmt.Errorf("can't use Remote() with local project")
 	ErrProjectIsRemote = fmt.Errorf("can't use Local() with remote project")
 
 	ErrInvalidProjectName = fmt.Errorf("invalid project name")
+
+	ProjectNameFormatHint = "project name should be in the form 'project' or 'registry.com/user/project'"
 )
 
 type T string
@@ -67,6 +72,12 @@ func Parse(projectname string) (Name, error) {
 			"project name should be in the form 'project' or 'registry.com/user/project'",
 		))
 	}
+
+	// test for double slash (do not allow prepended schema)
+	if ProjectNameDoubleSlashPattern.MatchString(projectname) {
+		return "", usererror.Wrap(errors.WithMessage(ErrInvalidProjectName, ProjectNameFormatHint))
+	}
+
 	return Name(projectname), nil
 }
 
