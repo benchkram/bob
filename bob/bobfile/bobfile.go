@@ -226,7 +226,7 @@ func (b *Bobfile) Dir() string {
 }
 
 func CreateDummyBobfile(dir string, overwrite bool) (err error) {
-	// Prevent accidential bobfile override
+	// Prevent accidental bobfile override
 	if file.Exists(global.BobFileName) && !overwrite {
 		return ErrBobfileExists
 	}
