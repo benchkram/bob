@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/bobrun"
 	"github.com/benchkram/bob/bobtask"
 )
@@ -59,9 +60,9 @@ func TestBobfileProjectName(t *testing.T) {
 		expected error
 	}{
 		{"simple-project", nil},
-		{"project-with-inv@lid-chars", bobfile.ErrInvalidProjectName},
+		{"project-with-inv@lid-chars", project.ErrInvalidProjectName},
 		{"bob.build/user/url-project", nil},
-		{"https://bob.build/user/schema-url-project", bobfile.ErrInvalidProjectName},
+		{"https://bob.build/user/schema-url-project", project.ErrInvalidProjectName},
 	}
 
 	for _, tt := range tests {

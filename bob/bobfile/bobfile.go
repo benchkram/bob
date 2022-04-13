@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/store"
+	storeclient "github.com/benchkram/bob/pkg/store-client"
+	"github.com/benchkram/bob/pkg/store/remotestore"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -38,7 +42,6 @@ var (
 	ErrBobfileExists          = fmt.Errorf("Bobfile exists")
 	ErrTaskDoesNotExist       = fmt.Errorf("Task does not exist")
 	ErrDuplicateTaskName      = fmt.Errorf("duplicate task name")
-	ErrInvalidProjectName     = fmt.Errorf("invalid project name")
 	ErrSelfReference          = fmt.Errorf("self reference")
 
 	ErrInvalidRunType = fmt.Errorf("Invalid run type")
@@ -66,6 +69,8 @@ type Bobfile struct {
 	dir string
 
 	bobfiles []*Bobfile
+
+	remotestore store.Store
 }
 
 func NewBobfile() *Bobfile {
@@ -83,6 +88,9 @@ func (b *Bobfile) SetBobfiles(bobs []*Bobfile) {
 
 func (b *Bobfile) Bobfiles() []*Bobfile {
 	return b.bobfiles
+}
+func (b *Bobfile) Remotestore() store.Store {
+	return b.remotestore
 }
 
 // bobfileRead reads a bobfile and intializes private fields.
@@ -145,7 +153,48 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		bobfile.RTasks[key] = run
 	}
 
+	// Initialize remote store in case of a valid remote url /  projectname.
+	if bobfile.Project != "" {
+		projectname, err := project.Parse(bobfile.Project)
+		if err != nil {
+			return nil, err
+		}
+
+		switch projectname.Type() {
+		case project.Local:
+			// Do nothing
+		case project.Remote:
+			// Initialize remote store
+			url, err := projectname.Remote()
+			if err != nil {
+				return nil, err
+			}
+			println("using remote store")
+			println(url.String())
+			bobfile.remotestore = newRemotestore(url)
+		}
+	} else {
+		bobfile.Project = bobfile.dir
+	}
+
 	return bobfile, nil
+}
+
+func newRemotestore(endpoint *url.URL) (s store.Store) {
+	const sep = "/"
+
+	parts := strings.Split(endpoint.Path, sep)
+
+	username := parts[0]
+	project := strings.Join(parts[1:], sep)
+	s = remotestore.New(
+		username,
+		project,
+		remotestore.WithClient(
+			storeclient.New("http://"+endpoint.Host),
+		),
+	)
+	return s
 }
 
 // BobfileRead read from a bobfile.
@@ -172,12 +221,9 @@ func (b *Bobfile) Validate() (err error) {
 	}
 
 	// validate project name if set
-	if b.Project != "" {
-		if !project.RestrictedProjectNamePattern.MatchString(b.Project) {
-			return usererror.Wrap(errors.WithMessage(ErrInvalidProjectName,
-				"project name should be in the form 'project' or 'registry.com/user/project'",
-			))
-		}
+	_, err = project.Parse(b.Project)
+	if err != nil {
+		return err
 	}
 
 	// use for duplicate names validation

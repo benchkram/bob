@@ -74,12 +74,10 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	}
 
 	// TODO: reestablish the local store.
-	// artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
+	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
 
-	// TODO: use the current project's actual ID
-	projectID := "fb79bd61-21c1-46c1-8cdd-6b8384f5ac36"
-
-	artifact, err := t.remote.NewArtifact(context.TODO(), projectID, artifactName.String())
+	// TODO: Currently the remote store automatically creates projects and ignores the username.
+	// artifact, err := t.remote.NewArtifact(context.TODO(), artifactName.String())
 	errz.Fatal(err)
 	defer artifact.Close()
 
@@ -173,10 +171,6 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		ReadCloser: io.NopCloser(bytes.NewBuffer(bin)),
 	})
 	errz.Fatal(err)
-
-	if t.remote != nil {
-		// TODO: sync with remote store
-	}
 
 	return nil
 }

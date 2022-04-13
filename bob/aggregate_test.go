@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -250,7 +251,7 @@ func TestInvalidProjectName(t *testing.T) {
 	assert.Nil(t, err)
 
 	_, err = testBob.Aggregate()
-	assert.ErrorIs(t, err, bobfile.ErrInvalidProjectName)
+	assert.ErrorIs(t, err, project.ErrInvalidProjectName)
 }
 
 // FIXME: As we don't refer to a child task by projectname but by path

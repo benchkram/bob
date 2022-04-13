@@ -54,7 +54,6 @@ func newBob(opts ...Option) *B {
 	b := &B{
 		dir:           wd,
 		enableCaching: true,
-		remote:        Remotestore(),
 	}
 
 	for _, opt := range opts {

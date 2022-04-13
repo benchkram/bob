@@ -100,6 +100,9 @@ type ClientInterface interface {
 
 	// ProjectArtifactExists request
 	ProjectArtifactExists(ctx context.Context, projectId string, artifactId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UploadArtifact request  with any body
+	UploadArtifactWithBody(ctx context.Context, userName string, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetHealth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -140,6 +143,18 @@ func (c *Client) GetProjectArtifact(ctx context.Context, projectId string, artif
 
 func (c *Client) ProjectArtifactExists(ctx context.Context, projectId string, artifactId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewProjectArtifactExistsRequest(c.Server, projectId, artifactId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UploadArtifactWithBody(ctx context.Context, userName string, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUploadArtifactRequestWithBody(c.Server, userName, projectName, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -295,6 +310,49 @@ func NewProjectArtifactExistsRequest(server string, projectId string, artifactId
 	return req, nil
 }
 
+// NewUploadArtifactRequestWithBody generates requests for UploadArtifact with any type of body
+func NewUploadArtifactRequestWithBody(server string, userName string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "user_name", runtime.ParamLocationPath, userName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "project_name", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/%s/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -349,6 +407,9 @@ type ClientWithResponsesInterface interface {
 
 	// ProjectArtifactExists request
 	ProjectArtifactExistsWithResponse(ctx context.Context, projectId string, artifactId string, reqEditors ...RequestEditorFn) (*ProjectArtifactExistsResponse, error)
+
+	// UploadArtifact request  with any body
+	UploadArtifactWithBodyWithResponse(ctx context.Context, userName string, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadArtifactResponse, error)
 }
 
 type GetHealthResponse struct {
@@ -438,6 +499,27 @@ func (r ProjectArtifactExistsResponse) StatusCode() int {
 	return 0
 }
 
+type UploadArtifactResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r UploadArtifactResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UploadArtifactResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // GetHealthWithResponse request returning *GetHealthResponse
 func (c *ClientWithResponses) GetHealthWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthResponse, error) {
 	rsp, err := c.GetHealth(ctx, reqEditors...)
@@ -472,6 +554,15 @@ func (c *ClientWithResponses) ProjectArtifactExistsWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseProjectArtifactExistsResponse(rsp)
+}
+
+// UploadArtifactWithBodyWithResponse request with arbitrary body returning *UploadArtifactResponse
+func (c *ClientWithResponses) UploadArtifactWithBodyWithResponse(ctx context.Context, userName string, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadArtifactResponse, error) {
+	rsp, err := c.UploadArtifactWithBody(ctx, userName, projectName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUploadArtifactResponse(rsp)
 }
 
 // ParseGetHealthResponse parses an HTTP response from a GetHealthWithResponse call
@@ -561,6 +652,25 @@ func ParseProjectArtifactExistsResponse(rsp *http.Response) (*ProjectArtifactExi
 	}
 
 	response := &ProjectArtifactExistsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParseUploadArtifactResponse parses an HTTP response from a UploadArtifactWithResponse call
+func ParseUploadArtifactResponse(rsp *http.Response) (*UploadArtifactResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UploadArtifactResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

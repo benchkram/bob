@@ -3,28 +3,31 @@ package storeclient
 import (
 	"context"
 	"fmt"
-	"github.com/benchkram/errz"
-	"github.com/pkg/errors"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+
+	"github.com/benchkram/errz"
+	"github.com/pkg/errors"
 )
 
 func (c *c) Upload(
 	ctx context.Context,
-	projectID string,
+	projectName string,
 	artifactID string,
 	src io.Reader,
 ) (err error) {
 	defer errz.Recover(&err)
 
+	println(c.endpoint)
+
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
 
 	go func() {
-		err := attachMimeHeader(mpw, "id", artifactID)
-		if err != nil {
+		err0 := attachMimeHeader(mpw, "id", artifactID)
+		if err0 != nil {
 			_ = w.CloseWithError(err)
 		}
 
@@ -36,20 +39,24 @@ func (c *c) Upload(
 		tr := io.TeeReader(src, pw)
 		buf := make([]byte, 256)
 		for {
-			_, err := tr.Read(buf)
-			if err == io.EOF {
+			_, err0 := tr.Read(buf)
+			if err0 == io.EOF {
 				_ = mpw.Close()
 				_ = w.Close()
 				break
 			}
-			if err != nil {
+			if err0 != nil {
 				_ = w.CloseWithError(err)
 			}
 		}
 	}()
 
-	resp, err := c.clientWithResponses.CreateProjectArtifactWithBodyWithResponse(
-		ctx, projectID, mpw.FormDataContentType(), r)
+	// resp, err := c.clientWithResponses.CreateProjectArtifactWithBodyWithResponse(
+	// 	ctx, projectID, mpw.FormDataContentType(), r)
+	// errz.Fatal(err)
+
+	resp, err := c.clientWithResponses.UploadArtifactWithBodyWithResponse(
+		ctx, "username", projectName, mpw.FormDataContentType(), r)
 	errz.Fatal(err)
 
 	if resp.StatusCode() != http.StatusOK {

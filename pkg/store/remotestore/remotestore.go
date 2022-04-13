@@ -3,21 +3,31 @@ package remotestore
 import (
 	"context"
 	"fmt"
+	"io"
+	"sync"
+
 	"github.com/benchkram/bob/pkg/store"
 	storeclient "github.com/benchkram/bob/pkg/store-client"
 	"github.com/benchkram/errz"
-	"io"
 )
 
 type s struct {
 	// client to call the remote store.
 	client storeclient.I
+
+	username string
+	project  string
+
+	wg sync.WaitGroup
 }
 
 // New creates a remote store. The caller is responsible to pass a
 // existing directory.
-func New(opts ...Option) store.Store {
-	s := &s{}
+func New(username, project string, opts ...Option) store.Store {
+	s := &s{
+		username: username,
+		project:  project,
+	}
 
 	for _, opt := range opts {
 		if opt == nil {
@@ -35,18 +45,21 @@ func New(opts ...Option) store.Store {
 
 // NewArtifact uploads an artifact. The caller is responsible to call Close().
 // Existing artifacts are overwritten.
-func (s *s) NewArtifact(ctx context.Context, projectID, artifactID string) (wc io.WriteCloser, err error) {
+func (s *s) NewArtifact(ctx context.Context, artifactID string) (wc io.WriteCloser, err error) {
+	s.wg.Add(1)
 	reader, writer := io.Pipe()
 
 	go func() {
+		defer s.wg.Done()
 		err := s.client.Upload(
 			ctx,
-			projectID,
+			s.project,
 			artifactID,
 			reader,
 		)
+		errz.Log(err)
 
-		_ = writer.CloseWithError(err)
+		//_ = writer.CloseWithError(err)
 	}()
 
 	return writer, nil
@@ -66,4 +79,9 @@ func (s *s) Clean(_ context.Context) (err error) {
 func (s *s) List(_ context.Context) (items []string, err error) {
 	defer errz.Recover(&err)
 	return items, fmt.Errorf("not implemented")
+}
+
+// Done waits till all processing finished
+func (s *s) Done() {
+	s.wg.Wait()
 }

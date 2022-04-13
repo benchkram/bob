@@ -108,11 +108,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
-	if aggregate.Project == "" {
-		// TODO: maybe don't leak absolute path of environment
-		aggregate.Project = aggregate.Dir()
-	}
-
 	// set project names for all bobfiles and build tasks
 	for _, bobfile := range bobs {
 		bobfile.Project = aggregate.Project
@@ -233,7 +228,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// Assure tasks are correctly initialised.
 	for i, task := range aggregate.BTasks {
 		task.WithLocalstore(b.local)
-		task.WithRemotestore(b.remote)
 		task.WithBuildinfoStore(b.buildInfoStore)
 
 		// a task must always-rebuild when caching is disabled
@@ -241,6 +235,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			task.SetRebuildStrategy(bobtask.RebuildAlways)
 		}
 		aggregate.BTasks[i] = task
+
 	}
 
 	return aggregate, aggregate.Verify()

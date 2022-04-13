@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"io"
 )
 
@@ -12,10 +13,16 @@ type Artifact interface {
 }
 
 type Store interface {
-	NewArtifact(_ context.Context, projectID, artifactID string) (io.WriteCloser, error)
+	NewArtifact(_ context.Context, artifactID string) (io.WriteCloser, error)
 	GetArtifact(_ context.Context, id string) (io.ReadCloser, error)
 
 	List(context.Context) ([]string, error)
 
 	Clean(context.Context) error
+
+	Done()
 }
+
+var (
+	ErrArtifactNotFoundinSrc = fmt.Errorf("artifact not found in src")
+)
