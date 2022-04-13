@@ -18,27 +18,27 @@ var (
 func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	defer errz.Recover(&err)
 
-	aggregate, err := b.Aggregate()
+	ag, err := b.Aggregate()
 	errz.Fatal(err)
 
-	b.PrintVersionCompatibility(aggregate)
+	b.PrintVersionCompatibility(ag)
 
 	var storePaths []string
-	aggregate.Dependencies = append(aggregate.BTasks[taskName].Dependencies, aggregate.Dependencies...)
-	if len(aggregate.Dependencies) > 0 {
+	ag.Dependencies = append(ag.BTasks[taskName].Dependencies, ag.Dependencies...)
+	if ag.ExperimentalUseNix && len(ag.Dependencies) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
-		storePaths, err = NixBuild(aggregate.Dependencies)
+		storePaths, err = NixBuild(ag.Dependencies)
 		errz.Fatal(err)
 	}
 
-	playbook, err := aggregate.Playbook(
+	playbook, err := ag.Playbook(
 		taskName,
 		playbook.WithCachingEnabled(b.enableCaching),
 	)
 	errz.Fatal(err)
 
-	if len(storePaths) > 0 {
+	if ag.ExperimentalUseNix && len(storePaths) > 0 {
 		fmt.Printf("Updating $PATH to: %s\n", StorePathsToPath(storePaths))
 		err = os.Setenv("PATH", StorePathsToPath(storePaths))
 		errz.Fatal(err)

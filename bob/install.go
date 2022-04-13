@@ -1,6 +1,7 @@
 package bob
 
 import (
+	"errors"
 	"fmt"
 	"github.com/benchkram/errz"
 	"os/exec"
@@ -11,6 +12,10 @@ func (b B) Install() (err error) {
 
 	ag, err := b.Aggregate()
 	errz.Fatal(err)
+
+	if !ag.ExperimentalUseNix {
+		return errors.New("`experimental-use-nix` flag is false")
+	}
 
 	var allDeps []string
 
