@@ -53,12 +53,11 @@ func NixBuildFiles(files []string) ([]string, error) {
 
 	packagesListSection := ""
 	for _, filePath := range files {
-		packagesListSection += fmt.Sprintf("%s = callPackage ./%s {};", randomString(6), filePath)
+		packagesListSection += fmt.Sprintf("%s = callPackage %s {};", randPackageName(6), filePath)
 	}
 
-	newNixExpression := fmt.Sprintf("with import <nixpkgs> { }; let packages = rec {%s inherit pkgs; }; in packages", packagesListSection)
-
-	cmd := exec.Command("nix-build", "--no-out-link", "-E", newNixExpression)
+	nixExpression := fmt.Sprintf("with import <nixpkgs> { }; let packages = rec {%s inherit pkgs; }; in packages", packagesListSection)
+	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if len(out) > 0 {
@@ -78,11 +77,14 @@ func NixBuildFiles(files []string) ([]string, error) {
 	return storePaths, nil
 }
 
-func randomString(length int) string {
+func randPackageName(length int) string {
 	rand.Seed(time.Now().UnixNano())
-	b := make([]byte, length)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)[:length]
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	b := make([]rune, length)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
 
 // StorePathsToPath creates a string ready to be added to $PATH appending /bin to each store path

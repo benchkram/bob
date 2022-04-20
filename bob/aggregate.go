@@ -212,7 +212,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	for _, bobfile := range bobs {
 		for _, dep := range bobfile.Dependencies {
 			if _, added := addedDependencies[dep]; !added {
-				allDeps = append(allDeps, dep)
+				if strings.HasSuffix(dep, ".nix") {
+					allDeps = append(allDeps, bobfile.Dir()+"/"+dep)
+				} else {
+					allDeps = append(allDeps, dep)
+				}
 				addedDependencies[dep] = true
 			}
 		}
