@@ -42,7 +42,9 @@ func (b B) Install() (err error) {
 	if len(allDeps) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
-		_, err = NixBuild(allDeps)
+		_, err = NixBuildPackages(FilterPackageNames(allDeps))
+		errz.Fatal(err)
+		_, err := NixBuildFiles(FilterNixFiles(allDeps))
 		errz.Fatal(err)
 	}
 

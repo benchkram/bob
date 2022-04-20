@@ -37,7 +37,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	if ag.UseNix && len(ag.Dependencies) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
-		storePaths, err = NixBuild(ag.Dependencies)
+		storePaths, err = NixBuildPackages(ag.Dependencies)
 		errz.Fatal(err)
 	}
 
