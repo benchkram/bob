@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/errz"
 	"os"
@@ -23,8 +24,16 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	b.PrintVersionCompatibility(ag)
 
+	workingDirectoryBobFile, err := bobfile.BobfileRead(ag.Dir())
+	errz.Fatal(err)
+
 	var storePaths []string
-	ag.Dependencies = append(ag.BTasks[taskName].Dependencies, ag.Dependencies...)
+	ag.Dependencies = append(ag.BTasks[taskName].Dependencies, workingDirectoryBobFile.Dependencies...)
+
+	if len(ag.Dependencies) > 0 && !ag.UseNix {
+		fmt.Println("Found a list of dependencies, but use-nix is false")
+	}
+
 	if ag.UseNix && len(ag.Dependencies) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
