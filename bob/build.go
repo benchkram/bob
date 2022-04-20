@@ -9,6 +9,7 @@ import (
 	"github.com/benchkram/errz"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 var (
@@ -27,18 +28,29 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	workingDirectoryBobFile, err := bobfile.BobfileRead(ag.Dir())
 	errz.Fatal(err)
 
-	var storePaths []string
-	ag.Dependencies = append(ag.BTasks[taskName].Dependencies, workingDirectoryBobFile.Dependencies...)
+	workingFileDeps := make([]string, len(workingDirectoryBobFile.Dependencies))
+	for k, v := range workingDirectoryBobFile.Dependencies {
+		if strings.HasSuffix(v, ".nix") {
+			workingFileDeps[k] = ag.Dir() + "/" + v
+		} else {
+			workingFileDeps[k] = v
+		}
+	}
+	allDepsToInstall := append(ag.BTasks[taskName].Dependencies, workingFileDeps...)
 
-	if len(ag.Dependencies) > 0 && !ag.UseNix {
+	if len(allDepsToInstall) > 0 && !ag.UseNix {
 		fmt.Println("Found a list of dependencies, but use-nix is false")
 	}
 
-	if ag.UseNix && len(ag.Dependencies) > 0 {
+	var storePaths []string
+	if ag.UseNix && len(allDepsToInstall) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
-		storePaths, err = NixBuildPackages(ag.Dependencies)
+		storePaths, err = NixBuildPackages(FilterPackageNames(allDepsToInstall))
 		errz.Fatal(err)
+		storePathsFromFiles, err := NixBuildFiles(FilterNixFiles(allDepsToInstall))
+		errz.Fatal(err)
+		storePaths = append(storePaths, storePathsFromFiles...)
 	}
 
 	playbook, err := ag.Playbook(
