@@ -206,7 +206,7 @@ func (b *Bobfile) Validate() (err error) {
 	return nil
 }
 
-func (b *Bobfile) BobfileSave(dir string) (err error) {
+func (b *Bobfile) BobfileSave(dir, name string) (err error) {
 	defer errz.Recover(&err)
 
 	buf := bytes.NewBuffer([]byte{})
@@ -218,7 +218,7 @@ func (b *Bobfile) BobfileSave(dir string) (err error) {
 	err = encoder.Encode(b)
 	errz.Fatal(err)
 
-	return ioutil.WriteFile(filepath.Join(dir, global.BobFileName), buf.Bytes(), 0664)
+	return ioutil.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0664)
 }
 
 func (b *Bobfile) Dir() string {
@@ -238,7 +238,7 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 		CmdDirty:    "go build -o run",
 		TargetDirty: "run",
 	}
-	return bobfile.BobfileSave(dir)
+	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
 func IsBobfile(file string) bool {
