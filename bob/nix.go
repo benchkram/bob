@@ -11,6 +11,12 @@ import (
 func NixBuildPackages(packages []string) ([]string, error) {
 	fmt.Println("Building nix dependencies...")
 
+	for _, v := range defaultPackages() {
+		if !inSlice(v, packages) {
+			packages = append(packages, v)
+		}
+	}
+
 	nixExpression := fmt.Sprintf("with import <nixpkgs> { }; [%s]", strings.Join(packages, " "))
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 	out, err := cmd.CombinedOutput()
@@ -30,6 +36,15 @@ func NixBuildPackages(packages []string) ([]string, error) {
 	}
 
 	return storePaths, nil
+}
+
+func defaultPackages() []string {
+	return []string{
+		"bash",
+		"coreutils",
+		"gnused",
+		"findutils",
+	}
 }
 
 func NixBuildFiles(files []string) ([]string, error) {
