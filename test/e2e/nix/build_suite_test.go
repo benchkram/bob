@@ -42,6 +42,7 @@ var _ = BeforeSuite(func() {
 	nameToBobfile := make(map[string]*bobfile.Bobfile)
 	for _, name := range mocks {
 		abs, err := filepath.Abs("./" + name)
+		Expect(err).NotTo(HaveOccurred())
 		bf, err := bobfile.BobfileRead(abs)
 		Expect(err).NotTo(HaveOccurred())
 		nameToBobfile[name] = bf
