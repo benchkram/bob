@@ -62,6 +62,7 @@ var _ = BeforeSuite(func() {
 
 	b, err = bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
 	Expect(err).NotTo(HaveOccurred())
+	Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {

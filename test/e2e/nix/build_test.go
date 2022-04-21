@@ -19,7 +19,6 @@ var _ = Describe("Testing new nix implementation", func() {
 			// update bob.yaml with mock content
 			err := os.Rename("with_use_nix_false.yaml", "bob.yaml")
 			errz.Log(err)
-			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
 
 			ctx := context.Background()
 			err = b.Build(ctx, "build")
