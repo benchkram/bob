@@ -3,6 +3,7 @@ package nix
 import (
 	"fmt"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -11,7 +12,7 @@ type NewPathKey struct{}
 // IsInstalled checks if nix is installed on the system
 func IsInstalled() bool {
 	_, err := exec.LookPath("nix")
-	return err != nil
+	return err == nil
 }
 
 // BuildPackages builds nix packages: nix-build --no-out-link -E 'with import <nixpkgs> { }; [pkg-1 pkg-2 pkg-3]'
@@ -105,6 +106,21 @@ func FilterNixFiles(dependencies []string) []string {
 		res = append(res, v)
 	}
 	return res
+}
+
+func DownloadURl() string {
+	url := "https://nixos.org/download.html"
+
+	switch runtime.GOOS {
+	case "windows":
+		url = "https://nixos.org/download.html#nix-install-windows"
+	case "darwin":
+		url = "https://nixos.org/download.html#nix-install-macos"
+	case "linux":
+		url = "https://nixos.org/download.html#nix-install-linux"
+	}
+
+	return url
 }
 
 func inSlice(a string, s []string) bool {

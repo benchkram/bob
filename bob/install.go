@@ -14,6 +14,10 @@ func (b B) Install() (err error) {
 	ag, err := b.Aggregate()
 	errz.Fatal(err)
 
+	if !nix.IsInstalled() {
+		return fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl())
+	}
+
 	if !ag.UseNix {
 		return errors.New("`use-nix: true` is missing in the root bob.yaml file")
 	}
