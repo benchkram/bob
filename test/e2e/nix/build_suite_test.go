@@ -48,7 +48,7 @@ var _ = BeforeSuite(func() {
 		nameToBobfile[name] = bf
 	}
 
-	testDir, err := ioutil.TempDir("", "bob-test-version-*")
+	testDir, err := ioutil.TempDir("", "bob-test-nix-*")
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
 
