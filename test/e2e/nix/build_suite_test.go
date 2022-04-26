@@ -33,14 +33,14 @@ var _ = BeforeSuite(func() {
 
 	initialPath = os.Getenv("PATH")
 
-	//Initialize mock bob files from local directory
-	mocks := []string{
+	// Initialize mock bob files from local directory
+	bobFiles := []string{
 		"with_use_nix_false",
 		"with_bob_dependencies",
 		"with_task_dependencies",
 	}
 	nameToBobfile := make(map[string]*bobfile.Bobfile)
-	for _, name := range mocks {
+	for _, name := range bobFiles {
 		abs, err := filepath.Abs("./" + name)
 		Expect(err).NotTo(HaveOccurred())
 		bf, err := bobfile.BobfileRead(abs)
