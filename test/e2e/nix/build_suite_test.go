@@ -55,7 +55,7 @@ var _ = BeforeSuite(func() {
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	//Save bob files in dir to have them available in tests
+	// Save bob files in dir to have them available in tests
 	for name, bf := range nameToBobfile {
 		err = bf.BobfileSave(dir, name+".yaml")
 		Expect(err).NotTo(HaveOccurred())
