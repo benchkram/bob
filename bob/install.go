@@ -15,7 +15,7 @@ func (b B) Install() (err error) {
 	errz.Fatal(err)
 
 	if !ag.UseNix {
-		return errors.New("`use-nix` flag is false")
+		return errors.New("`use-nix: true` is missing in the root bob.yaml file")
 	}
 
 	var allDeps []string
