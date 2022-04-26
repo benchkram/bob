@@ -26,6 +26,11 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 			return usererror.Wrapm(err, "shell command parse error")
 		}
 
+		err = updatePath(ctx)
+		if err != nil {
+			return err
+		}
+
 		env := os.Environ()
 		// TODO: warn when overwriting envvar from the environment
 		env = append(env, t.env...)
@@ -65,4 +70,15 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	}
 
 	return nil
+}
+
+func updatePath(ctx context.Context) error {
+	if ctx.Value("newPath") == nil {
+		return nil
+	}
+
+	newPath := ctx.Value("newPath").(string)
+	fmt.Printf("Updating $PATH to: %s\n", newPath)
+
+	return os.Setenv("PATH", newPath)
 }

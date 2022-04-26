@@ -7,7 +7,6 @@ import (
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/errz"
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -60,9 +59,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	errz.Fatal(err)
 
 	if ag.UseNix && len(storePaths) > 0 {
-		fmt.Printf("Updating $PATH to: %s\n", StorePathsToPath(storePaths))
-		err = os.Setenv("PATH", StorePathsToPath(storePaths))
-		errz.Fatal(err)
+		ctx = context.WithValue(ctx, "newPath", StorePathsToPath(storePaths))
 	}
 
 	err = playbook.Build(ctx)
