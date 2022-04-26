@@ -52,4 +52,30 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(output()).To(ContainSubstring("go version go1.16.15"))
 		})
 	})
+
+	Context("with ambiguous deps in root", func() {
+		It("running task go version will use go_1_17 from bob file dependency", func() {
+			Expect(os.Rename("with_ambiguous_deps_in_root.yaml", "bob.yaml")).NotTo(HaveOccurred())
+
+			capture()
+			ctx := context.Background()
+			err := b.Build(ctx, "run-hello")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(output()).To(ContainSubstring("go version go1.17"))
+		})
+	})
+
+	Context("with ambiguous deps in task", func() {
+		It("running task go version will use go_1_17 from task deps", func() {
+			Expect(os.Rename("with_ambiguous_deps_in_task.yaml", "bob.yaml")).NotTo(HaveOccurred())
+
+			capture()
+			ctx := context.Background()
+			err := b.Build(ctx, "run-hello")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(output()).To(ContainSubstring("go version go1.17"))
+		})
+	})
 })

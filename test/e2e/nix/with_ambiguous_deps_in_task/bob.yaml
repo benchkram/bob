@@ -1,0 +1,7 @@
+build:
+  run-hello:
+    cmd: go version
+    dependencies:
+      - go_1_17
+      - go_1_18
+use-nix: true
