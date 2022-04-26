@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/playbook"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
 	"os/exec"
 	"strings"
@@ -45,9 +46,9 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	if ag.UseNix && len(allDepsToInstall) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
-		storePaths, err = NixBuildPackages(FilterPackageNames(allDepsToInstall))
+		storePaths, err = nix.BuildPackages(nix.FilterPackageNames(allDepsToInstall))
 		errz.Fatal(err)
-		storePathsFromFiles, err := NixBuildFiles(FilterNixFiles(allDepsToInstall))
+		storePathsFromFiles, err := nix.BuildFiles(nix.FilterNixFiles(allDepsToInstall))
 		errz.Fatal(err)
 		storePaths = append(storePaths, storePathsFromFiles...)
 	}
@@ -59,7 +60,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	errz.Fatal(err)
 
 	if ag.UseNix && len(storePaths) > 0 {
-		ctx = context.WithValue(ctx, "newPath", StorePathsToPath(storePaths))
+		ctx = context.WithValue(ctx, "newPath", nix.StorePathsToPath(storePaths))
 	}
 
 	err = playbook.Build(ctx)

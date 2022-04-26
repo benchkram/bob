@@ -1,4 +1,4 @@
-package bob
+package nix
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-// NixBuildPackages builds nix packages: nix-build --no-out-link -E 'with import <nixpkgs> { }; [pkg-1 pkg-2 pkg-3]'
+// BuildPackages builds nix packages: nix-build --no-out-link -E 'with import <nixpkgs> { }; [pkg-1 pkg-2 pkg-3]'
 // and returns the list of built store paths
-func NixBuildPackages(packages []string) ([]string, error) {
+func BuildPackages(packages []string) ([]string, error) {
 	fmt.Println("Building nix dependencies...")
 
 	for _, v := range defaultPackages() {
@@ -47,7 +47,7 @@ func defaultPackages() []string {
 	}
 }
 
-func NixBuildFiles(files []string) ([]string, error) {
+func BuildFiles(files []string) ([]string, error) {
 	fmt.Println("Building .nix files...")
 
 	var storePaths []string
@@ -97,4 +97,13 @@ func FilterNixFiles(dependencies []string) []string {
 		res = append(res, v)
 	}
 	return res
+}
+
+func inSlice(a string, s []string) bool {
+	for _, v := range s {
+		if v == a {
+			return true
+		}
+	}
+	return false
 }

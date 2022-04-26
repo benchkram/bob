@@ -3,6 +3,7 @@ package bob
 import (
 	"errors"
 	"fmt"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
 	"os/exec"
 )
@@ -42,9 +43,9 @@ func (b B) Install() (err error) {
 	if len(allDeps) > 0 {
 		_, err = exec.LookPath("nix-build")
 		errz.Fatal(err)
-		_, err = NixBuildPackages(FilterPackageNames(allDeps))
+		_, err = nix.BuildPackages(nix.FilterPackageNames(allDeps))
 		errz.Fatal(err)
-		_, err := NixBuildFiles(FilterNixFiles(allDeps))
+		_, err := nix.BuildFiles(nix.FilterNixFiles(allDeps))
 		errz.Fatal(err)
 	}
 
