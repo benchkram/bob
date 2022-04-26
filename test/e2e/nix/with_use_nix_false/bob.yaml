@@ -1,15 +1,7 @@
 build:
   build:
-    input: |-
-      ./main1.go
-      go.mod
-    cmd: go build -o run
-    dependson: []
-    environment: ""
-    target: run
-    exports: {}
-    rebuild: on-change
+    cmd: echo build
 dependencies:
-    - git
-    - go_1_18
+  - git
+  - go_1_16
 use-nix: false
