@@ -9,10 +9,7 @@ import (
 // IsInstalled checks if nix is installed on the system
 func IsInstalled() bool {
 	_, err := exec.LookPath("nix")
-	if err != nil {
-		return false
-	}
-	return true
+	return err != nil
 }
 
 // BuildPackages builds nix packages: nix-build --no-out-link -E 'with import <nixpkgs> { }; [pkg-1 pkg-2 pkg-3]'
