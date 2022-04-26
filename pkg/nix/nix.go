@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+type NewPathKey struct{}
+
 // IsInstalled checks if nix is installed on the system
 func IsInstalled() bool {
 	_, err := exec.LookPath("nix")

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/benchkram/bob/pkg/nix"
 	"os"
 	"strings"
 
@@ -73,11 +74,11 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 }
 
 func updatePath(ctx context.Context) error {
-	if ctx.Value("newPath") == nil {
+	if ctx.Value(nix.NewPathKey{}) == nil {
 		return nil
 	}
 
-	newPath := ctx.Value("newPath").(string)
+	newPath := ctx.Value(nix.NewPathKey{}).(string)
 	fmt.Printf("Updating $PATH to: %s\n", newPath)
 
 	return os.Setenv("PATH", newPath)

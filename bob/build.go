@@ -60,7 +60,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	errz.Fatal(err)
 
 	if ag.UseNix && len(storePaths) > 0 {
-		ctx = context.WithValue(ctx, "newPath", nix.StorePathsToPath(storePaths))
+		ctx = context.WithValue(ctx, nix.NewPathKey{}, nix.StorePathsToPath(storePaths))
 	}
 
 	err = playbook.Build(ctx)
