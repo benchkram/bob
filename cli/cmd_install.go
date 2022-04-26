@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
@@ -19,13 +20,18 @@ var installCmd = &cobra.Command{
 }
 
 func runInstall() {
+	var exitCode int
+	defer func() { os.Exit(exitCode) }()
+
 	b, err := bob.Bob()
 	if err != nil {
+		exitCode = 1
 		boblog.Log.Error(err, "Unable to initialise bob")
 		return
 	}
 
 	if err = b.Install(); err != nil {
+		exitCode = 1
 		boblog.Log.Error(err, "Unable to install dependencies")
 		return
 	}
