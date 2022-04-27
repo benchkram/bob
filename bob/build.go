@@ -7,8 +7,8 @@ import (
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/bob/pkg/nix"
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
-	"os/exec"
 	"strings"
 )
 
@@ -43,12 +43,14 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	var storePaths []string
 	if ag.UseNix && len(allDepsToInstall) > 0 {
-		_, err = exec.LookPath("nix-build")
-		errz.Fatal(err)
 		storePaths, err = nix.BuildPackages(nix.FilterPackageNames(allDepsToInstall))
-		errz.Fatal(err)
+		if err != nil {
+			return usererror.Wrap(err)
+		}
 		storePathsFromFiles, err := nix.BuildFiles(nix.FilterNixFiles(allDepsToInstall))
-		errz.Fatal(err)
+		if err != nil {
+			return usererror.Wrap(err)
+		}
 		storePaths = append(storePaths, storePathsFromFiles...)
 	}
 
