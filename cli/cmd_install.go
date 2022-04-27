@@ -26,13 +26,13 @@ func runInstall() {
 	b, err := bob.Bob()
 	if err != nil {
 		exitCode = 1
-		boblog.Log.Error(err, "Unable to initialise bob")
+		boblog.Log.UserError(err)
 		return
 	}
 
 	if err = b.Install(); err != nil {
 		exitCode = 1
-		boblog.Log.Error(err, "Unable to install dependencies")
+		boblog.Log.UserError(err)
 		return
 	}
 

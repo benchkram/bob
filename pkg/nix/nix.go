@@ -1,6 +1,7 @@
 package nix
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"runtime"
@@ -34,7 +35,7 @@ func BuildPackages(packages []string) ([]string, error) {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if len(out) > 0 {
-			fmt.Println(string(out))
+			return []string{}, errors.New(string(out))
 		}
 		return []string{}, err
 	}
@@ -72,7 +73,7 @@ func BuildFiles(files []string) ([]string, error) {
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			if len(out) > 0 {
-				fmt.Println(string(out))
+				return []string{}, errors.New(string(out))
 			}
 			return []string{}, err
 		}
