@@ -40,8 +40,14 @@ func (b B) Install() (err error) {
 		allDeps = append(allDeps, v)
 	}
 
-	fmt.Println("Installing following dependencies...")
-	fmt.Println(allDeps)
+	if len(allDeps) == 0 {
+		fmt.Println("Nothing to install.")
+	}
+
+	fmt.Println("Installing following dependencies:")
+	for _, v := range allDeps {
+		fmt.Println(v)
+	}
 	fmt.Println()
 
 	if len(allDeps) > 0 {
