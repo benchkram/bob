@@ -37,11 +37,6 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 		}
 	}
 	allDepsToInstall := append(ag.BTasks[taskName].Dependencies, workingFileDeps...)
-
-	if ag.UseNix && !nix.IsInstalled() {
-		return fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl())
-	}
-
 	if len(allDepsToInstall) > 0 && !ag.UseNix {
 		fmt.Println("Found a list of dependencies, but use-nix is false")
 	}

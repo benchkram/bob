@@ -18,6 +18,9 @@ func IsInstalled() bool {
 // BuildPackages builds nix packages: nix-build --no-out-link -E 'with import <nixpkgs> { }; [pkg-1 pkg-2 pkg-3]'
 // and returns the list of built store paths
 func BuildPackages(packages []string) ([]string, error) {
+	if !IsInstalled() {
+		return []string{}, fmt.Errorf("nix is not installed on your system. Get it from %s", DownloadURl())
+	}
 	fmt.Println("Building nix dependencies...")
 
 	for _, v := range defaultPackages() {
@@ -57,6 +60,9 @@ func defaultPackages() []string {
 }
 
 func BuildFiles(files []string) ([]string, error) {
+	if !IsInstalled() {
+		return []string{}, fmt.Errorf("nix is not installed on your system. Get it from %s", DownloadURl())
+	}
 	fmt.Println("Building .nix files...")
 
 	var storePaths []string
