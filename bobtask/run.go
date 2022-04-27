@@ -77,9 +77,5 @@ func updatePath(ctx context.Context) error {
 	if ctx.Value(nix.NewPathKey{}) == nil {
 		return nil
 	}
-
-	newPath := ctx.Value(nix.NewPathKey{}).(string)
-	fmt.Printf("Updating $PATH to: %s\n", newPath)
-
-	return os.Setenv("PATH", newPath)
+	return os.Setenv("PATH", ctx.Value(nix.NewPathKey{}).(string))
 }
