@@ -36,5 +36,5 @@ func runInstall() {
 		return
 	}
 
-	fmt.Println("All dependencies installed!")
+	fmt.Printf("\nAll dependencies installed!\n")
 }

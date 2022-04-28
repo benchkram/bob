@@ -22,6 +22,10 @@ func BuildPackages(packages []string) ([]string, error) {
 	if !IsInstalled() {
 		return []string{}, fmt.Errorf("nix is not installed on your system. Get it from %s", DownloadURl())
 	}
+	if len(packages) == 0 {
+		return []string{}, nil
+	}
+
 	fmt.Println("Building nix dependencies...")
 
 	for _, v := range defaultPackages() {
@@ -63,6 +67,9 @@ func defaultPackages() []string {
 func BuildFiles(files []string) ([]string, error) {
 	if !IsInstalled() {
 		return []string{}, fmt.Errorf("nix is not installed on your system. Get it from %s", DownloadURl())
+	}
+	if len(files) == 0 {
+		return []string{}, nil
 	}
 	fmt.Println("Building .nix files...")
 
