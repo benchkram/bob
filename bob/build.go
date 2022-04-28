@@ -43,11 +43,11 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	var storePaths []string
 	if ag.UseNix && len(allDepsToInstall) > 0 {
-		storePaths, err = nix.BuildPackages(nix.FilterPackageNames(allDepsToInstall))
+		storePaths, err = nix.BuildPackages(nix.FilterPackageNames(allDepsToInstall), ag.Nixpkgs)
 		if err != nil {
 			return usererror.Wrap(err)
 		}
-		storePathsFromFiles, err := nix.BuildFiles(nix.FilterNixFiles(allDepsToInstall))
+		storePathsFromFiles, err := nix.BuildFiles(nix.FilterNixFiles(allDepsToInstall), ag.Nixpkgs)
 		if err != nil {
 			return usererror.Wrap(err)
 		}

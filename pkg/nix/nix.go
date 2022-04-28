@@ -18,7 +18,7 @@ func IsInstalled() bool {
 
 // BuildPackages builds nix packages: nix-build --no-out-link -E 'with import <nixpkgs> { }; [pkg-1 pkg-2 pkg-3]'
 // and returns the list of built store paths
-func BuildPackages(packages []string) ([]string, error) {
+func BuildPackages(packages []string, nixpkgs string) ([]string, error) {
 	if !IsInstalled() {
 		return []string{}, fmt.Errorf("nix is not installed on your system. Get it from %s", DownloadURl())
 	}
@@ -34,7 +34,7 @@ func BuildPackages(packages []string) ([]string, error) {
 		}
 	}
 
-	nixExpression := fmt.Sprintf("with import <nixpkgs> { }; [%s]", strings.Join(packages, " "))
+	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), strings.Join(packages, " "))
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -64,7 +64,7 @@ func defaultPackages() []string {
 	}
 }
 
-func BuildFiles(files []string) ([]string, error) {
+func BuildFiles(files []string, nixpkgs string) ([]string, error) {
 	if !IsInstalled() {
 		return []string{}, fmt.Errorf("nix is not installed on your system. Get it from %s", DownloadURl())
 	}
@@ -75,7 +75,7 @@ func BuildFiles(files []string) ([]string, error) {
 
 	var storePaths []string
 	for _, pkg := range files {
-		nixExpression := fmt.Sprintf("with import <nixpkgs> { }; callPackage %s {}", pkg)
+		nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), pkg)
 		cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
@@ -135,6 +135,13 @@ func DownloadURl() string {
 	}
 
 	return url
+}
+
+func source(nixpkgs string) string {
+	if nixpkgs != "" {
+		return fmt.Sprintf("(fetchTarball \"%s\")", nixpkgs)
+	}
+	return "<nixpkgs>"
 }
 
 func inSlice(a string, s []string) bool {

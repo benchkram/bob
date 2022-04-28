@@ -46,11 +46,11 @@ func (b B) Install() (err error) {
 	fmt.Println()
 
 	if len(allDeps) > 0 {
-		_, err = nix.BuildPackages(nix.FilterPackageNames(allDeps))
+		_, err = nix.BuildPackages(nix.FilterPackageNames(allDeps), ag.Nixpkgs)
 		if err != nil {
 			return err
 		}
-		_, err = nix.BuildFiles(nix.FilterNixFiles(allDeps))
+		_, err = nix.BuildFiles(nix.FilterNixFiles(allDeps), ag.Nixpkgs)
 		if err != nil {
 			return err
 		}

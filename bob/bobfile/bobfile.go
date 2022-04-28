@@ -54,6 +54,7 @@ type Bobfile struct {
 
 	Dependencies []string `yaml:"dependencies"`
 	UseNix       bool     `yaml:"use-nix"`
+	Nixpkgs      string   `yaml:"nixpkgs"`
 
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
