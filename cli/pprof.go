@@ -3,7 +3,6 @@ package cli
 import (
 	"os"
 	"runtime/pprof"
-	"sync"
 
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
@@ -12,18 +11,14 @@ import (
 const _cpuprofile = "cpuprofile.prof"
 const _memprofile = "memprofile.prof"
 
-var once sync.Once
-
 func profiling(cpuprofile, memprofile bool) func() {
 	doOnStop := []func(){}
 	stop := func() {
-		once.Do(func() {
-			for _, d := range doOnStop {
-				if d != nil {
-					d()
-				}
+		for _, d := range doOnStop {
+			if d != nil {
+				d()
 			}
-		})
+		}
 	}
 
 	if cpuprofile {
