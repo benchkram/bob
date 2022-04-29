@@ -49,6 +49,8 @@ func (tm Map) Sanitize() (err error) {
 
 	for key, task := range tm {
 
+		fmt.Printf("calling sanitize on task: %s\n", task.Name())
+
 		sanitizedExports, err := task.sanitizeExports(task.Exports)
 		errz.Fatal(err)
 		task.Exports = sanitizedExports
