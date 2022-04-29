@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
@@ -58,7 +57,7 @@ func runGitAdd(targets ...string) {
 	if err != nil {
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
-			os.Exit(1)
+			exit(1)
 		} else {
 			errz.Fatal(err)
 		}
@@ -70,10 +69,12 @@ func runGitCommit(m string) {
 	if err != nil {
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
-			os.Exit(1)
+			stopProfiling()
+			exit(1)
 		} else if errors.Is(err, bobgit.ErrEmptyCommitMessage) {
 			fmt.Printf("%s\n\n  %s\n\n", "bob git requires a commit message", aurora.Bold("bob git commit -m \"msg\""))
-			os.Exit(1)
+			stopProfiling()
+			exit(1)
 		} else {
 			errz.Fatal(err)
 		}
@@ -89,11 +90,11 @@ func runGitStatus() {
 	if err != nil {
 		if errors.Is(err, bobutil.ErrCouldNotFindBobWorkspace) {
 			fmt.Println("fatal: not a bob repository (or any of the parent directories): .bob")
-			os.Exit(1)
+			exit(1)
 		}
 		if errors.Is(err, bobgit.ErrCouldNotFindGitDir) {
 			fmt.Println("fatal: bob workspace is not a git repository")
-			os.Exit(1)
+			exit(1)
 		}
 		errz.Fatal(err)
 	}

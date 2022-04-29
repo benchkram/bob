@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
@@ -26,12 +25,13 @@ var verifyCmd = &cobra.Command{
 func runVerify() {
 	exitCode := 0
 	defer func() {
+		stopProfiling()
 		if exitCode == 0 {
 			fmt.Printf("\n%s\n", aurora.Green("Verified"))
-			os.Exit(0)
+			exit(0)
 		} else {
 			fmt.Printf("\n%s\n", aurora.Red("Verification failed"))
-			os.Exit(exitCode)
+			exit(exitCode)
 		}
 	}()
 
