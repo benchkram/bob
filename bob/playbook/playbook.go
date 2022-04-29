@@ -199,18 +199,14 @@ func (p *Playbook) play() error {
 			return err
 		}
 
-		// fmt.Printf("walking task %s which is in state %s\n", taskname, task.State())
-
 		switch task.State() {
 		case StatePending:
 			// Check if all dependent tasks are completed
 			for _, dependentTaskName := range task.Task.DependsOn {
 				t, ok := p.Tasks[dependentTaskName]
 				if !ok {
-					//fmt.Printf("Task %s does not exist", dependentTaskName)
 					return ErrTaskDoesNotExist
 				}
-				// fmt.Printf("dependentTask %s which is in state %s\n", t.Task.Name(), t.State())
 
 				state := t.State()
 				if state != StateCompleted && state != StateNoRebuildRequired {

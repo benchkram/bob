@@ -6,6 +6,7 @@ import (
 
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
+	"github.com/benchkram/errz"
 )
 
 var ErrInvalidRunType = fmt.Errorf("Invalid run type")
@@ -19,6 +20,12 @@ type Run struct {
 
 	// DependsOn run or build tasks
 	DependsOn []string
+
+	// Pre will be run after DependsOn tasks have been run and just before running this task
+	Pre []string
+
+	// Post will be run after stoppen this task
+	Post []string
 
 	// didUpdate fires after the run task
 	// did a restart.
@@ -49,6 +56,8 @@ func New() *Run {
 	r := &Run{
 		Type:      RunTypeBinary,
 		DependsOn: []string{},
+		Pre:       []string{},
+		Post:      []string{},
 		Path:      composeFileDefault,
 
 		didUpdate: make(chan struct{}),
@@ -58,15 +67,18 @@ func New() *Run {
 
 // Run creates run cmds and return a channel to ctl it.
 // To shutdown a Run() use a cancable context.
-func (r *Run) Run(ctx context.Context) (rc ctl.Command, _ error) {
+func (r *Run) Run(ctx context.Context) (rc ctl.Command, err error) {
+	defer errz.Recover(&err)
 	// fmt.Printf("Creating control for run task [%s]\n", r.name)
 
 	switch r.Type {
 	case RunTypeBinary:
-		return execctl.NewCmd(r.name, r.Path)
+		rc, err = execctl.NewCmd(r.name, r.Path)
 	case RunTypeCompose:
-		return r.composeCommand(ctx)
+		rc, err = r.composeCommand(ctx)
 	default:
 		return nil, ErrInvalidRunType
 	}
+
+	return r.WrapCommand(rc), nil
 }

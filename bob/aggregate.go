@@ -181,6 +181,20 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			}
 			run.DependsOn = dependsOn
 
+			// Rewrite pre tasks to global scope.
+			pre := []string{}
+			for _, preTask := range run.Pre {
+				pre = append(pre, addTaskPrefix(prefix, preTask))
+			}
+			run.Pre = pre
+
+			// Rewrite post tasks to global scope.
+			post := []string{}
+			for _, postTask := range run.Post {
+				post = append(post, addTaskPrefix(prefix, postTask))
+			}
+			run.Post = post
+
 			aggregate.RTasks[runname] = run
 		}
 	}

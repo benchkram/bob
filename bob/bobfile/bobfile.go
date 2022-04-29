@@ -218,6 +218,18 @@ func (b *Bobfile) Validate() (err error) {
 				return errors.WithMessage(ErrSelfReference, name)
 			}
 		}
+		// validate no self-reference
+		for _, dep := range run.Pre {
+			if name == dep {
+				return errors.WithMessage(ErrSelfReference, name)
+			}
+		}
+		// validate no self-reference
+		for _, dep := range run.Post {
+			if name == dep {
+				return errors.WithMessage(ErrSelfReference, name)
+			}
+		}
 	}
 
 	return nil
