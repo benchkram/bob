@@ -70,7 +70,10 @@ type absolutePathOrError struct {
 	err error
 }
 
-var pathMap = make(map[string]absolutePathOrError, 10000)
+// absPathMap caches already resolved absolut paths.
+// FIXME: in case of asynchronous calls this should be a sync map
+// or use a lock.
+var absPathMap = make(map[string]absolutePathOrError, 10000)
 
 // resolve is a very basic implementation only preventing the inclusion of files outside of the project.
 // It is very likely still possible to include other files with malicious intention.
@@ -82,7 +85,7 @@ func resolve(path string, opts optimizationOptions) (string, error) {
 		abs = filepath.Join(opts.wd, path)
 	}
 
-	aoe, ok := pathMap[abs]
+	aoe, ok := absPathMap[abs]
 	if ok {
 		return aoe.abs, aoe.err
 	}
@@ -97,14 +100,14 @@ func resolve(path string, opts optimizationOptions) (string, error) {
 		sym, err := filepath.EvalSymlinks(abs)
 		if err != nil {
 			a := absolutePathOrError{"", fmt.Errorf("failed to follow symlink of %q: %w", abs, err)}
-			pathMap[abs] = a
+			absPathMap[abs] = a
 			return a.abs, a.err
 		}
-		pathMap[abs] = absolutePathOrError{abs: sym, err: nil}
+		absPathMap[abs] = absolutePathOrError{abs: sym, err: nil}
 		return sym, nil
 	}
 
-	pathMap[abs] = absolutePathOrError{abs: abs, err: nil}
+	absPathMap[abs] = absolutePathOrError{abs: abs, err: nil}
 	return abs, nil
 }
 

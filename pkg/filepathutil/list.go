@@ -17,7 +17,18 @@ var (
 	}
 )
 
+var listRecursiveMap = make(map[string][]string, 1024)
+
 func ListRecursive(inp string) (all []string, err error) {
+
+	fmt.Printf("ListRecursive input: %s ", inp)
+
+	result, ok := listRecursiveMap[inp]
+	if ok {
+		fmt.Printf("cache hit \n")
+		return result, nil
+	}
+	fmt.Printf("failed \n")
 
 	// TODO: possibly ignore here too, before calling listDir
 	if s, err := os.Stat(inp); err != nil || !s.IsDir() {
@@ -56,13 +67,13 @@ func ListRecursive(inp string) (all []string, err error) {
 		all = append(all, files...)
 	}
 
+	listRecursiveMap[inp] = all
 	return all, nil
 }
 
 var WalkedDirs = map[string]int{}
 
 func listDir(path string) ([]string, error) {
-
 	times := WalkedDirs[path]
 	WalkedDirs[path] = times + 1
 
