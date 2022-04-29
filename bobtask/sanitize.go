@@ -12,13 +12,13 @@ import (
 	"github.com/benchkram/bob/bobtask/export"
 )
 
-type optimizationOptions struct {
+type optimisationOptions struct {
 	// wd is the current working directory
 	// to avoid calls to os.Getwd.
 	wd string
 }
 
-func (t *Task) sanitizeInputs(inputs []string, opts optimizationOptions) ([]string, error) {
+func (t *Task) sanitizeInputs(inputs []string, opts optimisationOptions) ([]string, error) {
 
 	projectRoot, err := resolve(t.dir, opts)
 	if err != nil {
@@ -77,7 +77,7 @@ var absPathMap = make(map[string]absolutePathOrError, 10000)
 
 // resolve is a very basic implementation only preventing the inclusion of files outside of the project.
 // It is very likely still possible to include other files with malicious intention.
-func resolve(path string, opts optimizationOptions) (string, error) {
+func resolve(path string, opts optimisationOptions) (string, error) {
 	var abs string
 	if filepath.IsAbs(path) {
 		abs = filepath.Clean(path)
