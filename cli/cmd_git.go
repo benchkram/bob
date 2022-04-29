@@ -69,11 +69,9 @@ func runGitCommit(m string) {
 	if err != nil {
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
-			stopProfiling()
 			exit(1)
 		} else if errors.Is(err, bobgit.ErrEmptyCommitMessage) {
 			fmt.Printf("%s\n\n  %s\n\n", "bob git requires a commit message", aurora.Bold("bob git commit -m \"msg\""))
-			stopProfiling()
 			exit(1)
 		} else {
 			errz.Fatal(err)
