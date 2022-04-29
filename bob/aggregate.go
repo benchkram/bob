@@ -203,16 +203,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		if !b.enableCaching {
 			task.SetRebuildStrategy(bobtask.RebuildAlways)
 		}
-
-		var depsWithPath []string
-		for _, v := range task.Dependencies {
-			if strings.HasSuffix(v, ".nix") {
-				depsWithPath = append(depsWithPath, task.Dir()+"/"+v)
-			} else {
-				depsWithPath = append(depsWithPath, v)
-			}
-		}
-		task.Dependencies = depsWithPath
 		aggregate.BTasks[i] = task
 	}
 

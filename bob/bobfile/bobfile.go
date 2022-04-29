@@ -132,6 +132,11 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
 
+		task.UseNix = bobfile.UseNix
+		task.Nixpkgs = bobfile.Nixpkgs
+		task.AllDependencies = unique(append(task.Dependencies, bobfile.Dependencies...))
+		addDir(dir, task.AllDependencies)
+
 		bobfile.BTasks[key] = task
 	}
 
@@ -144,6 +149,26 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	}
 
 	return bobfile, nil
+}
+
+func unique(s []string) []string {
+	added := make(map[string]bool)
+	var res []string
+	for _, v := range s {
+		if _, exists := added[v]; !exists {
+			res = append(res, v)
+			added[v] = true
+		}
+	}
+	return res
+}
+
+func addDir(dir string, dependencies []string) {
+	for k, v := range dependencies {
+		if strings.HasSuffix(v, ".nix") {
+			dependencies[k] = dir + "/" + v
+		}
+	}
 }
 
 // BobfileRead read from a bobfile.

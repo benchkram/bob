@@ -17,22 +17,18 @@ func (b B) Install() (err error) {
 		return errors.New("`use-nix: true` is missing in the root bob.yaml file")
 	}
 
-	var allDeps []string
+	if !nix.IsInstalled() {
+		return fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl())
+	}
 
+	var allDeps []string
 	for _, v := range ag.BTasks {
-		for _, d := range v.Dependencies {
+		for _, d := range v.AllDependencies {
 			if inSlice(d, allDeps) {
 				continue
 			}
 			allDeps = append(allDeps, d)
 		}
-	}
-
-	for _, v := range ag.Dependencies {
-		if inSlice(v, allDeps) {
-			continue
-		}
-		allDeps = append(allDeps, v)
 	}
 
 	if len(allDeps) == 0 {

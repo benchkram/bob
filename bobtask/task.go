@@ -2,6 +2,7 @@ package bobtask
 
 import (
 	"fmt"
+	"github.com/benchkram/bob/pkg/nix"
 	"path/filepath"
 	"strings"
 
@@ -108,6 +109,14 @@ type Task struct {
 	skippedInputs []string
 
 	Dependencies []string `yaml:"dependencies"`
+
+	// Contains Dependencies + its bobfile Dependencies
+	AllDependencies []string
+
+	// Paths from /nix/store computed from all its dependencies
+	StorePaths []string
+	UseNix     bool
+	Nixpkgs    string
 }
 
 type TargetEntry interface{}
@@ -351,4 +360,27 @@ func parseTargetImage(p string) []string {
 func keyExists(m map[string]interface{}, key string) bool {
 	_, ok := m[key]
 	return ok
+}
+
+func (t *Task) PopulateStorePaths() error {
+	var storePaths []string
+
+	if t.UseNix && !nix.IsInstalled() {
+		return fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl())
+	}
+
+	if t.UseNix && len(t.AllDependencies) > 0 {
+		storePathsFromPackages, err := nix.BuildPackages(nix.FilterPackageNames(t.AllDependencies), t.Nixpkgs)
+		if err != nil {
+			return err
+		}
+		storePathsFromFiles, err := nix.BuildFiles(nix.FilterNixFiles(t.AllDependencies), t.Nixpkgs)
+		if err != nil {
+			return err
+		}
+		storePaths = append(storePathsFromPackages, storePathsFromFiles...)
+	}
+
+	t.StorePaths = storePaths
+	return nil
 }
