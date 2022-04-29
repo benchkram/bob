@@ -22,13 +22,13 @@ to your .bashrc / .zshrc
 				err := rootCmd.GenZshCompletion(os.Stdout)
 				if err != nil {
 					boblog.Log.Error(err, "Unable to generate Zsh completion")
-					os.Exit(1)
+					exit(1)
 				}
 			} else {
 				err := rootCmd.GenBashCompletionV2(os.Stdout, true)
 				if err != nil {
 					boblog.Log.Error(err, "Unable to generate bash completion")
-					os.Exit(1)
+					exit(1)
 				}
 			}
 
@@ -46,7 +46,7 @@ to your .bashrc / .zshrc
 				err := rootCmd.GenBashCompletionFileV2(completionPath, true)
 				if err != nil {
 					boblog.Log.Error(err, "Unable to install bash completion")
-					os.Exit(1)
+					exit(1)
 				}
 			}
 		default:

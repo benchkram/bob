@@ -62,7 +62,9 @@ var buildListCmd = &cobra.Command{
 
 func runBuild(dummy bool, taskname string, noCache bool) {
 	var exitCode int
-	defer func() { os.Exit(exitCode) }()
+	defer func() {
+		exit(exitCode)
+	}()
 	defer errz.Recover()
 
 	if dummy {
