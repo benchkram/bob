@@ -23,7 +23,7 @@ func (b *B) List() (err error) {
 func (b *B) GetList() (tasks []string, err error) {
 	defer errz.Recover(&err)
 
-	aggregate, err := b.Aggregate()
+	aggregate, err := b.AggregateSparse()
 	errz.Fatal(err)
 
 	keys := make([]string, 0, len(aggregate.BTasks))

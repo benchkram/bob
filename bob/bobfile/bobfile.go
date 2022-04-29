@@ -164,6 +164,20 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 	return b, b.BTasks.Sanitize()
 }
 
+// BobfileReadPlain reads a bobfile.
+// For performance reasons sanitize is not called.
+func BobfileReadPlain(dir string) (_ *Bobfile, err error) {
+	defer errz.Recover(&err)
+
+	b, err := bobfileRead(dir)
+	errz.Fatal(err)
+
+	err = b.Validate()
+	errz.Fatal(err)
+
+	return b, nil
+}
+
 // Validate makes sure no task depends on itself (self-reference) or has the same name as another task
 func (b *Bobfile) Validate() (err error) {
 	if b.Version != "" {
