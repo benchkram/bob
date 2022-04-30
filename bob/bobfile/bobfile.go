@@ -56,6 +56,8 @@ type Bobfile struct {
 	// of its bobfile.
 	Project string `yaml:"project,omitempty"`
 
+	Imports []string `yaml:"import,omitempty"`
+
 	Variables VariableMap
 
 	// BTasks build tasks
@@ -94,7 +96,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	bobfilePath := filepath.Join(dir, global.BobFileName)
 
 	if !file.Exists(bobfilePath) {
-		return nil, ErrBobfileNotFound
+		return nil, ErrBobfileNotFound //fmt.Errorf("%s contains no Bobfile, %w", dir, ErrBobfileNotFound)
 	}
 	bin, err := ioutil.ReadFile(bobfilePath)
 	errz.Fatal(err, "Failed to read config file")
