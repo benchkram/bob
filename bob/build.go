@@ -27,6 +27,9 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 	)
 	errz.Fatal(err)
 
+	err = playbook.PreComputeInputHashes()
+	errz.Fatal(err)
+
 	err = playbook.Build(ctx)
 	errz.Fatal(err)
 

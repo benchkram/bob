@@ -46,6 +46,9 @@ func (t *Task) Target() (empty target.Target, _ error) {
 // and has not been there before the task ran.
 func (t *Task) Clean() error {
 	if t.target != nil {
+
+		t.target.HashInvalidate()
+
 		for _, f := range t.target.Paths {
 			if t.dir == "" {
 				return fmt.Errorf("task dir not set")
@@ -62,6 +65,7 @@ func (t *Task) Clean() error {
 				return err
 			}
 			//fmt.Printf("%s\n", aurora.Green("done"))
+
 		}
 	}
 

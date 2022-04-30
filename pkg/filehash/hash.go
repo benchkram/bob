@@ -1,16 +1,15 @@
 package filehash
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/cespare/xxhash"
 )
 
 var (
-	// Using sha1 shouldn't be a problem as hash collisions are very unlikely.
-	// sha1 is about twice as fast as sha256 on my — Leon's — machine.
-	hashFunc = sha1.New
+	hashFunc = xxhash.New
 )
 
 func Hash(file string) ([]byte, error) {

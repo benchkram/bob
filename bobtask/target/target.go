@@ -8,6 +8,7 @@ import (
 
 type Target interface {
 	Hash() (string, error)
+	HashInvalidate()
 	Verify() bool
 	Exists() bool
 
@@ -19,8 +20,11 @@ type T struct {
 	// working dir of target
 	dir string
 
-	// last computed hash of target
-	hash string
+	// hashFromBuildInfo is the last computed hash of target
+	hashFromBuildInfo string
+
+	// hashBeforeBuild is the hash of the target before a build started.
+	hashBeforeBuild string
 
 	// dockerRegistryClient utility functions to handle requests with local docker registry
 	dockerRegistryClient dockermobyutil.RegistryClient
@@ -73,7 +77,7 @@ func (t *T) WithDir(dir string) Target {
 }
 func (t *T) WithHash(hash string) Target {
 	target := t.clone()
-	target.hash = hash
+	target.hashFromBuildInfo = hash
 	return target
 }
 

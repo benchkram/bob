@@ -9,11 +9,11 @@ import (
 func (t *T) Verify() bool {
 	switch t.Type {
 	case Path:
-		return t.verifyFile(t.hash)
+		return t.verifyFile(t.hashFromBuildInfo)
 	case Docker:
-		return t.verifyDocker(t.hash)
+		return t.verifyDocker(t.hashFromBuildInfo)
 	default:
-		return t.verifyFile(t.hash)
+		return t.verifyFile(t.hashFromBuildInfo)
 	}
 }
 
@@ -22,7 +22,7 @@ func (t *T) verifyFile(groundTruth string) bool {
 		return true
 	}
 
-	if t.hash == "" {
+	if t.hashFromBuildInfo == "" {
 		return true
 	}
 
@@ -47,7 +47,7 @@ func (t *T) verifyDocker(groundTruth string) bool {
 		return true
 	}
 
-	if t.hash == "" {
+	if t.hashFromBuildInfo == "" {
 		return true
 	}
 

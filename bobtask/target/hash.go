@@ -18,14 +18,33 @@ import (
 
 // Hash creates a hash for the entire target
 func (t *T) Hash() (empty string, _ error) {
-	switch t.Type {
-	case Path:
-		return t.filepathHash()
-	case Docker:
-		return t.dockerImagesHash()
-	default:
-		return t.filepathHash()
+	// reuse once computed target hash
+	if t.hashBeforeBuild != "" {
+		return t.hashBeforeBuild, nil
 	}
+
+	switch t.Type {
+	case Docker:
+		hash, err := t.dockerImagesHash()
+		if err != nil {
+			return "", err
+		}
+		t.hashBeforeBuild = hash
+		return hash, nil
+	case Path:
+		fallthrough
+	default:
+		hash, err := t.filepathHash()
+		if err != nil {
+			return "", err
+		}
+		t.hashBeforeBuild = hash
+		return hash, nil
+	}
+}
+
+func (t *T) HashInvalidate() {
+	t.hashBeforeBuild = ""
 }
 
 func (t *T) filepathHash() (empty string, _ error) {
