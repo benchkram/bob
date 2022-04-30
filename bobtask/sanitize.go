@@ -12,8 +12,15 @@ import (
 	"github.com/benchkram/bob/bobtask/export"
 )
 
-func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {
-	projectRoot, err := resolve(t.dir)
+type optimisationOptions struct {
+	// wd is the current working directory
+	// to avoid calls to os.Getwd.
+	wd string
+}
+
+func (t *Task) sanitizeInputs(inputs []string, opts optimisationOptions) ([]string, error) {
+
+	projectRoot, err := resolve(t.dir, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve project root %q: %w", t.dir, err)
 	}
@@ -25,7 +32,7 @@ func (t *Task) sanitizeInputs(inputs []string) ([]string, error) {
 			return nil, fmt.Errorf("'../' not allowed in file path %q", f)
 		}
 
-		resolvedPath, err := resolve(f)
+		resolvedPath, err := resolve(f, opts)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				log.Printf("failed to resolve %q: %v, ignoring\n", f, err)
@@ -58,21 +65,50 @@ func (t *Task) sanitizeExports(exports export.Map) (export.Map, error) {
 	return sanitizedExports, nil
 }
 
-// Adapted from https://github.com/moby/moby/blob/7b9275c0da707b030e62c96b679a976f31f929d3/pkg/containerfs/containerfs.go#L73-L79 et al.
-// TODO: This is just a very basic implementation only preventing the inclusion of files outside of the project.
+type absolutePathOrError struct {
+	abs string
+	err error
+}
+
+// absPathMap caches already resolved absolut paths.
+// FIXME: in case of asynchronous calls this should be a sync map
+// or use a lock.
+var absPathMap = make(map[string]absolutePathOrError, 10000)
+
+// resolve is a very basic implementation only preventing the inclusion of files outside of the project.
 // It is very likely still possible to include other files with malicious intention.
-func resolve(path string) (string, error) {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return "", fmt.Errorf("failed to determine abs path: %w", err)
+func resolve(path string, opts optimisationOptions) (string, error) {
+	var abs string
+	if filepath.IsAbs(path) {
+		abs = filepath.Clean(path)
+	} else {
+		abs = filepath.Join(opts.wd, path)
 	}
 
-	sym, err := filepath.EvalSymlinks(abs)
-	if err != nil {
-		return "", fmt.Errorf("failed to follow symlink of %q: %w", abs, err)
+	aoe, ok := absPathMap[abs]
+	if ok {
+		return aoe.abs, aoe.err
 	}
 
-	return sym, nil
+	lstat, err := os.Lstat(abs)
+	if err != nil {
+		return "", fmt.Errorf("lstat failed %q: %w", abs, err)
+	}
+
+	// follow symlinks
+	if lstat.Mode()&os.ModeSymlink != 0 {
+		sym, err := filepath.EvalSymlinks(abs)
+		if err != nil {
+			a := absolutePathOrError{"", fmt.Errorf("failed to follow symlink of %q: %w", abs, err)}
+			absPathMap[abs] = a
+			return a.abs, a.err
+		}
+		absPathMap[abs] = absolutePathOrError{abs: sym, err: nil}
+		return sym, nil
+	}
+
+	absPathMap[abs] = absolutePathOrError{abs: abs, err: nil}
+	return abs, nil
 }
 
 // sanitizeRebuild used to transform from dirty member to internal member
