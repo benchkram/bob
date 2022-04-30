@@ -91,7 +91,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)
 
 	wd, _ := os.Getwd()
-	aggregate, err = bobfile.BobfileReadPlain(wd)
+	aggregate, err = bobfile.BobfileRead(wd)
 	errz.Fatal(err)
 
 	if !file.Exists(global.BobFileName) {
@@ -109,7 +109,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// it seems to be save to allow duplicate projectnames.
 	//projectNames := map[string]bool{}
 
-	for _, boblet := range bobs {
+	for _, boblet := range append(bobs, aggregate) {
 
 		// FIXME: As we don't refer to a child task by projectname but by path
 		// it seems to be save to allow duplicate projectnames.
