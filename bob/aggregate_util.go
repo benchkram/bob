@@ -103,10 +103,14 @@ func (b *B) addRunTasksToAggregate(
 
 // readImports recursively
 //
+// readModePlain allows to read bobfiles without
+// doing sanitization.
+//
 // If prefix is given it's appended to the search path to asuure
 // correctness of the search path in case of recursive calls.
 func readImports(
 	a *bobfile.Bobfile,
+	readModePlain bool,
 	prefix ...string,
 ) (imports []*bobfile.Bobfile, err error) {
 	errz.Recover(&err)
@@ -119,7 +123,13 @@ func readImports(
 	imports = []*bobfile.Bobfile{}
 	for _, imp := range a.Imports {
 		// read bobfile
-		boblet, err := bobfile.BobfileReadPlain(filepath.Join(p, imp))
+		var boblet *bobfile.Bobfile
+		var err error
+		if readModePlain {
+			boblet, err = bobfile.BobfileReadPlain(filepath.Join(p, imp))
+		} else {
+			boblet, err = bobfile.BobfileRead(filepath.Join(p, imp))
+		}
 		if err != nil {
 			if errors.Is(err, bobfile.ErrBobfileNotFound) {
 				return nil, usererror.Wrap(err)
@@ -129,7 +139,7 @@ func readImports(
 		imports = append(imports, boblet)
 
 		// read imports rescursively
-		childImports, err := readImports(boblet, boblet.Dir())
+		childImports, err := readImports(boblet, readModePlain, boblet.Dir())
 		errz.Fatal(err)
 		imports = append(imports, childImports...)
 	}

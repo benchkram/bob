@@ -60,7 +60,7 @@ func (b *B) AggregateSparse() (aggregate *bobfile.Bobfile, err error) {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
-	bobs, err := readImports(aggregate)
+	bobs, err := readImports(aggregate, true)
 	errz.Fatal(err)
 
 	// set project names for all bobfiles and build tasks
@@ -91,7 +91,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
-	bobs, err := readImports(aggregate)
+	bobs, err := readImports(aggregate, false)
 	errz.Fatal(err)
 
 	// FIXME: As we don't refer to a child task by projectname but by path
