@@ -19,7 +19,7 @@ func Hash(file string) ([]byte, error) {
 	}
 	defer f.Close()
 
-	return HashBytes(io.Reader(f))
+	return HashBytes(f)
 }
 
 func HashBytes(r io.Reader) ([]byte, error) {
