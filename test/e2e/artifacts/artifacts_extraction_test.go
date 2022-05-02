@@ -17,7 +17,7 @@ var _ = Describe("Test artifact creation and extraction", func() {
 	Context("in a fresh playground", func() {
 
 		It("should initialize bob playground", func() {
-			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		It("assure to be in the test root dir", func() {
@@ -82,7 +82,7 @@ var _ = Describe("Test artifact creation and extraction from docker targets", fu
 		mobyClient := dockermobyutil.NewRegistryClient()
 
 		It("should initialize bob playground", func() {
-			Expect(bob.CreatePlayground(dir)).NotTo(HaveOccurred())
+			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
 		})
 
 		It("should assure test image is not in docker registry", func() {

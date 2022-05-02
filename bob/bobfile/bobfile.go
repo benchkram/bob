@@ -16,6 +16,7 @@ import (
 
 	"github.com/benchkram/errz"
 
+	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobrun"
 	"github.com/benchkram/bob/bobtask"
@@ -37,13 +38,23 @@ var (
 	ErrBobfileExists          = fmt.Errorf("Bobfile exists")
 	ErrTaskDoesNotExist       = fmt.Errorf("Task does not exist")
 	ErrDuplicateTaskName      = fmt.Errorf("duplicate task name")
+	ErrInvalidProjectName     = fmt.Errorf("invalid project name")
 	ErrSelfReference          = fmt.Errorf("self reference")
 
 	ErrInvalidRunType = fmt.Errorf("Invalid run type")
+
+	ProjectNameFormatHint = "project name should be in the form 'project' or 'registry.com/user/project'"
 )
 
 type Bobfile struct {
+	// Version is optional, and can be used to
 	Version string `yaml:"version,omitempty"`
+
+	// Project uniquely identifies the current project (optional). If supplied,
+	// aggregation makes sure the project does not depend on another instance
+	// of itself. If not provided, then the project name is set after the path
+	// of its bobfile.
+	Project string `yaml:"project,omitempty"`
 
 	Variables VariableMap
 
@@ -126,9 +137,6 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		task.SetEnv([]string{})
 		task.SetRebuildStrategy(bobtask.RebuildOnChange)
 
-		// TODO: todoproject
-		task.SetProject(dir)
-
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
 
@@ -191,6 +199,18 @@ func (b *Bobfile) Validate() (err error) {
 		_, err = version.NewVersion(b.Version)
 		if err != nil {
 			return fmt.Errorf("invalid version '%s' (%s)", b.Version, b.Dir())
+		}
+	}
+
+	// validate project name if set
+	if b.Project != "" {
+		if !project.RestrictedProjectNamePattern.MatchString(b.Project) {
+			return usererror.Wrap(errors.WithMessage(ErrInvalidProjectName, ProjectNameFormatHint))
+		}
+
+		// test for double slash (do not allow prepended schema)
+		if project.ProjectNameDoubleSlashPattern.MatchString(b.Project) {
+			return usererror.Wrap(errors.WithMessage(ErrInvalidProjectName, ProjectNameFormatHint))
 		}
 	}
 

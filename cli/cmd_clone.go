@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -48,7 +47,7 @@ func runClone(url string, failFast bool) {
 		repoName, err := bob.CloneRepo(url, failFast)
 		if errors.As(err, &usererror.Err) {
 			fmt.Printf("%s\n", aurora.Red(errors.Unwrap(err).Error()))
-			os.Exit(1)
+			exit(1)
 		} else {
 			errz.Fatal(err)
 		}

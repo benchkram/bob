@@ -7,8 +7,6 @@ import (
 )
 
 type ArtifactMetadata struct {
-	// Builder project which triggered the build of the artifact
-	Builder string `yaml:"builder,omitempty"`
 
 	// TODO: Project | Module | for now it's the local abs dir
 	// when using remote repos it rather be a unique name

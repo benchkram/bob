@@ -54,13 +54,6 @@ type Task struct {
 	Environment string
 
 	// Target defines the output of a task.
-	//
-	// ??? (unsure)
-	// Binary or Directory:
-	// Can be a internal file or directory.
-	// Parent tasks can take the files and copy them
-	// to a place they like to
-	// ???
 	TargetDirty TargetEntry `yaml:"target,omitempty"`
 	target      *target.T
 
@@ -75,12 +68,7 @@ type Task struct {
 	// TODO: Make this public to allow yaml.Marshal to add this to the task hash?!?
 	name string
 
-	// builder is the project who trigered the build
-	builder string
-
 	// project this tasks belongs to
-	// TODO: todoproject: Currently it's the path.. later
-	// we need globaly unique identifiers when using remote caching.
 	project string
 
 	// dir is the working directory for this task
@@ -187,12 +175,17 @@ func (t *Task) SetEnv(env []string) {
 	t.env = env
 }
 
-func (t *Task) SetProject(proj string) {
-	t.project = proj
+// Project returns the projectname. In case of a non existing projectname the
+// tasks local directory is returned.
+func (t *Task) Project() string {
+	if t.project == "" {
+		return t.dir
+	}
+	return t.project
 }
 
-func (t *Task) SetBuilder(builder string) {
-	t.builder = builder
+func (t *Task) SetProject(proj string) {
+	t.project = proj
 }
 
 func (t *Task) SetDockerRegistryClient() {

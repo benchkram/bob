@@ -37,14 +37,14 @@ var playgroundCmd = &cobra.Command{
 			errz.Fatal(err)
 			if wd == "/" {
 				fmt.Println("Can't delete root '/'")
-				os.Exit(1)
+				exit(1)
 			}
 
 			homedir := os.Getenv("HOME")
 			if homedir != "" {
 				if wd == homedir {
 					fmt.Println("Can't delete home dir")
-					os.Exit(1)
+					exit(1)
 				}
 			}
 
@@ -55,7 +55,7 @@ var playgroundCmd = &cobra.Command{
 			text = strings.TrimSuffix(text, "\n")
 			if text != "y" {
 				fmt.Printf("%s\n", aurora.Red("abort"))
-				os.Exit(1)
+				exit(1)
 			}
 
 			files, err := os.ReadDir(wd)
@@ -74,6 +74,6 @@ func runPlayground() {
 	wd, err := os.Getwd()
 	errz.Fatal(err)
 
-	err = bob.CreatePlayground(wd)
+	err = bob.CreatePlayground(bob.PlaygroundOptions{Dir: wd, ProjectName: "bob-playground", ProjectNameSecondLevel: "bob-playground-second-level"})
 	errz.Fatal(err)
 }
