@@ -59,8 +59,15 @@ func (b *B) PrintVersionCompatibility(bobfile *bobfile.Bobfile) {
 
 // AggregateSparse reads Bobfile with the intent to gather task names.
 // The returned bobfile is not ready to be executed with a playbook.
-func (b *B) AggregateSparse() (aggregate *bobfile.Bobfile, err error) {
+func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)
+
+	addRunTasks := true
+	if len(omitRunTasks) > 0 {
+		if omitRunTasks[0] {
+			addRunTasks = false
+		}
+	}
 
 	bobfiles, err := b.find()
 	errz.Fatal(err)
@@ -88,6 +95,10 @@ func (b *B) AggregateSparse() (aggregate *bobfile.Bobfile, err error) {
 
 	// Merge tasks into one Bobfile
 	aggregate = b.addBuildTasksToAggregate(aggregate, bobs)
+
+	if addRunTasks {
+		aggregate = b.addRunTasksToAggregate(aggregate, bobs)
+	}
 
 	return aggregate, nil
 }

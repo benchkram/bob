@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/spf13/cobra"
@@ -19,6 +21,10 @@ func runRunList() {
 	b, err := bob.Bob()
 	boblog.Log.Error(err, "Unable to initialize bob")
 
-	err = b.RunList()
+	tasks, err := b.GetRunTasks()
 	boblog.Log.Error(err, "Unable to list tasks")
+
+	for _, t := range tasks {
+		fmt.Println(t)
+	}
 }

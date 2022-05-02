@@ -21,7 +21,7 @@ var getTasksCmd = &cobra.Command{
 	Short: "gettasks",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		tasks, err := getTasks()
+		tasks, err := getBuildTasks()
 		errz.Log(err)
 
 		for _, t := range tasks {

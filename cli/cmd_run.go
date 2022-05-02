@@ -89,5 +89,13 @@ func getRuns() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return b.GetRunList()
+	return b.GetRunTasks()
+}
+
+func getRunTasks() ([]string, error) {
+	b, err := bob.Bob()
+	if err != nil {
+		return nil, err
+	}
+	return b.GetRunTasks()
 }

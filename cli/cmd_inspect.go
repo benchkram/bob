@@ -46,7 +46,7 @@ var envCmd = &cobra.Command{
 		runEnv(taskname)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		tasks, err := getTasks()
+		tasks, err := getBuildTasks()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -83,7 +83,7 @@ var exportCmd = &cobra.Command{
 		runExport(taskname)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		tasks, err := getTasks()
+		tasks, err := getBuildTasks()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -123,7 +123,7 @@ var inspectArtifactCmd = &cobra.Command{
 		runInspectArtifact(inspectArtifactId)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		tasks, err := getTasks()
+		tasks, err := getBuildTasks()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
