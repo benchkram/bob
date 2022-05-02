@@ -1,0 +1,8 @@
+build:
+  run-hello-second:
+    cmd: go version
+    dependencies:
+      - go_1_17
+dependencies:
+    - ruby
+use-nix: true

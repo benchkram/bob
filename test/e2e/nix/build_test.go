@@ -78,4 +78,33 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(output()).To(ContainSubstring("go version go1.17"))
 		})
 	})
+
+	Context("with second level bob file", func() {
+		It("running task go version from parent directory will use go_1_17 second level task dependencies", func() {
+			Expect(os.Rename("with_second_level.yaml", "bob.yaml")).NotTo(HaveOccurred())
+			Expect(os.Rename("with_second_level_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
+			capture()
+
+			ctx := context.Background()
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
+			err = b.Build(ctx, "second_level/run-hello-second")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(output()).To(ContainSubstring("go version go1.17"))
+		})
+
+		It("running task go version from second level directory will use go_1_17 second level task dependencies", func() {
+			b, err := bob.Bob(bob.WithDir(dir+"/second_level"), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
+
+			err = os.Chdir(dir + "/second_level")
+			Expect(err).NotTo(HaveOccurred())
+
+			ctx := context.Background()
+			capture()
+			err = b.Build(ctx, "run-hello-second")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(output()).To(ContainSubstring("go version go1.17"))
+		})
+	})
 })

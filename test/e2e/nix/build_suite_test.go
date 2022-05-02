@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/benchkram/bob/bob"
@@ -40,6 +41,8 @@ var _ = BeforeSuite(func() {
 		"with_task_dependencies",
 		"with_ambiguous_deps_in_root",
 		"with_ambiguous_deps_in_task",
+		"with_second_level",
+		"with_second_level/second_level",
 	}
 	nameToBobfile := make(map[string]*bobfile.Bobfile)
 	for _, name := range bobFiles {
@@ -47,12 +50,14 @@ var _ = BeforeSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 		bf, err := bobfile.BobfileRead(abs)
 		Expect(err).NotTo(HaveOccurred())
-		nameToBobfile[name] = bf
+		nameToBobfile[strings.ReplaceAll(name, "/", "_")] = bf
 	}
 
 	testDir, err := ioutil.TempDir("", "bob-test-nix-*")
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
+	err = os.Mkdir(dir+"/second_level", 0700)
+	Expect(err).NotTo(HaveOccurred())
 
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
