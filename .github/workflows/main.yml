@@ -54,7 +54,7 @@ jobs:
 
       - name: Run tests
         run: | 
-          # go get github.com/jbenet/go-context/io@v0.0.0-20150711004518-d14ea06fba99
+          go get github.com/jbenet/go-context/io@v0.0.0-20150711004518-d14ea06fba99
           # go get github.com/go-git/go-git/v5/plumbing/transport/ssh@v5.4.2
           # go get golang.org/x/net/idna@v0.0.0-20211015210444-4f30a5c0130f
           # go get github.com/AlecAivazis/survey/v2/terminal@v2.2.9
