@@ -70,7 +70,7 @@ type absolutePathOrError struct {
 	err error
 }
 
-// absPathMap caches already resolved absolut paths.
+// absPathMap caches already resolved absolute paths.
 // FIXME: in case of asynchronous calls this should be a sync map
 // or use a lock.
 var absPathMap = make(map[string]absolutePathOrError, 10000)
