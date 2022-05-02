@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -42,7 +43,7 @@ var buildCmd = &cobra.Command{
 		runBuild(dummy, taskname, noCache)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		tasks, err := getTasks()
+		tasks, err := getBuildTasks()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -109,14 +110,18 @@ func runBuildList() {
 	b, err := bob.Bob()
 	boblog.Log.Error(err, "Unable to initialize bob")
 
-	err = b.List()
+	tasks, err := b.GetBuildTasks()
 	boblog.Log.Error(err, "Unable to aggregate bob file")
+
+	for _, t := range tasks {
+		fmt.Println(t)
+	}
 }
 
-func getTasks() ([]string, error) {
+func getBuildTasks() ([]string, error) {
 	b, err := bob.Bob()
 	if err != nil {
 		return nil, err
 	}
-	return b.GetList()
+	return b.GetBuildTasks()
 }

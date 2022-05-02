@@ -1,29 +1,16 @@
 package bob
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/benchkram/errz"
 )
 
-func (b *B) List() (err error) {
+func (b *B) GetBuildTasks() (tasks []string, err error) {
 	defer errz.Recover(&err)
 
-	keys, err := b.GetList()
-	errz.Fatal(err)
-
-	for _, k := range keys {
-		fmt.Println(k)
-	}
-
-	return nil
-}
-
-func (b *B) GetList() (tasks []string, err error) {
-	defer errz.Recover(&err)
-
-	aggregate, err := b.Aggregate()
+	omitRunTasks := true
+	aggregate, err := b.AggregateSparse(omitRunTasks)
 	errz.Fatal(err)
 
 	keys := make([]string, 0, len(aggregate.BTasks))

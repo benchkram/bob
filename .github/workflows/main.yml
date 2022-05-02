@@ -27,7 +27,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16.7
+          go-version: 1.18
 
 
       # Check if there are any changes for 'go mod tidy'
@@ -38,7 +38,7 @@ jobs:
       #     git diff --exit-code go.mod
 
       - name: Install golangci-lint
-        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.41.1
+        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.45.2
 
       - name: Lint code
         run: make lint
@@ -46,16 +46,9 @@ jobs:
       - name: Build
         run: make build
 
-      - name: Install ginkgo
-        run: go get -u github.com/onsi/ginkgo/ginkgo
-
       - name: Set Git author name and email address
         run: git config --global user.name "Bob The Builder" && git config --global user.email "bob@thebuilder.com"
-
+          
       - name: Run tests
         run: | 
-          go get github.com/jbenet/go-context/io@v0.0.0-20150711004518-d14ea06fba99
-          go get github.com/go-git/go-git/v5/plumbing/transport/ssh@v5.4.2
-          go get golang.org/x/net/idna@v0.0.0-20211015210444-4f30a5c0130f
-          go get github.com/AlecAivazis/survey/v2/terminal@v2.2.9
-          ginkgo -v ./...
+          go test -v ./...

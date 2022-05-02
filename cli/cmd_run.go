@@ -31,7 +31,7 @@ var runCmd = &cobra.Command{
 		run(taskname, noCache)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		tasks, err := getRuns()
+		tasks, err := getRunTasks()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -84,10 +84,10 @@ func run(taskname string, noCache bool) {
 	}
 }
 
-func getRuns() ([]string, error) {
+func getRunTasks() ([]string, error) {
 	b, err := bob.Bob()
 	if err != nil {
 		return nil, err
 	}
-	return b.GetRunList()
+	return b.GetRunTasks()
 }
