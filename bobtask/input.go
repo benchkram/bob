@@ -19,11 +19,12 @@ func (t *Task) Inputs() []string {
 // Calls sanitize on the result.
 func (t *Task) filteredInputs() ([]string, error) {
 
+	wd := t.dir
 	owd, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current working directory: %w", err)
 	}
-	if err := os.Chdir(t.dir); err != nil {
+	if err := os.Chdir(wd); err != nil {
 		return nil, fmt.Errorf("failed to change current working directory to %s: %w", t.dir, err)
 	}
 	defer func() {
@@ -84,7 +85,10 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}
 
-	sanitizedInputs, err := t.sanitizeInputs(filteredInputs)
+	sanitizedInputs, err := t.sanitizeInputs(
+		filteredInputs,
+		optimisationOptions{wd: wd},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sanitize inputs: %w", err)
 	}
