@@ -41,6 +41,8 @@ type B struct {
 	// enableCaching allows to save and load artifacts
 	// from the cache Default: true
 	enableCaching bool
+
+	listRecursiveCache map[string][]string
 }
 
 func newBob(opts ...Option) *B {
@@ -60,6 +62,8 @@ func newBob(opts ...Option) *B {
 		}
 		opt(b)
 	}
+
+	b.listRecursiveCache = make(map[string][]string, 1024)
 
 	return b
 }

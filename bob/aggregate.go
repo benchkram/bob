@@ -2,6 +2,7 @@ package bob
 
 import (
 	"fmt"
+	"github.com/benchkram/bob/pkg/filepathutil"
 	"path/filepath"
 	"strings"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
-	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/hashicorp/go-version"
 )
 
@@ -25,8 +25,11 @@ var (
 func (b *B) find() (bobfiles []string, err error) {
 	defer errz.Recover(&err)
 
-	list, err := filepathutil.ListRecursive(b.dir)
-	errz.Fatal(err)
+	list, ok := b.listRecursiveCache[b.dir]
+	if !ok {
+		list, err = filepathutil.ListRecursive(b.dir)
+		errz.Fatal(err)
+	}
 
 	for _, file := range list {
 		if bobfile.IsBobfile(file) {

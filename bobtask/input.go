@@ -38,12 +38,24 @@ func (t *Task) filteredInputs() ([]string, error) {
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
+
+	getCachedListRecursive := func(input string) ([]string, error) {
+		list, ok := t.listRecursiveCache[input]
+		if !ok {
+			list, err = filepathutil.ListRecursive(input)
+			if err != nil {
+				return []string{}, err
+			}
+		}
+		return list, nil
+	}
+
 	for _, input := range unique(inputDirty) {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
 
-			list, err := filepathutil.ListRecursive(input)
+			list, err := getCachedListRecursive(input)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list input: %w", err)
 			}
@@ -52,7 +64,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 			continue
 		}
 
-		list, err := filepathutil.ListRecursive(input)
+		list, err := getCachedListRecursive(input)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
 		}

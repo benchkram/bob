@@ -17,15 +17,7 @@ var (
 	}
 )
 
-var listRecursiveMap = make(map[string][]string, 1024)
-
 func ListRecursive(inp string) (all []string, err error) {
-
-	result, ok := listRecursiveMap[inp]
-	if ok {
-		return result, nil
-	}
-
 	// TODO: possibly ignore here too, before calling listDir
 	if s, err := os.Stat(inp); err != nil || !s.IsDir() {
 		// File
@@ -62,8 +54,6 @@ func ListRecursive(inp string) (all []string, err error) {
 
 		all = append(all, files...)
 	}
-
-	listRecursiveMap[inp] = all
 	return all, nil
 }
 
