@@ -22,9 +22,6 @@ func BuildPackages(packages []string, nixpkgs string) ([]string, error) {
 	if len(packages) == 0 {
 		return []string{}, nil
 	}
-
-	fmt.Println("Building nix dependencies...")
-
 	for _, v := range defaultPackages() {
 		if !inSlice(v, packages) {
 			packages = append(packages, v)
@@ -65,8 +62,6 @@ func BuildFiles(files []string, nixpkgs string) ([]string, error) {
 	if len(files) == 0 {
 		return []string{}, nil
 	}
-	fmt.Println("Building .nix files...")
-
 	var storePaths []string
 	for _, pkg := range files {
 		nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), pkg)

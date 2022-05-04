@@ -42,10 +42,12 @@ func (b B) Install() (err error) {
 	fmt.Println()
 
 	if len(allDeps) > 0 {
+		fmt.Println("Building nix dependencies...")
 		_, err = nix.BuildPackages(nix.FilterPackageNames(allDeps), ag.Nixpkgs)
 		if err != nil {
 			return err
 		}
+		fmt.Println("Building .nix files...")
 		_, err = nix.BuildFiles(nix.FilterNixFiles(allDeps), ag.Nixpkgs)
 		if err != nil {
 			return err

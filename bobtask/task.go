@@ -363,10 +363,12 @@ func (t *Task) PopulateStorePaths() error {
 	}
 
 	if t.UseNix && len(t.AllDependencies) > 0 {
+		fmt.Println("Building nix dependencies...")
 		storePathsFromPackages, err := nix.BuildPackages(nix.FilterPackageNames(t.AllDependencies), t.Nixpkgs)
 		if err != nil {
 			return err
 		}
+		fmt.Println("Building .nix files...")
 		storePathsFromFiles, err := nix.BuildFiles(nix.FilterNixFiles(t.AllDependencies), t.Nixpkgs)
 		if err != nil {
 			return err
