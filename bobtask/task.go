@@ -2,7 +2,6 @@ package bobtask
 
 import (
 	"fmt"
-	"github.com/benchkram/bob/pkg/nix"
 	"path/filepath"
 	"strings"
 
@@ -96,10 +95,11 @@ type Task struct {
 	// skippedInputs is a lists of skipped input files
 	skippedInputs []string
 
-	Dependencies []string `yaml:"dependencies"`
-
-	// Contains Dependencies + its bobfile Dependencies
-	AllDependencies []string
+	// DependenciesDirty read from the bobfile
+	DependenciesDirty []string `yaml:"dependencies"`
+	// dependencies contain the actual /nix/store/* path
+	// in the corrct order as they should be added to PATH.
+	dependencies []string
 }
 
 type TargetEntry interface{}
@@ -113,6 +113,7 @@ func Make(opts ...TaskOption) Task {
 		env:                  []string{},
 		rebuild:              RebuildOnChange,
 		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
+		dependencies:         []string{},
 	}
 
 	for _, opt := range opts {
@@ -168,6 +169,10 @@ func (t *Task) SetName(name string) {
 
 func (t *Task) SetEnv(env []string) {
 	t.env = env
+}
+
+func (t *Task) SetDependencies(dependencies []string) {
+	t.dependencies = dependencies
 }
 
 // Project returns the projectname. In case of a non existing projectname the
@@ -350,12 +355,12 @@ func keyExists(m map[string]interface{}, key string) bool {
 	return ok
 }
 
-func (t *Task) ToPATH(pkgToStorePath map[string]string) string {
-	var storePaths []string
-	for _, v := range t.AllDependencies {
-		if i, ok := pkgToStorePath[v]; ok {
-			storePaths = append(storePaths, i)
-		}
-	}
-	return nix.StorePathsToPath(storePaths)
-}
+// func (t *Task) ToPATH(pkgToStorePath map[string]string) string {
+// 	var storePaths []string
+// 	for _, v := range t.AllDependencies {
+// 		if i, ok := pkgToStorePath[v]; ok {
+// 			storePaths = append(storePaths, i)
+// 		}
+// 	}
+// 	return nix.StorePathsToPath(storePaths)
+// }

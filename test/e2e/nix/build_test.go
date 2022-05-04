@@ -2,12 +2,13 @@ package nix_test
 
 import (
 	"context"
+	"os"
+
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/benchkram/errz"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"os"
 )
 
 var _ = Describe("Testing new nix implementation", func() {

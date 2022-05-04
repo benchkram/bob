@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
@@ -17,26 +18,29 @@ import (
 	"github.com/benchkram/errz"
 )
 
-func (t *Task) Run(ctx context.Context, namePad int, pkgToStorePath map[string]string) (err error) {
+func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
+
+	env := os.Environ()
+	// TODO: warn when overwriting envvar from the environment
+	env = append(env, t.env...)
+
+	if len(t.dependencies) > 0 {
+		for k, v := range env {
+			pair := strings.SplitN(v, "=", 2)
+			if pair[0] == "PATH" {
+				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(t.dependencies), ":")
+
+				// TODO: remove debug output
+				fmt.Println(env[k])
+			}
+		}
+	}
 
 	for _, run := range t.cmds {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
 		if err != nil {
 			return usererror.Wrapm(err, "shell command parse error")
-		}
-
-		env := os.Environ()
-		// TODO: warn when overwriting envvar from the environment
-		env = append(env, t.env...)
-
-		if len(t.AllDependencies) > 0 {
-			for k, v := range env {
-				pair := strings.SplitN(v, "=", 2)
-				if pair[0] == "PATH" {
-					env[k] = "PATH=" + t.ToPATH(pkgToStorePath)
-				}
-			}
 		}
 
 		pr, pw, err := os.Pipe()

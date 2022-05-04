@@ -140,11 +140,11 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
 
-		task.AllDependencies = unique(append(task.Dependencies, bobfile.Dependencies...))
-		if len(task.AllDependencies) > 0 {
-			task.AllDependencies = unique(append(task.AllDependencies, defaultPackages()...))
-		}
-		addDir(dir, task.AllDependencies)
+		// task.AllDependencies = unique(append(task.Dependencies, bobfile.Dependencies...))
+		// if len(task.AllDependencies) > 0 {
+		// 	task.AllDependencies = unique(append(task.AllDependencies, defaultPackages()...))
+		// }
+		// addDir(dir, task.AllDependencies)
 
 		bobfile.BTasks[key] = task
 	}
