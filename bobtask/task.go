@@ -100,11 +100,6 @@ type Task struct {
 
 	// Contains Dependencies + its bobfile Dependencies
 	AllDependencies []string
-
-	// Paths from /nix/store computed from all its dependencies
-	StorePaths []string
-	UseNix     bool
-	Nixpkgs    string
 }
 
 type TargetEntry interface{}
@@ -355,27 +350,12 @@ func keyExists(m map[string]interface{}, key string) bool {
 	return ok
 }
 
-func (t *Task) PopulateStorePaths() error {
+func (t *Task) ToPATH(pkgToStorePath map[string]string) string {
 	var storePaths []string
-
-	if t.UseNix && !nix.IsInstalled() {
-		return fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl())
-	}
-
-	if t.UseNix && len(t.AllDependencies) > 0 {
-		fmt.Println("Building nix dependencies...")
-		storePathsFromPackages, err := nix.BuildPackages(nix.FilterPackageNames(t.AllDependencies), t.Nixpkgs)
-		if err != nil {
-			return err
+	for _, v := range t.AllDependencies {
+		if i, ok := pkgToStorePath[v]; ok {
+			storePaths = append(storePaths, i)
 		}
-		fmt.Println("Building .nix files...")
-		storePathsFromFiles, err := nix.BuildFiles(nix.FilterNixFiles(t.AllDependencies), t.Nixpkgs)
-		if err != nil {
-			return err
-		}
-		storePaths = append(storePathsFromPackages, storePathsFromFiles...)
 	}
-
-	t.StorePaths = storePaths
-	return nil
+	return nix.StorePathsToPath(storePaths)
 }

@@ -7,3 +7,9 @@ func WithCachingEnabled(enable bool) Option {
 		p.enableCaching = enable
 	}
 }
+
+func WithPkgToStorePath(pkgToStorePath map[string]string) Option {
+	return func(p *Playbook) {
+		p.pkgToStorePath = pkgToStorePath
+	}
+}

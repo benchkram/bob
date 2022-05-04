@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/benchkram/bob/pkg/usererror"
 	"os"
 	"sort"
 	"time"
@@ -192,12 +191,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	err = task.Clean()
 	errz.Fatal(err)
 
-	err = task.PopulateStorePaths()
-	if err != nil {
-		return usererror.Wrap(err)
-	}
-
-	err = task.Run(ctx, p.namePad)
+	err = task.Run(ctx, p.namePad, p.pkgToStorePath)
 	if err != nil {
 		taskSuccessFul = false
 		taskErr = err

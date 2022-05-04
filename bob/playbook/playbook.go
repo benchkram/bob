@@ -49,6 +49,9 @@ type Playbook struct {
 	// enableCaching allows artifacts to be read & written to a store.
 	// Default: true.
 	enableCaching bool
+
+	//map between a package name and its Nx store path
+	pkgToStorePath map[string]string
 }
 
 func New(root string, opts ...Option) *Playbook {

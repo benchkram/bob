@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/benchkram/bob/pkg/nix"
 	"os"
 	"strings"
 
@@ -18,7 +17,7 @@ import (
 	"github.com/benchkram/errz"
 )
 
-func (t *Task) Run(ctx context.Context, namePad int) (err error) {
+func (t *Task) Run(ctx context.Context, namePad int, pkgToStorePath map[string]string) (err error) {
 	defer errz.Recover(&err)
 
 	for _, run := range t.cmds {
@@ -31,11 +30,11 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		// TODO: warn when overwriting envvar from the environment
 		env = append(env, t.env...)
 
-		if len(t.StorePaths) > 0 {
+		if len(t.AllDependencies) > 0 {
 			for k, v := range env {
 				pair := strings.SplitN(v, "=", 2)
 				if pair[0] == "PATH" {
-					env[k] = "PATH=" + nix.StorePathsToPath(t.StorePaths)
+					env[k] = "PATH=" + t.ToPATH(pkgToStorePath)
 				}
 			}
 		}

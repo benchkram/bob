@@ -16,37 +16,72 @@ func IsInstalled() bool {
 	return err == nil
 }
 
-// BuildPackages builds nix packages: nix-build --no-out-link -E 'with import <nixpkgs> { }; [pkg-1 pkg-2 pkg-3]'
-// and returns the list of built store paths
-func BuildPackages(packages []string, nixpkgs string) ([]string, error) {
-	if len(packages) == 0 {
-		return []string{}, nil
-	}
+func Build(dependencies []string, nixpkgs string) (map[string]string, error) {
 	for _, v := range defaultPackages() {
-		if !inSlice(v, packages) {
-			packages = append(packages, v)
+		if !inSlice(v, dependencies) {
+			dependencies = append(dependencies, v)
+		}
+	}
+	pkgToStorePath := make(map[string]string)
+	for _, v := range dependencies {
+		if strings.HasSuffix(v, ".nix") {
+			storePath, err := buildFile(v, nixpkgs)
+			if err != nil {
+				return map[string]string{}, err
+			}
+			pkgToStorePath[v] = storePath
+		} else {
+			storePath, err := buildPackage(v, nixpkgs)
+			if err != nil {
+				return map[string]string{}, err
+			}
+			pkgToStorePath[v] = storePath
 		}
 	}
 
-	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), strings.Join(packages, " "))
+	return pkgToStorePath, nil
+}
+
+// buildPackage builds nix package: nix-build --no-out-link -E 'with import <nixpkgs> { }; pkg' and returns the store path
+func buildPackage(pkgName string, nixpkgs string) (string, error) {
+	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if len(out) > 0 {
-			return []string{}, errors.New(string(out))
+			return "", errors.New(string(out))
 		}
-		return []string{}, err
+		return "", err
 	}
 
-	fmt.Println(string(out))
-	var storePaths []string
+	fmt.Print(string(out))
 	for _, v := range strings.Split(string(out), "\n") {
 		if strings.HasPrefix(v, "/nix/store/") {
-			storePaths = append(storePaths, v)
+			return v, nil
 		}
 	}
 
-	return storePaths, nil
+	return "", nil
+}
+
+func buildFile(filePath string, nixpkgs string) (string, error) {
+	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
+	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		if len(out) > 0 {
+			return "", errors.New(string(out))
+		}
+		return "", err
+	}
+	fmt.Print(string(out))
+	for _, v := range strings.Split(string(out), "\n") {
+		if strings.HasPrefix(v, "/nix/store/") {
+			return v, nil
+		}
+	}
+
+	return "", nil
 }
 
 func defaultPackages() []string {
@@ -58,57 +93,9 @@ func defaultPackages() []string {
 	}
 }
 
-func BuildFiles(files []string, nixpkgs string) ([]string, error) {
-	if len(files) == 0 {
-		return []string{}, nil
-	}
-	var storePaths []string
-	for _, pkg := range files {
-		nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), pkg)
-		cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			if len(out) > 0 {
-				return []string{}, errors.New(string(out))
-			}
-			return []string{}, err
-		}
-		fmt.Print(string(out))
-		for _, v := range strings.Split(string(out), "\n") {
-			if strings.HasPrefix(v, "/nix/store/") {
-				storePaths = append(storePaths, v)
-			}
-		}
-	}
-
-	return storePaths, nil
-}
-
 // StorePathsToPath creates a string ready to be added to $PATH appending /bin to each store path
 func StorePathsToPath(storePaths []string) string {
 	return strings.Join(storePaths, "/bin:") + "/bin"
-}
-
-func FilterPackageNames(dependencies []string) []string {
-	var res []string
-	for _, v := range dependencies {
-		if strings.HasSuffix(v, ".nix") {
-			continue
-		}
-		res = append(res, v)
-	}
-	return res
-}
-
-func FilterNixFiles(dependencies []string) []string {
-	var res []string
-	for _, v := range dependencies {
-		if !strings.HasSuffix(v, ".nix") {
-			continue
-		}
-		res = append(res, v)
-	}
-	return res
 }
 
 func DownloadURl() string {
