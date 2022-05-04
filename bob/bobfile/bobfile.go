@@ -141,6 +141,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		task.SetDockerRegistryClient()
 
 		task.AllDependencies = unique(append(task.Dependencies, bobfile.Dependencies...))
+		if len(task.AllDependencies) > 0 {
+			task.AllDependencies = unique(append(task.AllDependencies, defaultPackages()...))
+		}
 		addDir(dir, task.AllDependencies)
 
 		bobfile.BTasks[key] = task
@@ -155,6 +158,15 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	}
 
 	return bobfile, nil
+}
+
+func defaultPackages() []string {
+	return []string{
+		"bash",
+		"coreutils",
+		"gnused",
+		"findutils",
+	}
 }
 
 func unique(s []string) []string {

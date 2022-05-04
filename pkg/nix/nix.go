@@ -17,11 +17,6 @@ func IsInstalled() bool {
 }
 
 func Build(dependencies []string, nixpkgs string) (map[string]string, error) {
-	for _, v := range defaultPackages() {
-		if !inSlice(v, dependencies) {
-			dependencies = append(dependencies, v)
-		}
-	}
 	pkgToStorePath := make(map[string]string)
 	for _, v := range dependencies {
 		if strings.HasSuffix(v, ".nix") {
@@ -84,15 +79,6 @@ func buildFile(filePath string, nixpkgs string) (string, error) {
 	return "", nil
 }
 
-func defaultPackages() []string {
-	return []string{
-		"bash",
-		"coreutils",
-		"gnused",
-		"findutils",
-	}
-}
-
 // StorePathsToPath creates a string ready to be added to $PATH appending /bin to each store path
 func StorePathsToPath(storePaths []string) string {
 	return strings.Join(storePaths, "/bin:") + "/bin"
@@ -118,13 +104,4 @@ func source(nixpkgs string) string {
 		return fmt.Sprintf("(fetchTarball \"%s\")", nixpkgs)
 	}
 	return "<nixpkgs>"
-}
-
-func inSlice(a string, s []string) bool {
-	for _, v := range s {
-		if v == a {
-			return true
-		}
-	}
-	return false
 }
