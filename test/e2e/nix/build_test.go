@@ -3,6 +3,7 @@ package nix_test
 import (
 	"context"
 	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/benchkram/errz"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,6 +13,9 @@ import (
 var _ = Describe("Testing new nix implementation", func() {
 	BeforeEach(func() {
 		Expect(os.Setenv("PATH", initialPath)).NotTo(HaveOccurred())
+	})
+	AfterEach(func() {
+		filepathutil.ClearListRecursiveCache()
 	})
 	Context("with use-nix false", func() {
 		It("build without errors", func() {

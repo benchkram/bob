@@ -105,8 +105,6 @@ type Task struct {
 	StorePaths []string
 	UseNix     bool
 	Nixpkgs    string
-
-	listRecursiveCache map[string][]string
 }
 
 type TargetEntry interface{}
@@ -128,8 +126,6 @@ func Make(opts ...TaskOption) Task {
 		}
 		opt(&t)
 	}
-
-	t.listRecursiveCache = make(map[string][]string, 1024)
 
 	return t
 }

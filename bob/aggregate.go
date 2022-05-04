@@ -25,11 +25,7 @@ var (
 func (b *B) find() (bobfiles []string, err error) {
 	defer errz.Recover(&err)
 
-	list, ok := b.listRecursiveCache[b.dir]
-	if !ok {
-		list, err = filepathutil.ListRecursive(b.dir)
-		errz.Fatal(err)
-	}
+	list, err := filepathutil.ListRecursive(b.dir)
 
 	for _, file := range list {
 		if bobfile.IsBobfile(file) {
