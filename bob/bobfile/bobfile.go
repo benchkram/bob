@@ -166,6 +166,7 @@ func defaultPackages() []string {
 		"coreutils",
 		"gnused",
 		"findutils",
+		"git",
 	}
 }
 
