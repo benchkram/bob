@@ -51,7 +51,7 @@ type Playbook struct {
 	enableCaching bool
 
 	//map between a package name and its Nx store path
-	pkgToStorePath map[string]string
+	//pkgToStorePath map[string]string
 }
 
 func New(root string, opts ...Option) *Playbook {

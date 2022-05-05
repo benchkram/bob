@@ -4,11 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
 
 type NewPathKey struct{}
+
+type Dependency string
+type StorePath string
+type DependeciesToStorePathMap map[Dependency]StorePath
 
 // IsInstalled checks if nix is installed on the system
 func IsInstalled() bool {
@@ -16,21 +21,21 @@ func IsInstalled() bool {
 	return err == nil
 }
 
-func Build(dependencies []string, nixpkgs string) (map[string]string, error) {
-	pkgToStorePath := make(map[string]string)
+func Build(dependencies []string, nixpkgs string) (DependeciesToStorePathMap, error) {
+	pkgToStorePath := make(DependeciesToStorePathMap)
 	for _, v := range dependencies {
 		if strings.HasSuffix(v, ".nix") {
 			storePath, err := buildFile(v, nixpkgs)
 			if err != nil {
-				return map[string]string{}, err
+				return DependeciesToStorePathMap{}, err
 			}
-			pkgToStorePath[v] = storePath
+			pkgToStorePath[Dependency(v)] = StorePath(storePath)
 		} else {
 			storePath, err := buildPackage(v, nixpkgs)
 			if err != nil {
-				return map[string]string{}, err
+				return DependeciesToStorePathMap{}, err
 			}
-			pkgToStorePath[v] = storePath
+			pkgToStorePath[Dependency(v)] = StorePath(storePath)
 		}
 	}
 
@@ -79,9 +84,34 @@ func buildFile(filePath string, nixpkgs string) (string, error) {
 	return "", nil
 }
 
-// StorePathsToPath creates a string ready to be added to $PATH appending /bin to each store path
-func StorePathsToPath(storePaths []string) string {
-	return strings.Join(storePaths, "/bin:") + "/bin"
+// DependenciesToStorePaths resolves a dependecy array to their
+// associated nix storePath. The order of the output is guaranteed
+// to match the order of the input.
+func DependenciesToStorePaths(dependencies []string, m DependeciesToStorePathMap) ([]string, error) {
+	storePaths := make([]string, len(dependencies))
+	for i, d := range dependencies {
+		storePath, ok := m[Dependency(d)]
+		if !ok {
+			return nil, fmt.Errorf("could not resolve store path for [%s]", d)
+		}
+		storePaths[i] = string(storePath)
+	}
+
+	return storePaths, nil
+}
+
+// StorePathBin adds the /bin dir to a array of storePaths
+func StorePathsBin(storePaths []string) []string {
+	out := make([]string, len(storePaths))
+	for i, sp := range storePaths {
+		out[i] = StorePathBin(sp)
+	}
+	return out
+}
+
+// StorePathBin adds the /bin dir to storePath
+func StorePathBin(storePath string) string {
+	return filepath.Join(storePath, "/bin")
 }
 
 func DownloadURl() string {

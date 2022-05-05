@@ -3,7 +3,9 @@ package bob
 import (
 	"errors"
 	"fmt"
+
 	"github.com/benchkram/bob/pkg/nix"
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 )
 
@@ -23,13 +25,9 @@ func (b B) Install() (err error) {
 
 	var allDeps []string
 	for _, v := range ag.BTasks {
-		for _, d := range v.AllDependencies {
-			if inSlice(d, allDeps) {
-				continue
-			}
-			allDeps = append(allDeps, d)
-		}
+		allDeps = append(allDeps, v.DependenciesDirty...)
 	}
+	allDeps = sliceutil.Unique(allDeps)
 
 	if len(allDeps) == 0 {
 		fmt.Println("Nothing to install.")
