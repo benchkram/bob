@@ -13,7 +13,7 @@ type NewPathKey struct{}
 
 type Dependency string
 type StorePath string
-type DependeciesToStorePathMap map[Dependency]StorePath
+type DependenciesToStorePathMap map[Dependency]StorePath
 
 // IsInstalled checks if nix is installed on the system
 func IsInstalled() bool {
@@ -21,19 +21,19 @@ func IsInstalled() bool {
 	return err == nil
 }
 
-func Build(dependencies []string, nixpkgs string) (DependeciesToStorePathMap, error) {
-	pkgToStorePath := make(DependeciesToStorePathMap)
+func Build(dependencies []string, nixpkgs string) (DependenciesToStorePathMap, error) {
+	pkgToStorePath := make(DependenciesToStorePathMap)
 	for _, v := range dependencies {
 		if strings.HasSuffix(v, ".nix") {
 			storePath, err := buildFile(v, nixpkgs)
 			if err != nil {
-				return DependeciesToStorePathMap{}, err
+				return DependenciesToStorePathMap{}, err
 			}
 			pkgToStorePath[Dependency(v)] = StorePath(storePath)
 		} else {
 			storePath, err := buildPackage(v, nixpkgs)
 			if err != nil {
-				return DependeciesToStorePathMap{}, err
+				return DependenciesToStorePathMap{}, err
 			}
 			pkgToStorePath[Dependency(v)] = StorePath(storePath)
 		}
@@ -87,7 +87,7 @@ func buildFile(filePath string, nixpkgs string) (string, error) {
 // DependenciesToStorePaths resolves a dependecy array to their
 // associated nix storePath. The order of the output is guaranteed
 // to match the order of the input.
-func DependenciesToStorePaths(dependencies []string, m DependeciesToStorePathMap) ([]string, error) {
+func DependenciesToStorePaths(dependencies []string, m DependenciesToStorePathMap) ([]string, error) {
 	storePaths := make([]string, len(dependencies))
 	for i, d := range dependencies {
 		storePath, ok := m[Dependency(d)]
