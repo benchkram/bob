@@ -33,9 +33,9 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	if ag.UseNix {
 		// Gather nix dependencies from tasks
-		nixDependencies := []string{}
+		var nixDependencies []string
 		nixDependencies = append(nixDependencies, ag.Dependencies...)
-		tasksInPipeline := []string{}
+		var tasksInPipeline []string
 		err = ag.BTasks.Walk(taskName, "", func(tn string, task bobtask.Task, err error) error {
 			if err != nil {
 				return err

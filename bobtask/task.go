@@ -97,10 +97,12 @@ type Task struct {
 
 	// DependenciesDirty read from the bobfile
 	DependenciesDirty []string `yaml:"dependencies"`
+
 	// dependencies contain the actual dependencies merged
-	// with the global dependencies defined in a the Bobfile.
-	// in the corrct order as they should be added to PATH.
+	// with the global dependencies defined in the Bobfile
+	// in the order which they need to be added to PATH
 	dependencies []string
+
 	// storePaths contain the actual /nix/store/* path
 	// in the corrct order (same as dependecies) as they should be added to PATH.
 	storePaths []string
