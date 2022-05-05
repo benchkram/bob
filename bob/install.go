@@ -46,12 +46,3 @@ func (b B) Install() (err error) {
 
 	return nil
 }
-
-func inSlice(a string, s []string) bool {
-	for _, v := range s {
-		if v == a {
-			return true
-		}
-	}
-	return false
-}
