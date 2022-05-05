@@ -109,8 +109,6 @@ type Task struct {
 
 	// flag if its bobfile has Nix enabled
 	useNix bool
-
-	// TODO: storePaths should go into the input hash
 }
 
 type TargetEntry interface{}

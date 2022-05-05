@@ -76,6 +76,16 @@ func (t *Task) HashIn() (taskHash hash.In, _ error) {
 		return taskHash, fmt.Errorf("failed to write task environment to aggregated hash: %w", err)
 	}
 
+	// Hash store paths
+	storePathsHash, err := filehash.HashBytes(bytes.NewBufferString(strings.Join(t.storePaths, "")))
+	if err != nil {
+		return taskHash, fmt.Errorf("failed to write store paths hash: %w", err)
+	}
+	_, err = aggregatedHashes.Write(storePathsHash)
+	if err != nil {
+		return taskHash, fmt.Errorf("failed to write task store paths to aggregated hash: %w", err)
+	}
+
 	// Summarize
 	h, err := filehash.HashBytes(aggregatedHashes)
 	if err != nil {
