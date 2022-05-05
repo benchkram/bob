@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -139,6 +140,10 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
+
+		dependecies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
+		dependecies = addDir(dir, dependecies)
+		task.SetDependencies(dependecies)
 
 		// task.AllDependencies = unique(append(task.Dependencies, bobfile.Dependencies...))
 		// if len(task.AllDependencies) > 0 {
@@ -307,10 +312,12 @@ func IsBobfile(file string) bool {
 	return strings.Contains(filepath.Base(file), global.BobFileName)
 }
 
-func addDir(dir string, dependencies []string) {
+// TODO: addd me to nix package
+func addDir(dir string, dependencies []string) []string {
 	for k, v := range dependencies {
 		if strings.HasSuffix(v, ".nix") {
 			dependencies[k] = dir + "/" + v
 		}
 	}
+	return dependencies
 }
