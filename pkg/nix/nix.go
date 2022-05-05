@@ -84,7 +84,7 @@ func buildFile(filePath string, nixpkgs string) (string, error) {
 	return "", nil
 }
 
-// DependenciesToStorePaths resolves a dependecy array to their
+// DependenciesToStorePaths resolves a dependency array to their
 // associated nix storePath. The order of the output is guaranteed
 // to match the order of the input.
 func DependenciesToStorePaths(dependencies []string, m DependenciesToStorePathMap) ([]string, error) {
