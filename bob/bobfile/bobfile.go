@@ -145,6 +145,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		dependencies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
 		dependencies = nix.AddDir(dir, dependencies)
 		task.SetDependencies(dependencies)
+		task.SetUseNix(bobfile.UseNix)
 
 		bobfile.BTasks[key] = task
 	}

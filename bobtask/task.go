@@ -107,6 +107,9 @@ type Task struct {
 	// in the order which they need to be added to PATH
 	storePaths []string
 
+	// flag if its bobfile has Nix enabled
+	useNix bool
+
 	// TODO: storePaths should go into the input hash
 }
 
@@ -232,6 +235,14 @@ func (t *Task) AddExportPrefix(prefix string) {
 	for i, e := range t.Exports {
 		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))
 	}
+}
+
+func (t *Task) SetUseNix(useNix bool) {
+	t.useNix = useNix
+}
+
+func (t *Task) UseNix() bool {
+	return t.useNix
 }
 
 // AddToSkippedInputs add filenames with permission issues to the task's
@@ -369,13 +380,3 @@ func keyExists(m map[string]interface{}, key string) bool {
 	_, ok := m[key]
 	return ok
 }
-
-// func (t *Task) ToPATH(pkgToStorePath map[string]string) string {
-// 	var storePaths []string
-// 	for _, v := range t.AllDependencies {
-// 		if i, ok := pkgToStorePath[v]; ok {
-// 			storePaths = append(storePaths, i)
-// 		}
-// 	}
-// 	return nix.StorePathsToPath(storePaths)
-// }

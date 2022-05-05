@@ -20,11 +20,6 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	b.PrintVersionCompatibility(ag)
 
-	// TODO: Don't check on the aggregate if UseNix is true...
-	// check if for each bobfile/ task
-	//
-	// only build/use the dependencies on task which
-	// have UseNix set to true
 	err = BuildNix(ag, taskName)
 	errz.Fatal(err)
 
