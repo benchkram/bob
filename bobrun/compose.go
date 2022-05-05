@@ -15,8 +15,6 @@ const composeFileDefault = "docker-compose.yml"
 func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 	defer errz.Recover(&err)
 
-	fmt.Println("compose cmd")
-
 	path := r.Path
 	if path == "" {
 		path = composeFileDefault
@@ -24,83 +22,6 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 
 	p, err := composeutil.ProjectFromConfig(path)
 	errz.Fatal(err)
-
-	//// In case the environment was already running (because of crash during shutdown, for example), shut it down.
-	//ctler, err := composectl.New(p, "", "")
-	//errz.Fatal(err)
-	//
-	//err = ctler.Down(ctx)
-	//errz.Fatal(err)
-
-	//cfgs := composeutil.ProjectPortConfigs(p)
-
-	//portConflicts := ""
-	//portMapping := ""
-	//var resolved composeutil.PortConfigs
-	//
-	//if composeutil.HasPortConflicts(cfgs) {
-	//	conflicts := composeutil.PortConflicts(cfgs)
-	//
-	//	portConflicts = conflicts.String()
-	//
-	//	// TODO: disable once we also resolve binaries' ports
-	//	//errz.Fatal(usererror.Wrap(fmt.Errorf(fmt.Sprint("conflicting ports detected:\n", conflicts))))
-	//
-	//	resolved, err = composeutil.ResolvePortConflicts(conflicts)
-	//	errz.Fatal(err)
-	//
-	//	portMapping = resolved.String()
-	//
-	//	// update project's ports
-	//}
-
-	//ctler, err := composectl.New()
-	//errz.Fatal(err)
-	//
-	//err = ctler.Down(ctx, p)
-	//errz.Fatal(err)
-	//
-	//portConflicts = ""
-	//portMapping = ""
-	//if composeutil.HasPortConflicts(cfgs) {
-	//	conflicts := composeutil.PortConflicts(cfgs)
-	//
-	//	portConflicts = conflicts.String()
-	//
-	//	// TODO: disable once we also resolve binaries' ports
-	//	errz.Fatal(usererror.Wrap(fmt.Errorf(fmt.Sprint("conflicting ports detected:\n", conflicts))))
-	//
-	//	resolved, err := composeutil.ResolvePortConflicts(conflicts)
-	//	errz.Fatal(err)
-	//
-	//	portMapping = resolved.String()
-	//
-	//	// update project's ports
-	//	composeutil.ApplyPortMapping(p, resolved)
-	//}
-	//
-	//w := ctler.StdoutWriter()
-	//
-	//if portConflicts != "" {
-	//	portConflicts = fmt.Sprintf("%s\n%s\n", "Conflicting ports detected:", portConflicts)
-	//	_, err = w.Write([]byte(portConflicts))
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//}
-	//
-	//if portMapping != "" {
-	//	portMapping = fmt.Sprintf("%s\n%s\n", "Resolved port mapping:", portMapping)
-	//	_, err = w.Write([]byte(portMapping))
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//}
-	//
-	//rc := ctl.New(r.name, 1, ctler.Stdout(), ctler.Stderr(), ctler.Stdin())
-	//
-	//go func() {
-	//}()
 
 	ctler, err := composectl.New()
 	errz.Fatal(err)
@@ -110,6 +31,7 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 	ready := make(chan bool)
 
 	go func() {
+		// In case the environment was already running (because of crash during shutdown, for example), shut it down.
 		err = ctler.Down(ctx, p)
 		errz.Fatal(err)
 
@@ -153,27 +75,6 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 		ready <- true
 	}()
 
-	//cfgs := composeutil.ProjectPortConfigs(p)
-
-	//if composeutil.HasPortConflicts(cfgs) {
-	//	conflicts := composeutil.PortConflicts(cfgs)
-	//
-	//	//portConflicts = conflicts.String()
-	//
-	//	// TODO: disable once we also resolve binaries' ports
-	//	//errz.Fatal(usererror.Wrap(fmt.Errorf(fmt.Sprint("conflicting ports detected:\n", conflicts))))
-	//
-	//	resolved, err := composeutil.ResolvePortConflicts(conflicts)
-	//	errz.Fatal(err)
-	//
-	//	//portMapping = resolved.String()
-	//
-	//	// update project's ports
-	//	composeutil.ApplyPortMapping(p, resolved)
-	//}
-
-	//w := ctler.StdoutWriter()
-
 	rc := ctl.New(r.name, 1, ctler.Stdout(), ctler.Stderr(), ctler.Stdin())
 
 	waitForReady := true
@@ -182,6 +83,7 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 		for {
 			switch <-rc.Control() {
 			case ctl.Start:
+				// wait for soft-nuke to finish
 				if waitForReady {
 					<-ready
 					waitForReady = false
