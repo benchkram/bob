@@ -24,15 +24,11 @@ var (
 	pw     *os.File
 
 	b *bob.B
-
-	initialPath string
 )
 
 var _ = BeforeSuite(func() {
 	version = bob.Version
 	bob.Version = "1.0.0"
-
-	initialPath = os.Getenv("PATH")
 
 	// Initialize mock bob files from local directory
 	bobFiles := []string{

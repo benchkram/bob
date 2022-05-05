@@ -12,9 +12,6 @@ import (
 )
 
 var _ = Describe("Testing new nix implementation", func() {
-	BeforeEach(func() {
-		Expect(os.Setenv("PATH", initialPath)).NotTo(HaveOccurred())
-	})
 	AfterEach(func() {
 		filepathutil.ClearListRecursiveCache()
 	})
