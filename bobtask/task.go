@@ -104,7 +104,7 @@ type Task struct {
 	dependencies []string
 
 	// storePaths contain the actual /nix/store/* path
-	// in the corrct order (same as dependecies) as they should be added to PATH.
+	// in the order which they need to be added to PATH
 	storePaths []string
 
 	// TODO: storePaths should go into the input hash
