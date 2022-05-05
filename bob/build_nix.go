@@ -6,11 +6,16 @@ import (
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/sliceutil"
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 func BuildNix(ag *bobfile.Bobfile, taskName string) error {
 	if !ag.UseNix {
 		return nil
+	}
+
+	if !nix.IsInstalled() {
+		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
 	// Gather nix dependencies from tasks
