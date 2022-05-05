@@ -66,20 +66,20 @@ var composeCmd = &cobra.Command{
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			ctl, err := composectl.New(p, portConflicts, portMapping)
+			ctl, err := composectl.New()
 			if err != nil {
 				errz.Fatal(err)
 			}
 
 			fmt.Println()
-			err = ctl.Up(ctx)
+			err = ctl.Up(ctx, p)
 			if err != nil {
 				errz.Fatal(err)
 			}
 
 			defer func() {
 				fmt.Print("\n\n")
-				err := ctl.Down(context.Background())
+				err := ctl.Down(context.Background(), p)
 				if err != nil {
 					errz.Log(err)
 				}

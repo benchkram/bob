@@ -20,7 +20,6 @@ var (
 )
 
 type ComposeController struct {
-	project *types.Project
 	service api.Service
 
 	stdout pipe
@@ -37,14 +36,8 @@ type pipe struct {
 	w *os.File
 }
 
-func New(project *types.Project, conflicts, mappings string) (*ComposeController, error) {
-	if project == nil || project.Name == "" {
-		return nil, ErrInvalidProject
-	}
-
-	c := &ComposeController{
-		project: project,
-	}
+func New() (*ComposeController, error) {
+	c := &ComposeController{}
 
 	// create pipes for stdout, stderr and stdin
 	var err error
@@ -61,22 +54,6 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 	c.stdin.r, c.stdin.w, err = os.Pipe()
 	if err != nil {
 		return nil, err
-	}
-
-	if conflicts != "" {
-		conflicts = fmt.Sprintf("%s\n%s\n", "Conflicting ports detected:", conflicts)
-		_, err = c.stdout.w.Write([]byte(conflicts))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if mappings != "" {
-		mappings = fmt.Sprintf("%s\n%s\n", "Resolved port mapping:", mappings)
-		_, err = c.stdout.w.Write([]byte(mappings))
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	logger, err := NewLogConsumer(c.stdout.w)
@@ -105,14 +82,18 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 	return c, nil
 }
 
-func (ctl *ComposeController) Up(ctx context.Context) error {
-	err := ctl.service.Up(ctx, ctl.project, api.UpOptions{})
+func (ctl *ComposeController) Up(ctx context.Context, p *types.Project) error {
+	if p == nil || p.Name == "" {
+		return ErrInvalidProject
+	}
+
+	err := ctl.service.Up(ctx, p, api.UpOptions{})
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		err := ctl.service.Logs(ctx, ctl.project.Name, ctl.logger, api.LogOptions{
+		err := ctl.service.Logs(ctx, p.Name, ctl.logger, api.LogOptions{
 			Services:   nil,
 			Tail:       "",
 			Since:      "",
@@ -130,19 +111,20 @@ func (ctl *ComposeController) Up(ctx context.Context) error {
 	return nil
 }
 
-func (ctl *ComposeController) Down(ctx context.Context) error {
-	if ctl.project == nil {
+func (ctl *ComposeController) Down(ctx context.Context, p *types.Project) error {
+	if p == nil || p.Name == "" {
 		return ErrInvalidProject
 	}
 
-	if !ctl.running {
-		return nil
-	}
+	//if !ctl.running {
+	//	return nil
+	//}
+	defer func() {
+		ctl.running = false
+	}()
 
-	ctl.running = false
-
-	err := ctl.service.Down(ctx, ctl.project.Name, api.DownOptions{
-		Project: ctl.project,
+	err := ctl.service.Down(ctx, p.Name, api.DownOptions{
+		Project: p,
 	})
 	if err != nil {
 		return err
@@ -165,4 +147,8 @@ func (ctl *ComposeController) Stderr() io.Reader {
 
 func (ctl *ComposeController) Stdin() io.Writer {
 	return ctl.stdin.w
+}
+
+func (ctl *ComposeController) StdoutWriter() io.Writer {
+	return ctl.stdout.w
 }
