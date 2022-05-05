@@ -25,11 +25,11 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	// TODO: warn when overwriting envvar from the environment
 	env = append(env, t.env...)
 
-	if len(t.dependencies) > 0 {
+	if len(t.storePaths) > 0 {
 		for k, v := range env {
 			pair := strings.SplitN(v, "=", 2)
 			if pair[0] == "PATH" {
-				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(t.dependencies), ":")
+				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(t.storePaths), ":")
 
 				// TODO: remove debug output
 				fmt.Println(env[k])

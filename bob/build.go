@@ -41,7 +41,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 				return err
 			}
 			tasksInPipeline = append(tasksInPipeline, task.Name())
-			nixDependencies = append(nixDependencies, task.DependenciesDirty...)
+			nixDependencies = append(nixDependencies, task.Dependencies()...)
 			return err
 		})
 		errz.Fatal(err)
@@ -61,8 +61,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 			// construct used dependencies for this task
 			deps := nix.DefaultPackages()
-			deps = append(deps, t.DependenciesDirty...)
-			deps = append(deps, ag.Dependencies...)
+			deps = append(deps, t.Dependencies()...)
 			deps = sliceutil.Unique(deps)
 
 			// resolve nix store paths from dependencies
@@ -70,7 +69,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 			errz.Fatal(err)
 
 			fmt.Printf("Setting dependencies for task %s\n", t.Name())
-			t.SetDependencies(storePaths)
+			t.SetStorePaths(storePaths)
 			ag.BTasks[tn] = t
 		}
 	}

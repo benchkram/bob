@@ -35,6 +35,8 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 	aggregate, err := b.Aggregate()
 	errz.Fatal(err)
 
+	// TODO: build nix depencies here
+
 	b.PrintVersionCompatibility(aggregate)
 
 	runTask, ok := aggregate.RTasks[runName]

@@ -97,9 +97,15 @@ type Task struct {
 
 	// DependenciesDirty read from the bobfile
 	DependenciesDirty []string `yaml:"dependencies"`
-	// dependencies contain the actual /nix/store/* path
+	// dependencies contain the actual dependencies merged
+	// with the global dependencies defined in a the Bobfile.
 	// in the corrct order as they should be added to PATH.
 	dependencies []string
+	// storePaths contain the actual /nix/store/* path
+	// in the corrct order (same as dependecies) as they should be added to PATH.
+	storePaths []string
+
+	// TODO: storePaths should go into the input hash
 }
 
 type TargetEntry interface{}
@@ -171,8 +177,15 @@ func (t *Task) SetEnv(env []string) {
 	t.env = env
 }
 
+func (t *Task) Dependencies() []string {
+	return t.dependencies
+}
 func (t *Task) SetDependencies(dependencies []string) {
 	t.dependencies = dependencies
+}
+
+func (t *Task) SetStorePaths(storePaths []string) {
+	t.storePaths = storePaths
 }
 
 // Project returns the projectname. In case of a non existing projectname the
