@@ -3,6 +3,7 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
+	"github.com/benchkram/bob/pkg/nix"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -141,15 +142,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
 
-		dependecies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
-		dependecies = addDir(dir, dependecies)
-		task.SetDependencies(dependecies)
-
-		// task.AllDependencies = unique(append(task.Dependencies, bobfile.Dependencies...))
-		// if len(task.AllDependencies) > 0 {
-		// 	task.AllDependencies = unique(append(task.AllDependencies, defaultPackages()...))
-		// }
-		// addDir(dir, task.AllDependencies)
+		dependencies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
+		dependencies = nix.AddDir(dir, dependencies)
+		task.SetDependencies(dependencies)
 
 		bobfile.BTasks[key] = task
 	}
@@ -163,28 +158,6 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	}
 
 	return bobfile, nil
-}
-
-func defaultPackages() []string {
-	return []string{
-		"bash",
-		"coreutils",
-		"gnused",
-		"findutils",
-		"git",
-	}
-}
-
-func unique(s []string) []string {
-	added := make(map[string]bool)
-	var res []string
-	for _, v := range s {
-		if _, exists := added[v]; !exists {
-			res = append(res, v)
-			added[v] = true
-		}
-	}
-	return res
 }
 
 // BobfileRead read from a bobfile.
@@ -311,14 +284,4 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 
 func IsBobfile(file string) bool {
 	return strings.Contains(filepath.Base(file), global.BobFileName)
-}
-
-// TODO: addd me to nix package
-func addDir(dir string, dependencies []string) []string {
-	for k, v := range dependencies {
-		if strings.HasSuffix(v, ".nix") {
-			dependencies[k] = dir + "/" + v
-		}
-	}
-	return dependencies
 }

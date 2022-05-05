@@ -129,6 +129,16 @@ func DownloadURl() string {
 	return url
 }
 
+// AddDir add the dir path to .nix files specified in dependencies
+func AddDir(dir string, dependencies []string) []string {
+	for k, v := range dependencies {
+		if strings.HasSuffix(v, ".nix") {
+			dependencies[k] = dir + "/" + v
+		}
+	}
+	return dependencies
+}
+
 func source(nixpkgs string) string {
 	if nixpkgs != "" {
 		return fmt.Sprintf("(fetchTarball \"%s\")", nixpkgs)
