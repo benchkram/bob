@@ -30,9 +30,6 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 			pair := strings.SplitN(v, "=", 2)
 			if pair[0] == "PATH" {
 				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(t.storePaths), ":")
-
-				// TODO: remove debug output
-				fmt.Println(env[k])
 			}
 		}
 	}
