@@ -103,7 +103,7 @@ type Task struct {
 	// in the order which they need to be added to PATH
 	dependencies []string
 
-	// storePaths contain the actual /nix/store/* path
+	// storePaths contain /nix/store/* paths
 	// in the order which they need to be added to PATH
 	storePaths []string
 
