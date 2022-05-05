@@ -66,8 +66,11 @@ type Bobfile struct {
 	RTasks bobrun.RunMap `yaml:"run"`
 
 	Dependencies []string `yaml:"dependencies"`
-	UseNix       bool     `yaml:"use-nix"`
-	Nixpkgs      string   `yaml:"nixpkgs"`
+
+	// Flag if nix is used by tasks inside bobfile
+	UseNix bool `yaml:"use-nix"`
+	// Optional flag which specifies the nixpkgs source
+	Nixpkgs string `yaml:"nixpkgs"`
 
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().

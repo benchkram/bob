@@ -9,6 +9,8 @@ import (
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
+// BuildNix will collect and build dependencies for all tasks used in running of taskName
+// adding the store paths to each task
 func BuildNix(ag *bobfile.Bobfile, taskName string) error {
 	if !ag.UseNix {
 		return nil

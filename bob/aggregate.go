@@ -226,9 +226,9 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.BTasks[i] = task
 	}
 
+	// Aggregate all dependencies set at bobfile level
 	addedDependencies := make(map[string]bool)
 	var allDeps []string
-
 	for _, bobfile := range bobs {
 		for _, dep := range bobfile.Dependencies {
 			if _, added := addedDependencies[dep]; !added {
