@@ -9,12 +9,6 @@ import (
 	"strings"
 )
 
-type NewPathKey struct{}
-
-type Dependency string
-type StorePath string
-type DependenciesToStorePathMap map[Dependency]StorePath
-
 // IsInstalled checks if nix is installed on the system
 func IsInstalled() bool {
 	_, err := exec.LookPath("nix")
@@ -26,25 +20,26 @@ func IsInstalled() bool {
 // dependencies can be either a package name ex. php or a path to .nix file
 // nixpkgs can be empty which means it will use local nixpkgs channel
 // or a link to desired revision ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
-func Build(dependencies []string, nixpkgs string) (DependenciesToStorePathMap, error) {
-	pkgToStorePath := make(DependenciesToStorePathMap)
-	for _, v := range dependencies {
+func Build(dependencies []string, nixpkgs string) ([]string, error) {
+	storePaths := make([]string, len(dependencies))
+
+	for k, v := range dependencies {
 		if strings.HasSuffix(v, ".nix") {
 			storePath, err := buildFile(v, nixpkgs)
 			if err != nil {
-				return DependenciesToStorePathMap{}, err
+				return []string{}, err
 			}
-			pkgToStorePath[Dependency(v)] = StorePath(storePath)
+			storePaths[k] = storePath
 		} else {
 			storePath, err := buildPackage(v, nixpkgs)
 			if err != nil {
-				return DependenciesToStorePathMap{}, err
+				return []string{}, err
 			}
-			pkgToStorePath[Dependency(v)] = StorePath(storePath)
+			storePaths[k] = storePath
 		}
 	}
 
-	return pkgToStorePath, nil
+	return storePaths, nil
 }
 
 // buildPackage builds a nix package: nix-build --no-out-link -E 'with import <nixpkgs> { }; pkg' and returns the store path
@@ -89,22 +84,6 @@ func buildFile(filePath string, nixpkgs string) (string, error) {
 	}
 
 	return "", nil
-}
-
-// DependenciesToStorePaths resolves a dependency array to their
-// associated nix storePath. The order of the output is guaranteed
-// to match the order of the input.
-func DependenciesToStorePaths(dependencies []string, m DependenciesToStorePathMap) ([]string, error) {
-	storePaths := make([]string, len(dependencies))
-	for i, d := range dependencies {
-		storePath, ok := m[Dependency(d)]
-		if !ok {
-			return nil, fmt.Errorf("could not resolve store path for [%s]", d)
-		}
-		storePaths[i] = string(storePath)
-	}
-
-	return storePaths, nil
 }
 
 // StorePathsBin adds the /bin dir to each of storePaths

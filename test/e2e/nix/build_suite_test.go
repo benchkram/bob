@@ -39,6 +39,10 @@ var _ = BeforeSuite(func() {
 		"with_ambiguous_deps_in_task",
 		"with_second_level",
 		"with_second_level/second_level",
+		"with_depends_on_dependency",
+		"with_depends_on_dependency/second_level",
+		"with_second_level_use_nix_false",
+		"with_second_level_use_nix_false/second_level",
 	}
 	nameToBobfile := make(map[string]*bobfile.Bobfile)
 	for _, name := range bobFiles {

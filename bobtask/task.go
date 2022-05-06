@@ -36,7 +36,7 @@ type Task struct {
 	// The cmds passed to os.Exec
 	cmds []string
 
-	// DependsOn are task which must succeede before this task
+	// DependsOn are task which must succeed before this task
 	// can run.
 	DependsOn []string
 

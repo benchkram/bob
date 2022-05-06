@@ -42,28 +42,16 @@ func BuildNix(ag *bobfile.Bobfile, taskName string) error {
 	if len(nixDependencies) == 0 {
 		return nil
 	}
-
 	fmt.Println("Building nix dependencies...")
-	depStorePathMapping, err := nix.Build(sliceutil.Unique(append(nix.DefaultPackages(), nixDependencies...)), ag.Nixpkgs)
+
+	storePaths, err := nix.Build(sliceutil.Unique(append(nix.DefaultPackages(), nixDependencies...)), ag.Nixpkgs)
 	if err != nil {
 		return err
 	}
 
-	// Resolve nix storePaths from dependencies
-	// and rewrite the affected tasks.
 	for _, name := range tasksInPipeline {
 		t := ag.BTasks[name]
-
-		// construct used dependencies for this task
-		deps := nix.DefaultPackages()
-		deps = append(deps, t.Dependencies()...)
-		deps = sliceutil.Unique(deps)
-
-		storePaths, err := nix.DependenciesToStorePaths(deps, depStorePathMapping)
-		if err != nil {
-			return err
-		}
-		t.SetStorePaths(storePaths)
+		t.SetStorePaths(sliceutil.Unique(storePaths))
 		ag.BTasks[name] = t
 	}
 
