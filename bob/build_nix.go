@@ -27,11 +27,10 @@ func BuildNix(ag *bobfile.Bobfile, taskName string) error {
 		if err != nil {
 			return err
 		}
-		if !task.UseNix() {
-			return nil
-		}
 		tasksInPipeline = append(tasksInPipeline, task.Name())
-		nixDependencies = append(nixDependencies, task.Dependencies()...)
+		if task.UseNix() {
+			nixDependencies = append(nixDependencies, task.Dependencies()...)
+		}
 		return nil
 	})
 
