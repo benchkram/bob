@@ -5,10 +5,12 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/filepathutil"
+	"github.com/sanity-io/litter"
 )
 
 func (t *Task) Inputs() []string {
@@ -20,7 +22,9 @@ func (t *Task) Inputs() []string {
 func (t *Task) filteredInputs() ([]string, error) {
 
 	wd := t.dir
+	println("setting workingDir " + wd)
 	owd, err := os.Getwd()
+	println("owd " + owd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current working directory: %w", err)
 	}
@@ -33,7 +37,12 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}()
 
+	nwd, _ := os.Getwd()
+	println("nwd " + nwd)
+
 	inputDirty := split(t.InputDirty)
+
+	litter.Dump(inputDirty)
 
 	// Determine inputs and files to be ignored
 	var inputs []string
@@ -52,9 +61,22 @@ func (t *Task) filteredInputs() ([]string, error) {
 			continue
 		}
 
+		// switch input {
+		// case "*":
+		// 	input =
+		// }
+
+		// TODO: when "*" is passed as input it's likely to hit the cache
+		// ass there is no further information. Think how to handle the cache correctly
+		// in those cases.
+
 		list, err := filepathutil.ListRecursive(input)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
+		}
+		println("listing inputs for " + input + " found " + strconv.Itoa(len(list)))
+		if input == "*" {
+			litter.Dump(list)
 		}
 		inputs = append(inputs, list...)
 	}
@@ -87,7 +109,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 
 	sanitizedInputs, err := t.sanitizeInputs(
 		filteredInputs,
-		optimisationOptions{wd: wd},
+		optimisationOptions{},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sanitize inputs: %w", err)

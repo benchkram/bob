@@ -20,10 +20,12 @@ type optimisationOptions struct {
 
 func (t *Task) sanitizeInputs(inputs []string, opts optimisationOptions) ([]string, error) {
 
-	projectRoot, err := resolve(t.dir, opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve project root %q: %w", t.dir, err)
-	}
+	println("sanitizeInputs[projectRoot]" + t.dir)
+	// projectRoot, err := resolve(t.dir, optimisationOptions{})
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to resolve project root %q: %w", t.dir, err)
+	// }
+	projectRoot := t.dir
 
 	sanitized := make([]string, 0, len(inputs))
 	resolved := make(map[string]struct{})

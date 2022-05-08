@@ -17,19 +17,33 @@ var (
 	}
 )
 
-var listRecursiveMap = make(map[string][]string, 1024)
+//var listRecursiveMap = make(map[string][]string, 1024)
 
 func ListRecursive(inp string) (all []string, err error) {
 
-	result, ok := listRecursiveMap[inp]
-	if ok {
-		return result, nil
-	}
+	println("input: " + inp)
+	// result, ok := listRecursiveMap[inp]
+	// if ok {
+	// 	return result, nil
+	// }
+
+	// TODO: new list recursive
+	// * does input contain a glob? see https://pkg.go.dev/path/filepath#Match => read with filepathx.Glob
+	// * check if input is a file => add file
+	// * check if input is a dir => add files in dir recursively
+	//
+	// More input:
+	// https://github.com/iriri/minimal/blob/9b2348d09c1ab2c25505f9933a3591ef9db6522a/gitignore/gitignore.go#L245
+	// https://github.com/zabawaba99/go-gitignore/
+	// https://github.com/gobwas/glob
+	//
+	// Thoughts: Is it possible to compile a ignoreList upfront?
+	// Then check if the accessed file || dir can be skipped.
+	// Maybe it's even possible to call skipdir on a walk func.
 
 	// TODO: possibly ignore here too, before calling listDir
 	if s, err := os.Stat(inp); err != nil || !s.IsDir() {
 		// File
-
 		// Use glob for unknowns (wildcard-paths) and existing files (non-dirs)
 		matches, err := filepathx.Glob(inp)
 		if err != nil {
@@ -63,7 +77,7 @@ func ListRecursive(inp string) (all []string, err error) {
 		all = append(all, files...)
 	}
 
-	listRecursiveMap[inp] = all
+	// listRecursiveMap[inp] = all
 	return all, nil
 }
 

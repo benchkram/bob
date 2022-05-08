@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/errz"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -196,6 +197,7 @@ func TestEmptyProjectName(t *testing.T) {
 	assert.Nil(t, err)
 
 	bobfile, err := testBob.Aggregate()
+	errz.Log(err)
 	assert.Nil(t, err)
 
 	assert.Equal(t, dir, bobfile.Project)

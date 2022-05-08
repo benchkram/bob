@@ -128,6 +128,7 @@ func readImports(
 		if readModePlain {
 			boblet, err = bobfile.BobfileReadPlain(filepath.Join(p, imp))
 		} else {
+			println("reading bobfile " + filepath.Join(p, imp))
 			boblet, err = bobfile.BobfileRead(filepath.Join(p, imp))
 		}
 		if err != nil {
