@@ -1,13 +1,14 @@
 package nix_test
 
 import (
-	"github.com/benchkram/bob/bob/bobfile"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/benchkram/bob/bob/bobfile"
 
 	"github.com/benchkram/bob/bob"
 
@@ -82,7 +83,12 @@ var _ = AfterSuite(func() {
 func TestBuild(t *testing.T) {
 	_, err := exec.LookPath("nix")
 	if err != nil {
-		t.Skip("Test skipped because nix is not installed on your system")
+		// Allow to skip tests only localy.
+		// CI is always set to true on github actions.
+		// https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
+		if os.Getenv("CI") != "true" {
+			t.Skip("Test skipped because nix is not installed on your system")
+		}
 	}
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "nix suite")

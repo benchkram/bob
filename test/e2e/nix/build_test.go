@@ -142,11 +142,11 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(err).NotTo(HaveOccurred())
 			output := output()
 
-			//will run both because build depends on second
+			// will run both because build depends on second
 			Expect(output).To(ContainSubstring("Hello second!"))
 			Expect(output).To(ContainSubstring("Hello build!"))
 
-			//but should not build dependencies from second level because of use_nix false
+			// but should not build dependencies from second level because of use_nix false
 			Expect(output).To(Not(ContainSubstring("go-1.16")))
 		})
 	})
