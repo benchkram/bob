@@ -2,9 +2,10 @@ package bob
 
 import (
 	"fmt"
-	"github.com/benchkram/bob/pkg/filepathutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/benchkram/bob/pkg/filepathutil"
 
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/usererror"

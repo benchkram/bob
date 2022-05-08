@@ -2,6 +2,7 @@ package bob
 
 import (
 	"fmt"
+
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/nix"
@@ -43,7 +44,12 @@ func BuildNix(ag *bobfile.Bobfile, taskName string) error {
 	}
 	fmt.Println("Building nix dependencies...")
 
-	storePaths, err := nix.Build(sliceutil.Unique(append(nix.DefaultPackages(), nixDependencies...)), ag.Nixpkgs)
+	// FIXME: warn or abort build when there are Bobfiles with different Nixpkgs.
+	// Curently only nixpkgs of aggregate is considered.
+	storePaths, err := nix.Build(
+		sliceutil.Unique(append(nix.DefaultPackages(), nixDependencies...)),
+		ag.Nixpkgs,
+	)
 	if err != nil {
 		return err
 	}

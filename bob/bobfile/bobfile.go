@@ -3,10 +3,11 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
-	"github.com/benchkram/bob/pkg/nix"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/benchkram/bob/pkg/nix"
 
 	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -67,9 +68,10 @@ type Bobfile struct {
 
 	Dependencies []string `yaml:"dependencies"`
 
-	// Flag if nix is used by tasks inside bobfile
+	// UseNix is a flag to indicate if nix is used
+	// by any task inside a bobfile
 	UseNix bool `yaml:"use-nix"`
-	// Optional flag which specifies the nixpkgs source
+	// Nixpkgs specifies a optional nixpkgs source.
 	Nixpkgs string `yaml:"nixpkgs"`
 
 	// Parent directory of the Bobfile.
