@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      
+      - name: Install nix
+        uses: cachix/install-nix-action@v15
 
       # # cache go packages, check go sum before install
       # - name: Cache go modules
