@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
@@ -20,15 +21,24 @@ import (
 func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
+	env := os.Environ()
+	// TODO: warn when overwriting envvar from the environment
+	env = append(env, t.env...)
+
+	if len(t.storePaths) > 0 && t.useNix {
+		for k, v := range env {
+			pair := strings.SplitN(v, "=", 2)
+			if pair[0] == "PATH" {
+				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(t.storePaths), ":")
+			}
+		}
+	}
+
 	for _, run := range t.cmds {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
 		if err != nil {
 			return usererror.Wrapm(err, "shell command parse error")
 		}
-
-		env := os.Environ()
-		// TODO: warn when overwriting envvar from the environment
-		env = append(env, t.env...)
 
 		pr, pw, err := os.Pipe()
 		if err != nil {

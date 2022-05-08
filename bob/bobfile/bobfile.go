@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/nix"
+
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -63,6 +66,14 @@ type Bobfile struct {
 	// RTasks run tasks
 	RTasks bobrun.RunMap `yaml:"run"`
 
+	Dependencies []string `yaml:"dependencies"`
+
+	// UseNix is a flag to indicate if nix is used
+	// by any task inside a bobfile
+	UseNix bool `yaml:"use-nix"`
+	// Nixpkgs specifies a optional nixpkgs source.
+	Nixpkgs string `yaml:"nixpkgs"`
+
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
 	dir string
@@ -87,7 +98,7 @@ func (b *Bobfile) Bobfiles() []*Bobfile {
 	return b.bobfiles
 }
 
-// bobfileRead reads a bobfile and intializes private fields.
+// bobfileRead reads a bobfile and initializes private fields.
 func bobfileRead(dir string) (_ *Bobfile, err error) {
 	defer errz.Recover(&err)
 
@@ -135,6 +146,11 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
+
+		dependencies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
+		dependencies = nix.AddDir(dir, dependencies)
+		task.SetDependencies(dependencies)
+		task.SetUseNix(bobfile.UseNix)
 
 		bobfile.BTasks[key] = task
 	}
@@ -237,7 +253,7 @@ func (b *Bobfile) Validate() (err error) {
 	return nil
 }
 
-func (b *Bobfile) BobfileSave(dir string) (err error) {
+func (b *Bobfile) BobfileSave(dir, name string) (err error) {
 	defer errz.Recover(&err)
 
 	buf := bytes.NewBuffer([]byte{})
@@ -249,7 +265,7 @@ func (b *Bobfile) BobfileSave(dir string) (err error) {
 	err = encoder.Encode(b)
 	errz.Fatal(err)
 
-	return ioutil.WriteFile(filepath.Join(dir, global.BobFileName), buf.Bytes(), 0664)
+	return ioutil.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0664)
 }
 
 func (b *Bobfile) Dir() string {
@@ -257,7 +273,7 @@ func (b *Bobfile) Dir() string {
 }
 
 func CreateDummyBobfile(dir string, overwrite bool) (err error) {
-	// Prevent accidential bobfile override
+	// Prevent accidental bobfile override
 	if file.Exists(global.BobFileName) && !overwrite {
 		return ErrBobfileExists
 	}
@@ -269,7 +285,7 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 		CmdDirty:    "go build -o run",
 		TargetDirty: "run",
 	}
-	return bobfile.BobfileSave(dir)
+	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
 func IsBobfile(file string) bool {

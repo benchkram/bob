@@ -38,11 +38,11 @@ func (t *Task) filteredInputs() ([]string, error) {
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
+
 	for _, input := range unique(inputDirty) {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
-
 			list, err := filepathutil.ListRecursive(input)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list input: %w", err)
@@ -51,7 +51,6 @@ func (t *Task) filteredInputs() ([]string, error) {
 			ignores = append(ignores, list...)
 			continue
 		}
-
 		list, err := filepathutil.ListRecursive(input)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)

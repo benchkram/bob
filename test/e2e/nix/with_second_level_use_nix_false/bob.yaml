@@ -1,0 +1,9 @@
+build:
+  build:
+    cmd: echo 'Hello build!'
+    dependson:
+      - second_level/run-hello-second
+dependencies:
+    - vim
+use-nix: false
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
