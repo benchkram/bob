@@ -21,7 +21,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			// update bob.yaml with mock content
 			err := os.Rename("with_use_nix_false.yaml", "bob.yaml")
 			errz.Log(err)
-
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
 			ctx := context.Background()
 			err = b.Build(ctx, "build")
 			errz.Log(err)
@@ -33,9 +33,12 @@ var _ = Describe("Testing new nix implementation", func() {
 		It("task dependency go_1_17 will have priority to bob file go_1_18", func() {
 			Expect(os.Rename("with_task_dependencies.yaml", "bob.yaml")).NotTo(HaveOccurred())
 
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
+
 			capture()
 			ctx := context.Background()
-			err := b.Build(ctx, "run-hello")
+			err = b.Build(ctx, "run-hello")
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(output()).To(ContainSubstring("go version go1.17.9"))
@@ -46,9 +49,12 @@ var _ = Describe("Testing new nix implementation", func() {
 		It("running task go version will use go_1_16 from bob file dependency", func() {
 			Expect(os.Rename("with_bob_dependencies.yaml", "bob.yaml")).NotTo(HaveOccurred())
 
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
+
 			capture()
 			ctx := context.Background()
-			err := b.Build(ctx, "run-hello")
+			err = b.Build(ctx, "run-hello")
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(output()).To(ContainSubstring("go version go1.16.15"))
@@ -59,9 +65,12 @@ var _ = Describe("Testing new nix implementation", func() {
 		It("running task go version will use go_1_17 from bob file dependency", func() {
 			Expect(os.Rename("with_ambiguous_deps_in_root.yaml", "bob.yaml")).NotTo(HaveOccurred())
 
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
+
 			capture()
 			ctx := context.Background()
-			err := b.Build(ctx, "run-hello")
+			err = b.Build(ctx, "run-hello")
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(output()).To(ContainSubstring("go version go1.17"))
@@ -72,9 +81,12 @@ var _ = Describe("Testing new nix implementation", func() {
 		It("running task go version will use go_1_17 from task deps", func() {
 			Expect(os.Rename("with_ambiguous_deps_in_task.yaml", "bob.yaml")).NotTo(HaveOccurred())
 
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
+
 			capture()
 			ctx := context.Background()
-			err := b.Build(ctx, "run-hello")
+			err = b.Build(ctx, "run-hello")
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(output()).To(ContainSubstring("go version go1.17"))
@@ -118,14 +130,17 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(os.Rename("with_depends_on_dependency.yaml", "bob.yaml")).NotTo(HaveOccurred())
 			Expect(os.Rename("with_depends_on_dependency_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
 
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
+
 			capture()
 			ctx := context.Background()
-			err := b.Build(ctx, "build")
+			err = b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 
 			output := output()
 
-			//run both tasks. `build` task can use `go` because it's a dependency of its dependson task
+			// run both tasks. `build` task can use `go` because it's a dependency of its dependson task
 			Expect(output).To(ContainSubstring("Hello second!"))
 			Expect(output).To(ContainSubstring("go version go1.16.15"))
 		})
@@ -135,10 +150,11 @@ var _ = Describe("Testing new nix implementation", func() {
 		It("will build dependencies of both tasks", func() {
 			Expect(os.Rename("with_second_level_use_nix_false.yaml", "bob.yaml")).NotTo(HaveOccurred())
 			Expect(os.Rename("with_second_level_use_nix_false_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
 
 			capture()
 			ctx := context.Background()
-			err := b.Build(ctx, "build")
+			err = b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 			output := output()
 
@@ -148,6 +164,26 @@ var _ = Describe("Testing new nix implementation", func() {
 
 			// but should not build dependencies from second level because of use_nix false
 			Expect(output).To(Not(ContainSubstring("go-1.16")))
+		})
+	})
+
+	Context("with use_nix false in parent but true in second level", func() {
+		It("will build dependencies of both tasks", func() {
+			Expect(os.Rename("with_use_nix_false_in_parent_true_in_child.yaml", "bob.yaml")).NotTo(HaveOccurred())
+			Expect(os.Rename("with_use_nix_false_in_parent_true_in_child_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
+
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
+			capture()
+
+			err = b.Build(context.Background(), "build")
+			Expect(err).NotTo(HaveOccurred())
+
+			out := output()
+			// Build will run
+			Expect(out).To(ContainSubstring("Hello build cmd!"))
+			// but umbrella bobfile dependencies will not be built because of use_nix false
+			Expect(out).To(Not(ContainSubstring("vim")))
 		})
 	})
 })

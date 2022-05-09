@@ -13,10 +13,6 @@ import (
 // BuildNix will collect and build dependencies for all tasks used in running of taskName
 // adding the store paths to each task
 func BuildNix(ag *bobfile.Bobfile, taskName string) error {
-	if !ag.UseNix {
-		return nil
-	}
-
 	if !nix.IsInstalled() {
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}

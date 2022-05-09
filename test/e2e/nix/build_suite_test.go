@@ -44,6 +44,8 @@ var _ = BeforeSuite(func() {
 		"with_depends_on_dependency/second_level",
 		"with_second_level_use_nix_false",
 		"with_second_level_use_nix_false/second_level",
+		"with_use_nix_false_in_parent_true_in_child",
+		"with_use_nix_false_in_parent_true_in_child/second_level",
 	}
 	nameToBobfile := make(map[string]*bobfile.Bobfile)
 	for _, name := range bobFiles {
@@ -68,9 +70,6 @@ var _ = BeforeSuite(func() {
 		err = bf.BobfileSave(dir, name+".yaml")
 		Expect(err).NotTo(HaveOccurred())
 	}
-
-	b, err = bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
-	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
