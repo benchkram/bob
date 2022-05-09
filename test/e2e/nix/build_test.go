@@ -107,9 +107,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			err = b.Build(ctx, "run-hello-second")
 			Expect(err).NotTo(HaveOccurred())
 
-			output := output()
-
-			Expect(output).To(ContainSubstring("go version go1.17"))
+			Expect(output()).To(ContainSubstring("go version go1.17"))
 
 			err = os.Chdir(dir)
 			Expect(err).NotTo(HaveOccurred())
