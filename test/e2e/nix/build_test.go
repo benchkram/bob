@@ -2,6 +2,7 @@ package nix_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/benchkram/bob/bob"
@@ -11,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Testing new nix implementation", func() {
+var _ = FDescribe("Testing new nix implementation", func() {
 	AfterEach(func() {
 		filepathutil.ClearListRecursiveCache()
 	})
@@ -106,7 +107,12 @@ var _ = Describe("Testing new nix implementation", func() {
 			capture()
 			err = b.Build(ctx, "run-hello-second")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(output()).To(ContainSubstring("go version go1.17"))
+
+			output := output()
+
+			fmt.Println("@@@@@@@@@@@@@@@11111111111111", output)
+
+			Expect(output).To(ContainSubstring("go version go1.17"))
 
 			err = os.Chdir(dir)
 			Expect(err).NotTo(HaveOccurred())
@@ -124,6 +130,8 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			output := output()
+
+			fmt.Println("@@@@@@@@@@@@@@@2222222222222222", output)
 
 			//run both tasks. `build` task can use `go` because it's a dependency of its dependson task
 			Expect(output).To(ContainSubstring("Hello second!"))

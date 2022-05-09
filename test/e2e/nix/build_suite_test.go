@@ -1,6 +1,7 @@
 package nix_test
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -107,8 +108,10 @@ func capture() {
 func output() string {
 	pw.Close()
 
-	b, err := ioutil.ReadAll(pr)
+	b, err := io.ReadAll(pr)
 	Expect(err).NotTo(HaveOccurred())
+
+	pr.Close()
 
 	os.Stdout = stdout
 
