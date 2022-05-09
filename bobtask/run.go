@@ -48,6 +48,8 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		s := bufio.NewScanner(pr)
 		s.Split(bufio.ScanLines)
 
+		done := make(chan bool)
+
 		go func() {
 			for s.Scan() {
 				err := s.Err()
@@ -57,6 +59,8 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 
 				boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint(s.Text())))
 			}
+
+			done <- true
 		}()
 
 		r, err := interp.New(
@@ -66,12 +70,17 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 			interp.Env(expand.ListEnviron(env...)),
 			interp.StdIO(os.Stdin, pw, pw),
 		)
+
 		errz.Fatal(err)
 
 		err = r.Run(ctx, p)
 		if err != nil {
 			return usererror.Wrapm(err, "shell command execute error")
 		}
+
+		// wait for the reader to finish after closing the write pipe
+		pw.Close()
+		<-done
 	}
 
 	return nil
