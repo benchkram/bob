@@ -20,7 +20,8 @@ var _ = Describe("Testing new nix implementation", func() {
 			bob.Version = "1.0.0"
 			// update bob.yaml with mock content
 			err := os.Rename("with_use_nix_false.yaml", "bob.yaml")
-			errz.Log(err)
+			Expect(err).NotTo(HaveOccurred())
+
 			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
 			ctx := context.Background()
 			err = b.Build(ctx, "build")

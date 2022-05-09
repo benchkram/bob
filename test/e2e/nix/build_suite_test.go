@@ -23,8 +23,6 @@ var (
 	stdout *os.File
 	pr     *os.File
 	pw     *os.File
-
-	b *bob.B
 )
 
 var _ = BeforeSuite(func() {
