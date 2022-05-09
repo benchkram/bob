@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = FDescribe("Testing new nix implementation", func() {
+var _ = Describe("Testing new nix implementation", func() {
 	AfterEach(func() {
 		filepathutil.ClearListRecursiveCache()
 	})
