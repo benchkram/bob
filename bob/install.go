@@ -3,9 +3,10 @@ package bob
 import (
 	"errors"
 	"fmt"
+	"github.com/benchkram/bob/bobtask"
+	"strings"
 
 	"github.com/benchkram/bob/pkg/nix"
-	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 )
 
@@ -23,11 +24,11 @@ func (b B) Install() (err error) {
 		return fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl())
 	}
 
-	var allDeps []string
+	var allDeps []bobtask.Dependency
 	for _, v := range ag.BTasks {
-		allDeps = append(allDeps, v.DependenciesDirty...)
+		allDeps = append(allDeps, v.Dependencies()...)
 	}
-	allDeps = sliceutil.Unique(allDeps)
+	allDeps = bobtask.UniqueDeps(allDeps)
 
 	if len(allDeps) == 0 {
 		fmt.Println("Nothing to install.")
@@ -35,13 +36,25 @@ func (b B) Install() (err error) {
 
 	fmt.Println("Installing following dependencies:")
 	for _, v := range allDeps {
-		fmt.Println(v)
+		fmt.Println(v.Name)
 	}
 	fmt.Println()
 
 	if len(allDeps) > 0 {
 		fmt.Println("Building nix dependencies...")
-		_, err = nix.Build(allDeps, ag.Nixpkgs)
+		for _, v := range allDeps {
+			if strings.HasSuffix(v.Name, ".nix") {
+				_, err := nix.BuildFile(v.Name, v.Nixpkgs)
+				if err != nil {
+					return err
+				}
+			} else {
+				_, err := nix.BuildPackage(v.Name, v.Nixpkgs)
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return nil

@@ -15,35 +15,8 @@ func IsInstalled() bool {
 	return err == nil
 }
 
-// Build nix dependencies and returns a <package>-<nix store path> map
-//
-// dependencies can be either a package name ex. php or a path to .nix file
-// nixpkgs can be empty which means it will use local nixpkgs channel
-// or a link to desired revision ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
-func Build(dependencies []string, nixpkgs string) ([]string, error) {
-	storePaths := make([]string, len(dependencies))
-
-	for k, v := range dependencies {
-		if strings.HasSuffix(v, ".nix") {
-			storePath, err := buildFile(v, nixpkgs)
-			if err != nil {
-				return []string{}, err
-			}
-			storePaths[k] = storePath
-		} else {
-			storePath, err := buildPackage(v, nixpkgs)
-			if err != nil {
-				return []string{}, err
-			}
-			storePaths[k] = storePath
-		}
-	}
-
-	return storePaths, nil
-}
-
-// buildPackage builds a nix package: nix-build --no-out-link -E 'with import <nixpkgs> { }; pkg' and returns the store path
-func buildPackage(pkgName string, nixpkgs string) (string, error) {
+// BuildPackage builds a nix package: nix-build --no-out-link -E 'with import <nixpkgs> { }; pkg' and returns the store path
+func BuildPackage(pkgName string, nixpkgs string) (string, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 	out, err := cmd.CombinedOutput()
@@ -64,9 +37,9 @@ func buildPackage(pkgName string, nixpkgs string) (string, error) {
 	return "", nil
 }
 
-// buildFile builds a .nix expression file
+// BuildFile builds a .nix expression file
 // `nix-build --no-out-link -E 'with import <nixpkgs> { }; callPackage filepath.nix {}'`
-func buildFile(filePath string, nixpkgs string) (string, error) {
+func BuildFile(filePath string, nixpkgs string) (string, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 	out, err := cmd.CombinedOutput()

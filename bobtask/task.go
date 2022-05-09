@@ -101,7 +101,7 @@ type Task struct {
 	// dependencies contain the actual dependencies merged
 	// with the global dependencies defined in the Bobfile
 	// in the order which they need to be added to PATH
-	dependencies []string
+	dependencies []Dependency
 
 	// storePaths contain /nix/store/* paths
 	// in the order which they need to be added to PATH
@@ -122,7 +122,7 @@ func Make(opts ...TaskOption) Task {
 		env:                  []string{},
 		rebuild:              RebuildOnChange,
 		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		dependencies:         []string{},
+		dependencies:         []Dependency{},
 	}
 
 	for _, opt := range opts {
@@ -180,10 +180,10 @@ func (t *Task) SetEnv(env []string) {
 	t.env = env
 }
 
-func (t *Task) Dependencies() []string {
+func (t *Task) Dependencies() []Dependency {
 	return t.dependencies
 }
-func (t *Task) SetDependencies(dependencies []string) {
+func (t *Task) SetDependencies(dependencies []Dependency) {
 	t.dependencies = dependencies
 }
 
@@ -377,4 +377,24 @@ func parseTargetImage(p string) []string {
 func keyExists(m map[string]interface{}, key string) bool {
 	_, ok := m[key]
 	return ok
+}
+
+type Dependency struct {
+	// Name of the dependency
+	Name string
+	// Nixpkgs can be empty or a link to desired revision ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
+	Nixpkgs string
+}
+
+// UniqueDeps removes duplicates from the list by checking against name-nixpkgs key
+func UniqueDeps(s []Dependency) []Dependency {
+	added := make(map[string]bool)
+	var res []Dependency
+	for _, v := range s {
+		if _, exists := added[v.Name+v.Nixpkgs]; !exists {
+			res = append(res, v)
+			added[v.Name+v.Nixpkgs] = true
+		}
+	}
+	return res
 }

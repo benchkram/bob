@@ -71,7 +71,7 @@ type Bobfile struct {
 	// UseNix is a flag to indicate if nix is used
 	// by any task inside a bobfile
 	UseNix bool `yaml:"use-nix"`
-	// Nixpkgs specifies a optional nixpkgs source.
+	// Nixpkgs specifies an optional nixpkgs source.
 	Nixpkgs string `yaml:"nixpkgs"`
 
 	// Parent directory of the Bobfile.
@@ -146,10 +146,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
-
-		dependencies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
-		dependencies = nix.AddDir(dir, dependencies)
-		task.SetDependencies(dependencies)
+		task.SetDependencies(initializeDependencies(dir, task, bobfile))
 		task.SetUseNix(bobfile.UseNix)
 
 		bobfile.BTasks[key] = task
@@ -164,6 +161,23 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	}
 
 	return bobfile, nil
+}
+
+// initializeDependencies gathers all dependencies for a task(task level and bobfile level)
+// and initialize them with bobfile dir and corresponding nixpkgs used
+func initializeDependencies(dir string, task bobtask.Task, bobfile *Bobfile) []bobtask.Dependency {
+	dependencies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
+	dependencies = nix.AddDir(dir, dependencies)
+
+	taskDeps := make([]bobtask.Dependency, 0)
+	for _, v := range dependencies {
+		taskDeps = append(taskDeps, bobtask.Dependency{
+			Name:    v,
+			Nixpkgs: bobfile.Nixpkgs,
+		})
+	}
+
+	return bobtask.UniqueDeps(taskDeps)
 }
 
 // BobfileRead read from a bobfile.
