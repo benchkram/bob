@@ -22,6 +22,7 @@ var (
 	version string
 
 	stdout *os.File
+	stderr *os.File
 	pr     *os.File
 	pw     *os.File
 
@@ -97,12 +98,14 @@ func TestBuild(t *testing.T) {
 
 func capture() {
 	stdout = os.Stdout
+	stderr = os.Stderr
 
 	var err error
 	pr, pw, err = os.Pipe()
 	Expect(err).NotTo(HaveOccurred())
 
 	os.Stdout = pw
+	os.Stderr = pw
 }
 
 func output() string {
@@ -114,6 +117,7 @@ func output() string {
 	pr.Close()
 
 	os.Stdout = stdout
+	os.Stderr = stderr
 
 	return string(b)
 }

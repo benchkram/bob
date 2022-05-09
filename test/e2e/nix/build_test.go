@@ -2,7 +2,6 @@ package nix_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/benchkram/bob/bob"
@@ -110,8 +109,6 @@ var _ = FDescribe("Testing new nix implementation", func() {
 
 			output := output()
 
-			_, _ = GinkgoWriter.Write([]byte(fmt.Sprint("@@@@@@@@@@@@@@@11111111111111", output)))
-
 			Expect(output).To(ContainSubstring("go version go1.17"))
 
 			err = os.Chdir(dir)
@@ -130,8 +127,6 @@ var _ = FDescribe("Testing new nix implementation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			output := output()
-
-			_, _ = GinkgoWriter.Write([]byte(fmt.Sprint("@@@@@@@@@@@@@@@2222222222222222", output)))
 
 			//run both tasks. `build` task can use `go` because it's a dependency of its dependson task
 			Expect(output).To(ContainSubstring("Hello second!"))
