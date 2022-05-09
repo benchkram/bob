@@ -36,7 +36,9 @@ features are fully-functional and tested, but some details are yet to be ironed 
 If you already have Go 1.16 or later installed, the short version is:
 
 ```bash
-go install github.com/benchkram/bob@latest
+git clone https://github.com/benchkram/bob
+cd bob
+go install
 ```
 
 For shell autocompletion (bash and zsh supported) add `source <(bob completion)` to your `.bashrc`/`.zshrc`.
