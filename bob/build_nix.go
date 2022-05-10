@@ -3,7 +3,6 @@ package bob
 import (
 	"fmt"
 	"github.com/benchkram/bob/bob/bobfile"
-	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -23,7 +22,7 @@ func BuildNixForTask(ag *bobfile.Bobfile, taskName string) error {
 		return err
 	}
 
-	nixDependencies := make([]bobtask.Dependency, 0)
+	nixDependencies := make([]nix.Dependency, 0)
 	err = ag.BTasks.CollectNixDependencies(taskName, &nixDependencies)
 	if err != nil {
 		return err
@@ -34,7 +33,7 @@ func BuildNixForTask(ag *bobfile.Bobfile, taskName string) error {
 	}
 
 	fmt.Println("Building nix dependencies...")
-	storePaths, err := BuildNixDependencies(nixDependencies)
+	storePaths, err := BuildNixDependencies(nix.UniqueDeps(append(nix.DefaultPackages(), nixDependencies...)))
 	if err != nil {
 		return err
 	}
@@ -55,7 +54,7 @@ func BuildNixForTask(ag *bobfile.Bobfile, taskName string) error {
 // BuildNixDependencies builds all nix dependencies inside nixDependencies
 // and return the list of their store paths
 // nixDependencies can be a package name or a .nix file path
-func BuildNixDependencies(nixDependencies []bobtask.Dependency) ([]string, error) {
+func BuildNixDependencies(nixDependencies []nix.Dependency) ([]string, error) {
 	storePaths := make([]string, len(nixDependencies))
 
 	for k, v := range nixDependencies {

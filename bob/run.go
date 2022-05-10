@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/benchkram/bob/bob/bobfile"
-	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 )
@@ -151,7 +151,7 @@ func buildNonInteractive(ctx context.Context, runname string, aggregate *bobfile
 	}
 
 	var tasksInPipeline []string
-	nixDependencies := make([]bobtask.Dependency, 0)
+	nixDependencies := make([]nix.Dependency, 0)
 	for _, child := range interactive.DependsOn {
 		if isInteractive(child, aggregate) {
 			continue
@@ -169,7 +169,7 @@ func buildNonInteractive(ctx context.Context, runname string, aggregate *bobfile
 	if len(nixDependencies) > 0 {
 		fmt.Println("Building nix dependencies...")
 
-		storePaths, err := BuildNixDependencies(bobtask.UniqueDeps(nixDependencies))
+		storePaths, err := BuildNixDependencies(nix.UniqueDeps(append(nix.DefaultPackages(), nixDependencies...)))
 		if err != nil {
 			return err
 		}

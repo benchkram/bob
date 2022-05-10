@@ -3,7 +3,6 @@ package bob
 import (
 	"errors"
 	"fmt"
-	"github.com/benchkram/bob/bobtask"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/nix"
@@ -24,11 +23,11 @@ func (b B) Install() (err error) {
 		return fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl())
 	}
 
-	var allDeps []bobtask.Dependency
+	var allDeps []nix.Dependency
 	for _, v := range ag.BTasks {
 		allDeps = append(allDeps, v.Dependencies()...)
 	}
-	allDeps = bobtask.UniqueDeps(allDeps)
+	allDeps = nix.UniqueDeps(allDeps)
 
 	if len(allDeps) == 0 {
 		fmt.Println("Nothing to install.")

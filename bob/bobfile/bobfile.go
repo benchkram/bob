@@ -165,19 +165,19 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 
 // initializeDependencies gathers all dependencies for a task(task level and bobfile level)
 // and initialize them with bobfile dir and corresponding nixpkgs used
-func initializeDependencies(dir string, task bobtask.Task, bobfile *Bobfile) []bobtask.Dependency {
+func initializeDependencies(dir string, task bobtask.Task, bobfile *Bobfile) []nix.Dependency {
 	dependencies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
 	dependencies = nix.AddDir(dir, dependencies)
 
-	taskDeps := make([]bobtask.Dependency, 0)
+	taskDeps := make([]nix.Dependency, 0)
 	for _, v := range dependencies {
-		taskDeps = append(taskDeps, bobtask.Dependency{
+		taskDeps = append(taskDeps, nix.Dependency{
 			Name:    v,
 			Nixpkgs: bobfile.Nixpkgs,
 		})
 	}
 
-	return bobtask.UniqueDeps(taskDeps)
+	return nix.UniqueDeps(taskDeps)
 }
 
 // BobfileRead read from a bobfile.

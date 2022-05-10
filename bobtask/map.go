@@ -3,6 +3,7 @@ package bobtask
 import (
 	"bytes"
 	"fmt"
+	"github.com/benchkram/bob/pkg/nix"
 	"path/filepath"
 	"sort"
 
@@ -111,7 +112,7 @@ func (tm Map) CollectTasksInPipeline(taskName string, tasksInPipeline *[]string)
 
 // CollectNixDependencies will collect all nix dependencies for task taskName
 // in nixDependencies slice
-func (tm Map) CollectNixDependencies(taskName string, nixDependencies *[]Dependency) error {
+func (tm Map) CollectNixDependencies(taskName string, nixDependencies *[]nix.Dependency) error {
 	return tm.Walk(taskName, "", func(tn string, task Task, err error) error {
 		if err != nil {
 			return err
