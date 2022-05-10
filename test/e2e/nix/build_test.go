@@ -23,6 +23,8 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
+
 			ctx := context.Background()
 			err = b.Build(ctx, "build")
 			errz.Log(err)
@@ -151,7 +153,9 @@ var _ = Describe("Testing new nix implementation", func() {
 		It("will build dependencies of both tasks", func() {
 			Expect(os.Rename("with_second_level_use_nix_false.yaml", "bob.yaml")).NotTo(HaveOccurred())
 			Expect(os.Rename("with_second_level_use_nix_false_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
+
 			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
+			Expect(err).NotTo(HaveOccurred())
 
 			capture()
 			ctx := context.Background()
