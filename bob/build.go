@@ -20,7 +20,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	b.PrintVersionCompatibility(ag)
 
-	err = BuildNix(ag, taskName)
+	err = BuildNixForTask(ag, taskName)
 	errz.Fatal(err)
 
 	playbook, err := ag.Playbook(

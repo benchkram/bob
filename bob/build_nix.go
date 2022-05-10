@@ -10,27 +10,21 @@ import (
 	"strings"
 )
 
-// BuildNix will collect and build dependencies for all tasks used in running of taskName
+// BuildNixForTask will collect and build dependencies for all tasks used in running of taskName
 // adding the store paths to each task
-func BuildNix(ag *bobfile.Bobfile, taskName string) error {
+func BuildNixForTask(ag *bobfile.Bobfile, taskName string) error {
 	if !nix.IsInstalled() {
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
-	// Gather nix dependencies from tasks
-	nixDependencies := make([]bobtask.Dependency, 0)
-	var tasksInPipeline []string
-	err := ag.BTasks.Walk(taskName, "", func(tn string, task bobtask.Task, err error) error {
-		if err != nil {
-			return err
-		}
-		tasksInPipeline = append(tasksInPipeline, task.Name())
-		if task.UseNix() {
-			nixDependencies = append(nixDependencies, task.Dependencies()...)
-		}
-		return nil
-	})
+	tasksInPipeline := make([]string, 0)
+	err := ag.BTasks.CollectTasksInPipeline(taskName, &tasksInPipeline)
+	if err != nil {
+		return err
+	}
 
+	nixDependencies := make([]bobtask.Dependency, 0)
+	err = ag.BTasks.CollectNixDependencies(taskName, &nixDependencies)
 	if err != nil {
 		return err
 	}
@@ -38,23 +32,11 @@ func BuildNix(ag *bobfile.Bobfile, taskName string) error {
 	if len(nixDependencies) == 0 {
 		return nil
 	}
-	fmt.Println("Building nix dependencies...")
 
-	storePaths := make([]string, len(nixDependencies))
-	for _, v := range nixDependencies {
-		if strings.HasSuffix(v.Name, ".nix") {
-			storePath, err := nix.BuildFile(v.Name, v.Nixpkgs)
-			if err != nil {
-				return err
-			}
-			storePaths = append(storePaths, storePath)
-		} else {
-			storePath, err := nix.BuildPackage(v.Name, v.Nixpkgs)
-			if err != nil {
-				return err
-			}
-			storePaths = append(storePaths, storePath)
-		}
+	fmt.Println("Building nix dependencies...")
+	storePaths, err := BuildNixDependencies(nixDependencies)
+	if err != nil {
+		return err
 	}
 
 	if err != nil {
@@ -68,4 +50,28 @@ func BuildNix(ag *bobfile.Bobfile, taskName string) error {
 	}
 
 	return nil
+}
+
+// BuildNixDependencies builds all nix dependencies inside nixDependencies
+// and return the list of their store paths
+// nixDependencies can be a package name or a .nix file path
+func BuildNixDependencies(nixDependencies []bobtask.Dependency) ([]string, error) {
+	storePaths := make([]string, len(nixDependencies))
+
+	for k, v := range nixDependencies {
+		if strings.HasSuffix(v.Name, ".nix") {
+			storePath, err := nix.BuildFile(v.Name, v.Nixpkgs)
+			if err != nil {
+				return []string{}, err
+			}
+			storePaths[k] = storePath
+		} else {
+			storePath, err := nix.BuildPackage(v.Name, v.Nixpkgs)
+			if err != nil {
+				return []string{}, err
+			}
+			storePaths[k] = storePath
+		}
+	}
+	return storePaths, nil
 }
