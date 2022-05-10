@@ -70,7 +70,7 @@ func (l log) Error(err error, msg string, keysAndValues ...interface{}) {
 	}
 }
 
-// UserError is inteded to present errors to the user
+// UserError is intended to present errors to the user
 // should go into a cli beatify package in the future..
 func (l log) UserError(err error) {
 	if err == nil {

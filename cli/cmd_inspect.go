@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
@@ -47,7 +46,7 @@ var envCmd = &cobra.Command{
 		runEnv(taskname)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		tasks, err := getTasks()
+		tasks, err := getBuildTasks()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -66,7 +65,7 @@ func runEnv(taskname string) {
 	task, ok := bobfile.BTasks[taskname]
 	if !ok {
 		fmt.Printf("%s\n", aurora.Red("Task does not exists"))
-		os.Exit(1)
+		exit(1)
 	}
 
 	for _, env := range task.Env() {
@@ -84,7 +83,7 @@ var exportCmd = &cobra.Command{
 		runExport(taskname)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		tasks, err := getTasks()
+		tasks, err := getBuildTasks()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -103,7 +102,7 @@ func runExport(taskname string) {
 	task, ok := bobfile.BTasks[taskname]
 	if !ok {
 		fmt.Printf("%s\n", aurora.Red("Task does not exists"))
-		os.Exit(1)
+		exit(1)
 	}
 
 	for exportname, export := range task.GetExports() {
@@ -119,12 +118,12 @@ var inspectArtifactCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if inspectArtifactId == "" {
 			fmt.Printf("%s", aurora.Red("failed to set artifact id"))
-			os.Exit(1)
+			exit(1)
 		}
 		runInspectArtifact(inspectArtifactId)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		tasks, err := getTasks()
+		tasks, err := getBuildTasks()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
@@ -141,7 +140,7 @@ func runInspectArtifact(artifactID string) {
 	if err != nil {
 		if errors.As(err, &usererror.Err) {
 			fmt.Printf("%s\n", errors.Unwrap(err).Error())
-			os.Exit(1)
+			exit(1)
 		}
 		errz.Log(err)
 	}

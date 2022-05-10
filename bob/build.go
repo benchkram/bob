@@ -3,7 +3,6 @@ package bob
 import (
 	"context"
 	"errors"
-
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/store"
@@ -14,17 +13,20 @@ var (
 	ErrNoRebuildRequired = errors.New("no rebuild required")
 )
 
-// Build a task and it's dependecies.
-func (b *B) Build(ctx context.Context, taskname string) (err error) {
+// Build a task and it's dependencies.
+func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	defer errz.Recover(&err)
 
-	aggregate, err := b.Aggregate()
+	ag, err := b.Aggregate()
 	errz.Fatal(err)
 
-	b.PrintVersionCompatibility(aggregate)
+	b.PrintVersionCompatibility(ag)
 
-	playbook, err := aggregate.Playbook(
-		taskname,
+	err = BuildNix(ag, taskName)
+	errz.Fatal(err)
+
+	playbook, err := ag.Playbook(
+		taskName,
 		playbook.WithCachingEnabled(b.enableCaching),
 	)
 	errz.Fatal(err)
@@ -33,7 +35,7 @@ func (b *B) Build(ctx context.Context, taskname string) (err error) {
 	errz.Fatal(err)
 
 	// sync artifacts from current build with remote store
-	remotestore := aggregate.Remotestore()
+	remotestore := ag.Remotestore()
 	if remotestore != nil {
 		artifactIds := []hash.In{}
 		for _, t := range playbook.Tasks {
