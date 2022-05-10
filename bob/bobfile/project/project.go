@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/pkg/errors"
@@ -82,10 +83,14 @@ func Parse(projectname string) (Name, error) {
 }
 
 func parse(projectname Name) (T, Name, *url.URL) {
-
 	n := string(projectname)
 	if n == "" {
 		return Local, "", nil
+	}
+
+	segs := strings.Split(n, "/")
+	if len(segs) <= 1 {
+		return Local, projectname, nil
 	}
 
 	url, err := url.Parse("https://" + n)
@@ -99,6 +104,6 @@ func parse(projectname Name) (T, Name, *url.URL) {
 	}
 
 	url.Scheme = "https"
+	
 	return Remote, "", url
-
 }

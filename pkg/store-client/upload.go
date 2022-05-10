@@ -20,8 +20,6 @@ func (c *c) Upload(
 ) (err error) {
 	defer errz.Recover(&err)
 
-	println(c.endpoint)
-
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
 

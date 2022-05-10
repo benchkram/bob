@@ -188,8 +188,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 			if err != nil {
 				return nil, err
 			}
-			println("using remote store")
-			println(url.String())
+
+			println("Using remote store:", url.String())
+
 			bobfile.remotestore = newRemotestore(url)
 		}
 	} else {
@@ -202,10 +203,11 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 func newRemotestore(endpoint *url.URL) (s store.Store) {
 	const sep = "/"
 
-	parts := strings.Split(endpoint.Path, sep)
+	parts := strings.Split(strings.TrimLeft(endpoint.Path, sep), sep)
 
 	username := parts[0]
 	project := strings.Join(parts[1:], sep)
+
 	s = remotestore.New(
 		username,
 		project,
