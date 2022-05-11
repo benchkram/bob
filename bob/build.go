@@ -47,7 +47,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	}
 
 	for _, a := range artifactIds {
-		err = store.Sync(ctx, remotestore, b.local, a.String())
+		err := store.Sync(ctx, remotestore, b.local, a.String())
 		if err != nil {
 			boblog.Log.V(1).Error(err, fmt.Sprintf("failed to sync from remote to local [artifactId: %s]", a.String()))
 			continue

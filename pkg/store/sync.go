@@ -13,10 +13,10 @@ func Sync(ctx context.Context, src, dst Store, id string) (err error) {
 	defer errz.Recover(&err)
 
 	found, err := exists(ctx, src, id)
-	errz.Fatal(err)
 	if !found {
 		return ErrArtifactNotFoundinSrc
 	}
+	errz.Fatal(err)
 
 	// found, err = exists(ctx, dst, id)
 	// errz.Fatal(err)
