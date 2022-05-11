@@ -173,7 +173,7 @@ var _ = Describe("Testing new nix implementation", func() {
 	})
 
 	Context("with use_nix false in parent but true in second level", func() {
-		It("will build dependencies of both tasks", func() {
+		It("will not build dependencies from parent", func() {
 			Expect(os.Rename("with_use_nix_false_in_parent_true_in_child.yaml", "bob.yaml")).NotTo(HaveOccurred())
 			Expect(os.Rename("with_use_nix_false_in_parent_true_in_child_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
 
