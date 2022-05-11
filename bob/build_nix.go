@@ -17,8 +17,7 @@ func BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err e
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
-	tasksInPipeline := make([]string, 0)
-	err = ag.BTasks.CollectTasksInPipeline(taskName, &tasksInPipeline)
+	tasksInPipeline, err := ag.BTasks.CollectTasksInPipeline(taskName)
 	errz.Fatal(err)
 
 	return BuildNixDependencies(ag, tasksInPipeline)
