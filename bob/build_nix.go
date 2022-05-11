@@ -31,7 +31,7 @@ func BuildNixForTask(ag *bobfile.Bobfile, taskName string) error {
 	}
 
 	fmt.Println("Building nix dependencies...")
-	depStorePathMapping, err := nix.BuildDependencies(nix.UniqueDeps(append(nix.DefaultPackages(), nixDependencies...)))
+	depStorePathMapping, err := nix.BuildDependencies(nix.UniqueDeps(append(nix.DefaultPackages(ag.Nixpkgs), nixDependencies...)))
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func BuildNixForTask(ag *bobfile.Bobfile, taskName string) error {
 		}
 
 		// construct used dependencies for this task
-		deps := nix.DefaultPackages()
+		deps := nix.DefaultPackages(ag.Nixpkgs)
 		deps = append(deps, t.Dependencies()...)
 		deps = nix.UniqueDeps(deps)
 

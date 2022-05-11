@@ -168,7 +168,7 @@ func buildNonInteractive(ctx context.Context, runname string, aggregate *bobfile
 	if len(nixDependencies) > 0 {
 		fmt.Println("Building nix dependencies...")
 
-		depStorePathMapping, err := nix.BuildDependencies(nix.UniqueDeps(append(nix.DefaultPackages(), nixDependencies...)))
+		depStorePathMapping, err := nix.BuildDependencies(nix.UniqueDeps(append(nix.DefaultPackages(aggregate.Nixpkgs), nixDependencies...)))
 		if err != nil {
 			return err
 		}
@@ -183,7 +183,7 @@ func buildNonInteractive(ctx context.Context, runname string, aggregate *bobfile
 			}
 
 			// construct used dependencies for this task
-			deps := nix.DefaultPackages()
+			deps := nix.DefaultPackages(aggregate.Nixpkgs)
 			deps = append(deps, t.Dependencies()...)
 			deps = nix.UniqueDeps(deps)
 
