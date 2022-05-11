@@ -3,12 +3,11 @@ package bobtask
 import (
 	"bytes"
 	"fmt"
+	"github.com/benchkram/bob/pkg/multilinecmd"
 	"github.com/benchkram/bob/pkg/nix"
+	"github.com/benchkram/errz"
 	"path/filepath"
 	"sort"
-
-	"github.com/benchkram/bob/pkg/multilinecmd"
-	"github.com/benchkram/errz"
 )
 
 type Map map[string]Task
@@ -100,26 +99,38 @@ func (tm Map) KeysSortedAlpabethically() (keys []string) {
 
 // CollectTasksInPipeline will collect all task names in the pipeline for task taskName
 // in the tasksInPipeline slice
-func (tm Map) CollectTasksInPipeline(taskName string, tasksInPipeline *[]string) error {
-	return tm.Walk(taskName, "", func(tn string, task Task, err error) error {
+func (tm Map) CollectTasksInPipeline(taskName string) ([]string, error) {
+	tasksInPipeleine := []string{}
+	err := tm.Walk(taskName, "", func(tn string, task Task, err error) error {
 		if err != nil {
 			return err
 		}
-		*tasksInPipeline = append(*tasksInPipeline, task.Name())
+		tasksInPipeleine = append(tasksInPipeleine, task.Name())
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
+	return tasksInPipeleine, nil
 }
 
 // CollectNixDependencies will collect all nix dependencies for task taskName
 // in nixDependencies slice
-func (tm Map) CollectNixDependencies(taskName string, nixDependencies *[]nix.Dependency) error {
-	return tm.Walk(taskName, "", func(tn string, task Task, err error) error {
-		if err != nil {
-			return err
+func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependency, error) {
+	nixDependecies := []nix.Dependency{}
+	for _, taskFromMap := range tm {
+		if !taskFromMap.UseNix() {
+			continue
 		}
-		if task.UseNix() {
-			*nixDependencies = append(*nixDependencies, task.Dependencies()...)
+
+		// only add dependecies of whitelisted tasks.
+		for _, taskName := range whitelist {
+			if taskFromMap.Name() == taskName {
+				nixDependecies = append(nixDependecies, taskFromMap.Dependencies()...)
+			}
 		}
-		return nil
-	})
+	}
+
+	return nixDependecies, nil
 }

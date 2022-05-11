@@ -53,11 +53,15 @@ func BuildDependencies(deps []Dependency) (_ DependenciesToStorePathMap, err err
 		} else {
 			if strings.HasSuffix(v.Name, ".nix") {
 				storePath, err := buildFile(v.Name, v.Nixpkgs)
-				errz.Fatal(err)
+				if err != nil {
+					return DependenciesToStorePathMap{}, err
+				}
 				pkgToStorePath[v] = StorePath(storePath)
 			} else {
 				storePath, err := buildPackage(v.Name, v.Nixpkgs)
-				errz.Fatal(err)
+				if err != nil {
+					return DependenciesToStorePathMap{}, err
+				}
 				pkgToStorePath[v] = StorePath(storePath)
 			}
 			err = c.Save(v, string(pkgToStorePath[v]))

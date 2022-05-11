@@ -8,28 +8,36 @@ import (
 	"github.com/benchkram/errz"
 )
 
-// BuildNixForTask will collect and build dependencies for all tasks used in running of taskName
-// adding the store paths to each task
-func BuildNixForTask(ag *bobfile.Bobfile, taskName string) (err error) {
+// BuildNixDependenciesInPipeline collects and builds nix-dependencies for a pipeline starting at taskName.
+func BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err error) {
 	defer errz.Recover(&err)
 
 	if !nix.IsInstalled() {
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
-	tasksInPipeline := make([]string, 0)
-	err = ag.BTasks.CollectTasksInPipeline(taskName, &tasksInPipeline)
+	tasksInPipeline, err := ag.BTasks.CollectTasksInPipeline(taskName)
 	errz.Fatal(err)
 
-	nixDependencies := make([]nix.Dependency, 0)
-	err = ag.BTasks.CollectNixDependencies(taskName, &nixDependencies)
+	return BuildNixDependencies(ag, tasksInPipeline)
+}
+
+// BuildNixDependencies builds nix dependencies and prepares the affected tasks
+// by setting the store paths on each task in the given aggregate.
+func BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline []string) (err error) {
+	defer errz.Recover(&err)
+
+	if !nix.IsInstalled() {
+		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
+	}
+
+	nixDependencies, err := ag.BTasks.CollectNixDependenciesForTasks(tasksInPipeline)
 	errz.Fatal(err)
 
 	if len(nixDependencies) == 0 {
 		return nil
 	}
 
-	fmt.Println("Building nix dependencies...")
 	depStorePathMapping, err := nix.BuildDependencies(nix.UniqueDeps(append(nix.DefaultPackages(ag.Nixpkgs), nixDependencies...)))
 	errz.Fatal(err)
 
@@ -49,6 +57,7 @@ func BuildNixForTask(ag *bobfile.Bobfile, taskName string) (err error) {
 
 		storePaths, err := nix.DependenciesToStorePaths(deps, depStorePathMapping)
 		errz.Fatal(err)
+
 		t.SetStorePaths(storePaths)
 		ag.BTasks[name] = t
 	}
