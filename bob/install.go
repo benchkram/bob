@@ -3,9 +3,7 @@ package bob
 import (
 	"errors"
 	"fmt"
-
 	"github.com/benchkram/bob/pkg/nix"
-	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 )
 
@@ -23,11 +21,11 @@ func (b B) Install() (err error) {
 		return fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl())
 	}
 
-	var allDeps []string
+	var allDeps []nix.Dependency
 	for _, v := range ag.BTasks {
-		allDeps = append(allDeps, v.DependenciesDirty...)
+		allDeps = append(allDeps, v.Dependencies()...)
 	}
-	allDeps = sliceutil.Unique(allDeps)
+	allDeps = nix.UniqueDeps(allDeps)
 
 	if len(allDeps) == 0 {
 		fmt.Println("Nothing to install.")
@@ -35,13 +33,16 @@ func (b B) Install() (err error) {
 
 	fmt.Println("Installing following dependencies:")
 	for _, v := range allDeps {
-		fmt.Println(v)
+		fmt.Println(v.Name)
 	}
 	fmt.Println()
 
 	if len(allDeps) > 0 {
 		fmt.Println("Building nix dependencies...")
-		_, err = nix.Build(allDeps, ag.Nixpkgs)
+		_, err := nix.BuildDependencies(allDeps)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

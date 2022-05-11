@@ -3,6 +3,7 @@ package bob
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/ctl"
@@ -35,8 +36,6 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 	aggregate, err := b.Aggregate()
 	errz.Fatal(err)
 
-	// TODO: build nix depencies here
-
 	b.PrintVersionCompatibility(aggregate)
 
 	runTask, ok := aggregate.RTasks[runName]
@@ -45,13 +44,13 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 	}
 
 	// gather interactive tasks
-	childInteractiveTasks := b.interactiveTasksInChain(runName, aggregate)
+	childInteractiveTasks := b.runTasksInPipeline(runName, aggregate)
 	interactiveTasks := []string{runTask.Name()}
 	interactiveTasks = append(interactiveTasks, childInteractiveTasks...)
 
 	// build dependencies & main runTask
 	for _, task := range interactiveTasks {
-		err = buildNonInteractive(ctx, task, aggregate)
+		err = executeBuildTasksInPipeline(ctx, task, aggregate)
 		errz.Fatal(err)
 	}
 
@@ -66,18 +65,18 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 		runCtls = append(runCtls, rc)
 	}
 
-	builder := NewBuilder(b, runName, aggregate, buildNonInteractive)
+	builder := NewBuilder(b, runName, aggregate, executeBuildTasksInPipeline)
 	commander := ctl.NewCommander(ctx, builder, runCtls...)
 
 	return commander, nil
 }
 
-// interactiveTasksInChain returns run tasks in the dependency chain.
+// runTasksInPipeline returns run tasks in the pipeline.
 // Task on a higher level in the tree appear at the front of the slice..
 //
 // It will not error but return a empty error in case the runName
 // does not exists.
-func (b *B) interactiveTasksInChain(runName string, aggregate *bobfile.Bobfile) []string {
+func (b *B) runTasksInPipeline(runName string, aggregate *bobfile.Bobfile) []string {
 	runTasks := []string{}
 
 	run, ok := aggregate.RTasks[runName]
@@ -86,13 +85,13 @@ func (b *B) interactiveTasksInChain(runName string, aggregate *bobfile.Bobfile) 
 	}
 
 	for _, task := range run.DependsOn {
-		if !isInteractive(task, aggregate) {
+		if !isRunTask(task, aggregate) {
 			continue
 		}
 		runTasks = append(runTasks, task)
 
 		// assure all it's dependent runTasks are also added.
-		childs := b.interactiveTasksInChain(task, aggregate)
+		childs := b.runTasksInPipeline(task, aggregate)
 		runTasks = append(runTasks, childs...)
 	}
 
@@ -126,18 +125,18 @@ func normalize(tasks []string) []string {
 	return sanitized
 }
 
-func isInteractive(name string, aggregate *bobfile.Bobfile) bool {
+func isRunTask(name string, aggregate *bobfile.Bobfile) bool {
 	_, ok := aggregate.RTasks[name]
 	return ok
 }
 
-// func isNonInteractive(name string, aggregate *bobfile.Bobfile) bool {
+// func isBuildTask(name string, aggregate *bobfile.Bobfile) bool {
 // 	_, ok := aggregate.Tasks[name]
 // 	return ok
 // }
 
-// buildNonInteractive takes a interactive task to build it's non-interactive children.
-func buildNonInteractive(ctx context.Context, runname string, aggregate *bobfile.Bobfile) (err error) {
+// executeBuildTasksInPipeline takes a run task but only executes the dependent build tasks
+func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate *bobfile.Bobfile) (err error) {
 	defer errz.Recover(&err)
 
 	interactive, ok := aggregate.RTasks[runname]
@@ -145,10 +144,25 @@ func buildNonInteractive(ctx context.Context, runname string, aggregate *bobfile
 		return ErrRunDoesNotExist
 	}
 
+	// Gather build tasks
+	buildTasks := []string{}
+	for _, child := range interactive.DependsOn {
+		if isRunTask(child, aggregate) {
+			continue
+		}
+		buildTasks = append(buildTasks, child)
+	}
+
+	// Build nix dependencies
+	fmt.Println("Building nix dependencies...")
+	err = BuildNixDependencies(aggregate, buildTasks)
+	errz.Fatal(err)
+	fmt.Println("Succeded building nix dependencies")
+
 	// Run dependent build tasks
 	// before starting the run task
 	for _, child := range interactive.DependsOn {
-		if isInteractive(child, aggregate) {
+		if isRunTask(child, aggregate) {
 			continue
 		}
 

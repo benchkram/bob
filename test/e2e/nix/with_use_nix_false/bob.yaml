@@ -1,6 +1,6 @@
 build:
   build:
-    cmd: echo build
+    cmd: echo 'building with use-nix false'
 dependencies:
   - git
   - go_1_16

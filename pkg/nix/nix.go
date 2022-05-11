@@ -9,37 +9,47 @@ import (
 	"strings"
 )
 
+type Dependency struct {
+	// Name of the dependency
+	Name string
+	// Nixpkgs can be empty or a link to desired revision
+	// ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
+	Nixpkgs string
+}
+
+type StorePath string
+type DependenciesToStorePathMap map[Dependency]StorePath
+
 // IsInstalled checks if nix is installed on the system
 func IsInstalled() bool {
 	_, err := exec.LookPath("nix")
 	return err == nil
 }
 
-// Build nix dependencies and returns a <package>-<nix store path> map
+// BuildDependencies build nix dependencies and returns a <package>-<nix store path> map
 //
 // dependencies can be either a package name ex. php or a path to .nix file
 // nixpkgs can be empty which means it will use local nixpkgs channel
 // or a link to desired revision ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
-func Build(dependencies []string, nixpkgs string) ([]string, error) {
-	storePaths := make([]string, len(dependencies))
+func BuildDependencies(deps []Dependency) (DependenciesToStorePathMap, error) {
+	pkgToStorePath := make(DependenciesToStorePathMap)
 
-	for k, v := range dependencies {
-		if strings.HasSuffix(v, ".nix") {
-			storePath, err := buildFile(v, nixpkgs)
+	for _, v := range deps {
+		if strings.HasSuffix(v.Name, ".nix") {
+			storePath, err := buildFile(v.Name, v.Nixpkgs)
 			if err != nil {
-				return []string{}, err
+				return DependenciesToStorePathMap{}, err
 			}
-			storePaths[k] = storePath
+			pkgToStorePath[v] = StorePath(storePath)
 		} else {
-			storePath, err := buildPackage(v, nixpkgs)
+			storePath, err := buildPackage(v.Name, v.Nixpkgs)
 			if err != nil {
-				return []string{}, err
+				return DependenciesToStorePathMap{}, err
 			}
-			storePaths[k] = storePath
+			pkgToStorePath[v] = StorePath(storePath)
 		}
 	}
-
-	return storePaths, nil
+	return pkgToStorePath, nil
 }
 
 // buildPackage builds a nix package: nix-build --no-out-link -E 'with import <nixpkgs> { }; pkg' and returns the store path
@@ -90,13 +100,13 @@ func buildFile(filePath string, nixpkgs string) (string, error) {
 func StorePathsBin(storePaths []string) []string {
 	out := make([]string, len(storePaths))
 	for i, sp := range storePaths {
-		out[i] = StorePathBin(sp)
+		out[i] = storePathBin(sp)
 	}
 	return out
 }
 
-// StorePathBin adds the /bin dir to storePath
-func StorePathBin(storePath string) string {
+// storePathBin adds the /bin dir to storePath
+func storePathBin(storePath string) string {
 	return filepath.Join(storePath, "/bin")
 }
 
@@ -114,6 +124,23 @@ func DownloadURl() string {
 	}
 
 	return url
+}
+
+// DependenciesToStorePaths resolves a dependency array to their
+// associated nix storePath. The order of the output is guaranteed
+// to match the order of the input.
+func DependenciesToStorePaths(dependencies []Dependency, m DependenciesToStorePathMap) ([]string, error) {
+	storePaths := make([]string, len(dependencies))
+
+	for i, d := range dependencies {
+		storePath, ok := m[d]
+		if !ok {
+			return nil, fmt.Errorf("could not resolve store path for [%s]", d)
+		}
+		storePaths[i] = string(storePath)
+	}
+
+	return storePaths, nil
 }
 
 // AddDir add the dir path to .nix files specified in dependencies

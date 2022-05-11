@@ -3,6 +3,8 @@ package bob
 import (
 	"context"
 	"errors"
+	"fmt"
+
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/errz"
 )
@@ -20,8 +22,10 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	b.PrintVersionCompatibility(ag)
 
-	err = BuildNix(ag, taskName)
+	fmt.Println("Building nix dependencies...")
+	err = BuildNixDependenciesInPipeline(ag, taskName)
 	errz.Fatal(err)
+	fmt.Println("Succeded building nix dependencies")
 
 	playbook, err := ag.Playbook(
 		taskName,
