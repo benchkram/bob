@@ -6,7 +6,6 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bobtask/buildinfo"
-	"github.com/sanity-io/litter"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -113,7 +112,6 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/print"
-			litter.Dump(aggregate.BTasks)
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
