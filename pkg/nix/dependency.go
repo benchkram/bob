@@ -1,13 +1,5 @@
 package nix
 
-type Dependency struct {
-	// Name of the dependency
-	Name string
-	// Nixpkgs can be empty or a link to desired revision
-	// ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
-	Nixpkgs string
-}
-
 // UniqueDeps removes duplicates from the list by checking against name-nixpkgs key
 func UniqueDeps(s []Dependency) []Dependency {
 	added := make(map[string]bool)

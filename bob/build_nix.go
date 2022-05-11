@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/nix"
-	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/bob/pkg/usererror"
-	"strings"
 )
 
 // BuildNixForTask will collect and build dependencies for all tasks used in running of taskName
@@ -33,44 +31,32 @@ func BuildNixForTask(ag *bobfile.Bobfile, taskName string) error {
 	}
 
 	fmt.Println("Building nix dependencies...")
-	storePaths, err := BuildNixDependencies(nix.UniqueDeps(append(nix.DefaultPackages(), nixDependencies...)))
+	depStorePathMapping, err := nix.BuildDependencies(nix.UniqueDeps(append(nix.DefaultPackages(), nixDependencies...)))
 	if err != nil {
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
-
+	// Resolve nix storePaths from dependencies
+	// and rewrite the affected tasks.
 	for _, name := range tasksInPipeline {
 		t := ag.BTasks[name]
-		t.SetStorePaths(sliceutil.Unique(storePaths))
+
+		if !t.UseNix() {
+			continue
+		}
+
+		// construct used dependencies for this task
+		deps := nix.DefaultPackages()
+		deps = append(deps, t.Dependencies()...)
+		deps = nix.UniqueDeps(deps)
+
+		storePaths, err := nix.DependenciesToStorePaths(deps, depStorePathMapping)
+		if err != nil {
+			return err
+		}
+		t.SetStorePaths(storePaths)
 		ag.BTasks[name] = t
 	}
 
 	return nil
-}
-
-// BuildNixDependencies builds all nix dependencies inside nixDependencies
-// and return the list of their store paths
-// nixDependencies can be a package name or a .nix file path
-func BuildNixDependencies(nixDependencies []nix.Dependency) ([]string, error) {
-	storePaths := make([]string, len(nixDependencies))
-
-	for k, v := range nixDependencies {
-		if strings.HasSuffix(v.Name, ".nix") {
-			storePath, err := nix.BuildFile(v.Name, v.Nixpkgs)
-			if err != nil {
-				return []string{}, err
-			}
-			storePaths[k] = storePath
-		} else {
-			storePath, err := nix.BuildPackage(v.Name, v.Nixpkgs)
-			if err != nil {
-				return []string{}, err
-			}
-			storePaths[k] = storePath
-		}
-	}
-	return storePaths, nil
 }
