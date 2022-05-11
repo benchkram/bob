@@ -109,7 +109,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 
 	sanitizedInputs, err := t.sanitizeInputs(
 		filteredInputs,
-		optimisationOptions{},
+		optimisationOptions{wd: wd},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sanitize inputs: %w", err)
