@@ -3,6 +3,7 @@ package nix
 import (
 	"errors"
 	"fmt"
+	"github.com/benchkram/errz"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -31,22 +32,36 @@ func IsInstalled() bool {
 // dependencies can be either a package name ex. php or a path to .nix file
 // nixpkgs can be empty which means it will use local nixpkgs channel
 // or a link to desired revision ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
-func BuildDependencies(deps []Dependency) (DependenciesToStorePathMap, error) {
+func BuildDependencies(deps []Dependency) (_ DependenciesToStorePathMap, err error) {
+	defer errz.Recover(&err)
+
+	c, err := NewCacheStore()
+	errz.Fatal(err)
+	defer func() {
+		err = c.Close()
+		errz.Log(err)
+	}()
+
 	pkgToStorePath := make(DependenciesToStorePathMap)
 
 	for _, v := range deps {
-		if strings.HasSuffix(v.Name, ".nix") {
-			storePath, err := buildFile(v.Name, v.Nixpkgs)
-			if err != nil {
-				return DependenciesToStorePathMap{}, err
-			}
+		key, err := c.generateKey(v)
+		errz.Fatal(err)
+
+		if storePath, ok := c.Get(key); ok {
 			pkgToStorePath[v] = StorePath(storePath)
 		} else {
-			storePath, err := buildPackage(v.Name, v.Nixpkgs)
-			if err != nil {
-				return DependenciesToStorePathMap{}, err
+			if strings.HasSuffix(v.Name, ".nix") {
+				storePath, err := buildFile(v.Name, v.Nixpkgs)
+				errz.Fatal(err)
+				pkgToStorePath[v] = StorePath(storePath)
+			} else {
+				storePath, err := buildPackage(v.Name, v.Nixpkgs)
+				errz.Fatal(err)
+				pkgToStorePath[v] = StorePath(storePath)
 			}
-			pkgToStorePath[v] = StorePath(storePath)
+			err = c.Save(v, string(pkgToStorePath[v]))
+			errz.Fatal(err)
 		}
 	}
 	return pkgToStorePath, nil
