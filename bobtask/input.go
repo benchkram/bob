@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -21,7 +22,11 @@ func (t *Task) Inputs() []string {
 // Calls sanitize on the result.
 func (t *Task) filteredInputs() ([]string, error) {
 
-	wd := t.dir
+	wd, err := filepath.Abs(t.dir)
+	if err != nil {
+		return nil, err
+	}
+
 	println("setting workingDir " + wd)
 	owd, err := os.Getwd()
 	println("owd " + owd)

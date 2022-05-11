@@ -19,15 +19,15 @@ type optimisationOptions struct {
 }
 
 // sanitizeInputs assures that inputs are only cosidered when they are inside the project dir.
+// Need to be called with the working directory set to teh tasks dir.
 func (t *Task) sanitizeInputs(inputs []string, opts optimisationOptions) ([]string, error) {
 	wd, _ := os.Getwd()
 	println("sanitizeInputs[projectRoot] " + t.dir + " [wd:" + wd + "]")
-	projectRoot, err := resolve(t.dir, opts)
+
+	projectRoot, err := resolve(".", optimisationOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve project root %q: %w", t.dir, err)
 	}
-	// projectRoot := t.dir
-	// wd, _ := filepath.Abs(t.dir)
 
 	sanitized := make([]string, 0, len(inputs))
 	resolved := make(map[string]struct{})
@@ -36,13 +36,7 @@ func (t *Task) sanitizeInputs(inputs []string, opts optimisationOptions) ([]stri
 			return nil, fmt.Errorf("'../' not allowed in file path %q", f)
 		}
 
-		// TODO: invalid path resolution .. and therefore paths are ignored
-		// and the buyuild is cached.
-
-		// sanitizeInputs[projectRoot]second-level/third-level
-		// 2022/05/11 00:00:54 failed to resolve "bob.yaml": lstat failed "/home/equa/tmp/ttt/second-level/third-level/second-level/third-level/bob.yaml": lstat /home/equa/tmp/ttt/second-level/third-level/second-level/third-level/bob.yaml: no such file or directory, ignoring
-
-		resolvedPath, err := resolve(f, optimisationOptions{wd: t.dir})
+		resolvedPath, err := resolve(f, opts)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				log.Printf("failed to resolve %q: %v, ignoring\n", f, err)
@@ -88,6 +82,8 @@ var absPathMap = make(map[string]absolutePathOrError, 10000)
 // resolve is a very basic implementation only preventing the inclusion of files outside of the project.
 // It is very likely still possible to include other files with malicious intention.
 func resolve(path string, opts optimisationOptions) (_ string, err error) {
+
+	fmt.Print("resolving: " + path)
 	var abs string
 	if filepath.IsAbs(path) {
 		abs = filepath.Clean(path)
@@ -103,6 +99,7 @@ func resolve(path string, opts optimisationOptions) (_ string, err error) {
 		}
 
 	}
+	fmt.Println(" to " + abs)
 
 	aoe, ok := absPathMap[abs]
 	if ok {

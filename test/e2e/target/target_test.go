@@ -2,11 +2,11 @@ package targettest
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bobtask/buildinfo"
+	"github.com/sanity-io/litter"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -109,15 +109,11 @@ var _ = Describe("Test bob's file target handling", func() {
 		})
 
 		It("target hash of task `/second-level/third-level/print` must NOT exist", func() {
-			wd, err := os.Getwd()
-			Expect(err).NotTo(HaveOccurred())
-			_ = os.Chdir("./second-level/third-level")
-			defer func() { _ = os.Chdir(wd) }()
-
 			aggregate, err := b.Aggregate()
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/print"
+			litter.Dump(aggregate.BTasks)
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
