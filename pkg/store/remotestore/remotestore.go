@@ -18,7 +18,8 @@ type s struct {
 	username string
 	project  string
 
-	wg sync.WaitGroup
+	wg  sync.WaitGroup
+	err error
 }
 
 // New creates a remote store. The caller is responsible to pass a
@@ -57,7 +58,10 @@ func (s *s) NewArtifact(ctx context.Context, artifactID string) (wc io.WriteClos
 			artifactID,
 			reader,
 		)
-		errz.Log(err)
+		if err != nil {
+			//errz.Log(err)
+			s.err = err
+		}
 
 		//_ = writer.CloseWithError(err)
 	}()
@@ -66,8 +70,13 @@ func (s *s) NewArtifact(ctx context.Context, artifactID string) (wc io.WriteClos
 }
 
 // GetArtifact opens a file
-func (s *s) GetArtifact(_ context.Context, id string) (empty io.ReadCloser, _ error) {
-	return empty, fmt.Errorf("not implemented")
+func (s *s) GetArtifact(ctx context.Context, id string) (rc io.ReadCloser, err error) {
+	defer errz.Recover(&err)
+
+	rc, err = s.client.GetArtifact(ctx, s.project, id)
+	errz.Fatal(err)
+
+	return rc, nil
 }
 
 func (s *s) Clean(_ context.Context) (err error) {
@@ -76,12 +85,18 @@ func (s *s) Clean(_ context.Context) (err error) {
 }
 
 // List the items id's in the store
-func (s *s) List(_ context.Context) (items []string, err error) {
+func (s *s) List(ctx context.Context) (ids []string, err error) {
 	defer errz.Recover(&err)
-	return items, fmt.Errorf("not implemented")
+
+	ids, err = s.client.ListArtifacts(ctx, s.project)
+	errz.Fatal(err)
+
+	return ids, nil
 }
 
 // Done waits till all processing finished
-func (s *s) Done() {
+func (s *s) Done() error {
 	s.wg.Wait()
+
+	return s.err
 }

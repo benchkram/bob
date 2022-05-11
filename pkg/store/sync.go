@@ -7,7 +7,7 @@ import (
 	"github.com/benchkram/errz"
 )
 
-// Sync a item from the src store to the dst store.
+// Sync an item from the src store to the dst store.
 // In case the item exists in dst Sync does nothing and returns nil.
 func Sync(ctx context.Context, src, dst Store, id string) (err error) {
 	defer errz.Recover(&err)
@@ -31,18 +31,20 @@ func Sync(ctx context.Context, src, dst Store, id string) (err error) {
 	dstWriter, err := dst.NewArtifact(ctx, id)
 	errz.Fatal(err)
 
-	tr := io.TeeReader(srcReader, dstWriter)
-	buf := make([]byte, 256)
-	for {
-		_, err := tr.Read(buf)
-		if err == io.EOF {
-			_ = dstWriter.Close()
-			break
+	go func() {
+		tr := io.TeeReader(srcReader, dstWriter)
+		buf := make([]byte, 256)
+		for {
+			_, err := tr.Read(buf)
+			if err == io.EOF {
+				_ = dstWriter.Close()
+				break
+			}
+			errz.Fatal(err)
 		}
-		errz.Fatal(err)
-	}
+	}()
 
-	return nil
+	return src.Done()
 }
 
 func exists(ctx context.Context, store Store, id string) (found bool, err error) {

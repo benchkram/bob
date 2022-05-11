@@ -20,7 +20,7 @@ type Store interface {
 
 	Clean(context.Context) error
 
-	Done()
+	Done() error
 }
 
 var (

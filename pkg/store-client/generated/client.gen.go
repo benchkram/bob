@@ -102,7 +102,10 @@ type ClientInterface interface {
 	ProjectArtifactExists(ctx context.Context, projectId string, artifactId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// UploadArtifact request  with any body
-	UploadArtifactWithBody(ctx context.Context, userName string, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	UploadArtifactWithBody(ctx context.Context, userId string, projectId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetProjectArtifacts request
+	GetProjectArtifacts(ctx context.Context, userId string, projectId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetHealth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -153,8 +156,20 @@ func (c *Client) ProjectArtifactExists(ctx context.Context, projectId string, ar
 	return c.Client.Do(req)
 }
 
-func (c *Client) UploadArtifactWithBody(ctx context.Context, userName string, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUploadArtifactRequestWithBody(c.Server, userName, projectName, contentType, body)
+func (c *Client) UploadArtifactWithBody(ctx context.Context, userId string, projectId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUploadArtifactRequestWithBody(c.Server, userId, projectId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetProjectArtifacts(ctx context.Context, userId string, projectId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProjectArtifactsRequest(c.Server, userId, projectId)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +213,7 @@ func NewCreateProjectArtifactRequestWithBody(server string, projectId string, co
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "project_id", runtime.ParamLocationPath, projectId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectId", runtime.ParamLocationPath, projectId)
 	if err != nil {
 		return nil, err
 	}
@@ -234,14 +249,14 @@ func NewGetProjectArtifactRequest(server string, projectId string, artifactId st
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "project_id", runtime.ParamLocationPath, projectId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectId", runtime.ParamLocationPath, projectId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "artifact_id", runtime.ParamLocationPath, artifactId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "artifactId", runtime.ParamLocationPath, artifactId)
 	if err != nil {
 		return nil, err
 	}
@@ -275,14 +290,14 @@ func NewProjectArtifactExistsRequest(server string, projectId string, artifactId
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "project_id", runtime.ParamLocationPath, projectId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectId", runtime.ParamLocationPath, projectId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "artifact_id", runtime.ParamLocationPath, artifactId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "artifactId", runtime.ParamLocationPath, artifactId)
 	if err != nil {
 		return nil, err
 	}
@@ -311,19 +326,19 @@ func NewProjectArtifactExistsRequest(server string, projectId string, artifactId
 }
 
 // NewUploadArtifactRequestWithBody generates requests for UploadArtifact with any type of body
-func NewUploadArtifactRequestWithBody(server string, userName string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+func NewUploadArtifactRequestWithBody(server string, userId string, projectId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "user_name", runtime.ParamLocationPath, userName)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "project_name", runtime.ParamLocationPath, projectName)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "projectId", runtime.ParamLocationPath, projectId)
 	if err != nil {
 		return nil, err
 	}
@@ -349,6 +364,47 @@ func NewUploadArtifactRequestWithBody(server string, userName string, projectNam
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetProjectArtifactsRequest generates requests for GetProjectArtifacts
+func NewGetProjectArtifactsRequest(server string, userId string, projectId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "userId", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "projectId", runtime.ParamLocationPath, projectId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/%s/%s/artifacts", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -409,7 +465,10 @@ type ClientWithResponsesInterface interface {
 	ProjectArtifactExistsWithResponse(ctx context.Context, projectId string, artifactId string, reqEditors ...RequestEditorFn) (*ProjectArtifactExistsResponse, error)
 
 	// UploadArtifact request  with any body
-	UploadArtifactWithBodyWithResponse(ctx context.Context, userName string, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadArtifactResponse, error)
+	UploadArtifactWithBodyWithResponse(ctx context.Context, userId string, projectId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadArtifactResponse, error)
+
+	// GetProjectArtifacts request
+	GetProjectArtifactsWithResponse(ctx context.Context, userId string, projectId string, reqEditors ...RequestEditorFn) (*GetProjectArtifactsResponse, error)
 }
 
 type GetHealthResponse struct {
@@ -520,6 +579,28 @@ func (r UploadArtifactResponse) StatusCode() int {
 	return 0
 }
 
+type GetProjectArtifactsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ArtifactIds
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProjectArtifactsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProjectArtifactsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // GetHealthWithResponse request returning *GetHealthResponse
 func (c *ClientWithResponses) GetHealthWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthResponse, error) {
 	rsp, err := c.GetHealth(ctx, reqEditors...)
@@ -557,12 +638,21 @@ func (c *ClientWithResponses) ProjectArtifactExistsWithResponse(ctx context.Cont
 }
 
 // UploadArtifactWithBodyWithResponse request with arbitrary body returning *UploadArtifactResponse
-func (c *ClientWithResponses) UploadArtifactWithBodyWithResponse(ctx context.Context, userName string, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadArtifactResponse, error) {
-	rsp, err := c.UploadArtifactWithBody(ctx, userName, projectName, contentType, body, reqEditors...)
+func (c *ClientWithResponses) UploadArtifactWithBodyWithResponse(ctx context.Context, userId string, projectId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadArtifactResponse, error) {
+	rsp, err := c.UploadArtifactWithBody(ctx, userId, projectId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseUploadArtifactResponse(rsp)
+}
+
+// GetProjectArtifactsWithResponse request returning *GetProjectArtifactsResponse
+func (c *ClientWithResponses) GetProjectArtifactsWithResponse(ctx context.Context, userId string, projectId string, reqEditors ...RequestEditorFn) (*GetProjectArtifactsResponse, error) {
+	rsp, err := c.GetProjectArtifacts(ctx, userId, projectId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProjectArtifactsResponse(rsp)
 }
 
 // ParseGetHealthResponse parses an HTTP response from a GetHealthWithResponse call
@@ -676,6 +766,32 @@ func ParseUploadArtifactResponse(rsp *http.Response) (*UploadArtifactResponse, e
 	}
 
 	switch {
+	}
+
+	return response, nil
+}
+
+// ParseGetProjectArtifactsResponse parses an HTTP response from a GetProjectArtifactsWithResponse call
+func ParseGetProjectArtifactsResponse(rsp *http.Response) (*GetProjectArtifactsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProjectArtifactsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ArtifactIds
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	}
 
 	return response, nil

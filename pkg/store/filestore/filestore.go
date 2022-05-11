@@ -80,5 +80,6 @@ func (s *s) List(_ context.Context) (items []string, err error) {
 }
 
 // Done does nothing
-func (s *s) Done() {
+func (s *s) Done() error {
+	return nil
 }

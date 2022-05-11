@@ -11,6 +11,9 @@ type Artifact struct {
 	Location *string `json:"location,omitempty"`
 }
 
+// ArtifactIds defines model for ArtifactIds.
+type ArtifactIds []string
+
 // Error defines model for Error.
 type Error struct {
 	Id string `json:"id"`

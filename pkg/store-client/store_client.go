@@ -9,12 +9,9 @@ import (
 )
 
 type I interface {
-	Upload(
-		_ context.Context,
-		projectID string,
-		artifactID string,
-		src io.Reader,
-	) error
+	Upload(ctx context.Context, projectName string, artifactID string, src io.Reader) (err error)
+	ListArtifacts(ctx context.Context, projectName string) (artifactIds []string, err error)
+	GetArtifact(ctx context.Context, projectName string, artifactId string) (rc io.ReadCloser, err error)
 }
 
 type c struct {
