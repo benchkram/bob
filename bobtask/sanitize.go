@@ -19,10 +19,8 @@ type optimisationOptions struct {
 }
 
 // sanitizeInputs assures that inputs are only cosidered when they are inside the project dir.
-// Need to be called with the working directory set to teh tasks dir.
+// Needs to be called with the current working directory set to the tasks working directory.
 func (t *Task) sanitizeInputs(inputs []string, opts optimisationOptions) ([]string, error) {
-	wd, _ := os.Getwd()
-	println("sanitizeInputs[projectRoot] " + t.dir + " [wd:" + wd + "]")
 
 	projectRoot, err := resolve(".", optimisationOptions{})
 	if err != nil {
@@ -83,7 +81,7 @@ var absPathMap = make(map[string]absolutePathOrError, 10000)
 // It is very likely still possible to include other files with malicious intention.
 func resolve(path string, opts optimisationOptions) (_ string, err error) {
 
-	fmt.Print("resolving: " + path)
+	// fmt.Print("resolving: " + path)
 	var abs string
 	if filepath.IsAbs(path) {
 		abs = filepath.Clean(path)
@@ -99,7 +97,7 @@ func resolve(path string, opts optimisationOptions) (_ string, err error) {
 		}
 
 	}
-	fmt.Println(" to " + abs)
+	// fmt.Println(" to " + abs)
 
 	aoe, ok := absPathMap[abs]
 	if ok {

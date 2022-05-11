@@ -21,7 +21,6 @@ var (
 
 func ListRecursive(inp string) (all []string, err error) {
 
-	println("input: " + inp)
 	// result, ok := listRecursiveMap[inp]
 	// if ok {
 	// 	return result, nil
