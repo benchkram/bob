@@ -6,17 +6,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/usererror"
 
-	"github.com/logrusorgru/aurora"
-
 	"github.com/benchkram/errz"
-
-	"github.com/benchkram/bob/bob/bobfile"
-	"github.com/benchkram/bob/bob/global"
 	"github.com/hashicorp/go-version"
+	"github.com/logrusorgru/aurora"
 )
 
 var (
@@ -210,6 +208,24 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		}
 		aggregate.BTasks[i] = task
 	}
+
+	// Aggregate all dependencies set at bobfile level
+	addedDependencies := make(map[string]bool)
+	var allDeps []string
+	for _, bobfile := range bobs {
+		for _, dep := range bobfile.Dependencies {
+			if _, added := addedDependencies[dep]; !added {
+				if strings.HasSuffix(dep, ".nix") {
+					allDeps = append(allDeps, bobfile.Dir()+"/"+dep)
+				} else {
+					allDeps = append(allDeps, dep)
+				}
+				addedDependencies[dep] = true
+			}
+		}
+	}
+	aggregate.Dependencies = make([]string, 0)
+	aggregate.Dependencies = append(aggregate.Dependencies, allDeps...)
 
 	return aggregate, aggregate.Verify()
 }

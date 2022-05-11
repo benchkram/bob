@@ -1,0 +1,7 @@
+build:
+  build:
+    cmd: echo 'building with use-nix false'
+dependencies:
+  - git
+  - go_1_16
+use-nix: false

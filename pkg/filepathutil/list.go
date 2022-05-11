@@ -17,12 +17,14 @@ var (
 	}
 )
 
-//var listRecursiveMap = make(map[string][]string, 1024)
+//var listRecursiveCache = make(map[string][]string, 1024)
+
+func ClearListRecursiveCache() {
+	// listRecursiveCache = make(map[string][]string, 1024)
+}
 
 func ListRecursive(inp string) (all []string, err error) {
-
-	// result, ok := listRecursiveMap[inp]
-	// if ok {
+	// if result, ok := listRecursiveCache[inp]; ok {
 	// 	return result, nil
 	// }
 

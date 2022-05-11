@@ -1,0 +1,9 @@
+build:
+  run-hello-child:
+    cmd: echo 'Hello child level!'
+    dependencies:
+      - go_1_16
+dependencies:
+  - ruby
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
+use-nix: true
