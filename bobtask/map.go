@@ -3,9 +3,10 @@ package bobtask
 import (
 	"bytes"
 	"fmt"
-	"github.com/benchkram/bob/pkg/nix"
 	"path/filepath"
 	"sort"
+
+	"github.com/benchkram/bob/pkg/nix"
 
 	"github.com/benchkram/bob/pkg/multilinecmd"
 	"github.com/benchkram/errz"
@@ -110,16 +111,43 @@ func (tm Map) CollectTasksInPipeline(taskName string, tasksInPipeline *[]string)
 	})
 }
 
+// // CollectNixDependencies will collect nix dependencies for a pipeline
+// // beginning at task
+// func (tm Map) CollectNixDependencies(taskName string) ([]nix.Dependency, error) {
+// 	nixDependecies := []nix.Dependency{}
+// 	err := tm.Walk(taskName, "", func(tn string, task Task, err error) error {
+// 		if err != nil {
+// 			return err
+// 		}
+// 		if task.UseNix() {
+// 			nixDependecies = append(nixDependecies, task.Dependencies()...)
+// 		}
+// 		return nil
+// 	})
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return nixDependecies, nil
+// }
+
 // CollectNixDependencies will collect all nix dependencies for task taskName
 // in nixDependencies slice
-func (tm Map) CollectNixDependencies(taskName string, nixDependencies *[]nix.Dependency) error {
-	return tm.Walk(taskName, "", func(tn string, task Task, err error) error {
-		if err != nil {
-			return err
+func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependency, error) {
+	nixDependecies := []nix.Dependency{}
+	for _, taskFromMap := range tm {
+		if !taskFromMap.UseNix() {
+			continue
 		}
-		if task.UseNix() {
-			*nixDependencies = append(*nixDependencies, task.Dependencies()...)
+
+		// only add dependecies of whitelisted tasks.
+		for _, taskName := range whitelist {
+			if taskFromMap.Name() == taskName {
+				nixDependecies = append(nixDependecies, taskFromMap.Dependencies()...)
+			}
 		}
-		return nil
-	})
+	}
+
+	return nixDependecies, nil
 }
