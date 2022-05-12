@@ -1,3 +1,5 @@
+import:
+  - second_level
 build:
   build:
     cmd: echo 'Hello build cmd!'
