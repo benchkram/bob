@@ -1,6 +1,9 @@
 package playbook
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 // PreComputeInputHashes asynchronically
 func (pb *Playbook) PreComputeInputHashes() (err error) {
@@ -9,7 +12,8 @@ func (pb *Playbook) PreComputeInputHashes() (err error) {
 	// on a test project.
 	const max = 3
 
-	var errors []error
+	var firstErrMutex sync.Mutex
+	var firstErr error
 	sem := make(chan int, max)
 	for _, t := range pb.Tasks {
 		sem <- 1
@@ -18,15 +22,19 @@ func (pb *Playbook) PreComputeInputHashes() (err error) {
 		go func(tt *Status) {
 			_, err := tt.HashIn()
 			if err != nil {
-				errors = append(errors, fmt.Errorf("error computing input hash on task %s, %w", tt.Name(), err))
+				firstErrMutex.Lock()
+				defer firstErrMutex.Unlock()
+				if firstErr == nil {
+					firstErr = fmt.Errorf("error computing input hash on task %s, %w", tt.Name(), err)
+				}
 			}
 			<-sem
 		}(t)
 
 	}
 
-	if len(errors) > 0 {
-		return errors[0]
+	if firstErr != nil {
+		return firstErr
 	}
 
 	return nil
