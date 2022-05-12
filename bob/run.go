@@ -47,8 +47,6 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 	interactiveTasks := []string{runTask.Name()}
 	interactiveTasks = append(interactiveTasks, childInteractiveTasks...)
 
-	//
-
 	// build dependencies & main runTask
 	for _, task := range interactiveTasks {
 		err = executeBuildTasksInPipeline(ctx, task, aggregate)
