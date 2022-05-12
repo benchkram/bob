@@ -3,11 +3,12 @@ package nix
 import (
 	"errors"
 	"fmt"
-	"github.com/benchkram/errz"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/benchkram/errz"
 )
 
 type Dependency struct {
@@ -39,7 +40,7 @@ func BuildDependencies(deps []Dependency) (_ DependenciesToStorePathMap, err err
 	errz.Fatal(err)
 	defer func() {
 		err = c.Close()
-		errz.Log(err)
+		errz.Fatal(err)
 	}()
 
 	pkgToStorePath := make(DependenciesToStorePathMap)
