@@ -107,7 +107,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	bobfilePath := filepath.Join(dir, global.BobFileName)
 
 	if !file.Exists(bobfilePath) {
-		return nil, ErrBobfileNotFound //fmt.Errorf("%s contains no Bobfile, %w", dir, ErrBobfileNotFound)
+		return nil, ErrBobfileNotFound
 	}
 	bin, err := ioutil.ReadFile(bobfilePath)
 	errz.Fatal(err, "Failed to read config file")

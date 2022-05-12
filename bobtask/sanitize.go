@@ -81,7 +81,6 @@ var absPathMap = make(map[string]absolutePathOrError, 10000)
 // It is very likely still possible to include other files with malicious intention.
 func resolve(path string, opts optimisationOptions) (_ string, err error) {
 
-	// fmt.Print("resolving: " + path)
 	var abs string
 	if filepath.IsAbs(path) {
 		abs = filepath.Clean(path)
@@ -97,7 +96,6 @@ func resolve(path string, opts optimisationOptions) (_ string, err error) {
 		}
 
 	}
-	// fmt.Println(" to " + abs)
 
 	aoe, ok := absPathMap[abs]
 	if ok {
