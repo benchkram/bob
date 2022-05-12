@@ -9,10 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filehash"
-	"github.com/benchkram/errz"
 )
 
 type cacheStore struct {
