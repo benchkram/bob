@@ -24,13 +24,15 @@ type cacheStore struct {
 func NewCacheStore() (_ *cacheStore, err error) {
 	defer errz.Recover(&err)
 
-	var c cacheStore
-	c.db = make(map[string]string)
+	c := &cacheStore{
+		db: make(map[string]string),
+	}
 
 	home, err := os.UserHomeDir()
 	errz.Fatal(err)
 
-	f, err := os.OpenFile(filepath.Join(home, global.BobCacheDir, ".nix_cache"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	nixCacheFile := filepath.Join(home, global.BobCacheNix)
+	f, err := os.OpenFile(nixCacheFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	errz.Fatal(err)
 	c.f = f
 
@@ -45,7 +47,7 @@ func NewCacheStore() (_ *cacheStore, err error) {
 		errz.Fatal(err)
 	}
 
-	return &c, nil
+	return c, nil
 }
 
 // Get value from cache by its key
@@ -68,7 +70,7 @@ func (c *cacheStore) Save(dependency Dependency, storePath string) (err error) {
 	key, err := c.generateKey(dependency)
 
 	if _, err := c.f.Write([]byte(fmt.Sprintf("%s:%s\n", key, storePath))); err != nil {
-		c.f.Close() // ignore error; Write error takes precedence
+		_ = c.f.Close() // ignore error; Write error takes precedence
 		errz.Fatal(err)
 	}
 	c.db[key] = storePath

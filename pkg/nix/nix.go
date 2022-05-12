@@ -39,8 +39,7 @@ func BuildDependencies(deps []Dependency) (_ DependenciesToStorePathMap, err err
 	c, err := NewCacheStore()
 	errz.Fatal(err)
 	defer func() {
-		err = c.Close()
-		errz.Fatal(err)
+		_ = c.Close()
 	}()
 
 	pkgToStorePath := make(DependenciesToStorePathMap)
