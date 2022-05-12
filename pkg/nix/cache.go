@@ -5,12 +5,13 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/benchkram/bob/bob/global"
-	"github.com/benchkram/bob/pkg/filehash"
-	"github.com/benchkram/errz"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/filehash"
+	"github.com/benchkram/errz"
 )
 
 type cacheStore struct {
