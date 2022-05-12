@@ -1,6 +1,6 @@
 package sliceutil
 
-// Unique remove dublicate entries from the slice.
+// Unique remove duplicate entries from the slice.
 func Unique(s []string) []string {
 	added := make(map[string]bool)
 	var res []string

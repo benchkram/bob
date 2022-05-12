@@ -2,6 +2,7 @@ package bobtask
 
 import (
 	"fmt"
+	"github.com/benchkram/bob/pkg/nix"
 	"path/filepath"
 	"strings"
 
@@ -104,7 +105,7 @@ type Task struct {
 	// dependencies contain the actual dependencies merged
 	// with the global dependencies defined in the Bobfile
 	// in the order which they need to be added to PATH
-	dependencies []string
+	dependencies []nix.Dependency
 
 	// storePaths contain /nix/store/* paths
 	// in the order which they need to be added to PATH
@@ -125,7 +126,7 @@ func Make(opts ...TaskOption) Task {
 		env:                  []string{},
 		rebuild:              RebuildOnChange,
 		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		dependencies:         []string{},
+		dependencies:         []nix.Dependency{},
 	}
 
 	for _, opt := range opts {
@@ -183,10 +184,10 @@ func (t *Task) SetEnv(env []string) {
 	t.env = env
 }
 
-func (t *Task) Dependencies() []string {
+func (t *Task) Dependencies() []nix.Dependency {
 	return t.dependencies
 }
-func (t *Task) SetDependencies(dependencies []string) {
+func (t *Task) SetDependencies(dependencies []nix.Dependency) {
 	t.dependencies = dependencies
 }
 
