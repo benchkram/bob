@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/store"
-	"github.com/benchkram/errz"
 )
 
 var (
@@ -37,25 +39,27 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	remotestore := ag.Remotestore()
 
-	artifactIds := []hash.In{}
-	for _, t := range playbook.Tasks {
+	if remotestore != nil {
+		artifactIds := []hash.In{}
+		for _, t := range playbook.Tasks {
 
-		h, err := t.HashIn()
-		if err != nil {
-			continue
+			h, err := t.HashIn()
+			if err != nil {
+				continue
+			}
+
+			artifactIds = append(artifactIds, h)
 		}
 
-		artifactIds = append(artifactIds, h)
-	}
+		for _, a := range artifactIds {
+			err := store.Sync(ctx, remotestore, b.local, a.String())
+			if err != nil {
+				boblog.Log.V(1).Error(err, fmt.Sprintf("failed to sync from remote to local [artifactId: %s]", a.String()))
+				continue
+			}
 
-	for _, a := range artifactIds {
-		err := store.Sync(ctx, remotestore, b.local, a.String())
-		if err != nil {
-			boblog.Log.V(1).Error(err, fmt.Sprintf("failed to sync from remote to local [artifactId: %s]", a.String()))
-			continue
+			boblog.Log.V(1).Info(fmt.Sprintf("synced from remote to local [artifactId: %s]", a.String()))
 		}
-
-		boblog.Log.V(1).Info(fmt.Sprintf("synced from remote to local [artifactId: %s]", a.String()))
 	}
 
 	err = playbook.Build(ctx)
