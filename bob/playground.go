@@ -264,6 +264,11 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 
 	bobfile.Project = projectName
 
+	bobfile.Imports = []string{
+		"second-level",
+		"openapi-provider-project",
+	}
+
 	bobfile.Variables["helloworld"] = "Hello World!"
 
 	bobfile.BTasks[global.DefaultBuildTask] = bobtask.Task{
@@ -416,6 +421,8 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool, projectName 
 	bobfile := bobfile.NewBobfile()
 	bobfile.Version = "1.2.3"
 	bobfile.Project = projectName
+
+	bobfile.Imports = []string{"third-level"}
 
 	bobfile.BTasks[fmt.Sprintf("%s2", global.DefaultBuildTask)] = bobtask.Task{
 		InputDirty: "./main2.go",

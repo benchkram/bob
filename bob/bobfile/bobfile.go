@@ -59,6 +59,8 @@ type Bobfile struct {
 	// of its bobfile.
 	Project string `yaml:"project,omitempty"`
 
+	Imports []string `yaml:"import,omitempty"`
+
 	Variables VariableMap
 
 	// BTasks build tasks

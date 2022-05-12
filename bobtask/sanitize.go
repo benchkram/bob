@@ -18,9 +18,11 @@ type optimisationOptions struct {
 	wd string
 }
 
+// sanitizeInputs assures that inputs are only cosidered when they are inside the project dir.
+// Needs to be called with the current working directory set to the tasks working directory.
 func (t *Task) sanitizeInputs(inputs []string, opts optimisationOptions) ([]string, error) {
 
-	projectRoot, err := resolve(t.dir, opts)
+	projectRoot, err := resolve(".", optimisationOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve project root %q: %w", t.dir, err)
 	}
@@ -43,7 +45,7 @@ func (t *Task) sanitizeInputs(inputs []string, opts optimisationOptions) ([]stri
 
 		if _, ok := resolved[resolvedPath]; !ok {
 			if isOutsideOfProject(projectRoot, resolvedPath) {
-				return nil, fmt.Errorf("file %q is outside of project", resolvedPath)
+				return nil, fmt.Errorf("file %q is outside of project [pr: %s]", resolvedPath, projectRoot)
 			}
 
 			resolved[resolvedPath] = struct{}{}
@@ -77,12 +79,22 @@ var absPathMap = make(map[string]absolutePathOrError, 10000)
 
 // resolve is a very basic implementation only preventing the inclusion of files outside of the project.
 // It is very likely still possible to include other files with malicious intention.
-func resolve(path string, opts optimisationOptions) (string, error) {
+func resolve(path string, opts optimisationOptions) (_ string, err error) {
+
 	var abs string
 	if filepath.IsAbs(path) {
 		abs = filepath.Clean(path)
 	} else {
-		abs = filepath.Join(opts.wd, path)
+		if opts.wd != "" {
+			// use given wd to avoid calling os.Getwd() for each path.
+			abs = filepath.Join(opts.wd, path)
+		} else {
+			abs, err = filepath.Abs(path)
+			if err != nil {
+				return "", err
+			}
+		}
+
 	}
 
 	aoe, ok := absPathMap[abs]
