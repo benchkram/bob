@@ -28,7 +28,11 @@ func ListRecursive(inp string) (all []string, err error) {
 	// 	return result, nil
 	// }
 
-	// TODO: new list recursive
+	// FIXME: when "*" is passed as input it's likely to hit the cache
+	// as there is no further information. Think how to handle the cache correctly
+	// in those cases. For now the cache is disabled!
+
+	// FIXME: new list recursive
 	// * does input contain a glob? see https://pkg.go.dev/path/filepath#Match => read with filepathx.Glob
 	// * check if input is a file => add file
 	// * check if input is a dir => add files in dir recursively
@@ -42,7 +46,7 @@ func ListRecursive(inp string) (all []string, err error) {
 	// Then check if the accessed file || dir can be skipped.
 	// Maybe it's even possible to call skipdir on a walk func.
 
-	// TODO: possibly ignore here too, before calling listDir
+	// FIXME: possibly ignore here too, before calling listDir
 	if s, err := os.Stat(inp); err != nil || !s.IsDir() {
 		// File
 		// Use glob for unknowns (wildcard-paths) and existing files (non-dirs)
@@ -61,7 +65,6 @@ func ListRecursive(inp string) (all []string, err error) {
 				// Directory
 				files, err := listDir(m)
 				if err != nil {
-					// TODO: handle error
 					return nil, fmt.Errorf("failed to list dir: %w", err)
 				}
 

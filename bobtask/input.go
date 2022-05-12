@@ -54,10 +54,6 @@ func (t *Task) filteredInputs() ([]string, error) {
 			continue
 		}
 
-		// TODO: when "*" is passed as input it's likely to hit the cache
-		// ass there is no further information. Think how to handle the cache correctly
-		// in those cases.
-
 		list, err := filepathutil.ListRecursive(input)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
