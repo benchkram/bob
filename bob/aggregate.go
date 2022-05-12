@@ -5,18 +5,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/benchkram/errz"
+	"github.com/hashicorp/go-version"
+	"github.com/logrusorgru/aurora"
+
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/file"
-	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/benchkram/errz"
-	"github.com/hashicorp/go-version"
-	"github.com/logrusorgru/aurora"
-	"github.com/logrusorgru/aurora"
-	"github.com/benchkram/bob/bob/bobfile"
-	"github.com/benchkram/bob/bobtask"
-	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
