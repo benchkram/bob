@@ -2,13 +2,18 @@ package bob
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
-
+	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 	"github.com/hashicorp/go-version"
 	"github.com/logrusorgru/aurora"
-
+	"github.com/logrusorgru/aurora"
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/filepathutil"
@@ -18,21 +23,6 @@ import (
 var (
 	ErrDuplicateProjectName = fmt.Errorf("duplicate project name")
 )
-
-// find bobfiles recursively.
-func (b *B) find() (bobfiles []string, err error) {
-	defer errz.Recover(&err)
-
-	list, err := filepathutil.ListRecursive(b.dir)
-
-	for _, file := range list {
-		if bobfile.IsBobfile(file) {
-			bobfiles = append(bobfiles, file)
-		}
-	}
-
-	return bobfiles, nil
-}
 
 func (b *B) PrintVersionCompatibility(bobfile *bobfile.Bobfile) {
 	binVersion, _ := version.NewVersion(Version)
@@ -66,24 +56,20 @@ func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, e
 		}
 	}
 
-	bobfiles, err := b.find()
+	wd, _ := os.Getwd()
+	aggregate, err = bobfile.BobfileReadPlain(wd)
 	errz.Fatal(err)
-	bobs := []*bobfile.Bobfile{}
 
-	for _, bf := range bobfiles {
-		boblet, err := bobfile.BobfileReadPlain(filepath.Dir(bf))
-		errz.Fatal(err)
-
-		if boblet.Dir() == b.dir {
-			aggregate = boblet
-		}
-
-		bobs = append(bobs, boblet)
+	if !file.Exists(global.BobFileName) {
+		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
 	if aggregate == nil {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
+
+	bobs, err := readImports(aggregate, true)
+	errz.Fatal(err)
 
 	// set project names for all bobfiles and build tasks
 	aggregate, bobs = syncProjectName(aggregate, bobs)
@@ -105,22 +91,26 @@ func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, e
 func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)
 
-	bobfiles, err := b.find()
+	wd, _ := os.Getwd()
+	aggregate, err = bobfile.BobfileRead(wd)
+	errz.Fatal(err)
+
+	if !file.Exists(global.BobFileName) {
+		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
+	}
+
+	if aggregate == nil {
+		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
+	}
+
+	bobs, err := readImports(aggregate, false)
 	errz.Fatal(err)
 
 	// FIXME: As we don't refer to a child task by projectname but by path
 	// it seems to be save to allow duplicate projectnames.
 	//projectNames := map[string]bool{}
 
-	// Read & Find Bobfiles
-	bobs := []*bobfile.Bobfile{}
-	for _, bf := range bobfiles {
-		boblet, err := bobfile.BobfileRead(filepath.Dir(bf))
-		errz.Fatal(err)
-
-		if boblet.Dir() == b.dir {
-			aggregate = boblet
-		}
+	for _, boblet := range append(bobs, aggregate) {
 
 		// FIXME: As we don't refer to a child task by projectname but by path
 		// it seems to be save to allow duplicate projectnames.
@@ -143,13 +133,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 				boblet.BTasks[key] = task
 			}
 		}
-
-		bobs = append(bobs, boblet)
 	}
 
-	if aggregate == nil {
-		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
-	}
+	// FIXME: As we don't refer to a child task by projectname but by path
+	// it seems to be save to allow duplicate projectnames.
+	//projectNames := map[string]bool{}
 
 	if aggregate.Project == "" {
 		// TODO: maybe don't leak absolute path of environment
@@ -222,7 +210,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			task.SetRebuildStrategy(bobtask.RebuildAlways)
 		}
 		aggregate.BTasks[i] = task
-
 	}
 
 	// Aggregate all dependencies set at bobfile level

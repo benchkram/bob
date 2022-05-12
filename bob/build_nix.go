@@ -2,7 +2,6 @@ package bob
 
 import (
 	"fmt"
-
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"

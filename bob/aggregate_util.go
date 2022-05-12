@@ -1,9 +1,13 @@
 package bob
 
 import (
+	"errors"
+	"path/filepath"
 	"strings"
 
 	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 )
 
 // syncProjectName project names for all bobfiles and build tasks
@@ -95,4 +99,50 @@ func (b *B) addRunTasksToAggregate(
 	}
 
 	return a
+}
+
+// readImports recursively
+//
+// readModePlain allows to read bobfiles without
+// doing sanitization.
+//
+// If prefix is given it's appended to the search path to asuure
+// correctness of the search path in case of recursive calls.
+func readImports(
+	a *bobfile.Bobfile,
+	readModePlain bool,
+	prefix ...string,
+) (imports []*bobfile.Bobfile, err error) {
+	errz.Recover(&err)
+
+	var p string
+	if len(prefix) > 0 {
+		p = prefix[0]
+	}
+
+	imports = []*bobfile.Bobfile{}
+	for _, imp := range a.Imports {
+		// read bobfile
+		var boblet *bobfile.Bobfile
+		var err error
+		if readModePlain {
+			boblet, err = bobfile.BobfileReadPlain(filepath.Join(p, imp))
+		} else {
+			boblet, err = bobfile.BobfileRead(filepath.Join(p, imp))
+		}
+		if err != nil {
+			if errors.Is(err, bobfile.ErrBobfileNotFound) {
+				return nil, usererror.Wrap(err)
+			}
+			errz.Fatal(err)
+		}
+		imports = append(imports, boblet)
+
+		// read imports rescursively
+		childImports, err := readImports(boblet, readModePlain, boblet.Dir())
+		errz.Fatal(err)
+		imports = append(imports, childImports...)
+	}
+
+	return imports, nil
 }

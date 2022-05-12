@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/errz"

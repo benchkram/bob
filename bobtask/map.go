@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/benchkram/bob/pkg/nix"
-
 	"github.com/benchkram/bob/pkg/multilinecmd"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
 )
 

@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/benchkram/errz v0.0.0-20180520163740-571a80a661f2
+	github.com/cespare/xxhash/v2 v2.1.1
 	github.com/charmbracelet/bubbles v0.9.0
 	github.com/charmbracelet/bubbletea v0.19.1
 	github.com/charmbracelet/lipgloss v0.3.0

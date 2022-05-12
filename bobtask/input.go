@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -19,7 +20,11 @@ func (t *Task) Inputs() []string {
 // Calls sanitize on the result.
 func (t *Task) filteredInputs() ([]string, error) {
 
-	wd := t.dir
+	wd, err := filepath.Abs(t.dir)
+	if err != nil {
+		return nil, err
+	}
+
 	owd, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current working directory: %w", err)
@@ -33,13 +38,10 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}()
 
-	inputDirty := split(t.InputDirty)
-
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
-
-	for _, input := range unique(inputDirty) {
+	for _, input := range unique(split(t.InputDirty)) {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
@@ -51,10 +53,12 @@ func (t *Task) filteredInputs() ([]string, error) {
 			ignores = append(ignores, list...)
 			continue
 		}
+
 		list, err := filepathutil.ListRecursive(input)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
 		}
+
 		inputs = append(inputs, list...)
 	}
 
