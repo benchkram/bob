@@ -6,9 +6,10 @@ import (
 	"io"
 	"sync"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/pkg/store"
 	storeclient "github.com/benchkram/bob/pkg/store-client"
-	"github.com/benchkram/errz"
 )
 
 type s struct {
@@ -52,7 +53,7 @@ func (s *s) NewArtifact(ctx context.Context, artifactID string) (wc io.WriteClos
 
 	go func() {
 		defer s.wg.Done()
-		err := s.client.Upload(
+		err := s.client.UploadArtifact(
 			ctx,
 			s.project,
 			artifactID,

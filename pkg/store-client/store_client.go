@@ -9,7 +9,7 @@ import (
 )
 
 type I interface {
-	Upload(ctx context.Context, projectName string, artifactID string, src io.Reader) (err error)
+	UploadArtifact(ctx context.Context, projectName string, artifactID string, src io.Reader) (err error)
 	ListArtifacts(ctx context.Context, projectName string) (artifactIds []string, err error)
 	GetArtifact(ctx context.Context, projectName string, artifactId string) (rc io.ReadCloser, err error)
 }

@@ -3,18 +3,20 @@ package storeclient
 import (
 	"context"
 	"fmt"
-	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/benchkram/errz"
-	"github.com/pkg/errors"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+
+	"github.com/benchkram/errz"
+	"github.com/pkg/errors"
+
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 var ErrProjectNotFound = errors.New("project not found")
 
-func (c *c) Upload(
+func (c *c) UploadArtifact(
 	ctx context.Context,
 	projectName string,
 	artifactID string,
@@ -54,7 +56,7 @@ func (c *c) Upload(
 	}()
 
 	resp, err := c.clientWithResponses.UploadArtifactWithBodyWithResponse(
-		ctx, "username", projectName, mpw.FormDataContentType(), r)
+		ctx, projectName, mpw.FormDataContentType(), r)
 	errz.Fatal(err)
 
 	if resp.StatusCode() != http.StatusOK {
@@ -86,7 +88,7 @@ func (c *c) ListArtifacts(ctx context.Context, project string) (ids []string, er
 	defer errz.Recover(&err)
 
 	res, err := c.clientWithResponses.GetProjectArtifactsWithResponse(
-		ctx, "username", project)
+		ctx, project)
 	errz.Fatal(err)
 
 	if res.StatusCode() == http.StatusNotFound {
