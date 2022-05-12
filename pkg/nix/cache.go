@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/errz"
 )
@@ -52,10 +53,9 @@ func NewCacheStore() (_ *cacheStore, err error) {
 func (c *cacheStore) Get(key string) (string, bool) {
 	path, ok := c.db[key]
 
-	if ok {
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			return path, false
-		}
+	// Assure path exists on the filesystem.
+	if ok && !file.Exists(path) {
+		return path, false
 	}
 
 	return path, ok
