@@ -4,11 +4,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/pkg/store/filestore"
-	"github.com/benchkram/errz"
 )
 
 func DefaultFilestore() (s store.Store, err error) {
@@ -29,23 +30,6 @@ func Filestore(dir string) (s store.Store, err error) {
 
 	return filestore.New(storeDir), nil
 }
-
-// func Remotestore(endpoint *url.URL) (s store.Store) {
-// 	const sep = "/"
-
-// 	parts := strings.Split(endpoint.Path, sep)
-
-// 	username := parts[0]
-// 	project := strings.Join(parts[1:], sep)
-// 	s = remotestore.New(
-// 		username,
-// 		project,
-// 		remotestore.WithClient(
-// 			storeclient.New("http://"+endpoint.Host),
-// 		),
-// 	)
-// 	return s
-// }
 
 func MustDefaultFilestore() store.Store {
 	s, _ := DefaultFilestore()
