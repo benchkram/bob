@@ -14,8 +14,9 @@ import (
 
 	"github.com/benchkram/errz"
 
-	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/hashicorp/go-version"
+
+	"github.com/benchkram/bob/bob/bobfile"
 )
 
 var (
@@ -152,6 +153,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 	if aggregate == nil {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
+	}
+
+	if aggregate.Project == "" {
+		// TODO: maybe don't leak absolute path of environment
+		aggregate.Project = aggregate.Dir()
 	}
 
 	// set project names for all bobfiles and build tasks
