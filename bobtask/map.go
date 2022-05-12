@@ -3,11 +3,12 @@ package bobtask
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
+	"sort"
+
 	"github.com/benchkram/bob/pkg/multilinecmd"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
-	"path/filepath"
-	"sort"
 )
 
 type Map map[string]Task
