@@ -80,7 +80,8 @@ func (c *cacheStore) Save(dependency Dependency, storePath string) (err error) {
 
 // FilterCachedDependencies will filter out dependencies which are already cached
 func (c *cacheStore) FilterCachedDependencies(deps []Dependency) (_ []Dependency, err error) {
-	defer errz.Recover()
+	defer errz.Recover(&err)
+
 	notCached := make([]Dependency, 0)
 	for _, v := range deps {
 		key, err := c.generateKey(v)
