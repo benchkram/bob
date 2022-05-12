@@ -47,9 +47,17 @@ func NewCacheStore() (_ *cacheStore, err error) {
 }
 
 // Get value from cache by its key
+// Additionally also checks if path exists on the system
 func (c *cacheStore) Get(key string) (string, bool) {
-	i, ok := c.db[key]
-	return i, ok
+	path, ok := c.db[key]
+
+	if ok {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			return path, false
+		}
+	}
+
+	return path, ok
 }
 
 // Save dependency inside the cache with its corresponding store path
