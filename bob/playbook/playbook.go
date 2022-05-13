@@ -13,6 +13,7 @@ import (
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 )
@@ -88,7 +89,7 @@ const (
 func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildRequired bool, cause RebuildCause, err error) {
 	ts, ok := p.Tasks[taskname]
 	if !ok {
-		return false, "", boberror.ErrTaskDoesNotExistF(taskname)
+		return false, "", usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
 	task := ts.Task
 	coloredName := task.ColoredName()
@@ -208,7 +209,7 @@ func (p *Playbook) play() error {
 				t, ok := p.Tasks[dependentTaskName]
 				if !ok {
 					//fmt.Printf("Task %s does not exist", dependentTaskName)
-					return boberror.ErrTaskDoesNotExistF(dependentTaskName)
+					return usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
 				}
 				// fmt.Printf("dependentTask %s which is in state %s\n", t.Task.Name(), t.State())
 
@@ -293,7 +294,7 @@ func (p *Playbook) setTaskState(taskname string, state State, taskError error) e
 func (p *Playbook) pack(taskname string, hash hash.In) error {
 	task, ok := p.Tasks[taskname]
 	if !ok {
-		return boberror.ErrTaskDoesNotExistF(taskname)
+		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
 	return task.Task.ArtifactPack(hash)
 }
@@ -301,7 +302,7 @@ func (p *Playbook) pack(taskname string, hash hash.In) error {
 func (p *Playbook) storeHash(taskname string, buildinfo *buildinfo.I) error {
 	task, ok := p.Tasks[taskname]
 	if !ok {
-		return boberror.ErrTaskDoesNotExistF(taskname)
+		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
 
 	return task.Task.WriteBuildinfo(buildinfo)
@@ -315,7 +316,7 @@ func (p *Playbook) ExecutionTime() time.Duration {
 func (p *Playbook) TaskStatus(taskname string) (ts *Status, _ error) {
 	status, ok := p.Tasks[taskname]
 	if !ok {
-		return ts, boberror.ErrTaskDoesNotExistF(taskname)
+		return ts, usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
 	return status, nil
 }
@@ -326,7 +327,7 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 
 	task, ok := p.Tasks[taskname]
 	if !ok {
-		return boberror.ErrTaskDoesNotExistF(taskname)
+		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
 
 	// compute input hash

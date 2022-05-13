@@ -172,7 +172,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 			dependentTask, ok := aggregate.BTasks[dependentTaskName]
 			if !ok {
-				return nil, boberror.ErrTaskDoesNotExistF(dependentTaskName)
+				return nil, usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
 			}
 
 			for exportname, export := range dependentTask.Exports {
