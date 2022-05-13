@@ -1,12 +1,14 @@
 package playbook
 
+import "github.com/benchkram/bob/pkg/boberror"
+
 type StatusMap map[string]*Status
 
 // walk the task tree starting at root. Following dependend tasks.
 func (tsm StatusMap) walk(root string, fn func(taskname string, _ *Status, _ error) error) error {
 	task, ok := tsm[root]
 	if !ok {
-		return ErrTaskDoesNotExist
+		return boberror.ErrTaskDoesNotExistF(root)
 	}
 
 	err := fn(root, task, nil)

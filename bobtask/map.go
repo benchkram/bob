@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/multilinecmd"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
@@ -21,7 +22,7 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 
 	task, ok := tm[taskname]
 	if !ok {
-		return ErrTaskDoesNotExist
+		return boberror.ErrTaskDoesNotExistF(taskname)
 	}
 
 	err := fn(taskname, task, nil)
