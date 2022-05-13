@@ -12,13 +12,13 @@
 </p>
 
 
-Bob is a build system with [Nix]( https://nixos.org/) as it's package manager to enable [hermetic builds](https://bazel.build/concepts/hermeticity). 
+Bob is a build system with [Nix]( https://nixos.org/) as it's package manager to enable [hermetic builds](https://bazel.build/concepts/hermeticity).
 
-Why is this useful? 
-
+Why is this useful?
 * Isolate builds from the host system to get rid of "Works on My Machine".
 * No more building in docker.
- 
+* Easily jump between different versions of a programming language.
+
 Despite build isolation Bob allows you to:
 
 - **Build** your programs efficiently, as Bob tracks build inputs and caches compiled outputs, providing fast
@@ -36,7 +36,7 @@ Documentation is available at [bob.build](https://bob.build/docs)
 [Download](https://github.com/benchkram/bob/releases) the latest release from GitHub.
 ### Install from Source
 
-If you already have Go 1.16 or later installed, the short version is:
+If you already have Go 1.17 or later installed, the short version is:
 
 ```bash
 git clone https://github.com/benchkram/bob
