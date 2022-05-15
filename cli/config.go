@@ -71,11 +71,13 @@ func readConfig(defaults map[string]interface{}) (*config, error) {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
-	switch err.(type) {
-	case viper.ConfigFileNotFoundError:
-		// fmt.Printf("%s\n", aurora.Yellow("Could not find a config file"))
-	default:
-		return nil, fmt.Errorf("config file invalid: %w", err)
+	if err != nil {
+		switch err.(type) {
+		case viper.ConfigFileNotFoundError:
+			// fmt.Printf("%s\n", aurora.Yellow("Could not find a config file"))
+		default:
+			return nil, fmt.Errorf("config file invalid: %w", err)
+		}
 	}
 
 	c := &config{}
@@ -95,6 +97,7 @@ func readGlobalConfig() {
 	config, err := readConfig(defaultConfig.AsMap())
 	if err != nil {
 		fmt.Println(err.Error())
+		GlobalConfig = defaultConfig
 		return
 	}
 	GlobalConfig = config
