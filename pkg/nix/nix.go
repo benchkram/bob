@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/benchkram/errz"
+
+	"github.com/benchkram/bob/pkg/cache"
 )
 
 type Dependency struct {
@@ -33,22 +35,16 @@ func IsInstalled() bool {
 // dependencies can be either a package name ex. php or a path to .nix file
 // nixpkgs can be empty which means it will use local nixpkgs channel
 // or a link to desired revision ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
-func BuildDependencies(deps []Dependency) (_ DependenciesToStorePathMap, err error) {
+func BuildDependencies(deps []Dependency, cache cache.Cache) (_ DependenciesToStorePathMap, err error) {
 	defer errz.Recover(&err)
-
-	c, err := NewCacheStore()
-	errz.Fatal(err)
-	defer func() {
-		_ = c.Close()
-	}()
 
 	pkgToStorePath := make(DependenciesToStorePathMap)
 
 	for _, v := range deps {
-		key, err := c.generateKey(v)
+		key, err := GenerateKey(v)
 		errz.Fatal(err)
 
-		if storePath, ok := c.Get(key); ok {
+		if storePath, ok := cache.Get(key); ok {
 			pkgToStorePath[v] = StorePath(storePath)
 		} else {
 			if strings.HasSuffix(v.Name, ".nix") {
@@ -64,7 +60,9 @@ func BuildDependencies(deps []Dependency) (_ DependenciesToStorePathMap, err err
 				}
 				pkgToStorePath[v] = StorePath(storePath)
 			}
-			err = c.Save(v, string(pkgToStorePath[v]))
+			key, err := GenerateKey(v)
+			errz.Fatal(err)
+			err = cache.Save(key, string(pkgToStorePath[v]))
 			errz.Fatal(err)
 		}
 	}

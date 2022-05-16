@@ -9,9 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/benchkram/bob/bob/bobfile"
-
 	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/bob/bobfile"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -115,4 +114,15 @@ func output() string {
 	os.Stderr = stderr
 
 	return string(b)
+}
+
+type FakeCache struct {
+}
+
+func (f *FakeCache) Get(key string) (string, bool) {
+	return "", false
+}
+
+func (f *FakeCache) Save(key, value string) (err error) {
+	return nil
 }

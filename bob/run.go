@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/ctl"
-	"github.com/benchkram/errz"
 )
 
 // Examples of possible interactive usecase
@@ -49,7 +51,7 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 
 	// build dependencies & main runTask
 	for _, task := range interactiveTasks {
-		err = executeBuildTasksInPipeline(ctx, task, aggregate)
+		err = executeBuildTasksInPipeline(ctx, task, aggregate, b.nix)
 		errz.Fatal(err)
 	}
 
@@ -135,7 +137,7 @@ func isRunTask(name string, aggregate *bobfile.Bobfile) bool {
 // }
 
 // executeBuildTasksInPipeline takes a run task but only executes the dependent build tasks
-func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate *bobfile.Bobfile) (err error) {
+func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate *bobfile.Bobfile, nix *Nix) (err error) {
 	defer errz.Recover(&err)
 
 	interactive, ok := aggregate.RTasks[runname]
@@ -153,10 +155,12 @@ func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate 
 	}
 
 	// Build nix dependencies
-	fmt.Println("Building nix dependencies...")
-	err = BuildNixDependencies(aggregate, buildTasks)
-	errz.Fatal(err)
-	fmt.Println("Succeded building nix dependencies")
+	if nix != nil {
+		fmt.Println("Building nix dependencies...")
+		err = nix.BuildNixDependencies(aggregate, buildTasks)
+		errz.Fatal(err)
+		fmt.Println("Succeded building nix dependencies")
+	}
 
 	// Run dependent build tasks
 	// before starting the run task

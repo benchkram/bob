@@ -9,13 +9,14 @@ import (
 
 var _ ctl.Builder = (*builder)(nil)
 
-type BuildFunc func(_ context.Context, runname string, aggregate *bobfile.Bobfile) error
+type BuildFunc func(_ context.Context, runname string, aggregate *bobfile.Bobfile, nix *Nix) error
 
-// builder holds all dependencys to build a build task
+// builder holds all dependencies to build a build task
 type builder struct {
 	task      string
 	aggregate *bobfile.Bobfile
 	f         BuildFunc
+	nix       *Nix
 }
 
 func NewBuilder(b *B, task string, aggregate *bobfile.Bobfile, f BuildFunc) ctl.Builder {
@@ -28,5 +29,5 @@ func NewBuilder(b *B, task string, aggregate *bobfile.Bobfile, f BuildFunc) ctl.
 }
 
 func (b *builder) Build(ctx context.Context) error {
-	return b.f(ctx, b.task, b.aggregate)
+	return b.f(ctx, b.task, b.aggregate, b.nix)
 }

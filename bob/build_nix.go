@@ -2,14 +2,31 @@ package bob
 
 import (
 	"fmt"
+
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/bob/bobfile"
+	cache2 "github.com/benchkram/bob/pkg/cache"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/benchkram/errz"
 )
 
+// Nix builder acts as a wrapper for github.com/benchkram/bob/pkg/nix package
+// and is used for building tasks dependencies
+type Nix struct {
+	// cache allows caching the dependency to store path
+	cache cache2.Cache
+}
+
+// NewNix instantiates a new Nix builder instance
+func NewNix(cache cache2.Cache) *Nix {
+	var n Nix
+	n.cache = cache
+	return &n
+}
+
 // BuildNixDependenciesInPipeline collects and builds nix-dependencies for a pipeline starting at taskName.
-func BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err error) {
+func (n *Nix) BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err error) {
 	defer errz.Recover(&err)
 
 	if !nix.IsInstalled() {
@@ -19,12 +36,12 @@ func BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err e
 	tasksInPipeline, err := ag.BTasks.CollectTasksInPipeline(taskName)
 	errz.Fatal(err)
 
-	return BuildNixDependencies(ag, tasksInPipeline)
+	return n.BuildNixDependencies(ag, tasksInPipeline)
 }
 
 // BuildNixDependencies builds nix dependencies and prepares the affected tasks
 // by setting the store paths on each task in the given aggregate.
-func BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline []string) (err error) {
+func (n *Nix) BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline []string) (err error) {
 	defer errz.Recover(&err)
 
 	if !nix.IsInstalled() {
@@ -38,7 +55,10 @@ func BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline []string) (err er
 		return nil
 	}
 
-	depStorePathMapping, err := nix.BuildDependencies(nix.UniqueDeps(append(nix.DefaultPackages(ag.Nixpkgs), nixDependencies...)))
+	depStorePathMapping, err := nix.BuildDependencies(
+		nix.UniqueDeps(append(nix.DefaultPackages(ag.Nixpkgs), nixDependencies...)),
+		n.cache,
+	)
 	errz.Fatal(err)
 
 	// Resolve nix storePaths from dependencies
@@ -63,4 +83,9 @@ func BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline []string) (err er
 	}
 
 	return nil
+}
+
+// BuildDependencies builds the list of all nix deps
+func (n *Nix) BuildDependencies(deps []nix.Dependency) (nix.DependenciesToStorePathMap, error) {
+	return nix.BuildDependencies(deps, n.cache)
 }

@@ -3,15 +3,18 @@ package cli
 import (
 	"context"
 
+	"github.com/pkg/errors"
+
 	"github.com/benchkram/bob/pkg/boblog"
+	nix2 "github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/bob/tui"
-	"github.com/pkg/errors"
+
+	"github.com/benchkram/errz"
+	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/global"
-	"github.com/benchkram/errz"
-	"github.com/spf13/cobra"
 )
 
 var runCmd = &cobra.Command{
@@ -43,8 +46,13 @@ func run(taskname string, noCache bool) {
 	var err error
 	defer errz.Recover(&err)
 
+	cache, err := nix2.NewFileCacheStore()
+	errz.Fatal(err)
+	nix := bob.NewNix(cache)
+
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
+		bob.WithNix(nix),
 	)
 	errz.Fatal(err)
 

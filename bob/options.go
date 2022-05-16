@@ -38,3 +38,9 @@ func WithCachingEnabled(enabled bool) Option {
 		b.enableCaching = enabled
 	}
 }
+
+func WithNix(nix *Nix) Option {
+	return func(b *B) {
+		b.nix = nix
+	}
+}

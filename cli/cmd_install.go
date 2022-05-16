@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/benchkram/errz"
+	"github.com/spf13/cobra"
+
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/spf13/cobra"
+	nix2 "github.com/benchkram/bob/pkg/nix"
 )
 
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install all dependencies",
-	//Args:  cobra.ExactArgs(1),
+	// Args:  cobra.ExactArgs(1),
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		runInstall()
@@ -23,7 +26,11 @@ func runInstall() {
 	var exitCode int
 	defer func() { os.Exit(exitCode) }()
 
-	b, err := bob.Bob()
+	cache, err := nix2.NewFileCacheStore()
+	errz.Fatal(err)
+	nix := bob.NewNix(cache)
+
+	b, err := bob.Bob(bob.WithNix(nix))
 	if err != nil {
 		exitCode = 1
 		boblog.Log.UserError(err)

@@ -41,6 +41,9 @@ type B struct {
 	// enableCaching allows to save and load artifacts
 	// from the cache Default: true
 	enableCaching bool
+
+	// Nix builds dependencies for tasks
+	nix *Nix
 }
 
 func newBob(opts ...Option) *B {

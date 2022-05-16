@@ -9,13 +9,15 @@ import (
 	"strconv"
 	"syscall"
 
+	nix2 "github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
+
+	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/errz"
 
 	"github.com/spf13/cobra"
 )
@@ -76,8 +78,13 @@ func runBuild(dummy bool, taskname string, noCache bool) {
 		return
 	}
 
+	cache, err := nix2.NewFileCacheStore()
+	errz.Fatal(err)
+	nix := bob.NewNix(cache)
+
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
+		bob.WithNix(nix),
 	)
 	if err != nil {
 		exitCode = 1

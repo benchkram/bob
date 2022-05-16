@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/errz"
+
+	"github.com/benchkram/bob/bob/playbook"
 )
 
 var (
@@ -22,10 +23,12 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	b.PrintVersionCompatibility(ag)
 
-	fmt.Println("Building nix dependencies...")
-	err = BuildNixDependenciesInPipeline(ag, taskName)
-	errz.Fatal(err)
-	fmt.Println("Succeded building nix dependencies")
+	if b.nix != nil {
+		fmt.Println("Building nix dependencies...")
+		err = b.nix.BuildNixDependenciesInPipeline(ag, taskName)
+		errz.Fatal(err)
+		fmt.Println("Succeeded building nix dependencies")
+	}
 
 	playbook, err := ag.Playbook(
 		taskName,
