@@ -1,6 +1,8 @@
 package remotestore
 
-import storeclient "github.com/benchkram/bob/pkg/store-client"
+import (
+	storeclient "github.com/benchkram/bob/pkg/store-client"
+)
 
 type Option func(s *s)
 

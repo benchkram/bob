@@ -44,3 +44,9 @@ func WithCachingEnabled(enabled bool) Option {
 		b.enableCaching = enabled
 	}
 }
+
+func WithInsecure(allow bool) Option {
+	return func(b *B) {
+		b.allowInsecure = allow
+	}
+}

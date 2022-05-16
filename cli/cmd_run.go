@@ -3,15 +3,15 @@ package cli
 import (
 	"context"
 
-	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/benchkram/bob/tui"
+	"github.com/benchkram/errz"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/global"
-	"github.com/benchkram/errz"
-	"github.com/spf13/cobra"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/tui"
 )
 
 var runCmd = &cobra.Command{
@@ -28,7 +28,10 @@ var runCmd = &cobra.Command{
 		noCache, err := cmd.Flags().GetBool("no-cache")
 		errz.Fatal(err)
 
-		run(taskname, noCache)
+		allowInsecure, err := cmd.Flags().GetBool("insecure")
+		errz.Fatal(err)
+
+		run(taskname, noCache, allowInsecure)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getRunTasks()
@@ -39,12 +42,13 @@ var runCmd = &cobra.Command{
 	},
 }
 
-func run(taskname string, noCache bool) {
+func run(taskname string, noCache, allowInsecure bool) {
 	var err error
 	defer errz.Recover(&err)
 
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
+		bob.WithInsecure(allowInsecure),
 	)
 	errz.Fatal(err)
 
