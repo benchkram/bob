@@ -44,7 +44,6 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	errz.Fatal(err)
 
 	remotestore := ag.Remotestore()
-
 	if remotestore != nil {
 		artifactIds := []hash.In{}
 		for _, t := range playbook.Tasks {
