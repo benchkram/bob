@@ -3,15 +3,14 @@ package bob
 import (
 	"fmt"
 	"io/ioutil"
+	_ "net/http/pprof"
 	"os"
 	"testing"
 
-	_ "net/http/pprof"
+	"github.com/benchkram/errz"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/benchkram/bob/bob/bobfile"
-	"github.com/benchkram/errz"
-	"github.com/benchkram/bob/bob/bobfile/project"
-	"github.com/stretchr/testify/assert"
 )
 
 var result *bobfile.Bobfile
@@ -253,7 +252,7 @@ func TestInvalidProjectName(t *testing.T) {
 	assert.Nil(t, err)
 
 	_, err = testBob.Aggregate()
-	assert.ErrorIs(t, err, project.ErrInvalidProjectName)
+	assert.ErrorIs(t, err, bobfile.ErrInvalidProjectName)
 }
 
 // FIXME: As we don't refer to a child task by projectname but by path
