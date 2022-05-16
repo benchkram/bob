@@ -14,12 +14,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/benchkram/bob/bobtask/hash"
-	"github.com/benchkram/bob/bobtask/target"
-	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
 	"github.com/mholt/archiver/v3"
 	"gopkg.in/yaml.v3"
+
+	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/pkg/boblog"
 )
 
 const __targets = "targets"
@@ -73,11 +74,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		exports = append(exports, filepath.Join(t.dir, path.String()))
 	}
 
-	// TODO: reestablish the local store.
 	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
-
-	// TODO: Currently the remote store ignores the username.
-	// artifact, err := t.remote.NewArtifact(context.TODO(), artifactName.String())
 	errz.Fatal(err)
 	defer artifact.Close()
 
