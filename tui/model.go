@@ -98,7 +98,7 @@ type model struct {
 	follow        bool
 	scrollOffset  int
 	ready         bool
-	error error
+	error         error
 }
 
 type tab struct {

@@ -679,4 +679,3 @@ func ParseUploadArtifactResponse(rsp *http.Response) (*UploadArtifactResponse, e
 
 	return response, nil
 }
-

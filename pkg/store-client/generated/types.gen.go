@@ -23,4 +23,3 @@ type Error struct {
 type Success struct {
 	Message string `json:"message"`
 }
-

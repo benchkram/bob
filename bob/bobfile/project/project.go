@@ -104,6 +104,6 @@ func parse(projectname Name) (T, Name, *url.URL) {
 	}
 
 	url.Scheme = "https"
-	
+
 	return Remote, "", url
 }
