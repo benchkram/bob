@@ -85,7 +85,7 @@ func buildPackage(pkgName string, nixpkgs string) (string, error) {
 		return "", err
 	}
 
-	for _, v := range strings.Split(string(stdoutBuf.Bytes()), "\n") {
+	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
 		if strings.HasPrefix(v, "/nix/store/") {
 			return v, nil
 		}
@@ -109,7 +109,7 @@ func buildFile(filePath string, nixpkgs string) (string, error) {
 		return "", err
 	}
 
-	for _, v := range strings.Split(string(stdoutBuf.Bytes()), "\n") {
+	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
 		if strings.HasPrefix(v, "/nix/store/") {
 			return v, nil
 		}
