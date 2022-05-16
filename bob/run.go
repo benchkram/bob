@@ -8,6 +8,7 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/ctl"
 )
 
@@ -171,7 +172,7 @@ func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate 
 
 		playbook, err := aggregate.Playbook(child)
 		if err != nil {
-			if errors.Is(err, ErrTaskDoesNotExist) {
+			if errors.Is(err, boberror.ErrTaskDoesNotExist) {
 				continue
 			}
 			errz.Fatal(err)
