@@ -60,11 +60,9 @@ func (s *s) NewArtifact(ctx context.Context, artifactID string) (wc io.WriteClos
 			reader,
 		)
 		if err != nil {
-			//errz.Log(err)
+			// store the error, it will be returned from s.Done()
 			s.err = err
 		}
-
-		//_ = writer.CloseWithError(err)
 	}()
 
 	return writer, nil

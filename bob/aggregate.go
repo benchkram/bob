@@ -14,6 +14,7 @@ import (
 	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -173,7 +174,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 			dependentTask, ok := aggregate.BTasks[dependentTaskName]
 			if !ok {
-				return nil, ErrTaskDoesNotExist
+				return nil, usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
 			}
 
 			for exportname, export := range dependentTask.Exports {

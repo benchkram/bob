@@ -43,7 +43,6 @@ var (
 	ErrHashesFileDoesNotExist = fmt.Errorf("Hashes file does not exist")
 	ErrTaskHashDoesNotExist   = fmt.Errorf("Task hash does not exist")
 	ErrBobfileExists          = fmt.Errorf("Bobfile exists")
-	ErrTaskDoesNotExist       = fmt.Errorf("Task does not exist")
 	ErrDuplicateTaskName      = fmt.Errorf("duplicate task name")
 	ErrInvalidProjectName     = fmt.Errorf("invalid project name")
 	ErrSelfReference          = fmt.Errorf("self reference")

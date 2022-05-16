@@ -1,6 +1,4 @@
 # Bob 
-_Inspired by Make and Bazel · Made for humans_
-
 <p>
     <a href="https://github.com/benchkram/bob/releases">
         <img src="https://img.shields.io/github/release/benchkram/bob.svg" alt="Latest Release">
@@ -14,17 +12,22 @@ _Inspired by Make and Bazel · Made for humans_
 </p>
 
 
-Bob is a build system, a task runner as well as tooling for Git Multi-repos, all bundled into a single binary.
+Bob is a build system with [Nix]( https://nixos.org/) as it's package manager to enable [hermetic builds](https://bazel.build/concepts/hermeticity).
 
-With bob, you can:
+Why is this useful?
+* Isolate builds from the host system to get rid of "Works on My Machine".
+* No more building in docker.
+* Easily jump between different versions of a programming language.
+
+Despite build isolation Bob allows you to:
 
 - **Build** your programs efficiently, as Bob tracks build inputs and caches compiled outputs, providing fast
   incremental builds.
 - **Run** local development environments, whether they are simple binaries, docker-compose files, or a mix of both.
 - **Multi-Repo Tooling** Easily manage multi-repo setups, with bulk Git operations.
 
-⚠️⚠️⚠️ _Warning: Bob and its documentation is in a early stage. Most of the
-features are fully-functional and tested, but some details are yet to be ironed out._
+## Getting Started
+Documentation is available at [bob.build](https://bob.build/docs)
 
 ## Install
 
@@ -33,7 +36,7 @@ features are fully-functional and tested, but some details are yet to be ironed 
 [Download](https://github.com/benchkram/bob/releases) the latest release from GitHub.
 ### Install from Source
 
-If you already have Go 1.16 or later installed, the short version is:
+If you already have Go 1.17 or later installed, the short version is:
 
 ```bash
 git clone https://github.com/benchkram/bob
@@ -51,15 +54,19 @@ The basic components of a build task are:
 - **input**: Whenever an input changes, the task's commands need to be re-executed [default: *]
 - **cmd**: Commands to be executed
 - **target**: File(s) or directories that are created when the commands are run and can be reused in other tasks.
+- **dependencies** Dependencies managed by the Nix package manager (requires: `use-nix: true`)
 
 Example of a `bob.yaml` file:
 
 ```yaml
+use-nix: true
+
 build:
   build:
     input: ./main.go
     cmd: go build -o ./app
     target: ./app
+    dependencies: [git, go_1_18]
 ```
 
 Multiline `sh` and `bash` commands are entirely possible, and are powered by [mvdan/sh](https://github.com/mvdan/sh).
@@ -133,8 +140,7 @@ Cloning an existing workspace from a remote git repository:
 bob clone git@github.com:benchkram/bob.git
 ```
 
-### Documentation
-Full documentation of Bob is available at [bob.build](https://bob.build/docs)
+
 ### Dependencies
 
 A list of Bob's top dependencies:
