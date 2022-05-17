@@ -161,7 +161,13 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 	err = b.Validate()
 	errz.Fatal(err)
 
-	return b, b.BTasks.Sanitize()
+	err = b.BTasks.Sanitize()
+	errz.Fatal(err)
+
+	err = b.RTasks.Sanitize()
+	errz.Fatal(err)
+
+	return b, nil
 }
 
 // Validate makes sure no task depends on itself (self-reference) or has the same name as another task
@@ -218,18 +224,12 @@ func (b *Bobfile) Validate() (err error) {
 				return errors.WithMessage(ErrSelfReference, name)
 			}
 		}
-		// validate no self-reference
-		for _, dep := range run.Pre {
-			if name == dep {
-				return errors.WithMessage(ErrSelfReference, name)
-			}
-		}
-		// validate no self-reference
-		for _, dep := range run.Post {
-			if name == dep {
-				return errors.WithMessage(ErrSelfReference, name)
-			}
-		}
+		// // validate no self-reference
+		// for _, dep := range run.init {
+		// 	if name == dep {
+		// 		return errors.WithMessage(ErrSelfReference, name)
+		// 	}
+		// }
 	}
 
 	return nil

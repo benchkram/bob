@@ -167,6 +167,11 @@ func (c *Cmd) Restart() error {
 	return c.Start()
 }
 
+// Init - dummy on cmd
+func (c *Cmd) Init() error {
+	return nil
+}
+
 // Stdout returns a reader to the command's stdout. The reader will return an io.EOF error if the command exits.
 func (c *Cmd) Stdout() io.Reader {
 	c.mux.Lock()

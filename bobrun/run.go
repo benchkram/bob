@@ -21,11 +21,9 @@ type Run struct {
 	// DependsOn run or build tasks
 	DependsOn []string
 
-	// Pre will be run after DependsOn tasks have been run and just before running this task
-	Pre []string
-
-	// Post will be run after stoppen this task
-	Post []string
+	InitDirty string `yaml:"init"`
+	// Init will be run after this task has started
+	init []string
 
 	// didUpdate fires after the run task
 	// did a restart.
@@ -56,8 +54,7 @@ func New() *Run {
 	r := &Run{
 		Type:      RunTypeBinary,
 		DependsOn: []string{},
-		Pre:       []string{},
-		Post:      []string{},
+		init:      []string{},
 		Path:      composeFileDefault,
 
 		didUpdate: make(chan struct{}),
@@ -80,5 +77,8 @@ func (r *Run) Run(ctx context.Context) (rc ctl.Command, err error) {
 		return nil, ErrInvalidRunType
 	}
 
-	return r.WrapCommand(rc), nil
+	rc, err = r.WrapCommand(rc)
+	errz.Fatal(err)
+
+	return rc, nil
 }
