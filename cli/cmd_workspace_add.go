@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/benchkram/bob/pkg/add"
 	"github.com/benchkram/bob/pkg/boblog"
@@ -36,7 +35,7 @@ func runAdd(repoURL string, plain bool) {
 
 	if errors.As(err, &usererror.Err) {
 		boblog.Log.UserError(err)
-		os.Exit(1)
+		exit(1)
 	} else {
 		errz.Fatal(err)
 	}

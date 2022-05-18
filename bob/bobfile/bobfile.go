@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/nix"
+
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -36,7 +39,6 @@ var (
 	ErrHashesFileDoesNotExist = fmt.Errorf("Hashes file does not exist")
 	ErrTaskHashDoesNotExist   = fmt.Errorf("Task hash does not exist")
 	ErrBobfileExists          = fmt.Errorf("Bobfile exists")
-	ErrTaskDoesNotExist       = fmt.Errorf("Task does not exist")
 	ErrDuplicateTaskName      = fmt.Errorf("duplicate task name")
 	ErrInvalidProjectName     = fmt.Errorf("invalid project name")
 	ErrSelfReference          = fmt.Errorf("self reference")
@@ -56,12 +58,22 @@ type Bobfile struct {
 	// of its bobfile.
 	Project string `yaml:"project,omitempty"`
 
+	Imports []string `yaml:"import,omitempty"`
+
 	Variables VariableMap
 
 	// BTasks build tasks
 	BTasks bobtask.Map `yaml:"build"`
 	// RTasks run tasks
 	RTasks bobrun.RunMap `yaml:"run"`
+
+	Dependencies []string `yaml:"dependencies"`
+
+	// UseNix is a flag to indicate if nix is used
+	// by any task inside a bobfile
+	UseNix bool `yaml:"use-nix"`
+	// Nixpkgs specifies an optional nixpkgs source.
+	Nixpkgs string `yaml:"nixpkgs"`
 
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
@@ -87,7 +99,7 @@ func (b *Bobfile) Bobfiles() []*Bobfile {
 	return b.bobfiles
 }
 
-// bobfileRead reads a bobfile and intializes private fields.
+// bobfileRead reads a bobfile and initializes private fields.
 func bobfileRead(dir string) (_ *Bobfile, err error) {
 	defer errz.Recover(&err)
 
@@ -135,6 +147,8 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
+		task.SetDependencies(initializeDependencies(dir, task, bobfile))
+		task.SetUseNix(bobfile.UseNix)
 
 		bobfile.BTasks[key] = task
 	}
@@ -148,6 +162,23 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	}
 
 	return bobfile, nil
+}
+
+// initializeDependencies gathers all dependencies for a task(task level and bobfile level)
+// and initialize them with bobfile dir and corresponding nixpkgs used
+func initializeDependencies(dir string, task bobtask.Task, bobfile *Bobfile) []nix.Dependency {
+	dependencies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
+	dependencies = nix.AddDir(dir, dependencies)
+
+	taskDeps := make([]nix.Dependency, 0)
+	for _, v := range dependencies {
+		taskDeps = append(taskDeps, nix.Dependency{
+			Name:    v,
+			Nixpkgs: bobfile.Nixpkgs,
+		})
+	}
+
+	return nix.UniqueDeps(taskDeps)
 }
 
 // BobfileRead read from a bobfile.
@@ -165,6 +196,20 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 	errz.Fatal(err)
 
 	err = b.RTasks.Sanitize()
+	errz.Fatal(err)
+
+	return b, nil
+}
+
+// BobfileReadPlain reads a bobfile.
+// For performance reasons sanitize is not called.
+func BobfileReadPlain(dir string) (_ *Bobfile, err error) {
+	defer errz.Recover(&err)
+
+	b, err := bobfileRead(dir)
+	errz.Fatal(err)
+
+	err = b.Validate()
 	errz.Fatal(err)
 
 	return b, nil
@@ -235,7 +280,7 @@ func (b *Bobfile) Validate() (err error) {
 	return nil
 }
 
-func (b *Bobfile) BobfileSave(dir string) (err error) {
+func (b *Bobfile) BobfileSave(dir, name string) (err error) {
 	defer errz.Recover(&err)
 
 	buf := bytes.NewBuffer([]byte{})
@@ -247,7 +292,7 @@ func (b *Bobfile) BobfileSave(dir string) (err error) {
 	err = encoder.Encode(b)
 	errz.Fatal(err)
 
-	return ioutil.WriteFile(filepath.Join(dir, global.BobFileName), buf.Bytes(), 0664)
+	return ioutil.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0664)
 }
 
 func (b *Bobfile) Dir() string {
@@ -255,7 +300,7 @@ func (b *Bobfile) Dir() string {
 }
 
 func CreateDummyBobfile(dir string, overwrite bool) (err error) {
-	// Prevent accidential bobfile override
+	// Prevent accidental bobfile override
 	if file.Exists(global.BobFileName) && !overwrite {
 		return ErrBobfileExists
 	}
@@ -267,7 +312,7 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 		CmdDirty:    "go build -o run",
 		TargetDirty: "run",
 	}
-	return bobfile.BobfileSave(dir)
+	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
 func IsBobfile(file string) bool {

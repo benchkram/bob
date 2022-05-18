@@ -264,6 +264,11 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 
 	bobfile.Project = projectName
 
+	bobfile.Imports = []string{
+		"second-level",
+		"openapi-provider-project",
+	}
+
 	bobfile.Variables["helloworld"] = "Hello World!"
 
 	bobfile.BTasks[global.DefaultBuildTask] = bobtask.Task{
@@ -387,7 +392,7 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 		TargetDirty: m,
 	}
 
-	return bobfile.BobfileSave(dir)
+	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
 func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite bool) (err error) {
@@ -404,7 +409,7 @@ func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite boo
 	bobfile.BTasks["openapi"] = bobtask.Task{
 		Exports: exports,
 	}
-	return bobfile.BobfileSave(dir)
+	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
 func createPlaygroundBobfileSecondLevel(dir string, overwrite bool, projectName string) (err error) {
@@ -417,6 +422,8 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool, projectName 
 	bobfile.Version = "1.2.3"
 	bobfile.Project = projectName
 
+	bobfile.Imports = []string{"third-level"}
+
 	bobfile.BTasks[fmt.Sprintf("%s2", global.DefaultBuildTask)] = bobtask.Task{
 		InputDirty: "./main2.go",
 		DependsOn: []string{
@@ -425,7 +432,7 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool, projectName 
 		CmdDirty:    "go build -o runsecondlevel",
 		TargetDirty: "runsecondlevel",
 	}
-	return bobfile.BobfileSave(dir)
+	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
 func createPlaygroundBobfileThirdLevel(dir string, overwrite bool, projectName string) (err error) {
@@ -448,5 +455,5 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool, projectName s
 		CmdDirty: "echo hello-third-level",
 	}
 
-	return bobfile.BobfileSave(dir)
+	return bobfile.BobfileSave(dir, global.BobFileName)
 }

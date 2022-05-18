@@ -2,6 +2,7 @@ package bobtask
 
 import (
 	"fmt"
+	"github.com/benchkram/bob/pkg/nix"
 	"path/filepath"
 	"strings"
 
@@ -36,7 +37,7 @@ type Task struct {
 	// The cmds passed to os.Exec
 	cmds []string
 
-	// DependsOn are task which must succeede before this task
+	// DependsOn are task which must succeed before this task
 	// can run.
 	DependsOn []string
 
@@ -94,6 +95,21 @@ type Task struct {
 
 	// skippedInputs is a lists of skipped input files
 	skippedInputs []string
+
+	// DependenciesDirty read from the bobfile
+	DependenciesDirty []string `yaml:"dependencies"`
+
+	// dependencies contain the actual dependencies merged
+	// with the global dependencies defined in the Bobfile
+	// in the order which they need to be added to PATH
+	dependencies []nix.Dependency
+
+	// storePaths contain /nix/store/* paths
+	// in the order which they need to be added to PATH
+	storePaths []string
+
+	// flag if its bobfile has Nix enabled
+	useNix bool
 }
 
 type TargetEntry interface{}
@@ -107,6 +123,7 @@ func Make(opts ...TaskOption) Task {
 		env:                  []string{},
 		rebuild:              RebuildOnChange,
 		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
+		dependencies:         []nix.Dependency{},
 	}
 
 	for _, opt := range opts {
@@ -164,6 +181,17 @@ func (t *Task) SetEnv(env []string) {
 	t.env = env
 }
 
+func (t *Task) Dependencies() []nix.Dependency {
+	return t.dependencies
+}
+func (t *Task) SetDependencies(dependencies []nix.Dependency) {
+	t.dependencies = dependencies
+}
+
+func (t *Task) SetStorePaths(storePaths []string) {
+	t.storePaths = storePaths
+}
+
 // Project returns the projectname. In case of a non existing projectname the
 // tasks local directory is returned.
 func (t *Task) Project() string {
@@ -206,6 +234,14 @@ func (t *Task) AddExportPrefix(prefix string) {
 	for i, e := range t.Exports {
 		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))
 	}
+}
+
+func (t *Task) SetUseNix(useNix bool) {
+	t.useNix = useNix
+}
+
+func (t *Task) UseNix() bool {
+	return t.useNix
 }
 
 // AddToSkippedInputs add filenames with permission issues to the task's

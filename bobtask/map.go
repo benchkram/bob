@@ -6,7 +6,10 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/multilinecmd"
+	"github.com/benchkram/bob/pkg/nix"
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
 
@@ -15,12 +18,12 @@ type Map map[string]Task
 // walk the task tree starting at root. Following dependend tasks.
 // dependencies are expressed in local scope, level is used to resolve the taskname in global scope.
 func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ Task, _ error) error) error {
-	taskname := root //filepath.Join(parentLevel, root)
-	//fmt.Printf("Walk started on root %s with parentLevel: %s using taskname:%s\n", root, parentLevel, taskname)
+	taskname := root // filepath.Join(parentLevel, root)
+	// fmt.Printf("Walk started on root %s with parentLevel: %s using taskname:%s\n", root, parentLevel, taskname)
 
 	task, ok := tm[taskname]
 	if !ok {
-		return ErrTaskDoesNotExist
+		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
 
 	err := fn(taskname, task, nil)
@@ -95,4 +98,42 @@ func (tm Map) KeysSortedAlpabethically() (keys []string) {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// CollectTasksInPipeline will collect all task names in the pipeline for task taskName
+// in the tasksInPipeline slice
+func (tm Map) CollectTasksInPipeline(taskName string) ([]string, error) {
+	tasksInPipeleine := []string{}
+	err := tm.Walk(taskName, "", func(tn string, task Task, err error) error {
+		if err != nil {
+			return err
+		}
+		tasksInPipeleine = append(tasksInPipeleine, task.Name())
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return tasksInPipeleine, nil
+}
+
+// CollectNixDependencies will collect all nix dependencies for task taskName
+// in nixDependencies slice
+func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependency, error) {
+	nixDependecies := []nix.Dependency{}
+	for _, taskFromMap := range tm {
+		if !taskFromMap.UseNix() {
+			continue
+		}
+
+		// only add dependecies of whitelisted tasks.
+		for _, taskName := range whitelist {
+			if taskFromMap.Name() == taskName {
+				nixDependecies = append(nixDependecies, taskFromMap.Dependencies()...)
+			}
+		}
+	}
+
+	return nixDependecies, nil
 }

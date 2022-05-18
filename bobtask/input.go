@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -19,11 +20,16 @@ func (t *Task) Inputs() []string {
 // Calls sanitize on the result.
 func (t *Task) filteredInputs() ([]string, error) {
 
+	wd, err := filepath.Abs(t.dir)
+	if err != nil {
+		return nil, err
+	}
+
 	owd, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current working directory: %w", err)
 	}
-	if err := os.Chdir(t.dir); err != nil {
+	if err := os.Chdir(wd); err != nil {
 		return nil, fmt.Errorf("failed to change current working directory to %s: %w", t.dir, err)
 	}
 	defer func() {
@@ -32,16 +38,13 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}()
 
-	inputDirty := split(t.InputDirty)
-
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
-	for _, input := range unique(inputDirty) {
+	for _, input := range unique(split(t.InputDirty)) {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
-
 			list, err := filepathutil.ListRecursive(input)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list input: %w", err)
@@ -55,6 +58,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
 		}
+
 		inputs = append(inputs, list...)
 	}
 
@@ -84,7 +88,10 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}
 
-	sanitizedInputs, err := t.sanitizeInputs(filteredInputs)
+	sanitizedInputs, err := t.sanitizeInputs(
+		filteredInputs,
+		optimisationOptions{wd: wd},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sanitize inputs: %w", err)
 	}

@@ -2,40 +2,25 @@ package bob
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/pkg/boberror"
+	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/usererror"
 
-	"github.com/logrusorgru/aurora"
-
 	"github.com/benchkram/errz"
-
-	"github.com/benchkram/bob/bob/bobfile"
-	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/hashicorp/go-version"
+	"github.com/logrusorgru/aurora"
 )
 
 var (
 	ErrDuplicateProjectName = fmt.Errorf("duplicate project name")
 )
-
-// find bobfiles recursively.
-func (b *B) find() (bobfiles []string, err error) {
-	defer errz.Recover(&err)
-
-	list, err := filepathutil.ListRecursive(b.dir)
-	errz.Fatal(err)
-
-	for _, file := range list {
-		if bobfile.IsBobfile(file) {
-			bobfiles = append(bobfiles, file)
-		}
-	}
-
-	return bobfiles, nil
-}
 
 func (b *B) PrintVersionCompatibility(bobfile *bobfile.Bobfile) {
 	binVersion, _ := version.NewVersion(Version)
@@ -57,27 +42,73 @@ func (b *B) PrintVersionCompatibility(bobfile *bobfile.Bobfile) {
 	}
 }
 
+// AggregateSparse reads Bobfile with the intent to gather task names.
+// The returned bobfile is not ready to be executed with a playbook.
+func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, err error) {
+	defer errz.Recover(&err)
+
+	addRunTasks := true
+	if len(omitRunTasks) > 0 {
+		if omitRunTasks[0] {
+			addRunTasks = false
+		}
+	}
+
+	wd, _ := os.Getwd()
+	aggregate, err = bobfile.BobfileReadPlain(wd)
+	errz.Fatal(err)
+
+	if !file.Exists(global.BobFileName) {
+		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
+	}
+
+	if aggregate == nil {
+		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
+	}
+
+	bobs, err := readImports(aggregate, true)
+	errz.Fatal(err)
+
+	// set project names for all bobfiles and build tasks
+	aggregate, bobs = syncProjectName(aggregate, bobs)
+
+	aggregate.SetBobfiles(bobs)
+
+	// Merge tasks into one Bobfile
+	aggregate = b.addBuildTasksToAggregate(aggregate, bobs)
+
+	if addRunTasks {
+		aggregate = b.addRunTasksToAggregate(aggregate, bobs)
+	}
+
+	return aggregate, nil
+}
+
 // Aggregate determine and read Bobfiles recursively into memory
 // and returns a single Bobfile containing all tasks & runs.
 func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)
 
-	bobfiles, err := b.find()
+	wd, _ := os.Getwd()
+	aggregate, err = bobfile.BobfileRead(wd)
+	errz.Fatal(err)
+
+	if !file.Exists(global.BobFileName) {
+		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
+	}
+
+	if aggregate == nil {
+		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
+	}
+
+	bobs, err := readImports(aggregate, false)
 	errz.Fatal(err)
 
 	// FIXME: As we don't refer to a child task by projectname but by path
 	// it seems to be save to allow duplicate projectnames.
 	//projectNames := map[string]bool{}
 
-	// Read & Find Bobfiles
-	bobs := []*bobfile.Bobfile{}
-	for _, bf := range bobfiles {
-		boblet, err := bobfile.BobfileRead(filepath.Dir(bf))
-		errz.Fatal(err)
-
-		if boblet.Dir() == b.dir {
-			aggregate = boblet
-		}
+	for _, boblet := range append(bobs, aggregate) {
 
 		// FIXME: As we don't refer to a child task by projectname but by path
 		// it seems to be save to allow duplicate projectnames.
@@ -100,13 +131,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 				boblet.BTasks[key] = task
 			}
 		}
-
-		bobs = append(bobs, boblet)
 	}
 
-	if aggregate == nil {
-		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
-	}
+	// FIXME: As we don't refer to a child task by projectname but by path
+	// it seems to be save to allow duplicate projectnames.
+	//projectNames := map[string]bool{}
 
 	if aggregate.Project == "" {
 		// TODO: maybe don't leak absolute path of environment
@@ -114,83 +143,15 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	}
 
 	// set project names for all bobfiles and build tasks
-	for _, bobfile := range bobs {
-		bobfile.Project = aggregate.Project
-
-		for taskname, task := range bobfile.BTasks {
-			// Should be the name of the umbrella-bobfile.
-			task.SetProject(aggregate.Project)
-
-			// Overwrite value in build map
-			bobfile.BTasks[taskname] = task
-		}
-	}
+	syncProjectName(aggregate, bobs)
 
 	aggregate.SetBobfiles(bobs)
 
 	// Merge tasks into one Bobfile
-	for _, bobfile := range bobs {
-		// Skip the aggregate
-		if bobfile.Dir() == aggregate.Dir() {
-			continue
-		}
-
-		for taskname, task := range bobfile.BTasks {
-			dir := bobfile.Dir()
-
-			// Use a relative path as task prefix.
-			prefix := strings.TrimPrefix(dir, b.dir)
-			taskname := addTaskPrefix(prefix, taskname)
-
-			// Alter the taskname.
-			task.SetName(taskname)
-
-			// Rewrite dependent tasks to global scope.
-			dependsOn := []string{}
-			for _, dependentTask := range task.DependsOn {
-				dependsOn = append(dependsOn, addTaskPrefix(prefix, dependentTask))
-			}
-			task.DependsOn = dependsOn
-
-			aggregate.BTasks[taskname] = task
-		}
-	}
+	aggregate = b.addBuildTasksToAggregate(aggregate, bobs)
 
 	// Merge runs into one Bobfile
-	for _, bobfile := range bobs {
-		// Skip the aggregate
-		if bobfile.Dir() == aggregate.Dir() {
-			continue
-		}
-
-		for runname, run := range bobfile.RTasks {
-			dir := bobfile.Dir()
-
-			// Use a relative path as task prefix.
-			prefix := strings.TrimPrefix(dir, b.dir)
-
-			runname = addTaskPrefix(prefix, runname)
-
-			// Alter the runname.
-			run.SetName(runname)
-
-			// Rewrite dependents to global scope.
-			dependsOn := []string{}
-			for _, dependent := range run.DependsOn {
-				dependsOn = append(dependsOn, addTaskPrefix(prefix, dependent))
-			}
-			run.DependsOn = dependsOn
-
-			// // Rewrite init tasks to global scope.
-			// init := []string{}
-			// for _, initTask := range run.Init {
-			// 	init = append(init, addTaskPrefix(prefix, initTask))
-			// }
-			// run.Init = init
-
-			aggregate.RTasks[runname] = run
-		}
-	}
+	aggregate = b.addRunTasksToAggregate(aggregate, bobs)
 
 	// TODO: Gather missing tasks from remote  & Unpack?
 
@@ -211,7 +172,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 			dependentTask, ok := aggregate.BTasks[dependentTaskName]
 			if !ok {
-				return nil, ErrTaskDoesNotExist
+				return nil, usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
 			}
 
 			for exportname, export := range dependentTask.Exports {
@@ -248,6 +209,24 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		}
 		aggregate.BTasks[i] = task
 	}
+
+	// Aggregate all dependencies set at bobfile level
+	addedDependencies := make(map[string]bool)
+	var allDeps []string
+	for _, bobfile := range bobs {
+		for _, dep := range bobfile.Dependencies {
+			if _, added := addedDependencies[dep]; !added {
+				if strings.HasSuffix(dep, ".nix") {
+					allDeps = append(allDeps, bobfile.Dir()+"/"+dep)
+				} else {
+					allDeps = append(allDeps, dep)
+				}
+				addedDependencies[dep] = true
+			}
+		}
+	}
+	aggregate.Dependencies = make([]string, 0)
+	aggregate.Dependencies = append(aggregate.Dependencies, allDeps...)
 
 	return aggregate, aggregate.Verify()
 }
