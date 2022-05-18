@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/benchkram/errz"
 	"io"
 	"os"
+
+	"github.com/benchkram/errz"
 
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/command"
@@ -27,7 +28,7 @@ type ComposeController struct {
 	stderr pipe
 	stdin  pipe
 
-	logger  *logger
+	logger *logger
 
 	running bool
 }
@@ -100,7 +101,7 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 		return nil, err
 	}
 
-	c.service = compose.NewComposeService(dockerCli.Client(), dockerCli.ConfigFile())
+	c.service = compose.NewComposeService(dockerCli)
 
 	return c, nil
 }
@@ -120,7 +121,7 @@ func (ctl *ComposeController) Up(ctx context.Context) error {
 			Follow:     true,
 			Timestamps: false,
 		})
-		if err != nil && !errors.Is(err, context.Canceled)  {
+		if err != nil && !errors.Is(err, context.Canceled) {
 			errz.Log(err)
 		}
 	}()

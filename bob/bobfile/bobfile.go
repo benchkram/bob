@@ -109,7 +109,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		return nil, ErrBobfileNotFound
 	}
 	bin, err := ioutil.ReadFile(bobfilePath)
-	errz.Fatal(err, "Failed to read config file")
+	errz.Fatal(err)
 
 	bobfile := &Bobfile{
 		dir: dir,
