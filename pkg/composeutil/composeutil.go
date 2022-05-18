@@ -97,19 +97,19 @@ func ApplyPortMapping(p *types.Project, mapping PortConfigs) {
 		servicePorts[service] = append(servicePorts[service], cfg)
 	}
 
-	//for i, service := range p.Services {
-	//	servicePortCfgs := servicePorts[service.Name]
-	//
-	//	for j, port := range service.Ports {
-	//		for _, cfg := range servicePortCfgs {
-	//			if int(port.Published) == cfg.OriginalPort && port.Protocol == cfg.Protocol {
-	//				port.Published = uint32(cfg.Port)
-	//				service.Ports[j] = port
-	//				p.Services[i] = service
-	//			}
-	//		}
-	//	}
-	//}
+	for i, service := range p.Services {
+		servicePortCfgs := servicePorts[service.Name]
+
+		for j, port := range service.Ports {
+			for _, cfg := range servicePortCfgs {
+				if int(port.Published) == cfg.OriginalPort && port.Protocol == cfg.Protocol {
+					port.Published = uint32(cfg.Port)
+					service.Ports[j] = port
+					p.Services[i] = service
+				}
+			}
+		}
+	}
 }
 
 // PortConflicts returns all PortConfigs that have a port conflict
@@ -168,19 +168,19 @@ func portConfigs(proj *types.Project, typ string) PortConfigs {
 		return services[i].Name < services[j].Name
 	})
 
-	//for _, s := range services {
-	//	for _, spCfg := range s.Ports {
-	//		port := int(spCfg.Published)
-	//
-	//		if spCfg.Protocol == typ {
-	//			if !PortAvailable(port, typ) && len(portServices[port]) == 0 {
-	//				portServices[port] = append(portServices[port], "host")
-	//			}
-	//
-	//			portServices[port] = append(portServices[port], s.Name)
-	//		}
-	//	}
-	//}
+	for _, s := range services {
+		for _, spCfg := range s.Ports {
+			port := int(spCfg.Published)
+
+			if spCfg.Protocol == typ {
+				if !PortAvailable(port, typ) && len(portServices[port]) == 0 {
+					portServices[port] = append(portServices[port], "host")
+				}
+
+				portServices[port] = append(portServices[port], s.Name)
+			}
+		}
+	}
 
 	portCfgs := []PortConfig{}
 	for port, services := range portServices {
