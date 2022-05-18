@@ -66,20 +66,8 @@ func readConfig(defaults map[string]interface{}) (*config, error) {
 	for key, value := range defaults {
 		viper.SetDefault(key, value)
 	}
-
-	//Read config from file
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	switch err.(type) {
-	case viper.ConfigFileNotFoundError:
-		// fmt.Printf("%s\n", aurora.Yellow("Could not find a config file"))
-	default:
-		return nil, fmt.Errorf("config file invalid: %w", err)
-	}
-
 	c := &config{}
-	err = viper.Unmarshal(c)
+	err := viper.Unmarshal(c)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +78,6 @@ func readGlobalConfig() {
 	// Priority of configuration options
 	// 1: CLI Parameters
 	// 2: environment
-	// 2: config.yaml
 	// 3: defaults
 	config, err := readConfig(defaultConfig.AsMap())
 	if err != nil {
