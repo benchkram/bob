@@ -153,7 +153,7 @@ func (b *B) read() (err error) {
 	}
 
 	bin, err := ioutil.ReadFile(b.WorkspaceFilePath())
-	errz.Fatal(err, "Failed to read config file")
+	errz.Fatal(err)
 
 	err = yaml.Unmarshal(bin, b)
 	if err != nil {
