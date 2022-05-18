@@ -77,8 +77,8 @@ func (r *Run) Run(ctx context.Context) (rc ctl.Command, err error) {
 		return nil, ErrInvalidRunType
 	}
 
-	rc, err = r.WrapCommand(rc)
-	errz.Fatal(err)
+	// rc, err = r.WrapCommand(rc)
+	// errz.Fatal(err)
 
 	return rc, nil
 }
