@@ -101,7 +101,7 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 		return nil, err
 	}
 
-	c.service = compose.NewComposeService(dockerCli)
+	c.service = compose.NewComposeService(dockerCli.Client(), dockerCli.ConfigFile())
 
 	return c, nil
 }
