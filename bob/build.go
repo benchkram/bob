@@ -45,7 +45,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	remote := ag.Remotestore()
 
-	if remote != nil {
+	if b.enableCaching && remote != nil {
 		// populate the local cache with any pre-compiled artifacts
 		syncFromRemoteToLocal(ctx, remote, b.local, getArtifactIds(playbook, false))
 	}
@@ -53,7 +53,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	err = playbook.Build(ctx)
 	errz.Fatal(err)
 
-	if remote != nil {
+	if b.enableCaching && remote != nil {
 		// sync any newly generated artifacts with the remote store
 		syncFromLocalToRemote(ctx, b.local, remote, getArtifactIds(playbook, true))
 	}
