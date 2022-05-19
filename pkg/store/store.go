@@ -25,4 +25,5 @@ type Store interface {
 
 var (
 	ErrArtifactNotFoundinSrc = fmt.Errorf("artifact not found in src")
+	ErrArtifactAlreadyExists = fmt.Errorf("artifact already exists")
 )

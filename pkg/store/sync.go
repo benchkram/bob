@@ -18,12 +18,11 @@ func Sync(ctx context.Context, src, dst Store, id string) (err error) {
 	}
 	errz.Fatal(err)
 
-	// found, err = exists(ctx, dst, id)
-	// errz.Fatal(err)
-	// if found {
-	// 	// Nothing todo, artifact already exists in dst
-	// 	return nil
-	// }
+	found, err = exists(ctx, dst, id)
+	errz.Fatal(err)
+	if found {
+		return ErrArtifactAlreadyExists
+	}
 
 	srcReader, err := src.GetArtifact(ctx, id)
 	errz.Fatal(err)

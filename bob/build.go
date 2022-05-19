@@ -83,7 +83,10 @@ func getArtifactIds(pbook *playbook.Playbook, checkForTarget bool) []hash.In {
 func syncFromRemoteToLocal(ctx context.Context, remote store.Store, local store.Store, artifactIds []hash.In) {
 	for _, a := range artifactIds {
 		err := store.Sync(ctx, remote, local, a.String())
-		if err != nil {
+		if errors.Is(err, store.ErrArtifactAlreadyExists) {
+			boblog.Log.V(1).Info(fmt.Sprintf("artifact already exists locally [artifactId: %s]. skipping...", a.String()))
+			continue
+		} else if err != nil {
 			boblog.Log.V(1).Error(err, fmt.Sprintf("failed to sync from remote to local [artifactId: %s]", a.String()))
 			continue
 		}
@@ -96,12 +99,15 @@ func syncFromRemoteToLocal(ctx context.Context, remote store.Store, local store.
 func syncFromLocalToRemote(ctx context.Context, local store.Store, remote store.Store, artifactIds []hash.In) {
 	for _, a := range artifactIds {
 		err := store.Sync(ctx, local, remote, a.String())
-		if err != nil {
+		if errors.Is(err, store.ErrArtifactAlreadyExists) {
+			boblog.Log.V(1).Info(fmt.Sprintf("artifact already exists on the remote [artifactId: %s]. skipping...", a.String()))
+			continue
+		} else if err != nil {
 			boblog.Log.V(1).Error(err, fmt.Sprintf("failed to sync from local to remote [artifactId: %s]", a.String()))
 			continue
 		}
 
-		//wait for the remote store to finish uploading this artifact. can be moved outside of the for loop but then
+		// wait for the remote store to finish uploading this artifact. can be moved outside of the for loop but then
 		// we don't know which artifacts failed to upload.
 		err = remote.Done()
 		if err != nil {
