@@ -4,23 +4,23 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/benchkram/errz"
-	"github.com/pkg/errors"
 	"io"
 	"strings"
 	"time"
 
-	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/ctl"
-
+	"github.com/benchkram/errz"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/logrusorgru/aurora"
+	"github.com/pkg/errors"
 	"github.com/xlab/treeprint"
+
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 func init() {

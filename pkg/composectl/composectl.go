@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/benchkram/errz"
 	"io"
 	"os"
+
+	"github.com/benchkram/errz"
 
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/command"
