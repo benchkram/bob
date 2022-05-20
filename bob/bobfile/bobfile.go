@@ -106,7 +106,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	bobfilePath := filepath.Join(dir, global.BobFileName)
 
 	if !file.Exists(bobfilePath) {
-		return nil, ErrBobfileNotFound
+		return nil, usererror.Wrap(ErrBobfileNotFound)
 	}
 	bin, err := ioutil.ReadFile(bobfilePath)
 	errz.Fatal(err)
