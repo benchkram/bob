@@ -9,7 +9,6 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
-	nix2 "github.com/benchkram/bob/pkg/nix"
 )
 
 var installCmd = &cobra.Command{
@@ -26,9 +25,8 @@ func runInstall() {
 	var exitCode int
 	defer func() { os.Exit(exitCode) }()
 
-	cache, err := nix2.NewFileCacheStore()
+	nix, err := bob.NewNix()
 	errz.Fatal(err)
-	nix := bob.NewNix(cache)
 
 	b, err := bob.Bob(bob.WithNix(nix))
 	if err != nil {

@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/benchkram/errz"
@@ -78,9 +77,8 @@ func runBuild(dummy bool, taskname string, noCache bool) {
 		return
 	}
 
-	cache, err := nix.NewFileCacheStore()
+	nix, err := bob.NewNix()
 	errz.Fatal(err)
-	nix := bob.NewNix(cache)
 
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),

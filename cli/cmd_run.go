@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/benchkram/bob/pkg/boblog"
-	nix2 "github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/bob/tui"
 
@@ -46,9 +45,8 @@ func run(taskname string, noCache bool) {
 	var err error
 	defer errz.Recover(&err)
 
-	cache, err := nix2.NewFileCacheStore()
+	nix, err := bob.NewNix(nil)
 	errz.Fatal(err)
-	nix := bob.NewNix(cache)
 
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),

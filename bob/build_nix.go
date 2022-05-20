@@ -18,11 +18,33 @@ type Nix struct {
 	cache cache.Cache
 }
 
+type NixOption func(n *Nix)
+
+func WithNixCache(cache cache.Cache) NixOption {
+	return func(n *Nix) {
+		n.cache = cache
+	}
+}
+
 // NewNix instantiates a new Nix builder instance
-func NewNix(cache cache.Cache) *Nix {
+// By default it uses a file to cache the mapping between dependencies and their store paths
+// You can override that with WithNixCache option
+func NewNix(opts ...NixOption) (_ *Nix, err error) {
+	defer errz.Recover(&err)
 	var n Nix
-	n.cache = cache
-	return &n
+
+	c, err := nix.NewFileCacheStore()
+	errz.Fatal(err)
+	n.cache = c
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(&n)
+	}
+
+	return &n, nil
 }
 
 // BuildNixDependenciesInPipeline collects and builds nix-dependencies for a pipeline starting at taskName.
