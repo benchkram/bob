@@ -6,7 +6,7 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
-	cache2 "github.com/benchkram/bob/pkg/cache"
+	"github.com/benchkram/bob/pkg/cache"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -15,11 +15,11 @@ import (
 // and is used for building tasks dependencies
 type Nix struct {
 	// cache allows caching the dependency to store path
-	cache cache2.Cache
+	cache cache.Cache
 }
 
 // NewNix instantiates a new Nix builder instance
-func NewNix(cache cache2.Cache) *Nix {
+func NewNix(cache cache.Cache) *Nix {
 	var n Nix
 	n.cache = cache
 	return &n
