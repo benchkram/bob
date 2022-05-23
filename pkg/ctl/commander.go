@@ -49,7 +49,7 @@ type Builder interface {
 // NewCommander creates a commander object which can be started and stoped
 // until shutdown is called, then it becomes noop.
 //
-// The commander allows it to control multiple commands while taking
+// The commander allows to control multiple commands while taking
 // orders from a higher level instance like a TUI.
 //
 // TODO: Could be benficial for a TUI to directly control the commands.
