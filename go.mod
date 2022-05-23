@@ -13,7 +13,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.10.1
 	github.com/docker/cli v20.10.7+incompatible
 	github.com/docker/compose/v2 v2.2.2
-	github.com/docker/docker v20.10.8+incompatible
+	github.com/docker/docker v20.10.16+incompatible
 	github.com/fatih/structs v1.1.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/google/go-cmp v0.5.8
