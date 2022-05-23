@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
       - name: Install nix
         uses: cachix/install-nix-action@v15
 
@@ -51,7 +51,7 @@ jobs:
 
       - name: Set Git author name and email address
         run: git config --global user.name "Bob The Builder" && git config --global user.email "bob@thebuilder.com"
-          
+
       - name: Run tests
-        run: | 
+        run: |
           go test -v ./...

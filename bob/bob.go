@@ -28,9 +28,11 @@ type B struct {
 
 	// local the place to store artifacts localy
 	local store.Store
-	// TODO: add a remote store
-	// remotestore cas.Store
 
+	// remotestore the place to store artifacts remotly
+	remote store.Store
+
+	// buildInfoStore stores build infos for tasks.
 	buildInfoStore buildinfostore.Store
 
 	// readConfig some commands need a fully initialised bob.
@@ -41,6 +43,9 @@ type B struct {
 	// enableCaching allows to save and load artifacts
 	// from the cache Default: true
 	enableCaching bool
+
+	// allowInsecure uses http protocol for accessing the remote artifact store, if any
+	allowInsecure bool
 }
 
 func newBob(opts ...Option) *B {
@@ -52,6 +57,7 @@ func newBob(opts ...Option) *B {
 	b := &B{
 		dir:           wd,
 		enableCaching: true,
+		allowInsecure: false,
 	}
 
 	for _, opt := range opts {

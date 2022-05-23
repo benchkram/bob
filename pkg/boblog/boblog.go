@@ -51,7 +51,7 @@ func (l log) Error(err error, msg string, keysAndValues ...interface{}) {
 	}
 
 	// Error message will always be logged if exists
-	fmt.Println(aurora.Red(msg))
+	fmt.Print(aurora.Red(msg + ": "))
 
 	// Stack trace will only be logged if globalLogLevel >= 2
 	if globalLogLevel >= 2 {

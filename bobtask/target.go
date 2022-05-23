@@ -41,6 +41,10 @@ func (t *Task) Target() (empty target.Target, _ error) {
 	return t.target.WithDir(t.dir).WithHash(targetHash), nil
 }
 
+func (t *Task) TargetExists() bool {
+	return t.target != nil
+}
+
 // Clean the targets defined by this task.
 // This assures that we can be sure a target was correctly created
 // and has not been there before the task ran.

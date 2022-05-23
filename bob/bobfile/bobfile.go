@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"path/filepath"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/nix"
+	storeclient "github.com/benchkram/bob/pkg/store-client"
 
 	"github.com/benchkram/bob/pkg/sliceutil"
+	"github.com/benchkram/bob/pkg/store"
+	"github.com/benchkram/bob/pkg/store/remotestore"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -80,6 +84,9 @@ type Bobfile struct {
 	dir string
 
 	bobfiles []*Bobfile
+
+	RemoteStoreHost string
+	remotestore     store.Store
 }
 
 func NewBobfile() *Bobfile {
@@ -97,6 +104,14 @@ func (b *Bobfile) SetBobfiles(bobs []*Bobfile) {
 
 func (b *Bobfile) Bobfiles() []*Bobfile {
 	return b.bobfiles
+}
+
+func (b *Bobfile) SetRemotestore(remote store.Store) {
+	b.remotestore = remote
+}
+
+func (b *Bobfile) Remotestore() store.Store {
+	return b.remotestore
 }
 
 // bobfileRead reads a bobfile and initializes private fields.
@@ -161,6 +176,31 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		bobfile.RTasks[key] = run
 	}
 
+	//// Initialize remote store in case of a valid remote url /  projectname.
+	//if bobfile.Project != "" {
+	//	projectname, err := project.Parse(bobfile.Project)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	switch projectname.Type() {
+	//	case project.Local:
+	//		// Do nothing
+	//	case project.Remote:
+	//		// Initialize remote store
+	//		url, err := projectname.Remote()
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//
+	//		boblog.Log.V(1).Info(fmt.Sprintf("Using remote store: %s", url.String()))
+	//
+	//		bobfile.remotestore = NewRemotestore(url)
+	//	}
+	//} else {
+	//	bobfile.Project = bobfile.dir
+	//}
+
 	return bobfile, nil
 }
 
@@ -179,6 +219,30 @@ func initializeDependencies(dir string, task bobtask.Task, bobfile *Bobfile) []n
 	}
 
 	return nix.UniqueDeps(taskDeps)
+}
+
+func NewRemotestore(endpoint *url.URL, allowInsecure bool) (s store.Store) {
+	const sep = "/"
+
+	parts := strings.Split(strings.TrimLeft(endpoint.Path, sep), sep)
+
+	username := parts[0]
+	proj := strings.Join(parts[1:], sep)
+
+	protocol := "https://"
+	if allowInsecure {
+		protocol = "http://"
+	}
+
+	s = remotestore.New(
+		username,
+		proj,
+
+		remotestore.WithClient(
+			storeclient.New(protocol+endpoint.Host),
+		),
+	)
+	return s
 }
 
 // BobfileRead read from a bobfile.
