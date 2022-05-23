@@ -42,20 +42,6 @@ func (rm RunMap) Sanitize() (err error) {
 		sanitizedInits := multilinecmd.Split(task.InitDirty)
 		task.init = sanitizedInits
 
-		// sanitizedExports, err := task.sanitizeExports(task.Exports)
-		// errz.Fatal(err)
-		// task.Exports = sanitizedExports
-
-		// err = task.parseTargets()
-		// errz.Fatal(err)
-
-		// inputs, err := task.filteredInputs()
-		// errz.Fatal(err)
-		// task.inputs = inputs
-
-		// task.cmds = multilinecmd.Split(task.CmdDirty)
-		// task.rebuild = task.sanitizeRebuild(task.RebuildDirty)
-
 		rm[key] = task
 	}
 
