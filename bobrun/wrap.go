@@ -1,16 +1,29 @@
 package bobrun
 
 import (
+	"bufio"
+	"context"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
+	"github.com/logrusorgru/aurora"
+	"mvdan.cc/sh/expand"
+	"mvdan.cc/sh/interp"
+	"mvdan.cc/sh/syntax"
 )
 
 type RunWrapper struct {
 	ctl.Command
-	initCommands []string
+	run *Run
+	ctx context.Context
 }
 
-func (r *Run) WrapCommand(rc ctl.Command) (_ ctl.Command, err error) {
+func (r *Run) WrapCommand(ctx context.Context, rc ctl.Command) (_ ctl.Command, err error) {
 	defer errz.Recover(&err)
 
 	// name := fmt.Sprintf("%s_%s", r.name, "init")
@@ -22,8 +35,9 @@ func (r *Run) WrapCommand(rc ctl.Command) (_ ctl.Command, err error) {
 	// }
 
 	rw := RunWrapper{
-		Command:      rc,
-		initCommands: r.init,
+		Command: rc,
+		run:     r,
+		ctx:     ctx,
 	}
 	return &rw, nil
 }
@@ -56,77 +70,83 @@ func (r *Run) WrapCommand(rc ctl.Command) (_ ctl.Command, err error) {
 // 	return rw.Command.Restart()
 // }
 
-// func (rw *RunWrapper) Init() (err error) {
-// 	defer errz.Recover(&err)
+func (rw *RunWrapper) Init() (err error) {
+	defer errz.Recover(&err)
 
-// 	if rw.initCommand == nil {
-// 		return nil
-// 	}
+	boblog.Log.V(1).Info("Init called")
 
-// 	// Wait for initial command to have started
-// 	go func() {
-// 		for !rw.Running() {
-// 			time.Sleep(100 * time.Millisecond)
-// 		}
+	// no init command
+	if len(rw.run.init) == 0 {
+		return nil
+	}
 
-// 	}()
-
-// 	boblog.Log.Info(fmt.Sprintf("Init [%s] ", rw.Name()))
-
-// 	err = rw.initCommand.Start()
-// 	errz.Fatal(err)
-
-// 	// At last call Init on the command itself
-// 	return rw.Command.Init()
-// }
-
-func (r *Run) startInit() error {
-
-	// namePad := fmt.Sprintf("%s_init", r.Name())
-
-	// for _, run := range r.init {
-	// 	p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
-	// 	if err != nil {
-	// 		return usererror.Wrapm(err, "shell command parse error")
-	// 	}
-
-	// 	env := os.Environ()
-	// 	// TODO: warn when overwriting envvar from the environment
-	// 	env = append(env, r.env...)
-
-	// 	pr, pw, err := os.Pipe()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	s := bufio.NewScanner(pr)
-	// 	s.Split(bufio.ScanLines)
-
-	// 	go func() {
-	// 		for s.Scan() {
-	// 			err := s.Err()
-	// 			if err != nil {
-	// 				return
-	// 			}
-
-	// 			boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint(s.Text())))
-	// 		}
-	// 	}()
-
-	// 	r, err := interp.New(
-	// 		interp.Params("-e"),
-	// 		interp.Dir(t.dir),
-
-	// 		interp.Env(expand.ListEnviron(env...)),
-	// 		interp.StdIO(os.Stdin, pw, pw),
-	// 	)
-	// 	errz.Fatal(err)
-
-	// 	err = r.Run(ctx, p)
-	// 	if err != nil {
-	// 		return usererror.Wrapm(err, "shell command execute error")
-	// 	}
+	// Wait for initial command to have started
+	// go func() {
+	// for !rw.Running() {
+	// 	time.Sleep(100 * time.Millisecond)
 	// }
+
+	// }()
+
+	boblog.Log.Info(fmt.Sprintf("Init [%s] ", rw.Name()))
+
+	err = rw.startInit()
+	errz.Fatal(err)
+
+	// At last call Init on the command itself
+	return rw.Command.Init()
+}
+
+func (rw *RunWrapper) startInit() (err error) {
+
+	boblog.Log.Info("startInit")
+
+	// namePad := fmt.Sprintf("%s_init", rw.Name())
+
+	for _, run := range rw.run.init {
+		// break
+		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
+		if err != nil {
+			return usererror.Wrapm(err, "shell command parse error")
+		}
+
+		env := os.Environ()
+		// TODO: warn when overwriting envvar from the environment
+		// env = append(env, rw.env...)
+
+		pr, pw, err := os.Pipe()
+		if err != nil {
+			return err
+		}
+
+		s := bufio.NewScanner(pr)
+		s.Split(bufio.ScanLines)
+
+		go func() {
+			for s.Scan() {
+				err := s.Err()
+				if err != nil {
+					return
+				}
+
+				boblog.Log.V(1).Info(fmt.Sprintf("\t%s", aurora.Faint(s.Text())))
+			}
+		}()
+
+		r, err := interp.New(
+			interp.Params("-e"),
+			interp.Dir(rw.run.dir),
+
+			interp.Env(expand.ListEnviron(env...)),
+			interp.StdIO(os.Stdin, pw, pw),
+		)
+		errz.Fatal(err)
+
+		err = r.Run(rw.ctx, p)
+		if err != nil {
+			return usererror.Wrapm(err, "shell command execute error")
+		}
+	}
 
 	return nil
 }

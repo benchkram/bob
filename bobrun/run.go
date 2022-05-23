@@ -66,7 +66,7 @@ func New() *Run {
 // To shutdown a Run() use a cancable context.
 func (r *Run) Run(ctx context.Context) (rc ctl.Command, err error) {
 	defer errz.Recover(&err)
-	// fmt.Printf("Creating control for run task [%s]\n", r.name)
+	fmt.Printf("Creating control for run task [%s]\n", r.name)
 
 	switch r.Type {
 	case RunTypeBinary:
@@ -77,8 +77,8 @@ func (r *Run) Run(ctx context.Context) (rc ctl.Command, err error) {
 		return nil, ErrInvalidRunType
 	}
 
-	// rc, err = r.WrapCommand(rc)
-	// errz.Fatal(err)
+	rc, err = r.WrapCommand(ctx, rc)
+	errz.Fatal(err)
 
 	return rc, nil
 }
