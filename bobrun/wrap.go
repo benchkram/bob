@@ -59,12 +59,7 @@ func (rw *RunWrapper) Init() (err error) {
 
 func (rw *RunWrapper) startInit() (err error) {
 
-	boblog.Log.Info("startInit")
-
-	// namePad := fmt.Sprintf("%s_init", rw.Name())
-
 	for _, run := range rw.run.init {
-		// break
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
 		if err != nil {
 			return usererror.Wrapm(err, "shell command parse error")

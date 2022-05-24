@@ -156,13 +156,11 @@ func (c *commander) start() (err error) {
 
 	for i := len(c.commands) - 1; i >= 0; i-- {
 		ctl := c.commands[i]
-		boblog.Log.Info("start cmd")
 		err = ctl.Start()
 		if err != nil {
 			return err
 		}
 
-		boblog.Log.Info("start cmds init")
 		err = ctl.Init()
 		if err != nil {
 			return err

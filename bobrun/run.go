@@ -9,7 +9,7 @@ import (
 	"github.com/benchkram/errz"
 )
 
-var ErrInvalidRunType = fmt.Errorf("Invalid run type")
+var ErrInvalidRunType = fmt.Errorf("invalid run type")
 
 type Run struct {
 	Type RunType
