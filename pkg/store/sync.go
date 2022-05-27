@@ -30,18 +30,16 @@ func Sync(ctx context.Context, src, dst Store, id string) (err error) {
 	dstWriter, err := dst.NewArtifact(ctx, id)
 	errz.Fatal(err)
 
-	go func() {
-		tr := io.TeeReader(srcReader, dstWriter)
-		buf := make([]byte, 256)
-		for {
-			_, err := tr.Read(buf)
-			if err == io.EOF {
-				_ = dstWriter.Close()
-				break
-			}
-			errz.Fatal(err)
+	tr := io.TeeReader(srcReader, dstWriter)
+	buf := make([]byte, 256)
+	for {
+		_, err := tr.Read(buf)
+		if err == io.EOF {
+			_ = dstWriter.Close()
+			break
 		}
-	}()
+		errz.Fatal(err)
+	}
 
 	return src.Done()
 }
