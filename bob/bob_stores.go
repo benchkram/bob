@@ -4,11 +4,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/pkg/store/filestore"
-	"github.com/benchkram/errz"
 )
 
 func DefaultFilestore() (s store.Store, err error) {
@@ -17,11 +18,7 @@ func DefaultFilestore() (s store.Store, err error) {
 	home, err := os.UserHomeDir()
 	errz.Fatal(err)
 
-	storeDir := filepath.Join(home, global.BobCacheArtifactsDir)
-	err = os.MkdirAll(storeDir, 0775)
-	errz.Fatal(err)
-
-	return filestore.New(storeDir), nil
+	return Filestore(home)
 }
 
 func Filestore(dir string) (s store.Store, err error) {
@@ -45,11 +42,7 @@ func DefaultBuildinfoStore() (s buildinfostore.Store, err error) {
 	home, err := os.UserHomeDir()
 	errz.Fatal(err)
 
-	storeDir := filepath.Join(home, global.BobCacheBuildinfoDir)
-	err = os.MkdirAll(storeDir, 0775)
-	errz.Fatal(err)
-
-	return buildinfostore.New(storeDir), nil
+	return BuildinfoStore(home)
 }
 
 func BuildinfoStore(dir string) (s buildinfostore.Store, err error) {

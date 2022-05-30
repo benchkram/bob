@@ -9,17 +9,16 @@ import (
 	"strconv"
 	"syscall"
 
-	nix2 "github.com/benchkram/bob/pkg/nix"
-	"github.com/benchkram/bob/pkg/usererror"
-
 	"github.com/benchkram/errz"
+	"github.com/spf13/cobra"
+
+	"github.com/benchkram/bob/pkg/nix"
+	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
-
-	"github.com/spf13/cobra"
 )
 
 var buildCmd = &cobra.Command{
@@ -37,12 +36,15 @@ var buildCmd = &cobra.Command{
 		noCache, err := cmd.Flags().GetBool("no-cache")
 		errz.Fatal(err)
 
+		allowInsecure, err := cmd.Flags().GetBool("insecure")
+		errz.Fatal(err)
+
 		taskname := global.DefaultBuildTask
 		if len(args) > 0 {
 			taskname = args[0]
 		}
 
-		runBuild(dummy, taskname, noCache)
+		runBuild(dummy, taskname, noCache, allowInsecure)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getBuildTasks()
@@ -63,7 +65,7 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(dummy bool, taskname string, noCache bool) {
+func runBuild(dummy bool, taskname string, noCache, allowInsecure bool) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
@@ -78,13 +80,13 @@ func runBuild(dummy bool, taskname string, noCache bool) {
 		return
 	}
 
-	cache, err := nix2.NewFileCacheStore()
+	cache, err := nix.NewFileCacheStore()
 	errz.Fatal(err)
-	nix := bob.NewNix(cache)
 
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
-		bob.WithNix(nix),
+		bob.WithInsecure(allowInsecure),
+		bob.WithNix(bob.NewNix(cache)),
 	)
 	if err != nil {
 		exitCode = 1

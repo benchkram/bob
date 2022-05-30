@@ -84,6 +84,9 @@ type Task struct {
 	// local store for artifacts
 	local store.Store
 
+	// remote store for artifacts
+	remote store.Store
+
 	// buildInfoStore stores buildinfos.
 	buildInfoStore buildinfostore.Store
 
@@ -217,6 +220,11 @@ func (t *Task) SetRebuildStrategy(rebuild RebuildType) {
 
 func (t *Task) WithLocalstore(s store.Store) *Task {
 	t.local = s
+	return t
+}
+
+func (t *Task) WithRemotestore(s store.Store) *Task {
+	t.remote = s
 	return t
 }
 

@@ -3,6 +3,7 @@ package filestore
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -33,12 +34,12 @@ func New(dir string, opts ...Option) store.Store {
 
 // NewArtifact creates a new file. The caller is responsible to call Close().
 // Existing artifacts are overwritten.
-func (s *s) NewArtifact(_ context.Context, id string) (store.Artifact, error) {
-	return os.Create(filepath.Join(s.dir, id))
+func (s *s) NewArtifact(_ context.Context, artifactID string) (io.WriteCloser, error) {
+	return os.Create(filepath.Join(s.dir, artifactID))
 }
 
 // GetArtifact opens a file
-func (s *s) GetArtifact(_ context.Context, id string) (empty store.Artifact, _ error) {
+func (s *s) GetArtifact(_ context.Context, id string) (empty io.ReadCloser, _ error) {
 	return os.Open(filepath.Join(s.dir, id))
 }
 
@@ -76,4 +77,9 @@ func (s *s) List(_ context.Context) (items []string, err error) {
 	}
 
 	return items, nil
+}
+
+// Done does nothing
+func (s *s) Done() error {
+	return nil
 }
