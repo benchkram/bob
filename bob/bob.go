@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/benchkram/bob/pkg/authstore"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -46,6 +47,9 @@ type B struct {
 
 	// allowInsecure uses http protocol for accessing the remote artifact store, if any
 	allowInsecure bool
+
+	// authStore is used to store authentication credentials for artifact sync with remote stores
+	authStore authstore.Store
 }
 
 func newBob(opts ...Option) *B {
@@ -130,6 +134,14 @@ func Bob(opts ...Option) (*B, error) {
 			return nil, err
 		}
 		bob.buildInfoStore = bis
+	}
+
+	if bob.authStore == nil {
+		fs, err := DefaultAuthStore()
+		if err != nil {
+			return nil, err
+		}
+		bob.authStore = fs
 	}
 
 	return bob, nil

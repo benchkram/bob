@@ -247,9 +247,14 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 				return nil, err
 			}
 
+			authCtx, err := b.CurrentAuthContext()
+			if err != nil {
+				return nil, err
+			}
+
 			boblog.Log.V(1).Info(fmt.Sprintf("Using remote store: %s", url.String()))
 
-			aggregate.SetRemotestore(bobfile.NewRemotestore(url, b.allowInsecure))
+			aggregate.SetRemotestore(bobfile.NewRemotestore(url, b.allowInsecure, authCtx.Token))
 		}
 	} else {
 		aggregate.Project = aggregate.Dir()
