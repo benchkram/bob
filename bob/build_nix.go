@@ -33,15 +33,17 @@ func NewNix(opts ...NixOption) (_ *Nix, err error) {
 	defer errz.Recover(&err)
 	var n Nix
 
-	c, err := nix.NewFileCacheStore()
-	errz.Fatal(err)
-	n.cache = c
-
 	for _, opt := range opts {
 		if opt == nil {
 			continue
 		}
 		opt(&n)
+	}
+
+	if n.cache == nil {
+		c, err := nix.NewFileCacheStore()
+		errz.Fatal(err)
+		n.cache = c
 	}
 
 	return &n, nil
