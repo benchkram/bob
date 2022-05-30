@@ -53,9 +53,7 @@ type B struct {
 
 func newBob(opts ...Option) *B {
 	wd, err := os.Getwd()
-	if err != nil {
-		errz.Fatal(err)
-	}
+	errz.Fatal(err)
 
 	b := &B{
 		dir:           wd,
