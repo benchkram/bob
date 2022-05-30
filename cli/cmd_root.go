@@ -6,10 +6,10 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
-	"github.com/spf13/cobra"
+	"github.com/benchkram/bob/pkg/boblog"
 )
 
 var zsh bool
@@ -40,12 +40,14 @@ func init() {
 
 	// runCmd
 	runCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
+	runCmd.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing a remote artifact store")
 	runCmd.AddCommand(runListCmd)
 	rootCmd.AddCommand(runCmd)
 
 	// buildCmd
 	buildCmd.Flags().Bool("dummy", false, "Create a dummy bobfile")
 	buildCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
+	buildCmd.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing a remote artifact store")
 	buildCmd.AddCommand(buildListCmd)
 	rootCmd.AddCommand(buildCmd)
 
