@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.20.0
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cli/cli v1.14.0
-	github.com/compose-spec/compose-go v1.0.8
+	github.com/compose-spec/compose-go v1.2.6
 	github.com/deepmap/oapi-codegen v1.10.1
 	github.com/docker/cli v20.10.7+incompatible
 	github.com/docker/compose/v2 v2.2.2
@@ -52,7 +52,6 @@ require (
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
 	github.com/cli/safeexec v1.0.0 // indirect
 	github.com/cloudflare/cfssl v1.6.0 // indirect
-	github.com/compose-spec/godotenv v1.1.1 // indirect
 	github.com/containerd/cgroups v1.0.1 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/containerd v1.5.8 // indirect
