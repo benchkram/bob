@@ -6,6 +6,7 @@ import (
 
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
+	"github.com/benchkram/bob/pkg/shctl"
 )
 
 var ErrInvalidRunType = fmt.Errorf("Invalid run type")
@@ -16,6 +17,10 @@ type Run struct {
 	// ComposePath is the path to a docker-compose file or binary
 	// Default filename is used when empty.
 	Path string
+
+	// Full script with arguments
+	ScriptDirty string `yaml:"script"`
+	script      []string
 
 	// DependsOn run or build tasks
 	DependsOn []string
@@ -66,6 +71,8 @@ func (r *Run) Run(ctx context.Context) (rc ctl.Command, _ error) {
 		return execctl.NewCmd(r.name, r.Path)
 	case RunTypeCompose:
 		return r.composeCommand(ctx)
+	case RunTypeScript:
+		return shctl.New(r.name, r.dir, r.script[0])
 	default:
 		return nil, ErrInvalidRunType
 	}

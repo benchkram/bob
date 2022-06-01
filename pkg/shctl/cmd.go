@@ -4,14 +4,16 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
 	"sync"
 
-	"github.com/Benchkram/errz"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 	"mvdan.cc/sh/expand"
 	"mvdan.cc/sh/interp"
 	"mvdan.cc/sh/syntax"
@@ -31,6 +33,9 @@ type Cmd struct {
 
 	// script to execute
 	script string
+
+	// dir to execute the script
+	dir string
 
 	// ctx used to cancel script execution
 	ctx           context.Context
@@ -53,11 +58,12 @@ type pipe struct {
 }
 
 // NewCmd creates a new Cmd, ready to be started
-func New(name string, script string, args ...string) (c *Cmd, err error) {
+func New(name, dir, script string, args ...string) (c *Cmd, err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	c = &Cmd{
 		name:          name,
 		script:        script,
+		dir:           dir,
 		ctx:           ctx,
 		ctxCancelFunc: cancel,
 		args:          args,
@@ -100,15 +106,21 @@ func (c *Cmd) sh(ctx context.Context, dir string, cmd string) (err error) {
 	// 	}
 	// }
 
+	boblog.Log.Info(fmt.Sprintf("sh: running script dir[%s], script[%s]", dir, c.script))
+
 	p, err := syntax.NewParser().Parse(strings.NewReader(c.script), "")
 	if err != nil {
 		return usererror.Wrapm(err, "shell command parse error")
 	}
 
+	boblog.Log.Info("sh: parser created")
+
 	pr, pw, err := os.Pipe()
 	if err != nil {
 		return err
 	}
+
+	boblog.Log.Info("sh: pipe created")
 
 	s := bufio.NewScanner(pr)
 	s.Split(bufio.ScanLines)
@@ -131,18 +143,27 @@ func (c *Cmd) sh(ctx context.Context, dir string, cmd string) (err error) {
 
 	r, err := interp.New(
 		interp.Params("-e"),
-		interp.Dir(dir),
+		interp.Dir(c.dir),
 
 		interp.Env(expand.ListEnviron(env...)),
 		interp.StdIO(c.stdin.r, c.stdout.w, c.stderr.r),
 	)
 
+	// TODO: remove
+	if err != nil {
+		boblog.Log.Error(err, "new interpreter")
+	}
+	// FIXME: this is not caught
 	errz.Fatal(err)
+
+	boblog.Log.Info("sh: calling run")
 
 	err = r.Run(ctx, p)
 	if err != nil {
 		return usererror.Wrapm(err, "shell command execute error")
 	}
+
+	boblog.Log.Info("sh: running")
 
 	// wait for the reader to finish after closing the write pipe
 	pw.Close()
@@ -183,6 +204,7 @@ func (c *Cmd) Start() error {
 	// start the command
 	go func() {
 		err := c.sh(c.ctx, "dir", "script/cmd")
+		fmt.Fprintln(c.stderr.w, err.Error())
 		c.err <- err
 
 		c.mux.Lock()
