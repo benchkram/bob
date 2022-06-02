@@ -10,7 +10,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/filepathutil"
-	nix2 "github.com/benchkram/bob/pkg/nix"
+	"github.com/benchkram/bob/pkg/nix"
 )
 
 var nixCacheContent = `49ce2a3aa83ef14a:/nix/store/fcd0m68c331j7nkdxvnnpb8ggwsaiqac-bash-5.1-p16
@@ -53,7 +53,7 @@ var _ = Describe("Testing new nix implementation", func() {
 
 			nixCacheFilePath := dir + "customFile"
 
-			fileCache, err := nix2.NewFileCacheStore(nix2.WithCustomPath(nixCacheFilePath))
+			fileCache, err := nix.NewFileCacheStore(nix.WithCustomPath(nixCacheFilePath))
 			Expect(err).NotTo(HaveOccurred())
 
 			nix, err := bob.NewNix(bob.WithNixCache(fileCache))
