@@ -84,7 +84,6 @@ var _ = Describe("Testing new nix implementation", func() {
 			//	capture()
 			ctx := context.Background()
 			err = b.Build(ctx, "run-hello")
-			errz.Log(err)
 			Expect(err).NotTo(HaveOccurred())
 
 			//	Expect(output()).To(ContainSubstring("go version go1.16.15"))
