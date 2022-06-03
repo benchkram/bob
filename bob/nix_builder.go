@@ -25,7 +25,7 @@ func WithCache(cache *nix.Cache) NixOption {
 	}
 }
 
-// NewNix instantiates a new Nix builder instance
+// NewNixBuilder instantiates a new Nix builder instance
 func NewNixBuilder(opts ...NixOption) *NixBuilder {
 	n := &NixBuilder{}
 

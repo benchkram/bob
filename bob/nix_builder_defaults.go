@@ -4,9 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/nix"
-	"github.com/benchkram/errz"
 )
 
 func DefaultNix() (_ *NixBuilder, err error) {

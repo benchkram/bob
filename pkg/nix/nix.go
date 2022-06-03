@@ -1,8 +1,10 @@
 package nix
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -77,16 +79,17 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 func buildPackage(pkgName string, nixpkgs string) (string, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
-	out, err := cmd.CombinedOutput()
+
+	var stdoutBuf bytes.Buffer
+	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
 	if err != nil {
-		if len(out) > 0 {
-			return "", errors.New(string(out))
-		}
 		return "", err
 	}
 
-	fmt.Print(string(out))
-	for _, v := range strings.Split(string(out), "\n") {
+	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
 		if strings.HasPrefix(v, "/nix/store/") {
 			return v, nil
 		}
@@ -100,15 +103,17 @@ func buildPackage(pkgName string, nixpkgs string) (string, error) {
 func buildFile(filePath string, nixpkgs string) (string, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
-	out, err := cmd.CombinedOutput()
+
+	var stdoutBuf bytes.Buffer
+	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
 	if err != nil {
-		if len(out) > 0 {
-			return "", errors.New(string(out))
-		}
 		return "", err
 	}
-	fmt.Print(string(out))
-	for _, v := range strings.Split(string(out), "\n") {
+
+	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
 		if strings.HasPrefix(v, "/nix/store/") {
 			return v, nil
 		}
