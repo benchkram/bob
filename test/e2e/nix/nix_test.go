@@ -1,4 +1,4 @@
-package nix_test
+package nixtest
 
 import (
 	"context"
@@ -34,7 +34,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			err := os.Rename("with_use_nix_false.yaml", "bob.yaml")
 			Expect(err).NotTo(HaveOccurred())
 
-			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNix(bob.NewNix()))
+			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
 			ctx := context.Background()
@@ -49,14 +49,15 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(os.Rename("with_task_dependencies.yaml", "bob.yaml")).NotTo(HaveOccurred())
 
 			nixCacheFilePath := dir + "customFile"
+			defer os.Remove(nixCacheFilePath)
 
-			fileCache, err := nix.NewCacheStore(nix.WithCustomPath(nixCacheFilePath))
+			fileCache, err := nix.NewCacheStore(nix.WithPath(nixCacheFilePath))
 			Expect(err).NotTo(HaveOccurred())
 
-			nix, err := bob.NewNixWithCache(bob.WithCustomCache(fileCache))
+			nixBuilder := bob.NewNixBuilder(bob.WithCache(fileCache))
 			Expect(err).NotTo(HaveOccurred())
 
-			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNix(nix))
+			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNixBuilder(nixBuilder))
 			Expect(err).NotTo(HaveOccurred())
 
 			capture()
@@ -77,7 +78,7 @@ var _ = Describe("Testing new nix implementation", func() {
 		It("running task go version will use go_1_16 from bob file dependency", func() {
 			Expect(os.Rename("with_bob_dependencies.yaml", "bob.yaml")).NotTo(HaveOccurred())
 
-			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNix(bob.NewNix()))
+			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
 			//	capture()
@@ -94,7 +95,7 @@ var _ = Describe("Testing new nix implementation", func() {
 		It("running task go version will use go_1_17 from bob file dependency", func() {
 			Expect(os.Rename("with_ambiguous_deps_in_root.yaml", "bob.yaml")).NotTo(HaveOccurred())
 
-			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNix(bob.NewNix()))
+			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
 			capture()
@@ -110,7 +111,7 @@ var _ = Describe("Testing new nix implementation", func() {
 		It("running task go version will use go_1_17 from task deps", func() {
 			Expect(os.Rename("with_ambiguous_deps_in_task.yaml", "bob.yaml")).NotTo(HaveOccurred())
 
-			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNix(bob.NewNix()))
+			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
 			capture()
@@ -129,7 +130,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			capture()
 
 			ctx := context.Background()
-			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNix(bob.NewNix()))
+			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 			err = b.Build(ctx, "second_level/run-hello-second")
 			Expect(err).NotTo(HaveOccurred())
@@ -137,7 +138,7 @@ var _ = Describe("Testing new nix implementation", func() {
 		})
 
 		It("running task go version from second level directory will use go_1_17 second level task dependencies", func() {
-			b, err := bob.Bob(bob.WithDir(dir+"/second_level"), bob.WithCachingEnabled(false), bob.WithNix(bob.NewNix()))
+			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
 			err = os.Chdir(dir + "/second_level")
@@ -159,7 +160,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(os.Rename("with_second_level_use_nix_false.yaml", "bob.yaml")).NotTo(HaveOccurred())
 			Expect(os.Rename("with_second_level_use_nix_false_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
 
-			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNix(bob.NewNix()))
+			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
 			capture()
@@ -182,7 +183,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(os.Rename("with_use_nix_false_in_parent_true_in_child.yaml", "bob.yaml")).NotTo(HaveOccurred())
 			Expect(os.Rename("with_use_nix_false_in_parent_true_in_child_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
 
-			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNix(bob.NewNix()))
+			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 			capture()
 

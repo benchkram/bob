@@ -1,4 +1,4 @@
-package nix_test
+package nixtest
 
 import (
 	"io"

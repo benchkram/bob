@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/benchkram/errz"
 	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
@@ -25,10 +24,7 @@ func runInstall() {
 	var exitCode int
 	defer func() { os.Exit(exitCode) }()
 
-	nix, err := bob.NewNixWithCache()
-	errz.Fatal(err)
-
-	b, err := bob.Bob(bob.WithNix(nix))
+	b, err := bob.Bob()
 	if err != nil {
 		exitCode = 1
 		boblog.Log.UserError(err)

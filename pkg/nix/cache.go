@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/benchkram/errz"
@@ -24,8 +23,9 @@ type Cache struct {
 
 type CacheOption func(f *Cache)
 
-// WithCustomPath adds a custom file path for the cache
-func WithCustomPath(path string) CacheOption {
+// WithPath adds a custom file path which is used
+// to store cache content on the filesystem.
+func WithPath(path string) CacheOption {
 	return func(n *Cache) {
 		n.path = path
 	}
@@ -36,7 +36,8 @@ func NewCacheStore(opts ...CacheOption) (_ *Cache, err error) {
 	defer errz.Recover(&err)
 
 	c := Cache{
-		db: make(map[string]string),
+		db:   make(map[string]string),
+		path: global.BobNixCacheFile,
 	}
 
 	for _, opt := range opts {
@@ -46,16 +47,7 @@ func NewCacheStore(opts ...CacheOption) (_ *Cache, err error) {
 		opt(&c)
 	}
 
-	var nixCacheFilePath string
-	if c.path == "" {
-		home, err := os.UserHomeDir()
-		errz.Fatal(err)
-		nixCacheFilePath = filepath.Join(home, global.BobCacheNix)
-	} else {
-		nixCacheFilePath = c.path
-	}
-
-	f, err := os.OpenFile(nixCacheFilePath, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile(c.path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	errz.Fatal(err)
 	c.f = f
 
