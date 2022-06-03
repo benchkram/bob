@@ -50,3 +50,9 @@ func WithInsecure(allow bool) Option {
 		b.allowInsecure = allow
 	}
 }
+
+func WithNixBuilder(nix *NixBuilder) Option {
+	return func(b *B) {
+		b.nix = nix
+	}
+}

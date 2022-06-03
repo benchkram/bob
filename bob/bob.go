@@ -46,13 +46,14 @@ type B struct {
 
 	// allowInsecure uses http protocol for accessing the remote artifact store, if any
 	allowInsecure bool
+
+	// Nix builds dependencies for tasks
+	nix *NixBuilder
 }
 
 func newBob(opts ...Option) *B {
 	wd, err := os.Getwd()
-	if err != nil {
-		errz.Fatal(err)
-	}
+	errz.Fatal(err)
 
 	b := &B{
 		dir:           wd,
@@ -130,6 +131,14 @@ func Bob(opts ...Option) (*B, error) {
 			return nil, err
 		}
 		bob.buildInfoStore = bis
+	}
+
+	if bob.nix == nil {
+		nix, err := DefaultNix()
+		if err != nil {
+			return nil, err
+		}
+		bob.nix = nix
 	}
 
 	return bob, nil
