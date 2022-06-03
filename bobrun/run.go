@@ -3,7 +3,9 @@ package bobrun
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
 	"github.com/benchkram/bob/pkg/shctl"
@@ -66,13 +68,16 @@ func New() *Run {
 func (r *Run) Run(ctx context.Context) (rc ctl.Command, _ error) {
 	// fmt.Printf("Creating control for run task [%s]\n", r.name)
 
+	boblog.Log.Info(fmt.Sprintf("bobrun.Run: path[%s] dir[%s]", r.Path, r.dir))
+	cwd := filepath.Join(r.dir, r.Path)
+
 	switch r.Type {
 	case RunTypeBinary:
 		return execctl.NewCmd(r.name, r.Path)
 	case RunTypeCompose:
 		return r.composeCommand(ctx)
 	case RunTypeScript:
-		return shctl.New(r.name, r.dir, r.script[0])
+		return shctl.New(r.name, cwd, r.script[0])
 	default:
 		return nil, ErrInvalidRunType
 	}

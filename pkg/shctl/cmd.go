@@ -106,7 +106,7 @@ func (c *Cmd) sh(ctx context.Context, dir string, cmd string) (err error) {
 	// 	}
 	// }
 
-	boblog.Log.Info(fmt.Sprintf("sh: running script dir[%s], script[%s]", dir, c.script))
+	boblog.Log.Info(fmt.Sprintf("sh: running script dir[%s], script[%s]", c.dir, c.script))
 
 	p, err := syntax.NewParser().Parse(strings.NewReader(c.script), "")
 	if err != nil {
@@ -204,7 +204,9 @@ func (c *Cmd) Start() error {
 	// start the command
 	go func() {
 		err := c.sh(c.ctx, "dir", "script/cmd")
-		fmt.Fprintln(c.stderr.w, err.Error())
+		if err != nil {
+			fmt.Fprintln(c.stderr.w, err.Error())
+		}
 		c.err <- err
 
 		c.mux.Lock()
