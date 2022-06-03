@@ -39,7 +39,7 @@ var (
 
 var (
 	ErrNotImplemented         = fmt.Errorf("Not implemented")
-	ErrBobfileNotFound        = fmt.Errorf("Could not find a Bobfile")
+	ErrBobfileNotFound        = fmt.Errorf("Could not find a bob.yaml")
 	ErrHashesFileDoesNotExist = fmt.Errorf("Hashes file does not exist")
 	ErrTaskHashDoesNotExist   = fmt.Errorf("Task hash does not exist")
 	ErrBobfileExists          = fmt.Errorf("Bobfile exists")
@@ -121,7 +121,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	bobfilePath := filepath.Join(dir, global.BobFileName)
 
 	if !file.Exists(bobfilePath) {
-		return nil, ErrBobfileNotFound
+		return nil, usererror.Wrap(ErrBobfileNotFound)
 	}
 	bin, err := ioutil.ReadFile(bobfilePath)
 	errz.Fatal(err)
