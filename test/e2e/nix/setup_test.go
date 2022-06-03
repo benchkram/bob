@@ -19,6 +19,10 @@ func Bob() (*bob.B, error) {
 	)
 }
 
+// tmpFiles tracks temporarly created files in this tests
+// to be cleaned up at the end.
+var tmpFiles []string
+
 func NixBuilder() (*bob.NixBuilder, error) {
 	file, err := ioutil.TempFile("", ".nix_cache*")
 	if err != nil {
@@ -26,6 +30,8 @@ func NixBuilder() (*bob.NixBuilder, error) {
 	}
 	name := file.Name()
 	file.Close()
+
+	tmpFiles = append(tmpFiles, name)
 
 	cache, err := nix.NewCacheStore(nix.WithPath(name))
 	if err != nil {

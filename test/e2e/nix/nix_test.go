@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 
-	"github.com/benchkram/errz"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -39,7 +38,6 @@ var _ = Describe("Testing new nix implementation", func() {
 
 			ctx := context.Background()
 			err = b.Build(ctx, "build")
-			errz.Log(err)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
