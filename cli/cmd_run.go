@@ -46,7 +46,7 @@ func run(taskname string, noCache, allowInsecure bool) {
 	var err error
 	defer errz.Recover(&err)
 
-	nix, err := bob.NewNix(nil)
+	nix, err := bob.NewNixWithCache()
 	errz.Fatal(err)
 
 	b, err := bob.Bob(

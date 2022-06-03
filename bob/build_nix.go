@@ -6,7 +6,6 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
-	"github.com/benchkram/bob/pkg/cache"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -15,22 +14,21 @@ import (
 // and is used for building tasks dependencies
 type Nix struct {
 	// cache allows caching the dependency to store path
-	cache cache.Cache
+	cache *nix.Cache
 }
 
 type NixOption func(n *Nix)
 
-func WithNixCache(cache cache.Cache) NixOption {
+func WithCustomCache(cache *nix.Cache) NixOption {
 	return func(n *Nix) {
 		n.cache = cache
 	}
 }
 
-// NewNix instantiates a new Nix builder instance
+// NewNixWithCache instantiates a new Nix builder with cached enabled
 // By default it uses a file to cache the mapping between dependencies and their store paths
-// You can override that with WithNixCache option
-func NewNix(opts ...NixOption) (_ *Nix, err error) {
-	defer errz.Recover(&err)
+// You can override that with WithCustomCache option
+func NewNixWithCache(opts ...NixOption) (_ *Nix, err error) {
 	var n Nix
 
 	for _, opt := range opts {
@@ -41,12 +39,26 @@ func NewNix(opts ...NixOption) (_ *Nix, err error) {
 	}
 
 	if n.cache == nil {
-		c, err := nix.NewFileCacheStore()
+		c, err := nix.NewCacheStore()
 		errz.Fatal(err)
 		n.cache = c
 	}
 
 	return &n, nil
+}
+
+// NewNix instantiates a new Nix builder instance
+func NewNix(opts ...NixOption) *Nix {
+	var n Nix
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(&n)
+	}
+
+	return &n
 }
 
 // BuildNixDependenciesInPipeline collects and builds nix-dependencies for a pipeline starting at taskName.

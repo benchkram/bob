@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"github.com/benchkram/errz"
-
-	"github.com/benchkram/bob/pkg/cache"
 )
 
 type Dependency struct {
@@ -35,36 +33,42 @@ func IsInstalled() bool {
 // dependencies can be either a package name ex. php or a path to .nix file
 // nixpkgs can be empty which means it will use local nixpkgs channel
 // or a link to desired revision ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
-func BuildDependencies(deps []Dependency, cache cache.Cache) (_ DependenciesToStorePathMap, err error) {
+func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePathMap, err error) {
 	defer errz.Recover(&err)
 
 	pkgToStorePath := make(DependenciesToStorePathMap)
 
 	for _, v := range deps {
-		key, err := GenerateKey(v)
-		errz.Fatal(err)
+		var key string
 
-		if storePath, ok := cache.Get(key); ok {
+		if cache != nil {
+			key, err = GenerateKey(v)
+			errz.Fatal(err)
+			if storePath, ok := cache.Get(key); ok {
+				pkgToStorePath[v] = StorePath(storePath)
+				continue
+			}
+		}
+
+		if strings.HasSuffix(v.Name, ".nix") {
+			storePath, err := buildFile(v.Name, v.Nixpkgs)
+			if err != nil {
+				return DependenciesToStorePathMap{}, err
+			}
 			pkgToStorePath[v] = StorePath(storePath)
 		} else {
-			if strings.HasSuffix(v.Name, ".nix") {
-				storePath, err := buildFile(v.Name, v.Nixpkgs)
-				if err != nil {
-					return DependenciesToStorePathMap{}, err
-				}
-				pkgToStorePath[v] = StorePath(storePath)
-			} else {
-				storePath, err := buildPackage(v.Name, v.Nixpkgs)
-				if err != nil {
-					return DependenciesToStorePathMap{}, err
-				}
-				pkgToStorePath[v] = StorePath(storePath)
+			storePath, err := buildPackage(v.Name, v.Nixpkgs)
+			if err != nil {
+				return DependenciesToStorePathMap{}, err
 			}
-			key, err := GenerateKey(v)
-			errz.Fatal(err)
+			pkgToStorePath[v] = StorePath(storePath)
+		}
+
+		if cache != nil {
 			err = cache.Save(key, string(pkgToStorePath[v]))
 			errz.Fatal(err)
 		}
+
 	}
 	return pkgToStorePath, nil
 }

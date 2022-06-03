@@ -78,7 +78,7 @@ func runBuild(dummy bool, taskname string, noCache, allowInsecure bool) {
 		return
 	}
 
-	nix, err := bob.NewNix()
+	nix, err := bob.NewNixWithCache()
 	errz.Fatal(err)
 
 	b, err := bob.Bob(

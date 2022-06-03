@@ -25,7 +25,7 @@ func runInstall() {
 	var exitCode int
 	defer func() { os.Exit(exitCode) }()
 
-	nix, err := bob.NewNix()
+	nix, err := bob.NewNixWithCache()
 	errz.Fatal(err)
 
 	b, err := bob.Bob(bob.WithNix(nix))

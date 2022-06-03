@@ -16,26 +16,26 @@ import (
 	"github.com/benchkram/bob/pkg/filehash"
 )
 
-type fileCache struct {
+type Cache struct {
 	db   map[string]string
 	f    *os.File
 	path string
 }
 
-type FileCacheOption func(f *fileCache)
+type CacheOption func(f *Cache)
 
 // WithCustomPath adds a custom file path for the cache
-func WithCustomPath(path string) FileCacheOption {
-	return func(n *fileCache) {
+func WithCustomPath(path string) CacheOption {
+	return func(n *Cache) {
 		n.path = path
 	}
 }
 
-// NewFileCacheStore initialize a Nix cache store inside dir
-func NewFileCacheStore(opts ...FileCacheOption) (_ *fileCache, err error) {
+// NewCacheStore initialize a Nix cache store inside dir
+func NewCacheStore(opts ...CacheOption) (_ *Cache, err error) {
 	defer errz.Recover(&err)
 
-	c := fileCache{
+	c := Cache{
 		db: make(map[string]string),
 	}
 
@@ -75,7 +75,7 @@ func NewFileCacheStore(opts ...FileCacheOption) (_ *fileCache, err error) {
 
 // Get value from cache by its key
 // Additionally also checks if path exists on the system
-func (c *fileCache) Get(key string) (string, bool) {
+func (c *Cache) Get(key string) (string, bool) {
 	path, ok := c.db[key]
 
 	// Assure path exists on the filesystem.
@@ -87,7 +87,7 @@ func (c *fileCache) Get(key string) (string, bool) {
 }
 
 // Save dependency inside the cache with its corresponding store path
-func (c *fileCache) Save(key string, storePath string) (err error) {
+func (c *Cache) Save(key string, storePath string) (err error) {
 	defer errz.Recover(&err)
 
 	if _, err := c.f.Write([]byte(fmt.Sprintf("%s:%s\n", key, storePath))); err != nil {
@@ -100,7 +100,7 @@ func (c *fileCache) Save(key string, storePath string) (err error) {
 }
 
 // Close closes the file used in cache
-func (c *fileCache) Close() error {
+func (c *Cache) Close() error {
 	return c.f.Close()
 }
 
