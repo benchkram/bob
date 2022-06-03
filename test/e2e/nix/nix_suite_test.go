@@ -120,14 +120,3 @@ func output() string {
 
 	return string(b)
 }
-
-type FakeCache struct {
-}
-
-func (f *FakeCache) Get(key string) (string, bool) {
-	return "", false
-}
-
-func (f *FakeCache) Save(key, value string) (err error) {
-	return nil
-}
