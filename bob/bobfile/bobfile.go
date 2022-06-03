@@ -35,7 +35,7 @@ var (
 
 var (
 	ErrNotImplemented         = fmt.Errorf("Not implemented")
-	ErrBobfileNotFound        = fmt.Errorf("Could not find a Bobfile")
+	ErrBobfileNotFound        = fmt.Errorf("Could not find a bob.yaml")
 	ErrHashesFileDoesNotExist = fmt.Errorf("Hashes file does not exist")
 	ErrTaskHashDoesNotExist   = fmt.Errorf("Task hash does not exist")
 	ErrBobfileExists          = fmt.Errorf("Bobfile exists")
