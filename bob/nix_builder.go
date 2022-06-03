@@ -6,27 +6,41 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
-	cache2 "github.com/benchkram/bob/pkg/cache"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
-// Nix builder acts as a wrapper for github.com/benchkram/bob/pkg/nix package
+// NixBuilder acts as a wrapper for github.com/benchkram/bob/pkg/nix package
 // and is used for building tasks dependencies
-type Nix struct {
+type NixBuilder struct {
 	// cache allows caching the dependency to store path
-	cache cache2.Cache
+	cache *nix.Cache
 }
 
-// NewNix instantiates a new Nix builder instance
-func NewNix(cache cache2.Cache) *Nix {
-	var n Nix
-	n.cache = cache
-	return &n
+type NixOption func(n *NixBuilder)
+
+func WithCache(cache *nix.Cache) NixOption {
+	return func(n *NixBuilder) {
+		n.cache = cache
+	}
+}
+
+// NewNixBuilder instantiates a new Nix builder instance
+func NewNixBuilder(opts ...NixOption) *NixBuilder {
+	n := &NixBuilder{}
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(n)
+	}
+
+	return n
 }
 
 // BuildNixDependenciesInPipeline collects and builds nix-dependencies for a pipeline starting at taskName.
-func (n *Nix) BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err error) {
+func (n *NixBuilder) BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err error) {
 	defer errz.Recover(&err)
 
 	if !nix.IsInstalled() {
@@ -41,7 +55,7 @@ func (n *Nix) BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName strin
 
 // BuildNixDependencies builds nix dependencies and prepares the affected tasks
 // by setting the store paths on each task in the given aggregate.
-func (n *Nix) BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline []string) (err error) {
+func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline []string) (err error) {
 	defer errz.Recover(&err)
 
 	if !nix.IsInstalled() {
@@ -86,6 +100,6 @@ func (n *Nix) BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline []string
 }
 
 // BuildDependencies builds the list of all nix deps
-func (n *Nix) BuildDependencies(deps []nix.Dependency) (nix.DependenciesToStorePathMap, error) {
+func (n *NixBuilder) BuildDependencies(deps []nix.Dependency) (nix.DependenciesToStorePathMap, error) {
 	return nix.BuildDependencies(deps, n.cache)
 }

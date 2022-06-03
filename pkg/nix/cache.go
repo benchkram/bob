@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/benchkram/errz"
@@ -16,24 +15,39 @@ import (
 	"github.com/benchkram/bob/pkg/filehash"
 )
 
-type fileCacheStore struct {
-	db map[string]string
-	f  *os.File
+type Cache struct {
+	db   map[string]string
+	f    *os.File
+	path string
 }
 
-// NewFileCacheStore initialize a Nix cache store inside dir
-func NewFileCacheStore() (_ *fileCacheStore, err error) {
+type CacheOption func(f *Cache)
+
+// WithPath adds a custom file path which is used
+// to store cache content on the filesystem.
+func WithPath(path string) CacheOption {
+	return func(n *Cache) {
+		n.path = path
+	}
+}
+
+// NewCacheStore initialize a Nix cache store inside dir
+func NewCacheStore(opts ...CacheOption) (_ *Cache, err error) {
 	defer errz.Recover(&err)
 
-	c := &fileCacheStore{
-		db: make(map[string]string),
+	c := Cache{
+		db:   make(map[string]string),
+		path: global.BobNixCacheFile,
 	}
 
-	home, err := os.UserHomeDir()
-	errz.Fatal(err)
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(&c)
+	}
 
-	nixCacheFile := filepath.Join(home, global.BobCacheNix)
-	f, err := os.OpenFile(nixCacheFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile(c.path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	errz.Fatal(err)
 	c.f = f
 
@@ -48,12 +62,12 @@ func NewFileCacheStore() (_ *fileCacheStore, err error) {
 		errz.Fatal(err)
 	}
 
-	return c, nil
+	return &c, nil
 }
 
 // Get value from cache by its key
 // Additionally also checks if path exists on the system
-func (c *fileCacheStore) Get(key string) (string, bool) {
+func (c *Cache) Get(key string) (string, bool) {
 	path, ok := c.db[key]
 
 	// Assure path exists on the filesystem.
@@ -65,7 +79,7 @@ func (c *fileCacheStore) Get(key string) (string, bool) {
 }
 
 // Save dependency inside the cache with its corresponding store path
-func (c *fileCacheStore) Save(key string, storePath string) (err error) {
+func (c *Cache) Save(key string, storePath string) (err error) {
 	defer errz.Recover(&err)
 
 	if _, err := c.f.Write([]byte(fmt.Sprintf("%s:%s\n", key, storePath))); err != nil {
@@ -78,7 +92,7 @@ func (c *fileCacheStore) Save(key string, storePath string) (err error) {
 }
 
 // Close closes the file used in cache
-func (c *fileCacheStore) Close() error {
+func (c *Cache) Close() error {
 	return c.f.Close()
 }
 

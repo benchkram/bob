@@ -1,4 +1,4 @@
-package nix_test
+package nixtest
 
 import (
 	"io"
@@ -72,6 +72,11 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	err := os.RemoveAll(dir)
 	Expect(err).NotTo(HaveOccurred())
+
+	for _, file := range tmpFiles {
+		err = os.Remove(file)
+		Expect(err).NotTo(HaveOccurred())
+	}
 
 	bob.Version = version
 })

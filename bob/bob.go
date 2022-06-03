@@ -48,14 +48,12 @@ type B struct {
 	allowInsecure bool
 
 	// Nix builds dependencies for tasks
-	nix *Nix
+	nix *NixBuilder
 }
 
 func newBob(opts ...Option) *B {
 	wd, err := os.Getwd()
-	if err != nil {
-		errz.Fatal(err)
-	}
+	errz.Fatal(err)
 
 	b := &B{
 		dir:           wd,
@@ -133,6 +131,14 @@ func Bob(opts ...Option) (*B, error) {
 			return nil, err
 		}
 		bob.buildInfoStore = bis
+	}
+
+	if bob.nix == nil {
+		nix, err := DefaultNix()
+		if err != nil {
+			return nil, err
+		}
+		bob.nix = nix
 	}
 
 	return bob, nil

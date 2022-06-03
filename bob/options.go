@@ -51,7 +51,7 @@ func WithInsecure(allow bool) Option {
 	}
 }
 
-func WithNix(nix *Nix) Option {
+func WithNixBuilder(nix *NixBuilder) Option {
 	return func(b *B) {
 		b.nix = nix
 	}

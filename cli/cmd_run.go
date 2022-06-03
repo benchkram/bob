@@ -10,7 +10,6 @@ import (
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
-	nix2 "github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/bob/tui"
 )
@@ -47,14 +46,9 @@ func run(taskname string, noCache, allowInsecure bool) {
 	var err error
 	defer errz.Recover(&err)
 
-	cache, err := nix2.NewFileCacheStore()
-	errz.Fatal(err)
-	nix := bob.NewNix(cache)
-
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
 		bob.WithInsecure(allowInsecure),
-		bob.WithNix(nix),
 	)
 	errz.Fatal(err)
 

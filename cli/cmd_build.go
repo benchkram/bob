@@ -12,13 +12,11 @@ import (
 	"github.com/benchkram/errz"
 	"github.com/spf13/cobra"
 
-	"github.com/benchkram/bob/pkg/nix"
-	"github.com/benchkram/bob/pkg/usererror"
-
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 var buildCmd = &cobra.Command{
@@ -80,13 +78,9 @@ func runBuild(dummy bool, taskname string, noCache, allowInsecure bool) {
 		return
 	}
 
-	cache, err := nix.NewFileCacheStore()
-	errz.Fatal(err)
-
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
 		bob.WithInsecure(allowInsecure),
-		bob.WithNix(bob.NewNix(cache)),
 	)
 	if err != nil {
 		exitCode = 1

@@ -138,7 +138,7 @@ func isRunTask(name string, aggregate *bobfile.Bobfile) bool {
 // }
 
 // executeBuildTasksInPipeline takes a run task but only executes the dependent build tasks
-func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate *bobfile.Bobfile, nix *Nix) (err error) {
+func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate *bobfile.Bobfile, nix *NixBuilder) (err error) {
 	defer errz.Recover(&err)
 
 	interactive, ok := aggregate.RTasks[runname]

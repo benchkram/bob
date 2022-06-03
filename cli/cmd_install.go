@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/benchkram/errz"
 	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
-	nix2 "github.com/benchkram/bob/pkg/nix"
 )
 
 var installCmd = &cobra.Command{
@@ -26,11 +24,7 @@ func runInstall() {
 	var exitCode int
 	defer func() { os.Exit(exitCode) }()
 
-	cache, err := nix2.NewFileCacheStore()
-	errz.Fatal(err)
-	nix := bob.NewNix(cache)
-
-	b, err := bob.Bob(bob.WithNix(nix))
+	b, err := bob.Bob()
 	if err != nil {
 		exitCode = 1
 		boblog.Log.UserError(err)
