@@ -5,15 +5,17 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/nix"
-
-	. "github.com/onsi/gomega"
 )
 
 func Bob() (*bob.B, error) {
+	nixBuilder, err := NixBuilder()
+	if err != nil {
+		return nil, err
+	}
 	return bob.Bob(
 		bob.WithDir(dir),
 		bob.WithCachingEnabled(false),
-		bob.WithNixBuilder(MustNixBuilder()),
+		bob.WithNixBuilder(nixBuilder),
 	)
 }
 
@@ -31,10 +33,4 @@ func NixBuilder() (*bob.NixBuilder, error) {
 	}
 
 	return bob.NewNixBuilder(bob.WithCache(cache)), nil
-}
-
-func MustNixBuilder() *bob.NixBuilder {
-	n, err := NixBuilder()
-	Expect(err).NotTo(HaveOccurred())
-	return n
 }
