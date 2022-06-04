@@ -171,12 +171,6 @@ func (c *commander) Stop() (err error) {
 	return c.stop()
 }
 
-// Init will provide a call for a command which is meant to run once the commander is up and running
-func (c *commander) Init() (err error) {
-	// Right now the commander itself doesn't have an init command
-	return nil
-}
-
 // stop children, starting from top.
 func (c *commander) stop() (err error) {
 
