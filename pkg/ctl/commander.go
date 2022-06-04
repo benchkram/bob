@@ -160,11 +160,6 @@ func (c *commander) start() (err error) {
 		if err != nil {
 			return err
 		}
-
-		err = ctl.Init()
-		if err != nil {
-			return err
-		}
 	}
 
 	return err

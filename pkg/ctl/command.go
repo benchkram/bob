@@ -8,7 +8,6 @@ type Command interface {
 	Start() error
 	Stop() error
 	Restart() error
-	Init() error
 	Running() bool
 
 	Shutdown() error

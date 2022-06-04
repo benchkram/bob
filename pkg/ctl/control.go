@@ -134,11 +134,6 @@ func (c *control) Restart() (err error) {
 	return nil
 }
 
-// Init - dummy on control
-func (c *control) Init() error {
-	return nil
-}
-
 func (c *control) Control() <-chan Signal {
 	return c.ctl
 }

@@ -56,18 +56,18 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 	}
 
 	// generate run controls to steer the run cmd.
-	runCtls := []ctl.Command{}
+	runCommands := []ctl.Command{}
 	for _, name := range interactiveTasks {
-		interactiveTask := aggregate.RTasks[name]
+		runTask := aggregate.RTasks[name]
 
-		rc, err := interactiveTask.Run(ctx)
+		command, err := runTask.Command(ctx)
 		errz.Fatal(err)
 
-		runCtls = append(runCtls, rc)
+		runCommands = append(runCommands, command)
 	}
 
 	builder := NewBuilder(b, runName, aggregate, executeBuildTasksInPipeline)
-	commander := ctl.NewCommander(ctx, builder, runCtls...)
+	commander := ctl.NewCommander(ctx, builder, runCommands...)
 
 	return commander, nil
 }

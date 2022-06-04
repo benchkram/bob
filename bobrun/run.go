@@ -62,9 +62,9 @@ func New() *Run {
 	return r
 }
 
-// Run creates run cmds and return a channel to ctl it.
-// To shutdown a Run() use a cancable context.
-func (r *Run) Run(ctx context.Context) (rc ctl.Command, err error) {
+// Command creates a run cmd and returns a Command interface to control it.
+// To shutdown a Command() use a cancable context.
+func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 	defer errz.Recover(&err)
 	fmt.Printf("Creating control for run task [%s]\n", r.name)
 
