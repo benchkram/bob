@@ -35,8 +35,6 @@ func (rm RunMap) String() string {
 func (rm RunMap) Sanitize() (err error) {
 	defer errz.Recover(&err)
 
-	// TODO: Sanitize script run tasks here
-
 	for key, task := range rm {
 
 		sanitizedInits := multilinecmd.Split(task.InitDirty)
