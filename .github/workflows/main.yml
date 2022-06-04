@@ -22,6 +22,9 @@ jobs:
       - uses: benchkram/bob-setup-action@v1
         with:
           version: 0.4.0
+      
+      - name: Install nix derivations
+        run: bob install
 
       - name: Check 'go mod tidy'
         run: bob build gomodtidy
@@ -33,7 +36,7 @@ jobs:
         run: bob build
 
       - name: Set Git author name and email address
-        run: git config --global user.name "Bob The Builder" && git config --global user.email "bob@thebuilder.com"
+        run: git config --global user.name "builder" && git config --global user.email "builder@bob.build"
 
       - name: Run tests
         run: bob build test
