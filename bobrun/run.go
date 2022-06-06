@@ -22,10 +22,13 @@ type Run struct {
 	DependsOn []string
 
 	InitDirty string `yaml:"init"`
-	// Init runs run after this task has started
+	// Init runs run after this task has started and `initOnce`conpleted.
 	init []string
 
-	InitOnce bool `yaml:"once"`
+	// InitOnce runs once during the lifetime of a run
+	// after the actual task has started.
+	InitOnceDirty string `yaml:"initOnce"`
+	initOnce      []string
 
 	// didUpdate fires after the run task
 	// did a restart.
@@ -81,7 +84,7 @@ func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 		return nil, ErrInvalidRunType
 	}
 
-	rc, err = r.WrapCommand(ctx, rc)
+	rc, err = r.WrapWithInit(ctx, rc)
 	errz.Fatal(err)
 
 	return rc, nil

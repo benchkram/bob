@@ -19,9 +19,9 @@ import (
 	"mvdan.cc/sh/syntax"
 )
 
-// RunWrapper provides init functionality to be executed after
-// a command has started.
-type RunWrapper struct {
+// Wrapper wraps a run-task to provide init functionality executed after
+// the task started.
+type Wrapper struct {
 	// inner is the wrapped command
 	inner ctl.Command
 
@@ -57,10 +57,10 @@ type pipe struct {
 }
 
 // WrapCommand takes a ctl to add init functionality defined in the run task.
-func (r *Run) WrapCommand(ctx context.Context, rc ctl.Command) (_ ctl.Command, err error) {
+func (r *Run) WrapWithInit(ctx context.Context, rc ctl.Command) (_ ctl.Command, err error) {
 	defer errz.Recover(&err)
 
-	rw := &RunWrapper{
+	rw := &Wrapper{
 		inner: rc,
 		run:   r,
 		ctx:   ctx,
@@ -89,15 +89,15 @@ func (r *Run) WrapCommand(ctx context.Context, rc ctl.Command) (_ ctl.Command, e
 	return rw, nil
 }
 
-func (rw *RunWrapper) Name() string {
+func (rw *Wrapper) Name() string {
 	return rw.inner.Name()
 }
 
-func (rw *RunWrapper) Restart() (err error) {
+func (rw *Wrapper) Restart() (err error) {
 	return rw.inner.Restart()
 }
 
-func (rw *RunWrapper) Start() (err error) {
+func (rw *Wrapper) Start() (err error) {
 	defer errz.Recover(&err)
 
 	err = rw.inner.Start()
@@ -108,21 +108,10 @@ func (rw *RunWrapper) Start() (err error) {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	// Init is called only once if defined so by the run-task.
-	if rw.run.InitOnce {
-		var onceErr error
-		rw.once.Do(
-			func() {
-				onceErr = rw.init()
-			},
-		)
-		return onceErr
-	}
-
 	return rw.init()
 }
 
-func (rw *RunWrapper) Stop() error {
+func (rw *Wrapper) Stop() error {
 	rw.mux.Lock()
 	if rw.initRunning {
 		rw.initCtxCancel()
@@ -138,11 +127,11 @@ func (rw *RunWrapper) Stop() error {
 	return rw.inner.Stop()
 }
 
-func (rw *RunWrapper) Running() bool {
+func (rw *Wrapper) Running() bool {
 	return rw.inner.Running()
 }
 
-func (rw *RunWrapper) Shutdown() (err error) {
+func (rw *Wrapper) Shutdown() (err error) {
 	defer errz.Recover(&err)
 	rw.mux.Lock()
 	if rw.initRunning {
@@ -153,21 +142,24 @@ func (rw *RunWrapper) Shutdown() (err error) {
 	return rw.inner.Shutdown()
 }
 
-func (rw *RunWrapper) Done() <-chan struct{} {
+func (rw *Wrapper) Done() <-chan struct{} {
 	return rw.done
 }
 
-func (rw *RunWrapper) Stdout() io.Reader {
+func (rw *Wrapper) Stdout() io.Reader {
 	return io.MultiReader(rw.inner.Stdout(), rw.stdout.r)
 }
-func (rw *RunWrapper) Stderr() io.Reader {
+func (rw *Wrapper) Stderr() io.Reader {
 	return io.MultiReader(rw.inner.Stderr(), rw.stderr.r)
 }
-func (rw *RunWrapper) Stdin() io.Writer {
+func (rw *Wrapper) Stdin() io.Writer {
 	return rw.inner.Stdin()
 }
 
-func (rw *RunWrapper) init() (err error) {
+// init runs the `initOnce` and `init` cmds.
+// Reacts to the external context and takes care of setting
+// the state of the control.
+func (rw *Wrapper) init() (err error) {
 
 	rw.mux.Lock()
 	defer rw.mux.Unlock()
@@ -190,63 +182,87 @@ func (rw *RunWrapper) init() (err error) {
 		rw.initCtxCancel()
 	}()
 
-	boblog.Log.Info(fmt.Sprintf("Init [%s] ", rw.inner.Name()))
 	go func() {
-		for _, run := range rw.run.init {
-			p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
-			if err != nil {
-				boblog.Log.V(1).Error(err, "shell command parse error")
-				break
-			}
 
-			// FIXME: make run cmds ready for nix integration.
-			env := os.Environ()
+		defer func() {
+			rw.mux.Lock()
+			rw.initRunning = false
+			rw.mux.Unlock()
+			close(rw.initDone)
+		}()
 
-			pr, pw, err := os.Pipe()
-			if err != nil {
-				boblog.Log.V(1).Error(err, "creating a pipe")
-				break
-			}
-
-			s := bufio.NewScanner(pr)
-			s.Split(bufio.ScanLines)
-
-			go func() {
-				for s.Scan() {
-					err := s.Err()
-					if err != nil {
-						return
-					}
-
-					// FIXME: why does printing to Commands stdout not work?
-					fmt.Fprintf(rw.stdout.w, "\t%s\n", aurora.Faint(s.Text()))
-					boblog.Log.V(1).Info(fmt.Sprintf("\t%s", aurora.Faint(s.Text())))
-				}
-			}()
-
-			r, err := interp.New(
-				interp.Params("-e"),
-				interp.Dir(rw.run.dir),
-
-				interp.Env(expand.ListEnviron(env...)),
-				interp.StdIO(os.Stdin, pw, pw),
-				// FIXME: why does this not work?
-				//interp.StdIO(os.Stdin, rw.stdout.w, rw.stderr.w),
+		// InitOnce.
+		if len(rw.run.InitOnce()) > 0 {
+			var onceErr error
+			rw.once.Do(
+				func() {
+					boblog.Log.Info(fmt.Sprintf("InitOnce [%s] ", rw.inner.Name()))
+					onceErr = rw.shexec(ctx, rw.run.InitOnce())
+				},
 			)
-			errz.Fatal(err)
-
-			err = r.Run(ctx, p)
-			if err != nil {
-				boblog.Log.V(1).Error(err, "shell command execute error")
-				break
+			if onceErr != nil {
+				boblog.Log.V(1).Error(onceErr, "")
+				return
 			}
 		}
-		rw.mux.Lock()
-		rw.initRunning = false
-		rw.mux.Unlock()
 
-		close(rw.initDone)
+		// Init.
+		if len(rw.run.Init()) > 0 {
+			boblog.Log.Info(fmt.Sprintf("Init [%s] ", rw.inner.Name()))
+			err = rw.shexec(ctx, rw.run.Init())
+			if err != nil {
+				boblog.Log.V(1).Error(err, "")
+				return
+			}
+		}
 	}()
+
+	return nil
+}
+
+func (rw *Wrapper) shexec(ctx context.Context, cmds []string) (err error) {
+	defer errz.Recover(&err)
+
+	for _, run := range cmds {
+		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
+		errz.Fatal(err)
+
+		// FIXME: make run cmds ready for nix integration.
+		env := os.Environ()
+
+		pr, pw, err := os.Pipe()
+		errz.Fatal(err)
+
+		s := bufio.NewScanner(pr)
+		s.Split(bufio.ScanLines)
+
+		go func() {
+			for s.Scan() {
+				err := s.Err()
+				if err != nil {
+					return
+				}
+
+				// FIXME: why does printing Commands to stdout not work?
+				// fmt.Fprintf(rw.stdout.w, "\t%s\n", aurora.Faint(s.Text()))
+				boblog.Log.V(1).Info(fmt.Sprintf("\t%s", aurora.Faint(s.Text())))
+			}
+		}()
+
+		r, err := interp.New(
+			interp.Params("-e"),
+			interp.Dir(rw.run.dir),
+
+			interp.Env(expand.ListEnviron(env...)),
+			interp.StdIO(os.Stdin, pw, pw),
+			// FIXME: why does this not work?
+			//interp.StdIO(os.Stdin, rw.stdout.w, rw.stderr.w),
+		)
+		errz.Fatal(err)
+
+		err = r.Run(ctx, p)
+		errz.Fatal(err)
+	}
 
 	return nil
 }
