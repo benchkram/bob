@@ -9,9 +9,10 @@ import (
 	"sort"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/filehash"
-	"gopkg.in/yaml.v2"
 )
 
 // HashIn computes a hash containing inputs, environment and the task description.

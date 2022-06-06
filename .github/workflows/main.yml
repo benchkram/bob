@@ -6,8 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-# Using one job for validation to save computing time.
-
 jobs:
   # Verify, lint and run tests
   lint-and-test:
@@ -15,43 +13,30 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
       - name: Install nix
         uses: cachix/install-nix-action@v15
-
-      # # cache go packages, check go sum before install
-      # - name: Cache go modules
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: ~/go/pkg/mod
-      #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      #     restore-keys: ${{ runner.os }}-go-
-
-      - name: Set up Go
-        uses: actions/setup-go@v2
         with:
-          go-version: 1.18
+          nix_path: nixpkgs=channel:nixos-unstable
 
+      - uses: benchkram/bob-setup-action@v1
+        with:
+          version: 0.4.0
+      
+      - name: Install nix derivations
+        run: bob install
 
-      # Check if there are any changes for 'go mod tidy'
-      # TODO: Not sure why this fails from time to time
       - name: Check 'go mod tidy'
-        run: |
-          go mod tidy
-      #     git diff --exit-code go.mod
-
-      - name: Install golangci-lint
-        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.45.2
-
+        run: bob build gomodtidy
+          
       - name: Lint code
-        run: make lint
+        run: bob build lint
 
       - name: Build
-        run: make build
+        run: bob build
 
       - name: Set Git author name and email address
-        run: git config --global user.name "Bob The Builder" && git config --global user.email "bob@thebuilder.com"
-          
+        run: git config --global user.name "builder" && git config --global user.email "builder@bob.build"
+
       - name: Run tests
-        run: | 
-          go test -v ./...
+        run: bob build test

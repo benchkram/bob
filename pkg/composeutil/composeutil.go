@@ -2,15 +2,17 @@ package composeutil
 
 import (
 	"fmt"
-	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/compose-spec/compose-go/loader"
-	"github.com/compose-spec/compose-go/types"
 	"math"
 	"net"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/compose-spec/compose-go/loader"
+	"github.com/compose-spec/compose-go/types"
+
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 type PortConfigs []PortConfig

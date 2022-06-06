@@ -6,16 +6,18 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/benchkram/bob/bob/bobfile"
-	"github.com/benchkram/bob/bob/global"
-	"github.com/benchkram/bob/bobtask"
-	"github.com/benchkram/bob/pkg/boberror"
-	"github.com/benchkram/bob/pkg/file"
-	"github.com/benchkram/bob/pkg/usererror"
-
 	"github.com/benchkram/errz"
 	"github.com/hashicorp/go-version"
 	"github.com/logrusorgru/aurora"
+
+	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/bob/bobfile/project"
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/pkg/boberror"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 var (
@@ -227,6 +229,31 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	}
 	aggregate.Dependencies = make([]string, 0)
 	aggregate.Dependencies = append(aggregate.Dependencies, allDeps...)
+
+	// Initialize remote store in case of a valid remote url / project name
+	if aggregate.Project != "" {
+		projectname, err := project.Parse(aggregate.Project)
+		if err != nil {
+			return nil, err
+		}
+
+		switch projectname.Type() {
+		case project.Local:
+			// Do nothing
+		case project.Remote:
+			// Initialize remote store
+			url, err := projectname.Remote()
+			if err != nil {
+				return nil, err
+			}
+
+			boblog.Log.V(1).Info(fmt.Sprintf("Using remote store: %s", url.String()))
+
+			aggregate.SetRemotestore(bobfile.NewRemotestore(url, b.allowInsecure))
+		}
+	} else {
+		aggregate.Project = aggregate.Dir()
+	}
 
 	return aggregate, aggregate.Verify()
 }

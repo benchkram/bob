@@ -28,9 +28,11 @@ type B struct {
 
 	// local the place to store artifacts localy
 	local store.Store
-	// TODO: add a remote store
-	// remotestore cas.Store
 
+	// remotestore the place to store artifacts remotly
+	remote store.Store
+
+	// buildInfoStore stores build infos for tasks.
 	buildInfoStore buildinfostore.Store
 
 	// readConfig some commands need a fully initialised bob.
@@ -41,17 +43,22 @@ type B struct {
 	// enableCaching allows to save and load artifacts
 	// from the cache Default: true
 	enableCaching bool
+
+	// allowInsecure uses http protocol for accessing the remote artifact store, if any
+	allowInsecure bool
+
+	// Nix builds dependencies for tasks
+	nix *NixBuilder
 }
 
 func newBob(opts ...Option) *B {
 	wd, err := os.Getwd()
-	if err != nil {
-		errz.Fatal(err)
-	}
+	errz.Fatal(err)
 
 	b := &B{
 		dir:           wd,
 		enableCaching: true,
+		allowInsecure: false,
 	}
 
 	for _, opt := range opts {
@@ -126,6 +133,14 @@ func Bob(opts ...Option) (*B, error) {
 		bob.buildInfoStore = bis
 	}
 
+	if bob.nix == nil {
+		nix, err := DefaultNix()
+		if err != nil {
+			return nil, err
+		}
+		bob.nix = nix
+	}
+
 	return bob, nil
 }
 
@@ -153,7 +168,7 @@ func (b *B) read() (err error) {
 	}
 
 	bin, err := ioutil.ReadFile(b.WorkspaceFilePath())
-	errz.Fatal(err, "Failed to read config file")
+	errz.Fatal(err)
 
 	err = yaml.Unmarshal(bin, b)
 	if err != nil {
