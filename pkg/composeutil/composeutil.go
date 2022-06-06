@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/compose-spec/compose-go/loader"
@@ -22,7 +23,7 @@ func (c PortConfigs) String() string {
 
 	for _, cfg := range c {
 		s += fmt.Sprintf(
-			" %5d/%s\t%s\n",
+			" %s/%s\t%s\n",
 			cfg.Port,
 			cfg.Protocol,
 			strings.Join(cfg.Services, ", "),
@@ -57,11 +58,13 @@ func ResolvePortConflicts(conflicts PortConfigs) (PortConfigs, error) {
 			}
 
 			// check the next port
-			port := cfg.Port + 1
-			for {
-				pp := protoPort(port, cfg.Protocol)
+			intPort, _ := strconv.Atoi(cfg.Port)
 
-				if _, ok := protoPortCfgs[pp]; !ok && PortAvailable(port, cfg.Protocol) {
+			port := intPort + 1
+			for {
+				pp := protoPort(fmt.Sprint(port), cfg.Protocol)
+
+				if _, ok := protoPortCfgs[pp]; !ok && PortAvailable(fmt.Sprint(port), cfg.Protocol) {
 					// we found an available port that is not already reserved
 					protoPortCfgs[pp] = true
 					break
@@ -74,7 +77,7 @@ func ResolvePortConflicts(conflicts PortConfigs) (PortConfigs, error) {
 			}
 
 			resolved = append(resolved, PortConfig{
-				Port:         port,
+				Port:         fmt.Sprint(port),
 				OriginalPort: cfg.Port,
 				Protocol:     cfg.Protocol,
 				Services:     []string{service},
@@ -85,8 +88,8 @@ func ResolvePortConflicts(conflicts PortConfigs) (PortConfigs, error) {
 	return resolved, nil
 }
 
-func protoPort(port int, proto string) string {
-	return fmt.Sprintf("%d/%s", port, proto)
+func protoPort(port string, proto string) string {
+	return fmt.Sprintf("%s/%s", port, proto)
 }
 
 func ApplyPortMapping(p *types.Project, mapping PortConfigs) {
@@ -102,8 +105,8 @@ func ApplyPortMapping(p *types.Project, mapping PortConfigs) {
 
 		for j, port := range service.Ports {
 			for _, cfg := range servicePortCfgs {
-				if int(port.Published) == cfg.OriginalPort && port.Protocol == cfg.Protocol {
-					port.Published = uint32(cfg.Port)
+				if port.Published == cfg.OriginalPort && port.Protocol == cfg.Protocol {
+					port.Published = cfg.Port
 					service.Ports[j] = port
 					p.Services[i] = service
 				}
@@ -139,8 +142,8 @@ func HasPortConflicts(cfgs PortConfigs) bool {
 }
 
 type PortConfig struct {
-	Port         int
-	OriginalPort int
+	Port         string
+	OriginalPort string
 	Protocol     string
 	Services     []string
 }
@@ -160,7 +163,7 @@ func ProjectPortConfigs(p *types.Project) PortConfigs {
 }
 
 func portConfigs(proj *types.Project, typ string) PortConfigs {
-	portServices := map[int][]string{}
+	portServices := map[string][]string{}
 
 	// services' order is undefined, sort them
 	services := proj.Services
@@ -170,7 +173,7 @@ func portConfigs(proj *types.Project, typ string) PortConfigs {
 
 	for _, s := range services {
 		for _, spCfg := range s.Ports {
-			port := int(spCfg.Published)
+			port := spCfg.Published
 
 			if spCfg.Protocol == typ {
 				if !PortAvailable(port, typ) && len(portServices[port]) == 0 {
@@ -220,10 +223,10 @@ func ProjectFromConfig(composePath string) (p *types.Project, err error) {
 }
 
 // PortAvailable returns true if the port is not currently in use by the host
-func PortAvailable(port int, proto string) bool {
+func PortAvailable(port string, proto string) bool {
 	switch proto {
 	case "tcp":
-		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		ln, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 		if err != nil {
 			return false
 		}
@@ -232,7 +235,7 @@ func PortAvailable(port int, proto string) bool {
 
 		return true
 	case "udp":
-		ln, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
+		ln, err := net.ListenPacket("udp", fmt.Sprintf(":%s", port))
 		if err != nil {
 			return false
 		}
