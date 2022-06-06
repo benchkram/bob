@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.20.0
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cli/cli v1.14.0
-	github.com/compose-spec/compose-go v1.0.8
+	github.com/compose-spec/compose-go v1.2.7
 	github.com/deepmap/oapi-codegen v1.10.1
 	github.com/docker/cli v20.10.7+incompatible
 	github.com/docker/compose/v2 v2.2.2
@@ -33,7 +33,7 @@ require (
 	github.com/yargevad/filepathx v1.0.0
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99
+	gopkg.in/yaml.v3 v3.0.0
 	mvdan.cc/sh v2.6.4+incompatible
 )
 
@@ -52,7 +52,6 @@ require (
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
 	github.com/cli/safeexec v1.0.0 // indirect
 	github.com/cloudflare/cfssl v1.6.0 // indirect
-	github.com/compose-spec/godotenv v1.1.1 // indirect
 	github.com/containerd/cgroups v1.0.1 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/containerd v1.5.8 // indirect
@@ -92,7 +91,7 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/imdario/mergo v0.3.12 // indirect
+	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jinzhu/gorm v1.9.16 // indirect
