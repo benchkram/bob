@@ -22,8 +22,10 @@ type Run struct {
 	DependsOn []string
 
 	InitDirty string `yaml:"init"`
-	// Init will be run after this task has started
+	// Init runs run after this task has started
 	init []string
+
+	InitOnce bool `yaml:"once"`
 
 	// didUpdate fires after the run task
 	// did a restart.

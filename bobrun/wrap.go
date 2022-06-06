@@ -44,6 +44,9 @@ type RunWrapper struct {
 	// done indicates the cmd has shutdown
 	done chan struct{}
 
+	// once assures that the init is executed only once if defined so by the run-task.
+	once sync.Once
+
 	stdout pipe
 	stderr pipe
 }
@@ -105,7 +108,16 @@ func (rw *RunWrapper) Start() (err error) {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	boblog.Log.Info(fmt.Sprintf("Init [%s] ", rw.inner.Name()))
+	// Init is called only once if defined so by the run-task.
+	if rw.run.InitOnce {
+		var onceErr error
+		rw.once.Do(
+			func() {
+				onceErr = rw.init()
+			},
+		)
+		return onceErr
+	}
 
 	return rw.init()
 }
@@ -156,6 +168,7 @@ func (rw *RunWrapper) Stdin() io.Writer {
 }
 
 func (rw *RunWrapper) init() (err error) {
+
 	rw.mux.Lock()
 	defer rw.mux.Unlock()
 
@@ -177,6 +190,7 @@ func (rw *RunWrapper) init() (err error) {
 		rw.initCtxCancel()
 	}()
 
+	boblog.Log.Info(fmt.Sprintf("Init [%s] ", rw.inner.Name()))
 	go func() {
 		for _, run := range rw.run.init {
 			p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
