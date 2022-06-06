@@ -53,6 +53,7 @@ type pipe struct {
 	w *os.File
 }
 
+// WrapCommand takes a ctl to add init functionality defined in the run task.
 func (r *Run) WrapCommand(ctx context.Context, rc ctl.Command) (_ ctl.Command, err error) {
 	defer errz.Recover(&err)
 
@@ -129,7 +130,8 @@ func (rw *RunWrapper) Running() bool {
 	return rw.inner.Running()
 }
 
-func (rw *RunWrapper) Shutdown() error {
+func (rw *RunWrapper) Shutdown() (err error) {
+	defer errz.Recover(&err)
 	rw.mux.Lock()
 	if rw.initRunning {
 		rw.initCtxCancel()

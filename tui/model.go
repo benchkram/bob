@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/benchkram/errz"
-	"github.com/pkg/errors"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
+	"github.com/pkg/errors"
 
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/ctl"
@@ -98,7 +99,7 @@ type model struct {
 	follow        bool
 	scrollOffset  int
 	ready         bool
-	error error
+	error         error
 }
 
 type tab struct {
