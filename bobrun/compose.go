@@ -53,8 +53,6 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 			switch <-rc.Control() {
 			case ctl.Start:
 				err = ctler.Up(ctx)
-				// TODO: ?
-				errz.Log(err)
 				if err != nil {
 					rc.EmitError(err)
 				} else {
@@ -62,8 +60,6 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 				}
 			case ctl.Stop:
 				err = ctler.Down(ctx)
-				// TODO: ?
-				errz.Log(err)
 				if err != nil {
 					rc.EmitError(err)
 				} else {
