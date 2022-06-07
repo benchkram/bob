@@ -55,6 +55,7 @@ func (t *TUI) Start(cmder ctl.Commander) {
 
 	programEvts := make(chan interface{}, 1)
 
+	// Create a bubletea program which takes control over stdout.
 	t.prog = tea.NewProgram(
 		newModel(cmder, t.events, programEvts, t.buffer),
 		tea.WithAltScreen(),

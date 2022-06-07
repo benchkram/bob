@@ -346,6 +346,26 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 		},
 	}
 
+	bobfile.RTasks["withinitslow"] = &bobrun.Run{
+		Type: bobrun.RunTypeBinary,
+		Path: "./run",
+		DependsOn: []string{
+			"all",
+		},
+		InitOnceDirty: "echo initstartOnce\nsleep 1s\ntouch initfile",
+		InitDirty:     "echo initstart\nsleep 1s\ntouch initfile",
+	}
+
+	bobfile.RTasks["withinitfast"] = &bobrun.Run{
+		Type: bobrun.RunTypeBinary,
+		Path: "./run",
+		DependsOn: []string{
+			"all",
+		},
+		InitOnceDirty: "echo initstartOnce\ntouch initfile",
+		InitDirty:     "echo initstart\ntouch initfile",
+	}
+
 	bobfile.BTasks["print"] = bobtask.Task{
 		CmdDirty: "echo ${HELLOWORLD}",
 	}
