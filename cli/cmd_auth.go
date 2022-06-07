@@ -223,7 +223,7 @@ func runAuthContextList() (err error) {
 	for _, c := range ctxs {
 		var curr string
 		if c.Current {
-			curr = fmt.Sprintf(" (current)")
+			curr = " (current)"
 		}
 		boblog.Log.V(1).Info(fmt.Sprint(c.Name, curr))
 	}

@@ -16,7 +16,6 @@ type I interface {
 
 type c struct {
 	endpoint            string
-	token               string
 	client              *generated.Client
 	clientWithResponses *generated.ClientWithResponses
 }
