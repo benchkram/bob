@@ -21,14 +21,16 @@ type Run struct {
 	// DependsOn run or build tasks
 	DependsOn []string
 
+	// InitDirty runs run after this task has started and `initOnce`conpleted.
 	InitDirty string `yaml:"init"`
-	// Init runs run after this task has started and `initOnce`conpleted.
+	// init see InitDirty
 	init []string
 
-	// InitOnce runs once during the lifetime of a run
+	// InitOnceDirty runs once during the lifetime of a run
 	// after the actual task has started.
 	InitOnceDirty string `yaml:"initOnce"`
-	initOnce      []string
+	// initOnce see InitOnceDirty
+	initOnce []string
 
 	// didUpdate fires after the run task
 	// did a restart.
@@ -68,7 +70,7 @@ func New() *Run {
 }
 
 // Command creates a run cmd and returns a Command interface to control it.
-// To shutdown a Command() use a cancable context.
+// To shutdown a Command() use a cancelable context.
 func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 	defer errz.Recover(&err)
 	fmt.Printf("Creating control for run task [%s]\n", r.name)

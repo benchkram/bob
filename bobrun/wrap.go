@@ -19,9 +19,9 @@ import (
 	"mvdan.cc/sh/syntax"
 )
 
-// Wrapper wraps a run-task to provide init functionality executed after
+// WithInit wraps a run-task to provide init functionality executed after
 // the task started.
-type Wrapper struct {
+type WithInit struct {
 	// inner is the wrapped command
 	inner ctl.Command
 
@@ -60,7 +60,7 @@ type pipe struct {
 func (r *Run) WrapWithInit(ctx context.Context, rc ctl.Command) (_ ctl.Command, err error) {
 	defer errz.Recover(&err)
 
-	rw := &Wrapper{
+	rw := &WithInit{
 		inner: rc,
 		run:   r,
 		ctx:   ctx,
@@ -89,15 +89,15 @@ func (r *Run) WrapWithInit(ctx context.Context, rc ctl.Command) (_ ctl.Command, 
 	return rw, nil
 }
 
-func (rw *Wrapper) Name() string {
+func (rw *WithInit) Name() string {
 	return rw.inner.Name()
 }
 
-func (rw *Wrapper) Restart() (err error) {
+func (rw *WithInit) Restart() (err error) {
 	return rw.inner.Restart()
 }
 
-func (rw *Wrapper) Start() (err error) {
+func (rw *WithInit) Start() (err error) {
 	defer errz.Recover(&err)
 
 	err = rw.inner.Start()
@@ -111,7 +111,7 @@ func (rw *Wrapper) Start() (err error) {
 	return rw.init()
 }
 
-func (rw *Wrapper) Stop() error {
+func (rw *WithInit) Stop() error {
 	rw.mux.Lock()
 	if rw.initRunning {
 		rw.initCtxCancel()
@@ -127,11 +127,11 @@ func (rw *Wrapper) Stop() error {
 	return rw.inner.Stop()
 }
 
-func (rw *Wrapper) Running() bool {
+func (rw *WithInit) Running() bool {
 	return rw.inner.Running()
 }
 
-func (rw *Wrapper) Shutdown() (err error) {
+func (rw *WithInit) Shutdown() (err error) {
 	defer errz.Recover(&err)
 	rw.mux.Lock()
 	if rw.initRunning {
@@ -142,24 +142,24 @@ func (rw *Wrapper) Shutdown() (err error) {
 	return rw.inner.Shutdown()
 }
 
-func (rw *Wrapper) Done() <-chan struct{} {
+func (rw *WithInit) Done() <-chan struct{} {
 	return rw.done
 }
 
-func (rw *Wrapper) Stdout() io.Reader {
+func (rw *WithInit) Stdout() io.Reader {
 	return io.MultiReader(rw.inner.Stdout(), rw.stdout.r)
 }
-func (rw *Wrapper) Stderr() io.Reader {
+func (rw *WithInit) Stderr() io.Reader {
 	return io.MultiReader(rw.inner.Stderr(), rw.stderr.r)
 }
-func (rw *Wrapper) Stdin() io.Writer {
+func (rw *WithInit) Stdin() io.Writer {
 	return rw.inner.Stdin()
 }
 
 // init runs the `initOnce` and `init` cmds.
 // Reacts to the external context and takes care of setting
 // the state of the control.
-func (rw *Wrapper) init() (err error) {
+func (rw *WithInit) init() (err error) {
 
 	rw.mux.Lock()
 	defer rw.mux.Unlock()
@@ -220,7 +220,7 @@ func (rw *Wrapper) init() (err error) {
 	return nil
 }
 
-func (rw *Wrapper) shexec(ctx context.Context, cmds []string) (err error) {
+func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 	defer errz.Recover(&err)
 
 	for _, run := range cmds {
