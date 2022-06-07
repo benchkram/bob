@@ -11,7 +11,10 @@ import (
 	"github.com/benchkram/bob/bobauth"
 )
 
-// var ErrBuildInfoDoesNotExist = fmt.Errorf("build info does not exist")
+var (
+	ErrNotFound      = errors.New("not found")
+	ErrAlreadyExists = errors.New("already exists")
+)
 
 type s struct {
 	dir        string
@@ -68,7 +71,7 @@ func (s *s) Context(name string) (ctx bobauth.AuthContext, err error) {
 		}
 	}
 
-	errz.Fatal(errors.New("context not found"))
+	errz.Fatal(ErrNotFound)
 	return
 }
 
@@ -87,7 +90,7 @@ func (s *s) CreateContext(name, token string) (err error) {
 	}
 
 	if exists {
-		errz.Fatal(errors.New("context already exists"))
+		errz.Fatal(ErrAlreadyExists)
 	}
 
 	ctxs = append(ctxs, &YamlAuthContext{
@@ -110,10 +113,9 @@ func (s *s) DeleteContext(name string) (err error) {
 			found = true
 
 			// remove this context
-
 			ctxs = append(ctxs[:i], ctxs[i+1:]...)
 			if c.Current && len(ctxs) > 0 {
-				// mark the next context as current
+				// mark the next context as current (if any left)
 				ctxs[i].Current = true
 			}
 
@@ -122,7 +124,7 @@ func (s *s) DeleteContext(name string) (err error) {
 	}
 
 	if !found {
-		errz.Fatal(errors.New("context not found"))
+		errz.Fatal(ErrNotFound)
 	}
 
 	return s.save(ctxs)
@@ -143,7 +145,7 @@ func (s *s) CurrentContext() (c bobauth.AuthContext, err error) {
 		}
 	}
 
-	return bobauth.AuthContext{}, errors.New("current context not set")
+	return bobauth.AuthContext{}, ErrNotFound
 }
 
 func (s *s) SetCurrentContext(name string) (err error) {
@@ -160,7 +162,7 @@ func (s *s) SetCurrentContext(name string) (err error) {
 	}
 
 	if !exists {
-		errz.Fatal(errors.New("context doesn't exist"))
+		errz.Fatal(ErrNotFound)
 	}
 
 	for _, c := range ctxs {
@@ -190,7 +192,7 @@ func (s *s) UpdateContext(name, token string) (err error) {
 	}
 
 	if !found {
-		errz.Fatal(errors.New("context doesn't exist"))
+		errz.Fatal(ErrNotFound)
 	}
 
 	return s.save(ctxs)
