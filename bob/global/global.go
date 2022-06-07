@@ -11,6 +11,7 @@ const (
 
 // Cache directory
 const BobCacheDir = ".bobcache"
+const BobNixCacheFile = ".nix_cache"
 
 var (
 	BobCacheBuildinfoDir       = filepath.Join(BobCacheDir, "buildinfos")
@@ -18,5 +19,5 @@ var (
 	BobCacheArtifactsDir       = filepath.Join(BobCacheDir, "artifacts")
 	BobAuthStoreDir            = filepath.Join(BobCacheDir, "auth")
 
-	BobCacheNix = filepath.Join(BobCacheDir, ".nix_cache")
+	BobCacheNixFileName = filepath.Join(BobCacheDir, BobNixCacheFile)
 )
