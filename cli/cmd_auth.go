@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	"github.com/benchkram/errz"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 var AuthCmd = &cobra.Command{
@@ -33,7 +35,10 @@ var AuthContextCreateCmd = &cobra.Command{
 		}
 
 		token, err := cmd.Flags().GetString("token")
-		errz.Fatal(err)
+		if err != nil {
+			boblog.Log.UserError(errors.WithMessage(err, "failed to parse token"))
+			return
+		}
 
 		if name == "" || token == "" {
 			err := cmd.Help()
@@ -41,7 +46,11 @@ var AuthContextCreateCmd = &cobra.Command{
 		}
 
 		err = runAuthContextCreate(name, token)
-		errz.Fatal(err)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
 	},
 }
 
@@ -58,7 +67,10 @@ var AuthContextUpdateCmd = &cobra.Command{
 		}
 
 		token, err := cmd.Flags().GetString("token")
-		errz.Fatal(err)
+		if err != nil {
+			boblog.Log.UserError(errors.WithMessage(err, "failed to parse token"))
+			return
+		}
 
 		if name == "" || token == "" {
 			err := cmd.Help()
@@ -66,7 +78,11 @@ var AuthContextUpdateCmd = &cobra.Command{
 		}
 
 		err = runAuthContextUpdate(name, token)
-		errz.Fatal(err)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
 	},
 }
 
@@ -88,7 +104,11 @@ var AuthContextDeleteCmd = &cobra.Command{
 		}
 
 		err := runAuthContextDelete(name)
-		errz.Fatal(err)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
 	},
 }
 
@@ -110,7 +130,11 @@ var AuthContextSwitchCmd = &cobra.Command{
 		}
 
 		err := runAuthContextSwitch(name)
-		errz.Fatal(err)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
 	},
 }
 
@@ -121,7 +145,11 @@ var AuthContextListCmd = &cobra.Command{
 	Aliases: []string{"ls"},
 	Run: func(cmd *cobra.Command, args []string) {
 		err := runAuthContextList()
-		errz.Fatal(err)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
 	},
 }
 
