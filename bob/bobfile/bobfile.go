@@ -256,7 +256,13 @@ func BobfileRead(dir string) (_ *Bobfile, err error) {
 	err = b.Validate()
 	errz.Fatal(err)
 
-	return b, b.BTasks.Sanitize()
+	err = b.BTasks.Sanitize()
+	errz.Fatal(err)
+
+	err = b.RTasks.Sanitize()
+	errz.Fatal(err)
+
+	return b, nil
 }
 
 // BobfileReadPlain reads a bobfile.
