@@ -3,15 +3,15 @@ package cli
 import (
 	"context"
 
-	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/benchkram/bob/tui"
+	"github.com/benchkram/errz"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/global"
-	"github.com/benchkram/errz"
-	"github.com/spf13/cobra"
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/bob/tui"
 )
 
 var runCmd = &cobra.Command{
@@ -28,7 +28,10 @@ var runCmd = &cobra.Command{
 		noCache, err := cmd.Flags().GetBool("no-cache")
 		errz.Fatal(err)
 
-		run(taskname, noCache)
+		allowInsecure, err := cmd.Flags().GetBool("insecure")
+		errz.Fatal(err)
+
+		run(taskname, noCache, allowInsecure)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getRunTasks()
@@ -39,28 +42,35 @@ var runCmd = &cobra.Command{
 	},
 }
 
-func run(taskname string, noCache bool) {
-	var err error
-	defer errz.Recover(&err)
+func run(taskname string, noCache bool, allowInsecure bool) {
+	var exitCode int
+	defer func() {
+		exit(exitCode)
+	}()
+	defer errz.Recover()
 
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
+		bob.WithInsecure(allowInsecure),
 	)
-	errz.Fatal(err)
+	if err != nil {
+		exitCode = 1
+		errz.Fatal(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	t, err := tui.New()
-	if err != nil {
-		errz.Log(err)
-
-		return
-	}
 	defer t.Restore()
+	if err != nil {
+		exitCode = 1
+		errz.Fatal(err)
+	}
 
 	commander, err := b.Run(ctx, taskname)
 	if err != nil {
+		exitCode = 1
 		switch err {
 		case bob.ErrNoRebuildRequired:
 		default:

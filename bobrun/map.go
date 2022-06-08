@@ -31,15 +31,14 @@ func (rm RunMap) String() string {
 }
 
 // Sanitize run map and write filtered & sanitized
-// propertys from dirty members to plain (e.g. dirtyInit -> init)
+// properties from dirty members to plain (e.g. dirtyInit -> init)
 func (rm RunMap) Sanitize() (err error) {
 	defer errz.Recover(&err)
 
 	for key, task := range rm {
-
-		sanitizedScript := multilinecmd.Split(task.ScriptDirty)
-		task.script = sanitizedScript
-
+		task.init = multilinecmd.Split(task.InitDirty)
+		task.initOnce = multilinecmd.Split(task.InitOnceDirty)
+		task.script = multilinecmd.Split(task.ScriptDirty)
 		rm[key] = task
 	}
 

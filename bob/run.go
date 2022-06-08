@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/ctl"
-	"github.com/benchkram/errz"
 )
 
 // Examples of possible interactive usecase
@@ -51,23 +52,23 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 
 	// build dependencies & main runTask
 	for _, task := range interactiveTasks {
-		err = executeBuildTasksInPipeline(ctx, task, aggregate)
+		err = executeBuildTasksInPipeline(ctx, task, aggregate, b.nix)
 		errz.Fatal(err)
 	}
 
 	// generate run controls to steer the run cmd.
-	runCtls := []ctl.Command{}
+	runCommands := []ctl.Command{}
 	for _, name := range interactiveTasks {
-		interactiveTask := aggregate.RTasks[name]
+		runTask := aggregate.RTasks[name]
 
-		rc, err := interactiveTask.Run(ctx)
+		command, err := runTask.Command(ctx)
 		errz.Fatal(err)
 
-		runCtls = append(runCtls, rc)
+		runCommands = append(runCommands, command)
 	}
 
 	builder := NewBuilder(b, runName, aggregate, executeBuildTasksInPipeline)
-	commander := ctl.NewCommander(ctx, builder, runCtls...)
+	commander := ctl.NewCommander(ctx, builder, runCommands...)
 
 	return commander, nil
 }
@@ -137,7 +138,7 @@ func isRunTask(name string, aggregate *bobfile.Bobfile) bool {
 // }
 
 // executeBuildTasksInPipeline takes a run task but only executes the dependent build tasks
-func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate *bobfile.Bobfile) (err error) {
+func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate *bobfile.Bobfile, nix *NixBuilder) (err error) {
 	defer errz.Recover(&err)
 
 	interactive, ok := aggregate.RTasks[runname]
@@ -155,10 +156,12 @@ func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate 
 	}
 
 	// Build nix dependencies
-	fmt.Println("Building nix dependencies...")
-	err = BuildNixDependencies(aggregate, buildTasks)
-	errz.Fatal(err)
-	fmt.Println("Succeded building nix dependencies")
+	if nix != nil {
+		fmt.Println("Building nix dependencies...")
+		err = nix.BuildNixDependencies(aggregate, buildTasks)
+		errz.Fatal(err)
+		fmt.Println("Succeded building nix dependencies")
+	}
 
 	// Run dependent build tasks
 	// before starting the run task

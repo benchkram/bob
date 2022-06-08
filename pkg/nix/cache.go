@@ -6,33 +6,48 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
+
+	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filehash"
-	"github.com/benchkram/errz"
 )
 
-type cacheStore struct {
-	db map[string]string
-	f  *os.File
+type Cache struct {
+	db   map[string]string
+	f    *os.File
+	path string
+}
+
+type CacheOption func(f *Cache)
+
+// WithPath adds a custom file path which is used
+// to store cache content on the filesystem.
+func WithPath(path string) CacheOption {
+	return func(n *Cache) {
+		n.path = path
+	}
 }
 
 // NewCacheStore initialize a Nix cache store inside dir
-func NewCacheStore() (_ *cacheStore, err error) {
+func NewCacheStore(opts ...CacheOption) (_ *Cache, err error) {
 	defer errz.Recover(&err)
 
-	c := &cacheStore{
-		db: make(map[string]string),
+	c := Cache{
+		db:   make(map[string]string),
+		path: global.BobNixCacheFile,
 	}
 
-	home, err := os.UserHomeDir()
-	errz.Fatal(err)
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(&c)
+	}
 
-	nixCacheFile := filepath.Join(home, global.BobCacheNix)
-	f, err := os.OpenFile(nixCacheFile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile(c.path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	errz.Fatal(err)
 	c.f = f
 
@@ -47,12 +62,12 @@ func NewCacheStore() (_ *cacheStore, err error) {
 		errz.Fatal(err)
 	}
 
-	return c, nil
+	return &c, nil
 }
 
 // Get value from cache by its key
 // Additionally also checks if path exists on the system
-func (c *cacheStore) Get(key string) (string, bool) {
+func (c *Cache) Get(key string) (string, bool) {
 	path, ok := c.db[key]
 
 	// Assure path exists on the filesystem.
@@ -64,10 +79,8 @@ func (c *cacheStore) Get(key string) (string, bool) {
 }
 
 // Save dependency inside the cache with its corresponding store path
-func (c *cacheStore) Save(dependency Dependency, storePath string) (err error) {
+func (c *Cache) Save(key string, storePath string) (err error) {
 	defer errz.Recover(&err)
-
-	key, err := c.generateKey(dependency)
 
 	if _, err := c.f.Write([]byte(fmt.Sprintf("%s:%s\n", key, storePath))); err != nil {
 		_ = c.f.Close() // ignore error; Write error takes precedence
@@ -78,31 +91,16 @@ func (c *cacheStore) Save(dependency Dependency, storePath string) (err error) {
 	return nil
 }
 
-// FilterCachedDependencies will filter out dependencies which are already cached
-func (c *cacheStore) FilterCachedDependencies(deps []Dependency) (_ []Dependency, err error) {
-	defer errz.Recover(&err)
-
-	notCached := make([]Dependency, 0)
-	for _, v := range deps {
-		key, err := c.generateKey(v)
-		errz.Fatal(err)
-
-		if _, exists := c.Get(key); !exists {
-			notCached = append(notCached, v)
-		}
-	}
-	return notCached, nil
-}
-
 // Close closes the file used in cache
-func (c *cacheStore) Close() error {
+func (c *Cache) Close() error {
 	return c.f.Close()
 }
 
-// generateKey generates key from the cache
-// if it's a file then will hash the nixpkgs + file contents
+// GenerateKey generates key for the cache for a Dependency
+//
+// if it's a .nix file it will hash the nixpkgs + file contents
 // if it's a package name will hash the packageName:nixpkgs content
-func (c *cacheStore) generateKey(dependency Dependency) (_ string, err error) {
+func GenerateKey(dependency Dependency) (_ string, err error) {
 	defer errz.Recover(&err)
 	var h []byte
 

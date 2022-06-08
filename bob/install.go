@@ -3,8 +3,10 @@ package bob
 import (
 	"errors"
 	"fmt"
-	"github.com/benchkram/bob/pkg/nix"
+
 	"github.com/benchkram/errz"
+
+	"github.com/benchkram/bob/pkg/nix"
 )
 
 func (b B) Install() (err error) {
@@ -39,7 +41,7 @@ func (b B) Install() (err error) {
 
 	if len(allDeps) > 0 {
 		fmt.Println("Building nix dependencies...")
-		_, err := nix.BuildDependencies(allDeps)
+		_, err := b.nix.BuildDependencies(allDeps)
 		if err != nil {
 			return err
 		}

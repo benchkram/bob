@@ -15,7 +15,6 @@ const composeFileDefault = "docker-compose.yml"
 
 func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 	defer errz.Recover(&err)
-
 	path := r.Path
 	if path == "" {
 		path = composeFileDefault
@@ -49,7 +48,6 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 	errz.Fatal(err)
 
 	rc := ctl.New(r.name, 1, ctler.Stdout(), ctler.Stderr(), ctler.Stdin())
-
 	go func() {
 		for {
 			switch <-rc.Control() {

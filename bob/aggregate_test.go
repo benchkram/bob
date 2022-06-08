@@ -3,14 +3,14 @@ package bob
 import (
 	"fmt"
 	"io/ioutil"
+	_ "net/http/pprof"
 	"os"
 	"testing"
 
-	_ "net/http/pprof"
-
-	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/errz"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/benchkram/bob/bob/bobfile"
 )
 
 var result *bobfile.Bobfile
