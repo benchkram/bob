@@ -12,6 +12,7 @@ import (
 
 	"github.com/compose-spec/compose-go/loader"
 	"github.com/compose-spec/compose-go/types"
+	"github.com/docker/compose/v2/pkg/api"
 
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -217,6 +218,18 @@ func ProjectFromConfig(composePath string) (p *types.Project, err error) {
 
 	if p.Name == "" {
 		p.Name = strings.ReplaceAll(composePath, "/", "-")
+	}
+
+	for i, s := range p.Services {
+		s.CustomLabels = map[string]string{
+			api.ProjectLabel:     p.Name,
+			api.ServiceLabel:     s.Name,
+			api.VersionLabel:     api.ComposeVersion,
+			api.WorkingDirLabel:  p.WorkingDir,
+			api.ConfigFilesLabel: strings.Join(p.ComposeFiles, ","),
+			api.OneoffLabel:      "False",
+		}
+		p.Services[i] = s
 	}
 
 	return p, nil
