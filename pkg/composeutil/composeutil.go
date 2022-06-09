@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"math"
 	"net"
-	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/compose-spec/compose-go/loader"
+	"github.com/compose-spec/compose-go/cli"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/compose/v2/pkg/api"
 
@@ -201,23 +199,14 @@ func portConfigs(proj *types.Project, typ string) PortConfigs {
 
 // ProjectFromConfig loads a docker-compose config file into a compose Project
 func ProjectFromConfig(composePath string) (p *types.Project, err error) {
-	b, err := os.ReadFile(composePath)
+	opts, err := cli.NewProjectOptions([]string{composePath})
 	if err != nil {
-		return nil, err
+		return nil, usererror.Wrapm(err, "error ")
 	}
 
-	p, err = loader.Load(types.ConfigDetails{
-		WorkingDir: filepath.Dir(composePath),
-		ConfigFiles: []types.ConfigFile{
-			{Filename: composePath, Content: b},
-		},
-	})
+	p, err = cli.ProjectFromOptions(opts)
 	if err != nil {
 		return nil, usererror.Wrapm(err, "error loading docker-compose file")
-	}
-
-	if p.Name == "" {
-		p.Name = strings.ReplaceAll(composePath, "/", "-")
 	}
 
 	for i, s := range p.Services {
