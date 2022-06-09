@@ -2,9 +2,11 @@ package composectl
 
 import (
 	"fmt"
+	"io"
+	"sync"
+
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/logrusorgru/aurora"
-	"io"
 )
 
 var colorPool = []aurora.Color{
@@ -18,6 +20,7 @@ var colorPool = []aurora.Color{
 
 type logger struct {
 	writer          io.Writer
+	mutex           sync.Mutex
 	containerColors map[string]aurora.Color
 }
 
@@ -43,13 +46,19 @@ func (l *logger) colorize(cid string) string {
 }
 
 func (l *logger) Log(_, container, msg string) {
+	l.mutex.Lock()
 	_, _ = l.writer.Write([]byte(fmt.Sprintf("[%s] %s\n", l.colorize(container), msg)))
+	l.mutex.Unlock()
 }
 
 func (l *logger) Status(container, msg string) {
+	l.mutex.Lock()
 	_, _ = l.writer.Write([]byte(fmt.Sprintf("[%s] %s\n", l.colorize(container), msg)))
+	l.mutex.Unlock()
 }
 
 func (l *logger) Register(container string) {
+	l.mutex.Lock()
 	_, _ = l.writer.Write([]byte(fmt.Sprintf("[%s] registered\n", l.colorize(container))))
+	l.mutex.Unlock()
 }

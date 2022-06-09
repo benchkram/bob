@@ -36,7 +36,10 @@ type R struct {
 }
 
 func NewRegistryClient() RegistryClient {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+	)
 	if err != nil {
 		errz.Fatal(err)
 	}
