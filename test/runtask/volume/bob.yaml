@@ -1,0 +1,6 @@
+version: 0
+build:
+run:
+  run:
+    type: compose
+    path: docker-compose.yml

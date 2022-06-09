@@ -5,12 +5,3 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
-  postgres:
-    image: postgres:13.4-alpine
-    container_name: postgres
-    restart: unless-stopped
-    tmpfs:
-      - /var/lib/postgres/data
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ./services/postgres/initdb.sh:/docker-entrypoint-initdb.d/initdb.sh
