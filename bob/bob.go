@@ -51,7 +51,7 @@ type B struct {
 	// nix builds dependencies for tasks
 	nix *NixBuilder
 
-	// authStore is used to store authentication credentials for artifact sync with remote stores
+	// authStore is used to store authentication credentials for remote store
 	authStore *auth.Store
 }
 
