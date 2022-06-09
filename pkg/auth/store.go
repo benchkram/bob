@@ -7,8 +7,6 @@ import (
 
 	"github.com/benchkram/errz"
 	"gopkg.in/yaml.v3"
-
-	"github.com/benchkram/bob/bobauth"
 )
 
 var (
@@ -38,15 +36,15 @@ func New(dir string) *Store {
 	return s
 }
 
-func (s *Store) Contexts() (names []bobauth.AuthContext, err error) {
+func (s *Store) Contexts() (names []Context, err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
 	errz.Fatal(err)
 
-	names = []bobauth.AuthContext{}
+	names = []Context{}
 	for _, c := range ctxs {
-		names = append(names, bobauth.AuthContext{
+		names = append(names, Context{
 			Name:    c.Name,
 			Token:   c.Token,
 			Current: c.Current,
@@ -56,7 +54,7 @@ func (s *Store) Contexts() (names []bobauth.AuthContext, err error) {
 	return names, nil
 }
 
-func (s *Store) Context(name string) (ctx bobauth.AuthContext, err error) {
+func (s *Store) Context(name string) (ctx Context, err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
@@ -64,7 +62,7 @@ func (s *Store) Context(name string) (ctx bobauth.AuthContext, err error) {
 
 	for _, c := range ctxs {
 		if c.Name == name {
-			return bobauth.AuthContext{
+			return Context{
 				Name:  c.Name,
 				Token: c.Token,
 			}, nil
@@ -130,7 +128,7 @@ func (s *Store) DeleteContext(name string) (err error) {
 	return s.save(ctxs)
 }
 
-func (s *Store) CurrentContext() (c bobauth.AuthContext, err error) {
+func (s *Store) CurrentContext() (c Context, err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
@@ -138,14 +136,14 @@ func (s *Store) CurrentContext() (c bobauth.AuthContext, err error) {
 
 	for _, c := range ctxs {
 		if c.Current {
-			return bobauth.AuthContext{
+			return Context{
 				Name:  c.Name,
 				Token: c.Token,
 			}, nil
 		}
 	}
 
-	return bobauth.AuthContext{}, ErrNotFound
+	return Context{}, ErrNotFound
 }
 
 func (s *Store) SetCurrentContext(name string) (err error) {

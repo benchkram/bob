@@ -5,7 +5,6 @@ import (
 
 	"github.com/benchkram/errz"
 
-	"github.com/benchkram/bob/bobauth"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -32,29 +31,29 @@ func (b *B) DeleteAuthContext(name string) (err error) {
 	return nil
 }
 
-func (b *B) AuthContexts() ([]bobauth.AuthContext, error) {
+func (b *B) AuthContexts() ([]auth.Context, error) {
 	// no usererror needed
 	return b.authStore.Contexts()
 }
 
-func (b *B) AuthContext(name string) (authCtx bobauth.AuthContext, err error) {
+func (b *B) AuthContext(name string) (authCtx auth.Context, err error) {
 	defer errz.Recover(&err)
 
 	authCtx, err = b.authStore.Context(name)
 	if errors.Is(err, auth.ErrNotFound) {
-		return bobauth.AuthContext{}, usererror.Wrapm(err, "failed to retrieve authentication context")
+		return auth.Context{}, usererror.Wrapm(err, "failed to retrieve authentication context")
 	}
 	errz.Fatal(err)
 
 	return authCtx, nil
 }
 
-func (b *B) CurrentAuthContext() (curr bobauth.AuthContext, err error) {
+func (b *B) CurrentAuthContext() (curr auth.Context, err error) {
 	defer errz.Recover(&err)
 
 	curr, err = b.authStore.CurrentContext()
 	if errors.Is(err, auth.ErrNotFound) {
-		return bobauth.AuthContext{}, usererror.Wrapm(err, "failed to retrieve current authentication context")
+		return auth.Context{}, usererror.Wrapm(err, "failed to retrieve current authentication context")
 	}
 	errz.Fatal(err)
 
