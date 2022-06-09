@@ -7,7 +7,7 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/global"
-	"github.com/benchkram/bob/pkg/authstore"
+	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/pkg/store/filestore"
@@ -66,17 +66,17 @@ func (b *B) Localstore() store.Store {
 	return b.local
 }
 
-func AuthStore(dir string) (s authstore.Store, err error) {
+func AuthStore(dir string) (s *auth.Store, err error) {
 	defer errz.Recover(&err)
 
 	storeDir := filepath.Join(dir, global.BobAuthStoreDir)
 	err = os.MkdirAll(storeDir, 0775)
 	errz.Fatal(err)
 
-	return authstore.New(storeDir), nil
+	return auth.New(storeDir), nil
 }
 
-func DefaultAuthStore() (s authstore.Store, err error) {
+func DefaultAuthStore() (s *auth.Store, err error) {
 	defer errz.Recover(&err)
 
 	home, err := os.UserHomeDir()

@@ -1,4 +1,4 @@
-package authstore
+package auth
 
 import (
 	"errors"
@@ -16,7 +16,7 @@ var (
 	ErrAlreadyExists = errors.New("already exists")
 )
 
-type s struct {
+type Store struct {
 	dir        string
 	configPath string
 }
@@ -29,8 +29,8 @@ type YamlAuthContext struct {
 
 // New creates a filestore. The caller is responsible to pass an
 // existing directory.
-func New(dir string) Store {
-	s := &s{
+func New(dir string) *Store {
+	s := &Store{
 		dir:        dir,
 		configPath: path.Join(dir, "auth.yaml"),
 	}
@@ -38,7 +38,7 @@ func New(dir string) Store {
 	return s
 }
 
-func (s *s) Contexts() (names []bobauth.AuthContext, err error) {
+func (s *Store) Contexts() (names []bobauth.AuthContext, err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
@@ -56,7 +56,7 @@ func (s *s) Contexts() (names []bobauth.AuthContext, err error) {
 	return names, nil
 }
 
-func (s *s) Context(name string) (ctx bobauth.AuthContext, err error) {
+func (s *Store) Context(name string) (ctx bobauth.AuthContext, err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
@@ -75,7 +75,7 @@ func (s *s) Context(name string) (ctx bobauth.AuthContext, err error) {
 	return
 }
 
-func (s *s) CreateContext(name, token string) (err error) {
+func (s *Store) CreateContext(name, token string) (err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
@@ -101,7 +101,7 @@ func (s *s) CreateContext(name, token string) (err error) {
 
 	return s.save(ctxs)
 }
-func (s *s) DeleteContext(name string) (err error) {
+func (s *Store) DeleteContext(name string) (err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
@@ -130,7 +130,7 @@ func (s *s) DeleteContext(name string) (err error) {
 	return s.save(ctxs)
 }
 
-func (s *s) CurrentContext() (c bobauth.AuthContext, err error) {
+func (s *Store) CurrentContext() (c bobauth.AuthContext, err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
@@ -148,7 +148,7 @@ func (s *s) CurrentContext() (c bobauth.AuthContext, err error) {
 	return bobauth.AuthContext{}, ErrNotFound
 }
 
-func (s *s) SetCurrentContext(name string) (err error) {
+func (s *Store) SetCurrentContext(name string) (err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
@@ -176,7 +176,7 @@ func (s *s) SetCurrentContext(name string) (err error) {
 	return s.save(ctxs)
 }
 
-func (s *s) UpdateContext(name, token string) (err error) {
+func (s *Store) UpdateContext(name, token string) (err error) {
 	defer errz.Recover(&err)
 
 	ctxs, err := s.contexts()
@@ -198,7 +198,7 @@ func (s *s) UpdateContext(name, token string) (err error) {
 	return s.save(ctxs)
 }
 
-func (s *s) contexts() (ctxs []*YamlAuthContext, err error) {
+func (s *Store) contexts() (ctxs []*YamlAuthContext, err error) {
 	defer errz.Recover(&err)
 
 	b, err := os.ReadFile(path.Join(s.dir, "auth.yaml"))
@@ -213,7 +213,7 @@ func (s *s) contexts() (ctxs []*YamlAuthContext, err error) {
 	return ctxs, nil
 }
 
-func (s *s) save(ctxs []*YamlAuthContext) (err error) {
+func (s *Store) save(ctxs []*YamlAuthContext) (err error) {
 	defer errz.Recover(&err)
 
 	b, err := yaml.Marshal(ctxs)

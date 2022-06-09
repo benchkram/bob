@@ -15,7 +15,7 @@ import (
 	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobtask"
-	"github.com/benchkram/bob/pkg/authstore"
+	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/file"
@@ -251,7 +251,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 			authCtx, err := b.CurrentAuthContext()
 			if err != nil {
-				if errors.Is(err, authstore.ErrNotFound) {
+				if errors.Is(err, auth.ErrNotFound) {
 					fmt.Printf("Will not sync to %s because of missing auth context\n", projectName)
 				} else {
 					return nil, err

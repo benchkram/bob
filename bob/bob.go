@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/benchkram/bob/pkg/authstore"
+	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -52,7 +52,7 @@ type B struct {
 	nix *NixBuilder
 
 	// authStore is used to store authentication credentials for artifact sync with remote stores
-	authStore authstore.Store
+	authStore *auth.Store
 }
 
 func newBob(opts ...Option) *B {
