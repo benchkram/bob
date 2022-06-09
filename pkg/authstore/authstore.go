@@ -27,7 +27,7 @@ type YamlAuthContext struct {
 	Current bool   `yaml:"current"`
 }
 
-// New creates a filestore. The caller is responsible to pass a
+// New creates a filestore. The caller is responsible to pass an
 // existing directory.
 func New(dir string) Store {
 	s := &s{
