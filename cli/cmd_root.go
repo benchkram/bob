@@ -58,21 +58,15 @@ func init() {
 	CmdGit.AddCommand(CmdGitStatus)
 	rootCmd.AddCommand(CmdGit)
 
-	// authentication
+	// authCmd
+	AuthCmd.AddCommand(AuthContextCreateCmd)
+	AuthContextCreateCmd.Flags().StringP("token", "t", "", "The token used for authentication")
+	AuthCmd.AddCommand(AuthContextUpdateCmd)
+	AuthContextUpdateCmd.Flags().StringP("token", "t", "", "The new token value")
+	AuthCmd.AddCommand(AuthContextDeleteCmd)
+	AuthCmd.AddCommand(AuthContextSwitchCmd)
+	AuthCmd.AddCommand(AuthContextListCmd)
 	rootCmd.AddCommand(AuthCmd)
-	{
-		AuthCmd.AddCommand(AuthContextCreateCmd)
-		AuthContextCreateCmd.Flags().StringP("token", "t", "", "The token used for authentication")
-
-		AuthCmd.AddCommand(AuthContextUpdateCmd)
-		AuthContextUpdateCmd.Flags().StringP("token", "t", "", "The new token value")
-
-		AuthCmd.AddCommand(AuthContextDeleteCmd)
-
-		AuthCmd.AddCommand(AuthContextSwitchCmd)
-
-		AuthCmd.AddCommand(AuthContextListCmd)
-	}
 }
 
 var rootCmd = &cobra.Command{
