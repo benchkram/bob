@@ -17,7 +17,7 @@ import (
 // 1: [Done] executable requiring a database to run properly.
 //    Database is setup in a docker-compose file.
 //
-// 2: [Done] plain docker-compose run with dependcies to build-cmds
+// 2: [Done] plain docker-compose run with dependencies to build-cmds
 //    containing instructions how to build the container image.
 //
 // TODO:
