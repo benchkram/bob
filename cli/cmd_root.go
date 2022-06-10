@@ -66,6 +66,7 @@ func init() {
 	AuthCmd.AddCommand(AuthContextDeleteCmd)
 	AuthCmd.AddCommand(AuthContextSwitchCmd)
 	AuthCmd.AddCommand(AuthContextListCmd)
+	AuthCmd.Flags().StringP("token", "t", "", "The token used for authentication")
 	rootCmd.AddCommand(AuthCmd)
 }
 

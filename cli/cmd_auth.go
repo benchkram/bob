@@ -12,22 +12,38 @@ import (
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
+const defaultContext = "default"
+
 var AuthCmd = &cobra.Command{
 	Use:   "auth",
-	Short: "Manage remote artifact store authentication contexts",
+	Short: "Log in to a bob server",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := cmd.Help()
-		errz.Fatal(err)
+		token, err := cmd.Flags().GetString("token")
+		if err != nil {
+			boblog.Log.UserError(errors.WithMessage(err, "failed to parse token"))
+			return
+		}
+
+		if token == "" {
+			err := cmd.Help()
+			errz.Fatal(err)
+		}
+
+		err = runAuthContextCreate(defaultContext, token)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
 	},
 }
 
 var AuthContextCreateCmd = &cobra.Command{
-	Use:     "create",
-	Short:   "Create a new authentication context",
-	Long:    ``,
-	Aliases: []string{"new", "add", "init"},
-	Args:    cobra.MinimumNArgs(1),
+	Use:   "init",
+	Short: "Initialize a authentication context",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var name string
 		if len(args) == 1 {
@@ -55,11 +71,10 @@ var AuthContextCreateCmd = &cobra.Command{
 }
 
 var AuthContextUpdateCmd = &cobra.Command{
-	Use:     "update",
-	Short:   "Updates an authentication context's token",
-	Long:    ``,
-	Aliases: []string{"set", "set-token"},
-	Args:    cobra.MinimumNArgs(1),
+	Use:   "update",
+	Short: "Updates an authentication context's token",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var name string
 		if len(args) == 1 {
@@ -87,11 +102,10 @@ var AuthContextUpdateCmd = &cobra.Command{
 }
 
 var AuthContextDeleteCmd = &cobra.Command{
-	Use:     "delete",
-	Short:   "Deletes an authentication context",
-	Long:    ``,
-	Aliases: []string{"remove", "del", "rm"},
-	Args:    cobra.MinimumNArgs(1),
+	Use:   "rm",
+	Short: "Removes an authentication context",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var name string
 		if len(args) == 1 {
@@ -113,11 +127,10 @@ var AuthContextDeleteCmd = &cobra.Command{
 }
 
 var AuthContextSwitchCmd = &cobra.Command{
-	Use:     "switch",
-	Short:   "Switches to a different authentication context",
-	Long:    ``,
-	Aliases: []string{"select", "set-current"},
-	Args:    cobra.MinimumNArgs(1),
+	Use:   "switch",
+	Short: "Switches to a different authentication context",
+	Long:  ``,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var name string
 		if len(args) == 1 {
@@ -139,10 +152,9 @@ var AuthContextSwitchCmd = &cobra.Command{
 }
 
 var AuthContextListCmd = &cobra.Command{
-	Use:     "list",
-	Short:   "Lists all authentication contexts",
-	Long:    ``,
-	Aliases: []string{"ls"},
+	Use:   "ls",
+	Short: "Lists authentication contexts",
+	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := runAuthContextList()
 		if errors.As(err, &usererror.Err) {

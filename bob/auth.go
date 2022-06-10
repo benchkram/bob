@@ -2,6 +2,7 @@ package bob
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/benchkram/errz"
 
@@ -14,7 +15,7 @@ func (b *B) CreateAuthContext(name, token string) (err error) {
 
 	err = b.authStore.CreateContext(name, token)
 	if errors.Is(err, auth.ErrAlreadyExists) {
-		return usererror.Wrapm(err, "failed to create authentication context")
+		return usererror.Wrapm(err, fmt.Sprintf("failed to create authentication context [%s]", name))
 	}
 
 	return nil

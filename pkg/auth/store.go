@@ -81,7 +81,7 @@ func (s *Store) CreateContext(name, token string) (err error) {
 
 	var exists bool
 	for _, c := range ctxs {
-		if c.Name == name || c.Token == token {
+		if c.Name == name {
 			exists = true
 			break
 		}
