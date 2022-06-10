@@ -53,7 +53,7 @@ type Builder interface {
 // The commander allows it to control multiple commands while taking
 // orders from a higher level instance like a TUI.
 //
-// TODO: Could be benficial for a TUI to directly control the commands.
+// TODO: Could be beneficial for a TUI to directly control the commands.
 //       That needs somehow blocking of a starting/stopping of the whole commander
 //       while a child is doing some work. This is currently not implemented.
 //       It's possible to control the underlying commands directly through
