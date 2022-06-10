@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/pkg/composectl"
 	"github.com/benchkram/bob/pkg/composeutil"
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/benchkram/errz"
 )
 
 const composeFileDefault = "docker-compose.yml"
