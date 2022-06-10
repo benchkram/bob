@@ -105,14 +105,14 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 						defer done()
 
 						err := c.Stop()
-						boblog.Log.Error(err, "Error on stopping comander")
+						boblog.Log.Error(err, "Error on stopping commander")
 
 						// Trigger a rebuild.
 						err = c.builder.Build(ctx)
 						errz.Fatal(err)
 
 						err = c.Start()
-						boblog.Log.Error(err, "Error during comander run")
+						boblog.Log.Error(err, "Error during commander run")
 
 						c.control.EmitRestarted()
 					}()
