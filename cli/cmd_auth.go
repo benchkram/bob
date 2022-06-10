@@ -19,33 +19,22 @@ var AuthCmd = &cobra.Command{
 	Short: "Log in to a bob server",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		token, err := cmd.Flags().GetString("token")
-		if err != nil {
-			boblog.Log.UserError(errors.WithMessage(err, "failed to parse token"))
-			return
-		}
-
-		if token == "" {
-			err := cmd.Help()
-			errz.Fatal(err)
-		}
-
-		err = runAuthContextCreate(defaultContext, token)
-		if errors.As(err, &usererror.Err) {
-			boblog.Log.UserError(err)
-		} else {
-			errz.Fatal(err)
-		}
+		err := cmd.Help()
+		errz.Fatal(err)
 	},
 }
 
 var AuthContextCreateCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a authentication context",
-	Long:  ``,
-	Args:  cobra.MinimumNArgs(1),
+	Long: `Initialize a authentication context  
+
+Example:
+  bob auth init --token=xxx              (default context)
+  bob auth init contextName --token=xxx
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var name string
+		name := defaultContext
 		if len(args) == 1 {
 			name = args[0]
 		}
@@ -56,9 +45,9 @@ var AuthContextCreateCmd = &cobra.Command{
 			return
 		}
 
-		if name == "" || token == "" {
-			err := cmd.Help()
-			errz.Fatal(err)
+		if token == "" {
+			boblog.Log.UserError(fmt.Errorf("token missing "))
+			return
 		}
 
 		err = runAuthContextCreate(name, token)
@@ -73,10 +62,14 @@ var AuthContextCreateCmd = &cobra.Command{
 var AuthContextUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Updates an authentication context's token",
-	Long:  ``,
-	Args:  cobra.MinimumNArgs(1),
+	Long: `Updates an authentication context's token  
+
+Example:
+  bob auth update --token=xxx              (default context)
+  bob auth update contextName --token=xxx
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var name string
+		name := defaultContext
 		if len(args) == 1 {
 			name = args[0]
 		}
@@ -87,9 +80,9 @@ var AuthContextUpdateCmd = &cobra.Command{
 			return
 		}
 
-		if name == "" || token == "" {
-			err := cmd.Help()
-			errz.Fatal(err)
+		if token == "" {
+			boblog.Log.UserError(fmt.Errorf("token missing "))
+			return
 		}
 
 		err = runAuthContextUpdate(name, token)
@@ -104,8 +97,13 @@ var AuthContextUpdateCmd = &cobra.Command{
 var AuthContextDeleteCmd = &cobra.Command{
 	Use:   "rm",
 	Short: "Removes an authentication context",
-	Long:  ``,
-	Args:  cobra.MinimumNArgs(1),
+	Long: `Removes an authentication context  
+
+Example:
+  bob auth rm contextName
+`,
+
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var name string
 		if len(args) == 1 {
@@ -115,6 +113,7 @@ var AuthContextDeleteCmd = &cobra.Command{
 		if name == "" {
 			err := cmd.Help()
 			errz.Fatal(err)
+			return
 		}
 
 		err := runAuthContextDelete(name)
@@ -129,8 +128,12 @@ var AuthContextDeleteCmd = &cobra.Command{
 var AuthContextSwitchCmd = &cobra.Command{
 	Use:   "switch",
 	Short: "Switches to a different authentication context",
-	Long:  ``,
-	Args:  cobra.MinimumNArgs(1),
+	Long: `Switches to a different authentication context
+
+Example:
+  bob auth switch contextName
+`,
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var name string
 		if len(args) == 1 {
@@ -140,6 +143,7 @@ var AuthContextSwitchCmd = &cobra.Command{
 		if name == "" {
 			err := cmd.Help()
 			errz.Fatal(err)
+			return
 		}
 
 		err := runAuthContextSwitch(name)
