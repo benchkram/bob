@@ -17,7 +17,7 @@ type Commander interface {
 	CommandTree
 }
 
-// commander allows to manage mutliple controls
+// commander allows managing multiple controls
 type commander struct {
 	// ctx to listen for execution interruption
 	ctx context.Context
