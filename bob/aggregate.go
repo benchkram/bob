@@ -1,6 +1,7 @@
 package bob
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/file"
@@ -108,7 +110,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 	// FIXME: As we don't refer to a child task by projectname but by path
 	// it seems to be save to allow duplicate projectnames.
-	//projectNames := map[string]bool{}
+	// projectNames := map[string]bool{}
 
 	for _, boblet := range append(bobs, aggregate) {
 
@@ -137,7 +139,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 	// FIXME: As we don't refer to a child task by projectname but by path
 	// it seems to be save to allow duplicate projectnames.
-	//projectNames := map[string]bool{}
+	// projectNames := map[string]bool{}
 
 	if aggregate.Project == "" {
 		// TODO: maybe don't leak absolute path of environment
@@ -232,24 +234,32 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 	// Initialize remote store in case of a valid remote url / project name
 	if aggregate.Project != "" {
-		projectname, err := project.Parse(aggregate.Project)
+		projectName, err := project.Parse(aggregate.Project)
 		if err != nil {
 			return nil, err
 		}
 
-		switch projectname.Type() {
+		switch projectName.Type() {
 		case project.Local:
 			// Do nothing
 		case project.Remote:
 			// Initialize remote store
-			url, err := projectname.Remote()
+			url, err := projectName.Remote()
 			if err != nil {
 				return nil, err
 			}
 
-			boblog.Log.V(1).Info(fmt.Sprintf("Using remote store: %s", url.String()))
-
-			aggregate.SetRemotestore(bobfile.NewRemotestore(url, b.allowInsecure))
+			authCtx, err := b.CurrentAuthContext()
+			if err != nil {
+				if errors.Is(err, auth.ErrNotFound) {
+					fmt.Printf("Will not sync to %s because of missing auth context\n", projectName)
+				} else {
+					return nil, err
+				}
+			} else {
+				boblog.Log.V(1).Info(fmt.Sprintf("Using remote store: %s", url.String()))
+				aggregate.SetRemotestore(bobfile.NewRemotestore(url, b.allowInsecure, authCtx.Token))
+			}
 		}
 	} else {
 		aggregate.Project = aggregate.Dir()

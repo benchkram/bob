@@ -7,6 +7,7 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/pkg/store/filestore"
@@ -63,4 +64,23 @@ func MustDefaultBuildinfoStore() buildinfostore.Store {
 // Localstore returns the local artifact store
 func (b *B) Localstore() store.Store {
 	return b.local
+}
+
+func AuthStore(dir string) (s *auth.Store, err error) {
+	defer errz.Recover(&err)
+
+	storeDir := filepath.Join(dir, global.BobAuthStoreDir)
+	err = os.MkdirAll(storeDir, 0775)
+	errz.Fatal(err)
+
+	return auth.New(storeDir), nil
+}
+
+func DefaultAuthStore() (s *auth.Store, err error) {
+	defer errz.Recover(&err)
+
+	home, err := os.UserHomeDir()
+	errz.Fatal(err)
+
+	return AuthStore(home)
 }
