@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
+
+	"github.com/benchkram/bob/pkg/boblog"
 )
 
 var ErrInProgress = fmt.Errorf("in progress")
@@ -46,7 +47,7 @@ type Builder interface {
 	Build(context.Context) error
 }
 
-// NewCommander creates a commander object which can be started and stoped
+// NewCommander creates a commander object which can be started and stopped
 // until shutdown is called, then it becomes noop.
 //
 // The commander allows it to control multiple commands while taking
