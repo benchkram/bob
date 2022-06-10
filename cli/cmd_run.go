@@ -42,29 +42,35 @@ var runCmd = &cobra.Command{
 	},
 }
 
-func run(taskname string, noCache, allowInsecure bool) {
-	var err error
-	defer errz.Recover(&err)
+func run(taskname string, noCache bool, allowInsecure bool) {
+	var exitCode int
+	defer func() {
+		exit(exitCode)
+	}()
+	defer errz.Recover()
 
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
 		bob.WithInsecure(allowInsecure),
 	)
-	errz.Fatal(err)
+	if err != nil {
+		exitCode = 1
+		errz.Fatal(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	t, err := tui.New()
-	if err != nil {
-		errz.Log(err)
-
-		return
-	}
 	defer t.Restore()
+	if err != nil {
+		exitCode = 1
+		errz.Fatal(err)
+	}
 
 	commander, err := b.Run(ctx, taskname)
 	if err != nil {
+		exitCode = 1
 		switch err {
 		case bob.ErrNoRebuildRequired:
 		default:

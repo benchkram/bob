@@ -6,9 +6,10 @@ import (
 
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
+	"github.com/benchkram/errz"
 )
 
-var ErrInvalidRunType = fmt.Errorf("Invalid run type")
+var ErrInvalidRunType = fmt.Errorf("invalid run type")
 
 type Run struct {
 	Type RunType
@@ -19,6 +20,17 @@ type Run struct {
 
 	// DependsOn run or build tasks
 	DependsOn []string
+
+	// InitDirty runs run after this task has started and `initOnce`conpleted.
+	InitDirty string `yaml:"init"`
+	// init see InitDirty
+	init []string
+
+	// InitOnceDirty runs once during the lifetime of a run
+	// after the actual task has started.
+	InitOnceDirty string `yaml:"initOnce"`
+	// initOnce see InitOnceDirty
+	initOnce []string
 
 	// didUpdate fires after the run task
 	// did a restart.
@@ -49,6 +61,7 @@ func New() *Run {
 	r := &Run{
 		Type:      RunTypeBinary,
 		DependsOn: []string{},
+		init:      []string{},
 		Path:      composeFileDefault,
 
 		didUpdate: make(chan struct{}),
@@ -56,17 +69,25 @@ func New() *Run {
 	return r
 }
 
-// Run creates run cmds and return a channel to ctl it.
-// To shutdown a Run() use a cancable context.
-func (r *Run) Run(ctx context.Context) (rc ctl.Command, _ error) {
-	// fmt.Printf("Creating control for run task [%s]\n", r.name)
+// Command creates a run cmd and returns a Command interface to control it.
+// To shutdown a Command() use a cancelable context.
+func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
+	defer errz.Recover(&err)
+	fmt.Printf("Creating control for run task [%s]\n", r.name)
 
 	switch r.Type {
 	case RunTypeBinary:
-		return execctl.NewCmd(r.name, r.Path)
+		rc, err = execctl.NewCmd(r.name, r.Path)
+		errz.Fatal(err)
 	case RunTypeCompose:
-		return r.composeCommand(ctx)
+		rc, err = r.composeCommand(ctx)
+		errz.Fatal(err)
 	default:
 		return nil, ErrInvalidRunType
 	}
+
+	rc, err = r.WrapWithInit(ctx, rc)
+	errz.Fatal(err)
+
+	return rc, nil
 }

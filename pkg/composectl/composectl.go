@@ -101,7 +101,7 @@ func New(project *types.Project, conflicts, mappings string) (*ComposeController
 		return nil, err
 	}
 
-	c.service = compose.NewComposeService(dockerCli.Client(), dockerCli.ConfigFile())
+	c.service = compose.NewComposeService(dockerCli)
 
 	return c, nil
 }
@@ -149,9 +149,9 @@ func (ctl *ComposeController) Down(ctx context.Context) error {
 		return err
 	}
 
-	//if ctl.stderr.String() != "" {
+	// if ctl.stderr.String() != "" {
 	//	return ErrComposeError
-	//}
+	// }
 
 	return nil
 }

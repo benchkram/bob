@@ -8,6 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/usererror"
+
 	"github.com/benchkram/errz"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -17,10 +21,6 @@ import (
 	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
 	"github.com/xlab/treeprint"
-
-	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/ctl"
-	"github.com/benchkram/bob/pkg/usererror"
 )
 
 func init() {
