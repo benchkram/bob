@@ -22,7 +22,7 @@ type Run struct {
 	// DependsOn run or build tasks
 	DependsOn []string
 
-	// InitDirty runs after this task has started and `initOnce`conpleted.
+	// InitDirty runs after this task has started and `initOnce` completed.
 	InitDirty string `yaml:"init"`
 	// init see InitDirty
 	init []string
