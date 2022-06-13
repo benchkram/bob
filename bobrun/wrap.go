@@ -10,13 +10,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
 	"mvdan.cc/sh/interp"
 	"mvdan.cc/sh/syntax"
+
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/ctl"
 )
 
 // WithInit wraps a run-task to provide init functionality executed after
@@ -56,7 +57,7 @@ type pipe struct {
 	w *os.File
 }
 
-// WrapCommand takes a ctl to add init functionality defined in the run task.
+// WrapWithInit takes a ctl to add init functionality defined in the run task.
 func (r *Run) WrapWithInit(ctx context.Context, rc ctl.Command) (_ ctl.Command, err error) {
 	defer errz.Recover(&err)
 
@@ -256,7 +257,7 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 			interp.Env(expand.ListEnviron(env...)),
 			interp.StdIO(os.Stdin, pw, pw),
 			// FIXME: why does this not work?
-			//interp.StdIO(os.Stdin, rw.stdout.w, rw.stderr.w),
+			// interp.StdIO(os.Stdin, rw.stdout.w, rw.stderr.w),
 		)
 		errz.Fatal(err)
 
