@@ -67,7 +67,7 @@ type Builder interface {
 // |___________|           |___________|           |___________|
 //
 func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Commander {
-	cmdr := &commander{
+	c := &commander{
 		ctx: ctx,
 
 		builder: builder,
@@ -90,10 +90,10 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 			select {
 			case <-ctx.Done():
 				// wait till all cmds are done
-				<-cmdr.Done()
-				cmdr.control.EmitDone()
+				<-c.Done()
+				c.control.EmitDone()
 				return
-			case s := <-cmdr.control.Control():
+			case s := <-c.control.Control():
 				switch s {
 				case Restart:
 					// Prevent a restart to happen multiple times.
@@ -106,14 +106,14 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 					go func() {
 						defer done()
 
-						err := cmdr.Restart()
+						err := c.Restart()
 						boblog.Log.Error(err, "Error on restarting commander")
 
 						// Trigger a rebuild.
-						err = cmdr.builder.Build(ctx)
+						err = c.builder.Build(ctx)
 						errz.Fatal(err)
 
-						cmdr.control.EmitRestarted()
+						c.control.EmitRestarted()
 					}()
 				}
 			}
@@ -124,10 +124,10 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 	// on a canceled context
 	go func() {
 		<-ctx.Done()
-		cmdr.shutdown()
+		c.shutdown()
 	}()
 
-	return cmdr
+	return c
 }
 
 // Subcommands allows direct access to the underlying commands.
