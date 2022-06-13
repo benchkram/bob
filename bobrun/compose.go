@@ -52,6 +52,13 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 	go func() {
 		for {
 			switch <-rc.Control() {
+			case ctl.Restart:
+				err = ctler.Up(ctx)
+				if err != nil {
+					rc.EmitError(err)
+				} else {
+					rc.EmitRestarted()
+				}
 			case ctl.Start:
 				err = ctler.Up(ctx)
 				if err != nil {

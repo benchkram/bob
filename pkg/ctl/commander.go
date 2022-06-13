@@ -35,6 +35,8 @@ type commander struct {
 	starting *Flag
 	// stopping blocks subssequent stopping requests.
 	stopping *Flag
+	// restarting blocks subssequent stopping requests.
+	restarting *Flag
 
 	// done indicates that the commander becomes noop.
 	done bool
@@ -65,8 +67,7 @@ type Builder interface {
 // |___________|           |___________|           |___________|
 //
 func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Commander {
-
-	c := &commander{
+	cmdr := &commander{
 		ctx: ctx,
 
 		builder: builder,
@@ -74,8 +75,9 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 		control:  New("commander", 0, nil, nil, nil),
 		commands: ctls,
 
-		starting: &Flag{},
-		stopping: &Flag{},
+		starting:   &Flag{},
+		stopping:   &Flag{},
+		restarting: &Flag{},
 
 		doneChan: make(chan struct{}),
 	}
@@ -88,10 +90,10 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 			select {
 			case <-ctx.Done():
 				// wait till all cmds are done
-				<-c.Done()
-				c.control.EmitDone()
+				<-cmdr.Done()
+				cmdr.control.EmitDone()
 				return
-			case s := <-c.control.Control():
+			case s := <-cmdr.control.Control():
 				switch s {
 				case Restart:
 					// Prevent a restart to happen multiple times.
@@ -104,17 +106,14 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 					go func() {
 						defer done()
 
-						err := c.Stop()
-						boblog.Log.Error(err, "Error on stopping commander")
+						err := cmdr.Restart()
+						boblog.Log.Error(err, "Error on restarting commander")
 
 						// Trigger a rebuild.
-						err = c.builder.Build(ctx)
+						err = cmdr.builder.Build(ctx)
 						errz.Fatal(err)
 
-						err = c.Start()
-						boblog.Log.Error(err, "Error during commander run")
-
-						c.control.EmitRestarted()
+						cmdr.control.EmitRestarted()
 					}()
 				}
 			}
@@ -125,10 +124,10 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 	// on a canceled context
 	go func() {
 		<-ctx.Done()
-		c.shutdown()
+		cmdr.shutdown()
 	}()
 
-	return c
+	return cmdr
 }
 
 // Subcommands allows direct access to the underlying commands.
@@ -174,15 +173,14 @@ func (c *commander) Stop() (err error) {
 
 // stop children, starting from top.
 func (c *commander) stop() (err error) {
-
 	done, err := c.stopping.InProgress()
 	if err != nil {
 		return err
 	}
 	defer done()
 
-	for _, v := range c.commands {
-		if e := v.Stop(); err != nil {
+	for _, cmd := range c.commands {
+		if e := cmd.Stop(); err != nil {
 			err = stackErrors(err, e)
 		}
 	}
@@ -207,7 +205,21 @@ func (c *commander) Name() string {
 	return c.control.Name()
 }
 func (c *commander) Restart() error {
-	return c.control.Restart()
+	done, err := c.restarting.InProgress()
+	if err != nil {
+		return err
+	}
+	defer done()
+
+	for i := len(c.commands) - 1; i >= 0; i-- {
+		ctl := c.commands[i]
+		err = ctl.Restart()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 func (c *commander) Running() bool {
 	return c.control.Running()
