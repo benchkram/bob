@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
-	"github.com/benchkram/errz"
 )
 
 var ErrInvalidRunType = fmt.Errorf("invalid run type")
@@ -21,7 +22,7 @@ type Run struct {
 	// DependsOn run or build tasks
 	DependsOn []string
 
-	// InitDirty runs run after this task has started and `initOnce`conpleted.
+	// InitDirty runs after this task has started and `initOnce`conpleted.
 	InitDirty string `yaml:"init"`
 	// init see InitDirty
 	init []string
