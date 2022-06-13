@@ -33,7 +33,7 @@ require (
 	github.com/yargevad/filepathx v1.0.0
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0
+	gopkg.in/yaml.v3 v3.0.1
 	mvdan.cc/sh v2.6.4+incompatible
 )
 
