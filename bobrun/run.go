@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
-	"github.com/benchkram/errz"
 )
 
 var ErrInvalidRunType = fmt.Errorf("invalid run type")
@@ -55,18 +56,6 @@ func (r *Run) Dir() string {
 
 func (r *Run) SetDir(dir string) {
 	r.dir = dir
-}
-
-func New() *Run {
-	r := &Run{
-		Type:      RunTypeBinary,
-		DependsOn: []string{},
-		init:      []string{},
-		Path:      composeFileDefault,
-
-		didUpdate: make(chan struct{}),
-	}
-	return r
 }
 
 // Command creates a run cmd and returns a Command interface to control it.
