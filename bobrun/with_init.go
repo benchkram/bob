@@ -61,7 +61,7 @@ type pipe struct {
 func (r *Run) WrapWithInit(ctx context.Context, rc ctl.Command) (_ ctl.Command, err error) {
 	defer errz.Recover(&err)
 
-	rw := &WithInit{
+	wi := &WithInit{
 		inner: rc,
 		run:   r,
 		ctx:   ctx,
@@ -69,136 +69,141 @@ func (r *Run) WrapWithInit(ctx context.Context, rc ctl.Command) (_ ctl.Command, 
 		done: make(chan struct{}),
 	}
 
-	// create pipes for stdout, stderr and stdin
-	rw.stdout.r, rw.stdout.w, err = os.Pipe()
+	// create pipes for stdout, stderr
+	wi.stdout.r, wi.stdout.w, err = os.Pipe()
 	if err != nil {
 		return nil, err
 	}
 
-	rw.stderr.r, rw.stderr.w, err = os.Pipe()
+	wi.stderr.r, wi.stderr.w, err = os.Pipe()
 	if err != nil {
 		return nil, err
 	}
 
 	// react to done from inner control
 	go func() {
-		<-rw.inner.Done()
-		<-rw.initDone
-		close(rw.done)
+		<-wi.inner.Done()
+		<-wi.initDone
+		close(wi.done)
 	}()
 
-	return rw, nil
+	return wi, nil
 }
 
-func (rw *WithInit) Name() string {
-	return rw.inner.Name()
+func (w *WithInit) Name() string {
+	return w.inner.Name()
 }
 
-func (rw *WithInit) Restart() (err error) {
-	return rw.inner.Restart()
+func (w *WithInit) Restart() (err error) {
+	// wait for init to shutdown or deadline is reached.
+	select {
+	case <-w.initDone:
+	case <-time.After(15 * time.Second): // FIXME we need a consistent deadline for all WithInit
+	}
+
+	return w.inner.Restart()
 }
 
-func (rw *WithInit) Start() (err error) {
+func (w *WithInit) Start() (err error) {
 	defer errz.Recover(&err)
 
-	err = rw.inner.Start()
+	err = w.inner.Start()
 	errz.Fatal(err)
 
 	// Wait for initial command to have started
-	for !rw.inner.Running() {
+	for !w.inner.Running() {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	return rw.init()
+	return w.init()
 }
 
-func (rw *WithInit) Stop() error {
-	rw.mux.Lock()
-	if rw.initRunning {
-		rw.initCtxCancel()
+func (w *WithInit) Stop() error {
+	w.mux.Lock()
+	if w.initRunning {
+		w.initCtxCancel()
 	}
-	rw.mux.Unlock()
+	w.mux.Unlock()
 
 	// wait for init to shutdown or deadline is reached.
 	select {
-	case <-rw.initDone:
+	case <-w.initDone:
 	case <-time.After(5 * time.Second):
 	}
 
-	return rw.inner.Stop()
+	return w.inner.Stop()
 }
 
-func (rw *WithInit) Running() bool {
-	return rw.inner.Running()
+func (w *WithInit) Running() bool {
+	return w.inner.Running()
 }
 
-func (rw *WithInit) Shutdown() (err error) {
+func (w *WithInit) Shutdown() (err error) {
 	defer errz.Recover(&err)
-	rw.mux.Lock()
-	if rw.initRunning {
-		rw.initCtxCancel()
+	w.mux.Lock()
+	if w.initRunning {
+		w.initCtxCancel()
 	}
-	rw.mux.Unlock()
+	w.mux.Unlock()
 
-	return rw.inner.Shutdown()
-}
-
-func (rw *WithInit) Done() <-chan struct{} {
-	return rw.done
+	return w.inner.Shutdown()
 }
 
-func (rw *WithInit) Stdout() io.Reader {
-	return io.MultiReader(rw.inner.Stdout(), rw.stdout.r)
+func (w *WithInit) Done() <-chan struct{} {
+	return w.done
 }
-func (rw *WithInit) Stderr() io.Reader {
-	return io.MultiReader(rw.inner.Stderr(), rw.stderr.r)
+
+func (w *WithInit) Stdout() io.Reader {
+	return io.MultiReader(w.stdout.r, w.inner.Stdout())
 }
-func (rw *WithInit) Stdin() io.Writer {
-	return rw.inner.Stdin()
+func (w *WithInit) Stderr() io.Reader {
+	return io.MultiReader(w.stderr.r, w.inner.Stderr())
+}
+func (w *WithInit) Stdin() io.Writer {
+	return w.inner.Stdin()
 }
 
 // init runs the `initOnce` and `init` cmds.
 // Reacts to the external context and takes care of setting
 // the state of the control.
-func (rw *WithInit) init() (err error) {
+func (w *WithInit) init() (err error) {
 
-	rw.mux.Lock()
-	defer rw.mux.Unlock()
+	w.mux.Lock()
+	defer w.mux.Unlock()
 
-	if rw.initRunning {
+	if w.initRunning {
 		return nil
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	rw.initCtxCancel = cancel
-	rw.initRunning = true
-	rw.initDone = make(chan struct{})
+	w.initCtxCancel = cancel
+	w.initRunning = true
+	w.initDone = make(chan struct{})
 
 	// React to cancel from external context
 	go func() {
 		select {
-		case <-rw.ctx.Done():
-		case <-rw.initDone: // assures this goroutine exits correctly
+		case <-w.ctx.Done():
+		case <-w.initDone: // assures this goroutine exits correctly
 		}
-		rw.initCtxCancel()
+		w.initCtxCancel()
 	}()
 
 	go func() {
-
 		defer func() {
-			rw.mux.Lock()
-			rw.initRunning = false
-			rw.mux.Unlock()
-			close(rw.initDone)
+			w.mux.Lock()
+			w.initRunning = false
+			w.mux.Unlock()
+			close(w.initDone)
 		}()
 
 		// InitOnce.
-		if len(rw.run.InitOnce()) > 0 {
+		if len(w.run.InitOnce()) > 0 {
 			var onceErr error
-			rw.once.Do(
+			w.once.Do(
 				func() {
-					boblog.Log.Info(fmt.Sprintf("InitOnce [%s] ", rw.inner.Name()))
-					onceErr = rw.shexec(ctx, rw.run.InitOnce())
+					boblog.Log.Info(fmt.Sprintf("InitOnce [%s] ", w.inner.Name()))
+					onceErr = w.shexec(ctx, w.run.InitOnce())
 				},
 			)
 			if onceErr != nil {
@@ -208,9 +213,9 @@ func (rw *WithInit) init() (err error) {
 		}
 
 		// Init.
-		if len(rw.run.Init()) > 0 {
-			boblog.Log.Info(fmt.Sprintf("Init [%s] ", rw.inner.Name()))
-			err = rw.shexec(ctx, rw.run.Init())
+		if len(w.run.Init()) > 0 {
+			boblog.Log.Info(fmt.Sprintf("Init [%s] ", w.inner.Name()))
+			err = w.shexec(ctx, w.run.Init())
 			if err != nil {
 				boblog.Log.V(1).Error(err, "")
 				return
@@ -221,7 +226,7 @@ func (rw *WithInit) init() (err error) {
 	return nil
 }
 
-func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
+func (w *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 	defer errz.Recover(&err)
 
 	for _, run := range cmds {
@@ -245,19 +250,19 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 				}
 
 				// FIXME: why does printing Commands to stdout not work?
-				// fmt.Fprintf(rw.stdout.w, "\t%s\n", aurora.Faint(s.Text()))
+				// fmt.Fprintf(w.stdout.w, "\t%s\n", aurora.Faint(s.Text()))
 				boblog.Log.V(1).Info(fmt.Sprintf("\t%s", aurora.Faint(s.Text())))
 			}
 		}()
 
 		r, err := interp.New(
 			interp.Params("-e"),
-			interp.Dir(rw.run.dir),
+			interp.Dir(w.run.dir),
 
 			interp.Env(expand.ListEnviron(env...)),
 			interp.StdIO(os.Stdin, pw, pw),
 			// FIXME: why does this not work?
-			// interp.StdIO(os.Stdin, rw.stdout.w, rw.stderr.w),
+			// interp.StdIO(os.Stdin, w.stdout.w, w.stderr.w),
 		)
 		errz.Fatal(err)
 
