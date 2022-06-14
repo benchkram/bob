@@ -25,8 +25,3 @@ func DefaultNix() (_ *NixBuilder, err error) {
 
 	return NewNixBuilder(WithCache(nixCache)), nil
 }
-
-func MustDefaultNix() *NixBuilder {
-	n, _ := DefaultNix()
-	return n
-}
