@@ -104,7 +104,7 @@ func (tm Map) KeysSortedAlpabethically() (keys []string) {
 // CollectTasksInPipeline will collect all task names in the pipeline for task taskName
 // in the tasksInPipeline slice
 func (tm Map) CollectTasksInPipeline(taskName string) ([]string, error) {
-	tasksInPipeline := []string{}
+	var tasksInPipeline []string
 	err := tm.Walk(taskName, "", func(tn string, task Task, err error) error {
 		if err != nil {
 			return err
@@ -119,22 +119,22 @@ func (tm Map) CollectTasksInPipeline(taskName string) ([]string, error) {
 	return tasksInPipeline, nil
 }
 
-// CollectNixDependencies will collect all nix dependencies for task taskName
+// CollectNixDependenciesForTasks will collect all nix dependencies for task taskName
 // in nixDependencies slice
 func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependency, error) {
-	nixDependecies := []nix.Dependency{}
+	var nixDependencies []nix.Dependency
 	for _, taskFromMap := range tm {
 		if !taskFromMap.UseNix() {
 			continue
 		}
 
-		// only add dependecies of whitelisted tasks.
+		// only add dependencies of whitelisted tasks.
 		for _, taskName := range whitelist {
 			if taskFromMap.Name() == taskName {
-				nixDependecies = append(nixDependecies, taskFromMap.Dependencies()...)
+				nixDependencies = append(nixDependencies, taskFromMap.Dependencies()...)
 			}
 		}
 	}
 
-	return nixDependecies, nil
+	return nixDependencies, nil
 }
