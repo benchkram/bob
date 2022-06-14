@@ -160,7 +160,7 @@ func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate 
 		fmt.Println("Building nix dependencies...")
 		err = nix.BuildNixDependencies(aggregate, buildTasks)
 		errz.Fatal(err)
-		fmt.Println("Succeded building nix dependencies")
+		fmt.Println("Succeeded building nix dependencies")
 	}
 
 	// Run dependent build tasks
