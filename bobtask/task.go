@@ -2,9 +2,10 @@ package bobtask
 
 import (
 	"fmt"
-	"github.com/benchkram/bob/pkg/nix"
 	"path/filepath"
 	"strings"
+
+	"github.com/benchkram/bob/pkg/nix"
 
 	"github.com/logrusorgru/aurora"
 
@@ -74,7 +75,7 @@ type Task struct {
 	// dir is the working directory for this task
 	dir string
 
-	// env holds key=value pairs passed to the environement
+	// env holds key=value pairs passed to the environment
 	// when the task is executed.
 	env []string
 
