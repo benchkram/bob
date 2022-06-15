@@ -43,7 +43,7 @@ func TestStatus(t *testing.T) {
 			"status_untracked",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -64,7 +64,7 @@ func TestStatus(t *testing.T) {
 			"status_subfolder",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -85,7 +85,7 @@ func TestStatus(t *testing.T) {
 			"status_exec_from_subfolder",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -105,7 +105,7 @@ func TestStatus(t *testing.T) {
 			"status_added",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -127,7 +127,7 @@ func TestStatus(t *testing.T) {
 			"status_comitted",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -154,7 +154,7 @@ func TestStatus(t *testing.T) {
 			"status_conflict",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -176,7 +176,7 @@ func TestStatus(t *testing.T) {
 			"status_conflict_multirepo",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -210,7 +210,7 @@ func TestStatus(t *testing.T) {
 			"status_conflict_delete",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -232,7 +232,7 @@ func TestStatus(t *testing.T) {
 			"status_conflict_delete_main",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -254,7 +254,7 @@ func TestStatus(t *testing.T) {
 			"status_conflict_delete_multirepo",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -286,7 +286,7 @@ func TestStatus(t *testing.T) {
 			"status_conflict_added_multirepo",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -318,7 +318,7 @@ func TestStatus(t *testing.T) {
 			"status_conflict_added_by_both",
 			input{
 				func(dir string) {
-					err := cmdutil.RunGit(dir, "init")
+					err := initGit(dir)
 					assert.Nil(t, err)
 
 					assert.Nil(t, os.MkdirAll(dir, 0775))
@@ -471,4 +471,8 @@ func assertMergeAddedByBothConflict(t *testing.T, dir string) {
 	assert.Nil(t, cmdutil.RunGit(dir, "add", "--all"))
 	assert.Nil(t, cmdutil.RunGit(dir, "commit", "-m", "File content updated in master branch"))
 	assert.NotNil(t, cmdutil.RunGit(dir, "merge", "target_branch"))
+}
+
+func initGit(dir string) error {
+	return cmdutil.RunGit(dir, "init", "-b", "master")
 }
