@@ -19,7 +19,7 @@ func Bob() (*bob.B, error) {
 	)
 }
 
-// tmpFiles tracks temporarly created files in this tests
+// tmpFiles tracks temporarily created files in these tests
 // to be cleaned up at the end.
 var tmpFiles []string
 
