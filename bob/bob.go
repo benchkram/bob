@@ -96,6 +96,12 @@ func BobWithBaseStoreDir(baseStoreDir string, opts ...Option) (*B, error) {
 	}
 	bob.buildInfoStore = bis
 
+	authStore, err := AuthStore(baseStoreDir)
+	if err != nil {
+		return nil, err
+	}
+	bob.authStore = authStore
+
 	for _, opt := range opts {
 		if opt == nil {
 			continue

@@ -1,6 +1,7 @@
 package bob
 
 import (
+	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/store"
 )
@@ -24,6 +25,12 @@ func WithRequireBobConfig() Option {
 func WithFilestore(store store.Store) Option {
 	return func(b *B) {
 		b.local = store
+	}
+}
+
+func WithAuthStore(store *auth.Store) Option {
+	return func(b *B) {
+		b.authStore = store
 	}
 }
 
