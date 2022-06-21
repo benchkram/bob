@@ -3,11 +3,13 @@ package bobrun
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
+	"github.com/benchkram/bob/pkg/nix"
 )
 
 var ErrInvalidRunType = fmt.Errorf("invalid run type")
@@ -37,6 +39,21 @@ type Run struct {
 	// did a restart.
 	didUpdate chan struct{}
 
+	// DependenciesDirty read from the bobfile
+	DependenciesDirty []string `yaml:"dependencies"`
+
+	// dependencies contain the actual dependencies merged
+	// with the global dependencies defined in the Bobfile
+	// in the order which they need to be added to PATH
+	dependencies []nix.Dependency
+
+	// storePaths contain /nix/store/* paths
+	// in the order which they need to be added to PATH
+	storePaths []string
+
+	// flag if its bobfile has Nix enabled
+	useNix bool
+
 	dir string
 
 	name string
@@ -58,6 +75,25 @@ func (r *Run) SetDir(dir string) {
 	r.dir = dir
 }
 
+func (r *Run) SetUseNix(useNix bool) {
+	r.useNix = useNix
+}
+
+func (r *Run) UseNix() bool {
+	return r.useNix
+}
+
+func (r *Run) Dependencies() []nix.Dependency {
+	return r.dependencies
+}
+func (r *Run) SetDependencies(dependencies []nix.Dependency) {
+	r.dependencies = dependencies
+}
+
+func (r *Run) SetStorePaths(storePaths []string) {
+	r.storePaths = storePaths
+}
+
 // Command creates a run cmd and returns a Command interface to control it.
 // To shutdown a Command() use a cancelable context.
 func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
@@ -66,7 +102,7 @@ func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 
 	switch r.Type {
 	case RunTypeBinary:
-		rc, err = execctl.NewCmd(r.name, r.Path)
+		rc, err = execctl.NewCmd(r.name, r.Path, strings.Join(nix.StorePathsBin(r.storePaths), ":"))
 		errz.Fatal(err)
 	case RunTypeCompose:
 		rc, err = r.composeCommand(ctx)

@@ -50,20 +50,23 @@ func (n *NixBuilder) BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskNam
 	tasksInPipeline, err := ag.BTasks.CollectTasksInPipeline(taskName)
 	errz.Fatal(err)
 
-	return n.BuildNixDependencies(ag, tasksInPipeline)
+	return n.BuildNixDependencies(ag, tasksInPipeline, []string{})
 }
 
 // BuildNixDependencies builds nix dependencies and prepares the affected tasks
 // by setting the store paths on each task in the given aggregate.
-func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline []string) (err error) {
+func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, runTasksInPipeline []string) (err error) {
 	defer errz.Recover(&err)
 
 	if !nix.IsInstalled() {
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
-	nixDependencies, err := ag.BTasks.CollectNixDependenciesForTasks(tasksInPipeline)
+	nixDependencies, err := ag.BTasks.CollectNixDependenciesForTasks(buildTasksInPipeline)
 	errz.Fatal(err)
+
+	runTasksDependencies, err := ag.RTasks.CollectNixDependenciesForTasks(runTasksInPipeline)
+	nixDependencies = append(nixDependencies, runTasksDependencies...)
 
 	if len(nixDependencies) == 0 {
 		return nil
@@ -77,7 +80,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline [
 
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
-	for _, name := range tasksInPipeline {
+	for _, name := range buildTasksInPipeline {
 		t := ag.BTasks[name]
 
 		if !t.UseNix() {
@@ -94,6 +97,26 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, tasksInPipeline [
 
 		t.SetStorePaths(storePaths)
 		ag.BTasks[name] = t
+	}
+
+	for _, name := range runTasksInPipeline {
+		t := ag.RTasks[name]
+
+		if !t.UseNix() {
+			continue
+		}
+
+		// construct used dependencies for this task
+		deps := nix.DefaultPackages(ag.Nixpkgs)
+		deps = append(deps, t.Dependencies()...)
+		deps = nix.UniqueDeps(deps)
+
+		storePaths, err := nix.DependenciesToStorePaths(deps, depStorePathMapping)
+		errz.Fatal(err)
+
+		t.SetStorePaths(storePaths)
+
+		ag.RTasks[name] = t
 	}
 
 	return nil

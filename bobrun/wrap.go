@@ -10,13 +10,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
 	"mvdan.cc/sh/interp"
 	"mvdan.cc/sh/syntax"
+
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/ctl"
 )
 
 // WithInit wraps a run-task to provide init functionality executed after
@@ -99,6 +100,11 @@ func (rw *WithInit) Restart() (err error) {
 
 func (rw *WithInit) Start() (err error) {
 	defer errz.Recover(&err)
+
+	if rw.inner.Path() != "" {
+		err = os.Setenv("PATH", rw.inner.Path())
+		errz.Fatal(err)
+	}
 
 	err = rw.inner.Start()
 	errz.Fatal(err)
@@ -256,7 +262,7 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 			interp.Env(expand.ListEnviron(env...)),
 			interp.StdIO(os.Stdin, pw, pw),
 			// FIXME: why does this not work?
-			//interp.StdIO(os.Stdin, rw.stdout.w, rw.stderr.w),
+			// interp.StdIO(os.Stdin, rw.stdout.w, rw.stderr.w),
 		)
 		errz.Fatal(err)
 
@@ -265,4 +271,8 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 	}
 
 	return nil
+}
+
+func (rw *WithInit) Path() string {
+	return rw.inner.Path()
 }

@@ -3,7 +3,6 @@ package bob
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/benchkram/errz"
 
@@ -148,8 +147,10 @@ func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate 
 
 	// Gather build tasks
 	buildTasks := []string{}
+	runTasks := []string{interactive.Name()}
 	for _, child := range interactive.DependsOn {
 		if isRunTask(child, aggregate) {
+			runTasks = append(runTasks, child)
 			continue
 		}
 		buildTasks = append(buildTasks, child)
@@ -157,10 +158,8 @@ func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate 
 
 	// Build nix dependencies
 	if nix != nil {
-		fmt.Println("Building nix dependencies...")
-		err = nix.BuildNixDependencies(aggregate, buildTasks)
+		err = nix.BuildNixDependencies(aggregate, buildTasks, runTasks)
 		errz.Fatal(err)
-		fmt.Println("Succeeded building nix dependencies")
 	}
 
 	// Run dependent build tasks

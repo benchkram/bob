@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
+
+	"github.com/benchkram/bob/pkg/boblog"
 )
 
 var ErrInProgress = fmt.Errorf("in progress")
@@ -222,4 +223,8 @@ func (c *commander) Stderr() io.Reader {
 }
 func (c *commander) Stdin() io.Writer {
 	return c.control.Stdin()
+}
+
+func (c *commander) Path() string {
+	return c.control.Path()
 }

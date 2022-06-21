@@ -2,6 +2,7 @@ package ctl
 
 import (
 	"io"
+	"os"
 )
 
 type Control interface {
@@ -37,7 +38,7 @@ type control struct {
 
 func (c *control) Running() bool {
 	// TODO: @Tasos that needs to be somehow implemented for the TUI
-	//panic("implement me")
+	// panic("implement me")
 	return true
 
 }
@@ -193,4 +194,8 @@ func (c *control) Stderr() io.Reader {
 
 func (c *control) Stdin() io.Writer {
 	return c.stdin
+}
+
+func (c *control) Path() string {
+	return os.Getenv("PATH")
 }

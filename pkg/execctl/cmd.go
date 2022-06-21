@@ -48,6 +48,8 @@ type Cmd struct {
 	interrupted bool
 	err         chan error
 	lastErr     error
+	// path is the $PATH cmd
+	path string
 }
 
 type pipe struct {
@@ -56,12 +58,18 @@ type pipe struct {
 }
 
 // NewCmd creates a new Cmd, ready to be started
-func NewCmd(name string, exe string, args ...string) (c *Cmd, err error) {
+func NewCmd(name string, exe, path string, args ...string) (c *Cmd, err error) {
 	c = &Cmd{
 		name: name,
 		exe:  exe,
 		args: args,
 		err:  make(chan error, 1),
+	}
+
+	if path != "" {
+		c.path = path
+	} else {
+		c.path = os.Getenv("PATH")
 	}
 
 	// create pipes for stdout, stderr and stdin
@@ -103,6 +111,11 @@ func (c *Cmd) Start() error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
+	err := os.Setenv("PATH", c.path)
+	if err != nil {
+		return err
+	}
+
 	if c.running {
 		return nil
 	}
@@ -121,7 +134,7 @@ func (c *Cmd) Start() error {
 	c.cmd.Stdin = c.stdin.r
 
 	// start the command
-	err := c.cmd.Start()
+	err = c.cmd.Start()
 	if err != nil {
 		return usererror.Wrapm(err, "Command execution failed")
 	}
@@ -263,4 +276,9 @@ func (c *Cmd) Done() <-chan struct{} {
 		close(done)
 	}()
 	return done
+}
+
+// Path returns the $PATH of the command
+func (c *Cmd) Path() string {
+	return c.path
 }
