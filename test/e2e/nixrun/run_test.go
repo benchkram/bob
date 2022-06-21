@@ -163,7 +163,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			err = cmdr.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			time.Sleep(1 * time.Second) // fixme
+			time.Sleep(500 * time.Millisecond) // fixme
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
