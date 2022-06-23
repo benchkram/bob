@@ -51,10 +51,6 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 	interactiveTasks = append(interactiveTasks, childInteractiveTasks...)
 
 	// build dependencies & main runTask
-	for _, task := range interactiveTasks {
-		err = executeBuildTasksInPipeline(ctx, task, aggregate, b.nix)
-		errz.Fatal(err)
-	}
 
 	// generate run controls to steer the run cmd.
 	runCommands := []ctl.Command{}
@@ -160,7 +156,7 @@ func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate 
 		fmt.Println("Building nix dependencies...")
 		err = nix.BuildNixDependencies(aggregate, buildTasks)
 		errz.Fatal(err)
-		fmt.Println("Succeded building nix dependencies")
+		fmt.Println("Succeeded building nix dependencies")
 	}
 
 	// Run dependent build tasks

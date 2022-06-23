@@ -191,12 +191,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
-		//for _, r := range msg.Runes {
+		// for _, r := range msg.Runes {
 		//	print(fmt.Sprintf("%s\n", strconv.QuoteRuneToASCII(r)))
-		//}
+		// }
 
 		switch {
-		//case string(msg.Runes[0]) == "[":
+		// case string(msg.Runes[0]) == "[":
 		//	errz.Log(fmt.Errorf("%#v", msg.Runes[0]))
 
 		case key.Matches(msg, m.keys.NextTab):
@@ -387,9 +387,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.content, updateCmd = m.content.Update(msg)
 	cmds = append(cmds, updateCmd)
 
-	//if m.error != nil {
+	// if m.error != nil {
 	//	//cmds = append(cmds, stop(m))
-	//}
+	// }
 
 	return m, tea.Batch(cmds...)
 }
