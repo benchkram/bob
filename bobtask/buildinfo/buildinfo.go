@@ -8,7 +8,10 @@ import (
 type Targets map[hash.In]string
 
 // Creator information
-type Creator struct{ Taskname string }
+type Creator struct {
+	Taskname string
+	Project  string
+}
 
 type I struct {
 	// Info holds data about the creator of this object.
@@ -21,11 +24,6 @@ type I struct {
 
 func New() *I {
 	return &I{
-		Targets: make(Targets),
-	}
-}
-func Make() I {
-	return I{
 		Targets: make(Targets),
 	}
 }
