@@ -61,6 +61,7 @@ func (s *s) Clean(ctx context.Context, project string) (err error) {
 		}
 
 		artifact, err := s.GetArtifact(ctx, entry.Name())
+		errz.Fatal(err)
 		defer artifact.Close()
 
 		ai, err := ArtifactInspectFromReader(artifact)
