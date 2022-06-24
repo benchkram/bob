@@ -1,4 +1,4 @@
-package filestore
+package bobtask
 
 import (
 	"context"
@@ -15,18 +15,11 @@ type s struct {
 	dir string
 }
 
-// New creates a filestore. The caller is responsible to pass a
+// NewArtifactStore creates a filestore. The caller is responsible to pass a
 // existing directory.
-func New(dir string, opts ...Option) store.Store {
+func NewArtifactStore(dir string) store.Store {
 	s := &s{
 		dir: dir,
-	}
-
-	for _, opt := range opts {
-		if opt == nil {
-			continue
-		}
-		opt(s)
 	}
 
 	return s
@@ -43,7 +36,9 @@ func (s *s) GetArtifact(_ context.Context, id string) (empty io.ReadCloser, _ er
 	return os.Open(filepath.Join(s.dir, id))
 }
 
-func (s *s) Clean(_ context.Context) (err error) {
+// Clean deletes all artifacts from store for project. If project is empty then
+// it deletes only artifacts belonging to that project
+func (s *s) Clean(ctx context.Context, project string) (err error) {
 	defer errz.Recover(&err)
 
 	homeDir, err := os.UserHomeDir()
@@ -52,14 +47,34 @@ func (s *s) Clean(_ context.Context) (err error) {
 		return fmt.Errorf("Cleanup of %s is not allowed", s.dir)
 	}
 
-	entrys, err := os.ReadDir(s.dir)
+	entries, err := os.ReadDir(s.dir)
 	errz.Fatal(err)
 
-	for _, entry := range entrys {
+	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		_ = os.Remove(filepath.Join(s.dir, entry.Name()))
+
+		if project == "" {
+			_ = os.Remove(filepath.Join(s.dir, entry.Name()))
+			continue
+		}
+
+		artifact, err := s.GetArtifact(ctx, entry.Name())
+		defer artifact.Close()
+
+		ai, err := ArtifactInspectFromReader(artifact)
+		errz.Fatal(err)
+
+		m := ai.Metadata()
+		if m == nil {
+			continue
+		}
+
+		if m.Project == project {
+			err = os.Remove(filepath.Join(s.dir, entry.Name()))
+			errz.Fatal(err)
+		}
 	}
 
 	return nil

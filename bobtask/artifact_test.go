@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/benchkram/bob/pkg/file"
-	"github.com/benchkram/bob/pkg/store/filestore"
 	"github.com/benchkram/errz"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,7 +22,7 @@ func TestPackAndUnpackArtifacts(t *testing.T) {
 		os.RemoveAll(storage)
 	}()
 
-	artifactStore := filestore.New(storage)
+	artifactStore := NewArtifactStore(storage)
 
 	assert.Nil(t, os.MkdirAll(filepath.Join(testdir, ".bbuild"), 0774))
 	assert.Nil(t, os.MkdirAll(filepath.Join(testdir, ".bbuild/dirone"), 0774))

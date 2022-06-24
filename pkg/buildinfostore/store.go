@@ -16,5 +16,7 @@ type Store interface {
 	GetBuildInfo(id string) (*buildinfo.I, error)
 	GetBuildInfos() ([]*buildinfo.I, error)
 
-	Clean() error
+	// Clean will remove all build infos. If project is not empty
+	// will clear entries only for that project
+	Clean(project string) error
 }

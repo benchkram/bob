@@ -17,7 +17,7 @@ type s struct {
 	dir string
 }
 
-// New creates a filestore. The caller is responsible to pass a
+// New creates a filestore. The caller is responsible to pass an
 // existing directory.
 func New(dir string, opts ...Option) Store {
 	s := &s{
@@ -94,7 +94,7 @@ func (s *s) GetBuildInfos() (_ []*buildinfo.I, err error) {
 	return buildinfos, nil
 }
 
-func (s *s) Clean() (err error) {
+func (s *s) Clean(projectName string) (err error) {
 	defer errz.Recover(&err)
 
 	homeDir, err := os.UserHomeDir()
@@ -103,15 +103,27 @@ func (s *s) Clean() (err error) {
 		return fmt.Errorf("Cleanup of %s is not allowed", s.dir)
 	}
 
-	entrys, err := os.ReadDir(s.dir)
+	entries, err := os.ReadDir(s.dir)
 	errz.Fatal(err)
 
-	for _, entry := range entrys {
+	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		_ = os.Remove(filepath.Join(s.dir, entry.Name()))
-	}
 
+		if projectName == "" {
+			err = os.Remove(filepath.Join(s.dir, entry.Name()))
+			errz.Fatal(err)
+			continue
+		}
+
+		bi, err := s.GetBuildInfo(entry.Name())
+		errz.Fatal(err)
+
+		if bi.Info.Project == projectName {
+			err = os.Remove(filepath.Join(s.dir, entry.Name()))
+			errz.Fatal(err)
+		}
+	}
 	return nil
 }

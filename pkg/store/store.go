@@ -18,7 +18,7 @@ type Store interface {
 
 	List(context.Context) ([]string, error)
 
-	Clean(context.Context) error
+	Clean(ctx context.Context, project string) error
 
 	Done() error
 }

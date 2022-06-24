@@ -24,12 +24,19 @@ func runClean(isGlobal bool) {
 
 	if isGlobal {
 		err = b.Clean()
+
+		boblog.Log.Error(err, "Unable to clean buildinfo")
+
+		fmt.Println("all build info cleaned")
+		fmt.Println("all artifacts cleaned")
 	} else {
-		fmt.Println("todo clean locally")
+		ag, err := b.AggregateSparse(true)
+		boblog.Log.Error(err, "Unable to get project name")
+		err = b.CleanProject(ag.Project)
+
+		boblog.Log.Error(err, "Unable to clean buildinfo")
+
+		fmt.Println("build info cleaned")
+		fmt.Println("artifacts cleaned")
 	}
-
-	boblog.Log.Error(err, "Unable to clean buildinfo")
-
-	fmt.Println("build info cleaned")
-	fmt.Println("artifacts cleaned")
 }

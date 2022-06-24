@@ -50,7 +50,7 @@ func (t *Task) ArtifactInspect(artifactNames ...hash.In) (ai ArtifactInfo, err e
 	return info, nil
 }
 
-// ArtifactInspectFromPath opens a artifact from a io reader and returns
+// ArtifactInspectFromReader opens an artifact from an io.ReadCloser and returns
 // a string containing compact information about a target.
 func ArtifactInspectFromReader(reader io.ReadCloser) (_ ArtifactInfo, err error) {
 	defer errz.Recover(&err)

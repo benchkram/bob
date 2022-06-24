@@ -36,7 +36,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 		})
 
 		It("clean artifacts & buildinfo", func() {
-			err := b.CleanLocalStore()
+			err := b.CleanLocalStore("")
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -67,7 +67,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 			Expect(exists).To(BeTrue())
 
 			// clean buildinfo
-			err = b.CleanBuildInfoStore()
+			err = b.CleanBuildInfoStore("")
 			Expect(err).NotTo(HaveOccurred())
 
 			state, err = buildTask(b, "build")
@@ -125,7 +125,7 @@ var _ = Describe("Test artifact and target lifecycle for docker images without e
 		})
 
 		It("clean artifacts & buildinfo", func() {
-			err := b.CleanLocalStore()
+			err := b.CleanLocalStore("")
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -160,7 +160,7 @@ var _ = Describe("Test artifact and target lifecycle for docker images without e
 			Expect(exists).To(BeTrue())
 
 			// clean buildinfo
-			err = b.CleanBuildInfoStore()
+			err = b.CleanBuildInfoStore("")
 			Expect(err).NotTo(HaveOccurred())
 
 			state, err = buildTask(b, bob.BuildTargetDockerImageName)

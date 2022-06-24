@@ -63,10 +63,7 @@ var _ = Describe("Test artifact creation and extraction", func() {
 		})
 
 		It("cleanup", func() {
-			err := b.CleanBuildInfoStore()
-			Expect(err).NotTo(HaveOccurred())
-
-			err = b.CleanLocalStore()
+			err := b.Clean()
 			Expect(err).NotTo(HaveOccurred())
 
 			err = reset()
@@ -154,10 +151,7 @@ var _ = Describe("Test artifact creation and extraction from docker targets", fu
 		})
 
 		It("cleanup", func() {
-			err := b.CleanBuildInfoStore()
-			Expect(err).NotTo(HaveOccurred())
-
-			err = b.CleanLocalStore()
+			err := b.Clean()
 			Expect(err).NotTo(HaveOccurred())
 
 			err = reset()
