@@ -18,7 +18,7 @@ func syncProjectName(a *bobfile.Bobfile, bobs []*bobfile.Bobfile) (*bobfile.Bobf
 		bobfile.Project = a.Project
 
 		for taskname, task := range bobfile.BTasks {
-			// Should be the name of the umbrella-bobfile.
+			// Name of the umbrella-bobfile.
 			task.SetProject(a.Project)
 
 			// Overwrite value in build map
