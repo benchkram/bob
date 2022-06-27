@@ -1,0 +1,7 @@
+project: projectWithSecondLevel
+import:
+  - second_level
+build:
+  run-hello:
+    cmd: echo hello
+
