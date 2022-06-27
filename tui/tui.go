@@ -21,6 +21,7 @@ type TUI struct {
 }
 
 func New() (*TUI, error) {
+
 	evts := make(chan interface{}, 1024)
 
 	stdout := os.Stdout
@@ -34,6 +35,14 @@ func New() (*TUI, error) {
 	// Redirect of stderr and stdout to cache all logging until tui is either started or restored
 	os.Stdout = wout
 	os.Stderr = wout
+
+	// FIXME: this is a hack to indicate a line to read to multiScanner().
+	// If we don't do this, the scanner assumes theres is nothing to do and shuts down.
+	// The TUI does not start and the program will exit.
+	//
+	// This happens only occasionaly on mid-size projects (i've no idea why).
+	// Though, it sorks fine with the standard server-db example.
+	fmt.Fprint(wout, "\n")
 
 	buf, err := multiScanner(0, evts, rout)
 	if err != nil {
@@ -51,6 +60,7 @@ func New() (*TUI, error) {
 }
 
 func (t *TUI) Start(cmder ctl.Commander) {
+
 	t.started = true
 
 	programEvts := make(chan interface{}, 1)
