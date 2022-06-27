@@ -147,7 +147,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	}
 
 	// set project names for all bobfiles and build tasks
-	syncProjectName(aggregate, bobs)
+	aggregate, bobs = syncProjectName(aggregate, bobs)
 
 	aggregate.SetBobfiles(bobs)
 
