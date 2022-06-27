@@ -41,7 +41,7 @@ func New() (*TUI, error) {
 	// The TUI does not start and the program will exit.
 	//
 	// This happens only occasionaly on mid-size projects (i've no idea why).
-	// Though, it sorks fine with the standard server-db example.
+	// Though, it works fine with the standard server-db example.
 	fmt.Fprint(wout, "\n")
 
 	buf, err := multiScanner(0, evts, rout)
