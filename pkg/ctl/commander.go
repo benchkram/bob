@@ -46,7 +46,7 @@ type Builder interface {
 	Build(context.Context) error
 }
 
-// NewCommander creates a commander object which can be started and stoped
+// NewCommander creates a commander object which can be started and stopped
 // until shutdown is called, then it becomes noop.
 //
 // The commander allows it to control multiple commands while taking
@@ -55,7 +55,7 @@ type Builder interface {
 // TODO: Could be benficial for a TUI to directly control the commands.
 //       That needs somehow blocking of a starting/stopping of the whole commander
 //       while a child is doing some work. This is currently not implemented.
-//       It's possible to control the underlying commands directly through
+//       It is possible to control the underlying commands directly through
 //       `Subcommands()` but that could probably lead to nasty start/stop loops.
 //  ___________             ___________             ___________
 // |           | Command() |           | Command() |           |
@@ -106,10 +106,6 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 						err := c.Stop()
 						boblog.Log.Error(err, "Error on stopping comander")
 
-						// Trigger a rebuild.
-						err = c.builder.Build(ctx)
-						errz.Fatal(err)
-
 						err = c.Start()
 						boblog.Log.Error(err, "Error during comander run")
 
@@ -138,8 +134,13 @@ func (c *commander) Subcommands() []Command {
 }
 
 // Start cmds in inverse order.
-// Blocks subsquent calls until the first one is completed.
+// Blocks subsequent calls until the first one is completed.
 func (c *commander) Start() (err error) {
+	defer errz.Recover(&err)
+
+	err = c.builder.Build(c.ctx)
+	errz.Fatal(err)
+
 	return c.start()
 }
 
