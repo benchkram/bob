@@ -55,7 +55,7 @@ type Builder interface {
 // TODO: Could be benficial for a TUI to directly control the commands.
 //       That needs somehow blocking of a starting/stopping of the whole commander
 //       while a child is doing some work. This is currently not implemented.
-//       It's possible to control the underlying commands directly through
+//       It is possible to control the underlying commands directly through
 //       `Subcommands()` but that could probably lead to nasty start/stop loops.
 //  ___________             ___________             ___________
 // |           | Command() |           | Command() |           |
