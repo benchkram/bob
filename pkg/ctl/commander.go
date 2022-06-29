@@ -209,7 +209,7 @@ func (c *commander) Restart() error {
 	}
 	defer done()
 
-	for i := len(c.commands) - 1; i >= 0; i-- {
+	for i := 0; i < len(c.commands); i++ {
 		ctl := c.commands[i]
 		err = ctl.Restart()
 		if err != nil {
