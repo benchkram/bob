@@ -2,9 +2,10 @@ package bobtask
 
 import (
 	"fmt"
-	"github.com/benchkram/bob/pkg/nix"
 	"path/filepath"
 	"strings"
+
+	"github.com/benchkram/bob/pkg/nix"
 
 	"github.com/logrusorgru/aurora"
 

@@ -11,15 +11,14 @@ import (
 )
 
 // syncProjectName project names for all bobfiles and build tasks
-func syncProjectName(
-	a *bobfile.Bobfile,
-	bobs []*bobfile.Bobfile,
-) (*bobfile.Bobfile, []*bobfile.Bobfile) {
-	for _, bobfile := range bobs {
+func syncProjectName(a *bobfile.Bobfile, bobs []*bobfile.Bobfile) (*bobfile.Bobfile, []*bobfile.Bobfile) {
+	toSync := append([]*bobfile.Bobfile{a}, bobs...)
+
+	for _, bobfile := range toSync {
 		bobfile.Project = a.Project
 
 		for taskname, task := range bobfile.BTasks {
-			// Should be the name of the umbrella-bobfile.
+			// Name of the umbrella-bobfile.
 			task.SetProject(a.Project)
 
 			// Overwrite value in build map

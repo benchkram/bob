@@ -39,7 +39,7 @@ func newArchive() archiveIO             { return archiver.NewTarGz() } // TODO: 
 func newArchiveWriter() archiver.Writer { return newArchive() }
 func newArchiveReader() archiver.Reader { return newArchive() }
 
-// ArtifactPack creates a archive for a target & exports.
+// ArtifactPack creates an archive for a target & exports.
 func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	defer errz.Recover(&err)
 

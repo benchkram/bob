@@ -1,0 +1,3 @@
+build:
+  run-hello-second:
+    cmd: echo hello second
