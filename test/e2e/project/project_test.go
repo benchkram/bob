@@ -16,10 +16,15 @@ var _ = Describe("Testing project name for tats", func() {
 			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
-			ag, err := b.AggregateSparse()
+			ag, err := b.Aggregate()
 			Expect(err).NotTo(HaveOccurred())
-
 			for _, v := range ag.BTasks {
+				Expect(v.Project()).To(Equal(dir))
+			}
+
+			ags, err := b.AggregateSparse()
+			Expect(err).NotTo(HaveOccurred())
+			for _, v := range ags.BTasks {
 				Expect(v.Project()).To(Equal(dir))
 			}
 		})
@@ -33,10 +38,15 @@ var _ = Describe("Testing project name for tats", func() {
 			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
-			ag, err := b.AggregateSparse()
+			ag, err := b.Aggregate()
 			Expect(err).NotTo(HaveOccurred())
-
 			for _, v := range ag.BTasks {
+				Expect(v.Project()).To(Equal("projectX"))
+			}
+
+			ags, err := b.AggregateSparse()
+			Expect(err).NotTo(HaveOccurred())
+			for _, v := range ags.BTasks {
 				Expect(v.Project()).To(Equal("projectX"))
 			}
 		})
@@ -50,12 +60,19 @@ var _ = Describe("Testing project name for tats", func() {
 			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
-			ag, err := b.AggregateSparse()
+			ag, err := b.Aggregate()
 			Expect(err).NotTo(HaveOccurred())
-
 			Expect(len(ag.BTasks)).To(Equal(2))
 
 			for _, v := range ag.BTasks {
+				Expect(v.Project()).To(Equal("projectWithSecondLevel"))
+			}
+
+			ags, err := b.AggregateSparse()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(ags.BTasks)).To(Equal(2))
+
+			for _, v := range ags.BTasks {
 				Expect(v.Project()).To(Equal("projectWithSecondLevel"))
 			}
 		})
