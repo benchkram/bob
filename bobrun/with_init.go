@@ -101,7 +101,11 @@ func (w *WithInit) Restart() (err error) {
 	case <-time.After(15 * time.Second): // FIXME we need a consistent deadline for all WithInit
 	}
 
-	return w.inner.Restart()
+	err = w.inner.Restart()
+	if err != nil {
+		return err
+	}
+	return w.init()
 }
 
 func (w *WithInit) Start() (err error) {
