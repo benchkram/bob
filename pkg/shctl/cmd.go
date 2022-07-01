@@ -1,15 +1,22 @@
-package execctl
+package shctl
 
 import (
+	"bufio"
+	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
 	"sync"
 
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
+	"mvdan.cc/sh/expand"
+	"mvdan.cc/sh/interp"
+	"mvdan.cc/sh/syntax"
 )
 
 var (
@@ -22,10 +29,19 @@ var _ ctl.Command = (*Cmd)(nil)
 // Cmd allows to control a process started through os.Exec with additional start, stop and restart capabilities, and
 // provides readers/writers for the command's outputs and input, respectively.
 type Cmd struct {
-	mux         sync.Mutex
-	cmd         *exec.Cmd
+	mux sync.Mutex
+
+	// script to execute
+	script string
+
+	// dir to execute the script
+	dir string
+
+	// ctx used to cancel script execution
+	ctx           context.Context
+	ctxCancelFunc context.CancelFunc
+
 	name        string
-	exe         string
 	args        []string
 	stdout      pipe
 	stderr      pipe
@@ -42,12 +58,16 @@ type pipe struct {
 }
 
 // NewCmd creates a new Cmd, ready to be started
-func NewCmd(name string, exe string, args ...string) (c *Cmd, err error) {
+func New(name, dir, script string, args ...string) (c *Cmd, err error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	c = &Cmd{
-		name: name,
-		exe:  exe,
-		args: args,
-		err:  make(chan error, 1),
+		name:          name,
+		script:        script,
+		dir:           dir,
+		ctx:           ctx,
+		ctxCancelFunc: cancel,
+		args:          args,
+		err:           make(chan error, 1),
 	}
 
 	// create pipes for stdout, stderr and stdin
@@ -67,6 +87,90 @@ func NewCmd(name string, exe string, args ...string) (c *Cmd, err error) {
 	}
 
 	return c, nil
+}
+
+func (c *Cmd) sh(ctx context.Context, dir string, cmd string) (err error) {
+
+	defer errz.Recover(&err)
+
+	env := os.Environ()
+	// // TODO: warn when overwriting envvar from the environment
+	// env = append(env, t.env...)
+
+	// if len(t.storePaths) > 0 && t.useNix {
+	// 	for k, v := range env {
+	// 		pair := strings.SplitN(v, "=", 2)
+	// 		if pair[0] == "PATH" {
+	// 			env[k] = "PATH=" + strings.Join(nix.StorePathsBin(t.storePaths), ":")
+	// 		}
+	// 	}
+	// }
+
+	boblog.Log.Info(fmt.Sprintf("sh: running script dir[%s], script[%s]", c.dir, c.script))
+
+	p, err := syntax.NewParser().Parse(strings.NewReader(c.script), "")
+	if err != nil {
+		return usererror.Wrapm(err, "shell command parse error")
+	}
+
+	boblog.Log.Info("sh: parser created")
+
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+
+	boblog.Log.Info("sh: pipe created")
+
+	s := bufio.NewScanner(pr)
+	s.Split(bufio.ScanLines)
+
+	doneReading := make(chan bool)
+
+	go func() {
+		for s.Scan() {
+			err := s.Err()
+			if err != nil {
+				return
+			}
+
+			//boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t  %s", namePad, t.ColoredName(), aurora.Faint(s.Text())))
+			println(s.Text())
+		}
+
+		doneReading <- true
+	}()
+
+	r, err := interp.New(
+		interp.Params("-e"),
+		interp.Dir(c.dir),
+
+		interp.Env(expand.ListEnviron(env...)),
+		interp.StdIO(c.stdin.r, c.stdout.w, c.stderr.r),
+	)
+
+	// TODO: remove
+	if err != nil {
+		boblog.Log.Error(err, "new interpreter")
+	}
+	// FIXME: this is not caught
+	errz.Fatal(err)
+
+	boblog.Log.Info("sh: calling run")
+
+	err = r.Run(ctx, p)
+	if err != nil {
+		return usererror.Wrapm(err, "shell command execute error")
+	}
+
+	boblog.Log.Info("sh: running")
+
+	// wait for the reader to finish after closing the write pipe
+	pw.Close()
+	<-doneReading
+
+	return nil
+
 }
 
 func (c *Cmd) Name() string {
@@ -97,24 +201,12 @@ func (c *Cmd) Start() error {
 	c.interrupted = false
 	c.lastErr = nil
 
-	// create the command with the found executable and the its args
-	cmd := exec.Command(c.exe, c.args...)
-	c.cmd = cmd
-
-	// assign the pipes to the command
-	c.cmd.Stdout = c.stdout.w
-	c.cmd.Stderr = c.stderr.w
-	c.cmd.Stdin = c.stdin.r
-
 	// start the command
-	err := c.cmd.Start()
-	if err != nil {
-		return usererror.Wrapm(err, "Command execution failed")
-	}
-
 	go func() {
-		err = cmd.Wait()
-
+		err := c.sh(c.ctx, "dir", "script/cmd")
+		if err != nil {
+			fmt.Fprintln(c.stderr.w, err.Error())
+		}
 		c.err <- err
 
 		c.mux.Lock()
@@ -217,7 +309,6 @@ func (c *Cmd) stop() error {
 	c.mux.Lock()
 
 	running := c.running
-	cmd := c.cmd
 	c.interrupted = true
 
 	c.mux.Unlock()
@@ -226,13 +317,7 @@ func (c *Cmd) stop() error {
 		return nil
 	}
 
-	if cmd != nil && cmd.Process != nil {
-		// send an interrupt signal to the command
-		err := cmd.Process.Signal(os.Interrupt)
-		if err != nil && !strings.Contains(err.Error(), "os: process already finished") {
-			return err
-		}
-	}
+	c.ctxCancelFunc()
 
 	return nil
 }

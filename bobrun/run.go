@@ -3,9 +3,12 @@ package bobrun
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
+	"github.com/benchkram/bob/pkg/shctl"
 	"github.com/benchkram/errz"
 )
 
@@ -17,6 +20,10 @@ type Run struct {
 	// ComposePath is the path to a docker-compose file or binary
 	// Default filename is used when empty.
 	Path string
+
+	// Full script with arguments
+	ScriptDirty string `yaml:"script"`
+	script      []string
 
 	// DependsOn run or build tasks
 	DependsOn []string
@@ -75,12 +82,18 @@ func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 	defer errz.Recover(&err)
 	fmt.Printf("Creating control for run task [%s]\n", r.name)
 
+	boblog.Log.Info(fmt.Sprintf("bobrun.Run: path[%s] dir[%s]", r.Path, r.dir))
+	cwd := filepath.Join(r.dir, r.Path)
+
 	switch r.Type {
 	case RunTypeBinary:
 		rc, err = execctl.NewCmd(r.name, r.Path)
 		errz.Fatal(err)
 	case RunTypeCompose:
 		rc, err = r.composeCommand(ctx)
+		errz.Fatal(err)
+	case RunTypeScript:
+		rc, err = shctl.New(r.name, cwd, r.script[0])
 		errz.Fatal(err)
 	default:
 		return nil, ErrInvalidRunType

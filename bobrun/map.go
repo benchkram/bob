@@ -38,6 +38,7 @@ func (rm RunMap) Sanitize() (err error) {
 	for key, task := range rm {
 		task.init = multilinecmd.Split(task.InitDirty)
 		task.initOnce = multilinecmd.Split(task.InitOnceDirty)
+		task.script = multilinecmd.Split(task.ScriptDirty)
 		rm[key] = task
 	}
 
