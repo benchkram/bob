@@ -17,6 +17,7 @@ var (
 	BobCacheBuildinfoDir       = filepath.Join(BobCacheDir, "buildinfos")
 	BobCacheTaskHashesFileName = filepath.Join(BobCacheDir, "hashes")
 	BobCacheArtifactsDir       = filepath.Join(BobCacheDir, "artifacts")
+	BobAuthStoreDir            = filepath.Join(BobCacheDir, "auth")
 
 	BobCacheNixFileName = filepath.Join(BobCacheDir, BobNixCacheFile)
 )

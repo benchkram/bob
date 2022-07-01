@@ -58,7 +58,7 @@ type Builder interface {
 // TODO: Could be beneficial for a TUI to directly control the commands.
 //       That needs somehow blocking of a starting/stopping of the whole commander
 //       while a child is doing some work. This is currently not implemented.
-//       It's possible to control the underlying commands directly through
+//       It is possible to control the underlying commands directly through
 //       `Subcommands()` but that could probably lead to nasty start/stop loops.
 //  ___________             ___________             ___________
 // |           | Command() |           | Command() |           |
@@ -136,8 +136,13 @@ func (c *commander) Subcommands() []Command {
 }
 
 // Start cmds in inverse order.
-// Blocks subsquent calls until the first one is completed.
+// Blocks subsequent calls until the first one is completed.
 func (c *commander) Start() (err error) {
+	defer errz.Recover(&err)
+
+	err = c.builder.Build(c.ctx)
+	errz.Fatal(err)
+
 	return c.start()
 }
 

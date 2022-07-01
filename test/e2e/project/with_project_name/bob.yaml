@@ -1,0 +1,6 @@
+project: projectX
+build:
+  run-hello:
+    cmd: echo hello!
+  run-hi:
+    cmd: echo hi!

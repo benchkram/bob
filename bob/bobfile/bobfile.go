@@ -221,7 +221,7 @@ func initializeDependencies(dir string, task bobtask.Task, bobfile *Bobfile) []n
 	return nix.UniqueDeps(taskDeps)
 }
 
-func NewRemotestore(endpoint *url.URL, allowInsecure bool) (s store.Store) {
+func NewRemotestore(endpoint *url.URL, allowInsecure bool, token string) (s store.Store) {
 	const sep = "/"
 
 	parts := strings.Split(strings.TrimLeft(endpoint.Path, sep), sep)
@@ -239,7 +239,7 @@ func NewRemotestore(endpoint *url.URL, allowInsecure bool) (s store.Store) {
 		proj,
 
 		remotestore.WithClient(
-			storeclient.New(protocol+endpoint.Host),
+			storeclient.New(protocol+endpoint.Host, token),
 		),
 	)
 	return s
