@@ -158,10 +158,10 @@ func (w *WithInit) Done() <-chan struct{} {
 }
 
 func (w *WithInit) Stdout() io.Reader {
-	return io.MultiReader(w.stdout.r, w.inner.Stdout())
+	return io.MultiReader(w.inner.Stdout(), w.stdout.r)
 }
 func (w *WithInit) Stderr() io.Reader {
-	return io.MultiReader(w.stderr.r, w.inner.Stderr())
+	return io.MultiReader(w.inner.Stderr(), w.stderr.r)
 }
 func (w *WithInit) Stdin() io.Writer {
 	return w.inner.Stdin()
