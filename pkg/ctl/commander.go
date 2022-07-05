@@ -82,15 +82,10 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 
 	// Listen on the control for external cmds
 	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				// wait till all cmds are done
-				<-c.Done()
-				c.control.EmitDone()
-				return
-			}
-		}
+		<-ctx.Done()
+		// wait till all cmds are done
+		<-c.Done()
+		c.control.EmitDone()
 	}()
 
 	// Shutdown each control
