@@ -6,8 +6,6 @@ import (
 	"io"
 
 	"github.com/benchkram/errz"
-
-	"github.com/benchkram/bob/pkg/boblog"
 )
 
 var ErrInProgress = fmt.Errorf("in progress")
@@ -84,8 +82,6 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 
 	// Listen on the control for external cmds
 	go func() {
-		restarting := Flag{}
-
 		for {
 			select {
 			case <-ctx.Done():
@@ -93,27 +89,6 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 				<-c.Done()
 				c.control.EmitDone()
 				return
-			case s := <-c.control.Control():
-				switch s {
-				case Restart:
-					// Prevent a restart to happen multiple times.
-					// Blocks till the first restart request is finished.
-					done, err := restarting.InProgress()
-					if err != nil {
-						continue
-					}
-
-					go func() {
-						defer done()
-						// Trigger a rebuild.
-						err := c.builder.Build(ctx)
-						errz.Fatal(err)
-
-						err = c.Restart()
-						boblog.Log.Error(err, "Error on restarting commander")
-						c.control.EmitRestarted()
-					}()
-				}
 			}
 		}
 	}()
