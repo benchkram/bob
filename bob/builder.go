@@ -13,21 +13,22 @@ type BuildFunc func(_ context.Context, runname string, aggregate *bobfile.Bobfil
 
 // builder holds all dependencies to build a build task
 type builder struct {
-	task      string
-	aggregate *bobfile.Bobfile
-	f         BuildFunc
-	nix       *NixBuilder
+	task       string
+	aggregator func() *bobfile.Bobfile
+	f          BuildFunc
+	nix        *NixBuilder
 }
 
-func NewBuilder(b *B, task string, aggregate *bobfile.Bobfile, f BuildFunc) ctl.Builder {
+func NewBuilder(task string, aggregator func() *bobfile.Bobfile, f BuildFunc) ctl.Builder {
 	builder := &builder{
-		task:      task,
-		aggregate: aggregate,
-		f:         f,
+		task:       task,
+		aggregator: aggregator,
+		f:          f,
 	}
 	return builder
 }
 
 func (b *builder) Build(ctx context.Context) error {
-	return b.f(ctx, b.task, b.aggregate, b.nix)
+	ag := b.aggregator()
+	return b.f(ctx, b.task, ag, b.nix)
 }

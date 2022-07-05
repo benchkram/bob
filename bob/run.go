@@ -35,25 +35,42 @@ import (
 func (b *B) Run(ctx context.Context, runTaskName string) (_ ctl.Commander, err error) {
 	defer errz.Recover(&err)
 
-	aggregate, err := b.Aggregate()
+	aggregator := func() *bobfile.Bobfile {
+		aggregate, err := b.Aggregate()
+		errz.Fatal(err)
+
+		b.PrintVersionCompatibility(aggregate)
+		return aggregate
+	}
+
+	runCommands, err := getRunCommands(ctx, aggregator, runTaskName)
 	errz.Fatal(err)
 
-	b.PrintVersionCompatibility(aggregate)
+	commander := ctl.NewCommander(
+		ctx,
+		NewBuilder(runTaskName, aggregator, executeBuildTasksInPipeline),
+		runCommands...,
+	)
+
+	return commander, nil
+}
+
+func getRunCommands(ctx context.Context, aggregator func() *bobfile.Bobfile, runTaskName string) (runCommands []ctl.Command, err error) {
+	defer errz.Recover(&err)
+
+	aggregate := aggregator()
 
 	runTask, ok := aggregate.RTasks[runTaskName]
 	if !ok {
-		return nil, ErrRunDoesNotExist
+		return []ctl.Command{}, ErrRunDoesNotExist
 	}
 
 	// gather interactive tasks
-	childInteractiveTasks := runTasksInPipeline(runTaskName, aggregate)
 	interactiveTasks := []string{runTask.Name()}
+	childInteractiveTasks := runTasksInPipeline(runTaskName, aggregate)
 	interactiveTasks = append(interactiveTasks, childInteractiveTasks...)
 
-	// build dependencies & main runTask
-
 	// generate run controls to steer the run cmd.
-	runCommands := []ctl.Command{}
 	for _, name := range interactiveTasks {
 		runTask := aggregate.RTasks[name]
 
@@ -63,10 +80,7 @@ func (b *B) Run(ctx context.Context, runTaskName string) (_ ctl.Commander, err e
 		runCommands = append(runCommands, command)
 	}
 
-	builder := NewBuilder(b, runTaskName, aggregate, executeBuildTasksInPipeline)
-	commander := ctl.NewCommander(ctx, builder, runCommands...)
-
-	return commander, nil
+	return runCommands, nil
 }
 
 // runTasksInPipeline returns run tasks in the pipeline.

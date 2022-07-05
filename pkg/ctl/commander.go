@@ -214,6 +214,12 @@ func (c *commander) Restart() error {
 	}
 	defer done()
 
+	// Trigger a rebuild.
+	err = c.builder.Build(c.ctx)
+	if err != nil {
+		return err
+	}
+
 	for i := 0; i < len(c.commands); i++ {
 		ctl := c.commands[i]
 		err = ctl.Restart()
