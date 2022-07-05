@@ -150,7 +150,7 @@ func executeBuildTasksInPipeline(
 
 	// Gather build tasks from run task dependencies.
 	// This is required to get the top most build tasks and start a build for each.
-	// Each run task could have could have distinct build pipeline beneth it.
+	// Each run task could have distinct build pipeline beneath it.
 	// This implies that multiple unrelated builds could be started
 	// on a run invocation.
 
