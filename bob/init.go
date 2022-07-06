@@ -1,8 +1,10 @@
 package bob
 
 import (
+	"fmt"
 	"path/filepath"
 
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/global"
@@ -20,8 +22,10 @@ func (b *B) init() (err error) {
 	dir := filepath.Join(b.dir, global.BobWorkspaceFile)
 
 	if file.Exists(dir) {
-		return ErrWorkspaceAlreadyInitialised
+		return usererror.Wrap(ErrWorkspaceAlreadyInitialised)
 	}
+
+	fmt.Println("Initialize Bob workspace...")
 
 	err = b.write()
 	errz.Fatal(err)
