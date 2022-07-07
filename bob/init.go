@@ -1,7 +1,7 @@
 package bob
 
 import (
-	"github.com/benchkram/bob/pkg/boblog"
+	"fmt"
 	"path/filepath"
 
 	"github.com/benchkram/bob/pkg/usererror"
@@ -25,7 +25,7 @@ func (b *B) init() (err error) {
 		return usererror.Wrap(ErrWorkspaceAlreadyInitialised)
 	}
 
-	boblog.Log.V(1).Info("Initialize Bob workspace...")
+	fmt.Println("Initialize Bob workspace...")
 
 	err = b.write()
 	errz.Fatal(err)
