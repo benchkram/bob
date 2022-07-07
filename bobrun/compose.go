@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/benchkram/errz"
+
 	"github.com/benchkram/bob/pkg/composectl"
 	"github.com/benchkram/bob/pkg/composeutil"
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/usererror"
-	"github.com/benchkram/errz"
 )
 
 const composeFileDefault = "docker-compose.yml"
@@ -51,6 +52,13 @@ func (r *Run) composeCommand(ctx context.Context) (_ ctl.Command, err error) {
 	go func() {
 		for {
 			switch <-rc.Control() {
+			case ctl.Restart:
+				err = ctler.Up(ctx)
+				if err != nil {
+					rc.EmitError(err)
+				} else {
+					rc.EmitRestarted()
+				}
 			case ctl.Start:
 				err = ctler.Up(ctx)
 				if err != nil {

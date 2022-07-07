@@ -212,6 +212,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.updateContent()
 
 		case key.Matches(msg, m.keys.Restart):
+			if m.restarting {
+				break
+			}
 			status := fmt.Sprintf("\n%-*s\n", 10, "restarting")
 			status = aurora.Colorize(status, aurora.CyanFg|aurora.BoldFm).String()
 

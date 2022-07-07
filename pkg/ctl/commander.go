@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
 )
 
@@ -16,7 +15,7 @@ type Commander interface {
 	CommandTree
 }
 
-// commander allows to manage mutliple controls
+// commander allows managing multiple controls
 type commander struct {
 	// ctx to listen for execution interruption
 	ctx context.Context
@@ -34,6 +33,8 @@ type commander struct {
 	starting *Flag
 	// stopping blocks subssequent stopping requests.
 	stopping *Flag
+	// restarting blocks subssequent stopping requests.
+	restarting *Flag
 
 	// done indicates that the commander becomes noop.
 	done bool
@@ -52,7 +53,7 @@ type Builder interface {
 // The commander allows it to control multiple commands while taking
 // orders from a higher level instance like a TUI.
 //
-// TODO: Could be benficial for a TUI to directly control the commands.
+// TODO: Could be beneficial for a TUI to directly control the commands.
 //       That needs somehow blocking of a starting/stopping of the whole commander
 //       while a child is doing some work. This is currently not implemented.
 //       It is possible to control the underlying commands directly through
@@ -64,7 +65,6 @@ type Builder interface {
 // |___________|           |___________|           |___________|
 //
 func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Commander {
-
 	c := &commander{
 		ctx: ctx,
 
@@ -73,47 +73,19 @@ func NewCommander(ctx context.Context, builder Builder, ctls ...Command) Command
 		control:  New("commander", 0, nil, nil, nil),
 		commands: ctls,
 
-		starting: &Flag{},
-		stopping: &Flag{},
+		starting:   &Flag{},
+		stopping:   &Flag{},
+		restarting: &Flag{},
 
 		doneChan: make(chan struct{}),
 	}
 
 	// Listen on the control for external cmds
 	go func() {
-		restarting := Flag{}
-
-		for {
-			select {
-			case <-ctx.Done():
-				// wait till all cmds are done
-				<-c.Done()
-				c.control.EmitDone()
-				return
-			case s := <-c.control.Control():
-				switch s {
-				case Restart:
-					// Prevent a restart to happen multiple times.
-					// Blocks till the first restart request is finished.
-					done, err := restarting.InProgress()
-					if err != nil {
-						continue
-					}
-
-					go func() {
-						defer done()
-
-						err := c.Stop()
-						boblog.Log.Error(err, "Error on stopping comander")
-
-						err = c.Start()
-						boblog.Log.Error(err, "Error during comander run")
-
-						c.control.EmitRestarted()
-					}()
-				}
-			}
-		}
+		<-ctx.Done()
+		// wait till all cmds are done
+		<-c.Done()
+		c.control.EmitDone()
 	}()
 
 	// Shutdown each control
@@ -174,15 +146,14 @@ func (c *commander) Stop() (err error) {
 
 // stop children, starting from top.
 func (c *commander) stop() (err error) {
-
 	done, err := c.stopping.InProgress()
 	if err != nil {
 		return err
 	}
 	defer done()
 
-	for _, v := range c.commands {
-		if e := v.Stop(); err != nil {
+	for _, cmd := range c.commands {
+		if e := cmd.Stop(); err != nil {
 			err = stackErrors(err, e)
 		}
 	}
@@ -207,7 +178,27 @@ func (c *commander) Name() string {
 	return c.control.Name()
 }
 func (c *commander) Restart() error {
-	return c.control.Restart()
+	done, err := c.restarting.InProgress()
+	if err != nil {
+		return err
+	}
+	defer done()
+
+	// Trigger a rebuild.
+	err = c.builder.Build(c.ctx)
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < len(c.commands); i++ {
+		ctl := c.commands[i]
+		err = ctl.Restart()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 func (c *commander) Running() bool {
 	return c.control.Running()
