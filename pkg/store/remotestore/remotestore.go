@@ -78,7 +78,7 @@ func (s *s) GetArtifact(ctx context.Context, id string) (rc io.ReadCloser, err e
 	return rc, nil
 }
 
-func (s *s) Clean(_ context.Context) (err error) {
+func (s *s) Clean(_ context.Context, _ string) (err error) {
 	defer errz.Recover(&err)
 	return fmt.Errorf("not implemented")
 }

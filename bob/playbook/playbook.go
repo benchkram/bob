@@ -206,7 +206,7 @@ func (p *Playbook) play() error {
 			for _, dependentTaskName := range task.Task.DependsOn {
 				t, ok := p.Tasks[dependentTaskName]
 				if !ok {
-					//fmt.Printf("Task %s does not exist", dependentTaskName)
+					// fmt.Printf("Task %s does not exist", dependentTaskName)
 					return usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
 				}
 
@@ -341,6 +341,7 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 		}
 	}
 	buildInfo.Info.Taskname = task.Name()
+	buildInfo.Info.Project = task.Project()
 
 	target, err := task.Task.Target()
 	errz.Fatal(err)

@@ -72,10 +72,7 @@ var _ = Describe("Test artifact and target on no cache build", func() {
 		It("cleanup", func() {
 			// b and bNoCache uses the same dir, so this should
 			// so this cleans directory for both build task
-			err := bNoCache.CleanBuildInfoStore()
-			Expect(err).NotTo(HaveOccurred())
-
-			err = bNoCache.CleanLocalStore()
+			err := bNoCache.Clean()
 			Expect(err).NotTo(HaveOccurred())
 
 			err = reset()

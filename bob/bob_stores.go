@@ -4,13 +4,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/store"
-	"github.com/benchkram/bob/pkg/store/filestore"
 )
 
 func DefaultFilestore() (s store.Store, err error) {
@@ -29,12 +29,7 @@ func Filestore(dir string) (s store.Store, err error) {
 	err = os.MkdirAll(storeDir, 0775)
 	errz.Fatal(err)
 
-	return filestore.New(storeDir), nil
-}
-
-func MustDefaultFilestore() store.Store {
-	s, _ := DefaultFilestore()
-	return s
+	return bobtask.NewArtifactStore(storeDir), nil
 }
 
 func DefaultBuildinfoStore() (s buildinfostore.Store, err error) {
@@ -54,11 +49,6 @@ func BuildinfoStore(dir string) (s buildinfostore.Store, err error) {
 	errz.Fatal(err)
 
 	return buildinfostore.New(storeDir), nil
-}
-
-func MustDefaultBuildinfoStore() buildinfostore.Store {
-	s, _ := DefaultBuildinfoStore()
-	return s
 }
 
 // Localstore returns the local artifact store

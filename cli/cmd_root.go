@@ -13,6 +13,7 @@ import (
 )
 
 var zsh bool
+var cleanGlobal bool
 
 func init() {
 	configInit()
@@ -24,8 +25,11 @@ func init() {
 
 	rootCmd.Flags().Bool("version", false, "Show the CLI's version")
 
-	rootCmd.AddCommand(verifyCmd)
+	// clean
+	cleanCmd.Flags().BoolVarP(&cleanGlobal, "global", "g", cleanGlobal, "Clean cache globally")
 	rootCmd.AddCommand(cleanCmd)
+
+	rootCmd.AddCommand(verifyCmd)
 	rootCmd.AddCommand(installCmd)
 
 	// clone
@@ -85,11 +89,11 @@ Commonly used cmds:
 		if cmd.Flag("version") != nil {
 			showVersion, err := strconv.ParseBool(cmd.Flag("version").Value.String())
 			if err == nil && showVersion {
-				//TODO for go 1.18: check what we can use from runtime/debug: https://github.com/golang/go/issues/49168
-				//bi, ok := debug.ReadBuildInfo()
-				//if ok {
+				// TODO for go 1.18: check what we can use from runtime/debug: https://github.com/golang/go/issues/49168
+				// bi, ok := debug.ReadBuildInfo()
+				// if ok {
 				//
-				//}
+				// }
 
 				boblog.Log.Info(fmt.Sprintf("bob version %s %s/%s\n", bob.Version, runtime.GOOS, runtime.GOARCH))
 				os.Exit(0)
