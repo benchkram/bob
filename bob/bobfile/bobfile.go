@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/bobsync"
 	"github.com/benchkram/bob/pkg/nix"
 	storeclient "github.com/benchkram/bob/pkg/store-client"
 
@@ -78,6 +79,9 @@ type Bobfile struct {
 	UseNix bool `yaml:"use-nix"`
 	// Nixpkgs specifies an optional nixpkgs source.
 	Nixpkgs string `yaml:"nixpkgs"`
+
+	// SyncCollections are folder synchronisations through bob-server
+	SyncCollections bobsync.SyncMap `yaml:"sync"`
 
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
