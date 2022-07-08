@@ -166,7 +166,7 @@ func executeBuildTasksInPipeline(
 	buildTasks = sliceutil.Unique(buildTasks)
 
 	// Build nix dependencies
-	if nix != nil {
+	if aggregate.UseNix && nix != nil {
 		fmt.Println("Building nix dependencies...")
 		err = nix.BuildNixDependencies(aggregate, buildTasks)
 		errz.Fatal(err)
