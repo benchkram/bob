@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
@@ -25,7 +26,7 @@ func runInit() {
 
 	err = b.Init()
 	if err != nil {
-		if errors.Is(err, bob.ErrWorkspaceAlreadyInitialised) {
+		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
 		} else {
 			errz.Fatal(err)
