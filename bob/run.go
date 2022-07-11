@@ -3,12 +3,14 @@ package bob
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/sliceutil"
 )
 
 // Examples of possible interactive usecase
@@ -19,8 +21,7 @@ import (
 // 2: [Done] plain docker-compose run with dependcies to build-cmds
 //    containing instructions how to build the container image.
 //
-// TODO:
-// 3: init script requiring a executable to run before
+// 3: [Done] init script requiring an executable to run before
 //    containing a health endpoint (REST?). So the init script can be
 //    sure about the service to be functional.
 //
@@ -30,8 +31,8 @@ import (
 //
 // Canceling the cmd from the outside must be done through the context.
 //
-// TODO: Forbid circular dependecys.
-func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error) {
+// FIXME: Forbid circular dependecys.
+func (b *B) Run(ctx context.Context, runTaskName string) (_ ctl.Commander, err error) {
 	defer errz.Recover(&err)
 
 	aggregate, err := b.Aggregate()
@@ -39,17 +40,16 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 
 	b.PrintVersionCompatibility(aggregate)
 
-	runTask, ok := aggregate.RTasks[runName]
+	runTask, ok := aggregate.RTasks[runTaskName]
 	if !ok {
 		return nil, ErrRunDoesNotExist
 	}
 
 	// gather interactive tasks
-	childInteractiveTasks := b.runTasksInPipeline(runName, aggregate)
+	childInteractiveTasks := runTasksInPipeline(runTaskName, aggregate)
 	interactiveTasks := []string{runTask.Name()}
 	interactiveTasks = append(interactiveTasks, childInteractiveTasks...)
 
-	// build dependencies & main runTask
 	for _, task := range interactiveTasks {
 		err = executeBuildTasksInPipeline(ctx, task, aggregate, b.nix)
 		errz.Fatal(err)
@@ -66,7 +66,7 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 		runCommands = append(runCommands, command)
 	}
 
-	builder := NewBuilder(b, runName, aggregate, executeBuildTasksInPipeline)
+	builder := NewBuilder(runTaskName, aggregate, executeBuildTasksInPipeline, b.nix)
 	commander := ctl.NewCommander(ctx, builder, runCommands...)
 
 	return commander, nil
@@ -77,10 +77,10 @@ func (b *B) Run(ctx context.Context, runName string) (_ ctl.Commander, err error
 //
 // It will not error but return a empty error in case the runName
 // does not exists.
-func (b *B) runTasksInPipeline(runName string, aggregate *bobfile.Bobfile) []string {
+func runTasksInPipeline(runTaskName string, aggregate *bobfile.Bobfile) []string {
 	runTasks := []string{}
 
-	run, ok := aggregate.RTasks[runName]
+	run, ok := aggregate.RTasks[runTaskName]
 	if !ok {
 		return nil
 	}
@@ -92,7 +92,7 @@ func (b *B) runTasksInPipeline(runName string, aggregate *bobfile.Bobfile) []str
 		runTasks = append(runTasks, task)
 
 		// assure all it's dependent runTasks are also added.
-		childs := b.runTasksInPipeline(task, aggregate)
+		childs := runTasksInPipeline(task, aggregate)
 		runTasks = append(runTasks, childs...)
 	}
 
@@ -136,40 +136,49 @@ func isRunTask(name string, aggregate *bobfile.Bobfile) bool {
 // 	return ok
 // }
 
-// executeBuildTasksInPipeline takes a run task but only executes the dependent build tasks
-func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate *bobfile.Bobfile, nix *NixBuilder) (err error) {
+// executeBuildTasksInPipeline takes a run task and starts the required builds.
+func executeBuildTasksInPipeline(
+	ctx context.Context,
+	runTaskName string,
+	aggregate *bobfile.Bobfile,
+	nix *NixBuilder,
+) (err error) {
 	defer errz.Recover(&err)
 
-	interactive, ok := aggregate.RTasks[runname]
+	_, ok := aggregate.RTasks[runTaskName]
 	if !ok {
 		return ErrRunDoesNotExist
 	}
+	runTasksInPipeline := runTasksInPipeline(runTaskName, aggregate)
 
-	// Gather build tasks
-	buildTasks := []string{}
-	runTasks := []string{interactive.Name()}
-	for _, child := range interactive.DependsOn {
-		if isRunTask(child, aggregate) {
-			runTasks = append(runTasks, child)
-			continue
-		}
-		buildTasks = append(buildTasks, child)
+	// Gather build tasks from run task dependencies.
+	// This is required to get the top most build tasks and start a build for each.
+	// Each run task could have could have distinct build pipeline beneth it.
+	// This implies that multiple unrelated builds could be started
+	// on a run invocation.
+
+	// umbrella run task
+	buildTasks, err := gatherBuildTasks(runTaskName, aggregate)
+	errz.Fatal(err)
+	// child run tasks
+	for _, runTaskName := range runTasksInPipeline {
+		childBuildTasks, err := gatherBuildTasks(runTaskName, aggregate)
+		errz.Fatal(err)
+		buildTasks = append(buildTasks, childBuildTasks...)
 	}
+	buildTasks = sliceutil.Unique(buildTasks)
 
 	// Build nix dependencies
-	if nix != nil {
-		err = nix.BuildNixDependencies(aggregate, buildTasks, runTasks)
+	if aggregate.UseNix && nix != nil {
+		fmt.Println("Building nix dependencies...")
+		err = nix.BuildNixDependencies(aggregate, buildTasks, append(runTasksInPipeline, runTaskName))
 		errz.Fatal(err)
+		fmt.Println("Succeeded building nix dependencies")
 	}
 
-	// Run dependent build tasks
-	// before starting the run task
-	for _, child := range interactive.DependsOn {
-		if isRunTask(child, aggregate) {
-			continue
-		}
-
-		playbook, err := aggregate.Playbook(child)
+	// Initiate each build
+	for _, buildTask := range buildTasks {
+		playbook, err := aggregate.Playbook(buildTask)
 		if err != nil {
 			if errors.Is(err, boberror.ErrTaskDoesNotExist) {
 				continue
@@ -182,4 +191,22 @@ func executeBuildTasksInPipeline(ctx context.Context, runname string, aggregate 
 	}
 
 	return nil
+}
+
+// gatherBuildTasks returns all direct build tasks in the pipeline of a run task.
+func gatherBuildTasks(runTaskName string, aggregate *bobfile.Bobfile) ([]string, error) {
+	runTask, ok := aggregate.RTasks[runTaskName]
+	if !ok {
+		return nil, ErrRunDoesNotExist
+	}
+
+	buildTasks := []string{}
+	for _, child := range runTask.DependsOn {
+		if isRunTask(child, aggregate) {
+			continue
+		}
+		buildTasks = append(buildTasks, child)
+	}
+
+	return buildTasks, nil
 }

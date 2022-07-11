@@ -17,7 +17,8 @@ func DefaultNix() (_ *NixBuilder, err error) {
 	errz.Fatal(err)
 
 	cacheDir := filepath.Join(home, global.BobCacheNixFileName)
-	err = os.MkdirAll(filepath.Dir(global.BobCacheNixFileName), 0775)
+
+	err = os.MkdirAll(filepath.Dir(cacheDir), 0775)
 	errz.Fatal(err)
 
 	nixCache, err := nix.NewCacheStore(nix.WithPath(cacheDir))
