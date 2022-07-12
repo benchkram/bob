@@ -277,8 +277,3 @@ func (c *Cmd) Done() <-chan struct{} {
 	}()
 	return done
 }
-
-// Path returns the $PATH of the command
-func (c *Cmd) Path() string {
-	return c.path
-}

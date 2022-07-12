@@ -2,7 +2,6 @@ package ctl
 
 import (
 	"io"
-	"os"
 )
 
 type Control interface {
@@ -194,8 +193,4 @@ func (c *control) Stderr() io.Reader {
 
 func (c *control) Stdin() io.Writer {
 	return c.stdin
-}
-
-func (c *control) Path() string {
-	return os.Getenv("PATH")
 }

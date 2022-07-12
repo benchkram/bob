@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
@@ -100,11 +101,6 @@ func (rw *WithInit) Restart() (err error) {
 
 func (rw *WithInit) Start() (err error) {
 	defer errz.Recover(&err)
-
-	if rw.inner.Path() != "" {
-		err = os.Setenv("PATH", rw.inner.Path())
-		errz.Fatal(err)
-	}
 
 	err = rw.inner.Start()
 	errz.Fatal(err)
@@ -233,8 +229,15 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
 		errz.Fatal(err)
 
-		// FIXME: make run cmds ready for nix integration.
 		env := os.Environ()
+		if len(rw.run.storePaths) > 0 && rw.run.UseNix() {
+			for k, v := range env {
+				pair := strings.SplitN(v, "=", 2)
+				if pair[0] == "PATH" {
+					env[k] = "PATH=" + strings.Join(nix.StorePathsBin(rw.run.storePaths), ":")
+				}
+			}
+		}
 
 		pr, pw, err := os.Pipe()
 		errz.Fatal(err)
@@ -271,8 +274,4 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 	}
 
 	return nil
-}
-
-func (rw *WithInit) Path() string {
-	return rw.inner.Path()
 }

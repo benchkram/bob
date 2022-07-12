@@ -225,7 +225,3 @@ func (c *commander) Stderr() io.Reader {
 func (c *commander) Stdin() io.Writer {
 	return c.control.Stdin()
 }
-
-func (c *commander) Path() string {
-	return c.control.Path()
-}

@@ -16,6 +16,4 @@ type Command interface {
 	Stdout() io.Reader
 	Stderr() io.Reader
 	Stdin() io.Writer
-
-	Path() string
 }
