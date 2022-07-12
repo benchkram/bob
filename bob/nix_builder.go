@@ -66,6 +66,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 	errz.Fatal(err)
 
 	runTasksDependencies, err := ag.RTasks.CollectNixDependenciesForTasks(runTasksInPipeline)
+	errz.Fatal(err)
 	nixDependencies = append(nixDependencies, runTasksDependencies...)
 
 	if len(nixDependencies) == 0 {
