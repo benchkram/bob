@@ -25,8 +25,6 @@ var (
 	stderr *os.File
 	pr     *os.File
 	pw     *os.File
-
-	initialPath string
 )
 
 type project struct {
@@ -96,8 +94,6 @@ var _ = BeforeSuite(func() {
 		err = bf.BobfileSave(dir, name+".yaml")
 		Expect(err).NotTo(HaveOccurred())
 	}
-
-	initialPath = os.Getenv("PATH")
 })
 
 var _ = AfterSuite(func() {
