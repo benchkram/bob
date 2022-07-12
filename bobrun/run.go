@@ -3,7 +3,6 @@ package bobrun
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/benchkram/errz"
 
@@ -98,7 +97,7 @@ func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 
 	switch r.Type {
 	case RunTypeBinary:
-		rc, err = execctl.NewCmd(r.name, r.Path, strings.Join(nix.StorePathsBin(r.storePaths), ":"))
+		rc, err = execctl.NewCmd(r.name, r.Path, r.storePaths, r.UseNix(), ":")
 		errz.Fatal(err)
 	case RunTypeCompose:
 		rc, err = r.composeCommand(ctx)

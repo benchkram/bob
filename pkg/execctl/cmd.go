@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
@@ -48,8 +49,8 @@ type Cmd struct {
 	interrupted bool
 	err         chan error
 	lastErr     error
-	// path is the $PATH cmd
-	path string
+	storePaths  []string
+	useNix      bool
 }
 
 type pipe struct {
@@ -58,18 +59,14 @@ type pipe struct {
 }
 
 // NewCmd creates a new Cmd, ready to be started
-func NewCmd(name string, exe, path string, args ...string) (c *Cmd, err error) {
+func NewCmd(name string, exe string, storePaths []string, useNix bool, args ...string) (c *Cmd, err error) {
 	c = &Cmd{
-		name: name,
-		exe:  exe,
-		args: args,
-		err:  make(chan error, 1),
-	}
-
-	if path != "" {
-		c.path = path
-	} else {
-		c.path = os.Getenv("PATH")
+		name:       name,
+		exe:        exe,
+		args:       args,
+		err:        make(chan error, 1),
+		storePaths: storePaths,
+		useNix:     useNix,
 	}
 
 	// create pipes for stdout, stderr and stdin
@@ -111,11 +108,6 @@ func (c *Cmd) Start() error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	err := os.Setenv("PATH", c.path)
-	if err != nil {
-		return err
-	}
-
 	if c.running {
 		return nil
 	}
@@ -128,13 +120,23 @@ func (c *Cmd) Start() error {
 	cmd := exec.Command(c.exe, c.args...)
 	c.cmd = cmd
 
+	env := os.Environ()
+	if len(c.storePaths) > 0 && c.useNix {
+		for k, v := range env {
+			pair := strings.SplitN(v, "=", 2)
+			if pair[0] == "PATH" {
+				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(c.storePaths), ":")
+			}
+		}
+	}
+	c.cmd.Env = env
 	// assign the pipes to the command
 	c.cmd.Stdout = c.stdout.w
 	c.cmd.Stderr = c.stderr.w
 	c.cmd.Stdin = c.stdin.r
 
 	// start the command
-	err = c.cmd.Start()
+	err := c.cmd.Start()
 	if err != nil {
 		return usererror.Wrapm(err, "Command execution failed")
 	}

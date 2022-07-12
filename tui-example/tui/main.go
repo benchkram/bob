@@ -6,17 +6,17 @@ import (
 )
 
 func main() {
-	cmd1, err := execctl.NewCmd("app", "/bin/bash", "-c", "./script1.sh")
+	cmd1, err := execctl.NewCmd("app", "/bin/bash", []string{}, false, "-c", "./script1.sh")
 	if err != nil {
 		panic(err)
 	}
 
-	cmd2, err := execctl.NewCmd("mongo", "/bin/bash", "-c", "./script2.sh")
+	cmd2, err := execctl.NewCmd("mongo", "/bin/bash", []string{}, false, "-c", "./script2.sh")
 	if err != nil {
 		panic(err)
 	}
 
-	cmd3, err := execctl.NewCmd("redis", "/bin/bash", "-c", "./script3.sh")
+	cmd3, err := execctl.NewCmd("redis", "/bin/bash", []string{}, false, "-c", "./script3.sh")
 	if err != nil {
 		panic(err)
 	}
