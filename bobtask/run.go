@@ -25,13 +25,12 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	// TODO: warn when overwriting envvar from the environment
 	env = append(env, t.env...)
 
+	if t.useNix {
+		env = t.env
+	}
+
 	if len(t.storePaths) > 0 && t.useNix {
-		for k, v := range env {
-			pair := strings.SplitN(v, "=", 2)
-			if pair[0] == "PATH" {
-				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(t.storePaths), ":")
-			}
-		}
+		env = append(env, "PATH="+strings.Join(nix.StorePathsBin(t.storePaths), ":"))
 	}
 
 	for _, run := range t.cmds {

@@ -236,9 +236,14 @@ func (t *Task) WithBuildinfoStore(s buildinfostore.Store) *Task {
 
 const EnvironSeparator = "="
 
-func (t *Task) AddEnvironment(key, value string) {
+func (t *Task) AddEnvironmentVariable(key, value string) {
 	t.env = append(t.env, strings.Join([]string{key, value}, EnvironSeparator))
 }
+
+func (t *Task) AddEnvironment(env []string) {
+	t.env = append(t.env, env...)
+}
+
 func (t *Task) AddExportPrefix(prefix string) {
 	for i, e := range t.Exports {
 		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))

@@ -53,6 +53,10 @@ type B struct {
 
 	// authStore is used to store authentication credentials for remote store
 	authStore *auth.Store
+
+	// env is a list of strings representing the environment in the form "key=value"
+	// This will be used only if use-nix is true
+	env []string
 }
 
 func newBob(opts ...Option) *B {

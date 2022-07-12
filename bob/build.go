@@ -27,6 +27,10 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	b.PrintVersionCompatibility(ag)
 
 	if ag.UseNix && b.nix != nil {
+		for i, task := range ag.BTasks {
+			task.AddEnvironment(b.env)
+			ag.BTasks[i] = task
+		}
 		fmt.Println("Building nix dependencies...")
 		err = b.nix.BuildNixDependenciesInPipeline(ag, taskName)
 		errz.Fatal(err)

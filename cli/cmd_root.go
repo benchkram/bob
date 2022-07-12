@@ -13,6 +13,7 @@ import (
 )
 
 var zsh bool
+var flagEnvVars []string
 
 func init() {
 	configInit()
@@ -48,6 +49,7 @@ func init() {
 	buildCmd.Flags().Bool("dummy", false, "Create a dummy bobfile")
 	buildCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
 	buildCmd.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing a remote artifact store")
+	buildCmd.Flags().StringSliceVar(&flagEnvVars, "env", []string{}, "Set environment variables to build task")
 	buildCmd.AddCommand(buildListCmd)
 	rootCmd.AddCommand(buildCmd)
 
@@ -85,11 +87,11 @@ Commonly used cmds:
 		if cmd.Flag("version") != nil {
 			showVersion, err := strconv.ParseBool(cmd.Flag("version").Value.String())
 			if err == nil && showVersion {
-				//TODO for go 1.18: check what we can use from runtime/debug: https://github.com/golang/go/issues/49168
-				//bi, ok := debug.ReadBuildInfo()
-				//if ok {
+				// TODO for go 1.18: check what we can use from runtime/debug: https://github.com/golang/go/issues/49168
+				// bi, ok := debug.ReadBuildInfo()
+				// if ok {
 				//
-				//}
+				// }
 
 				boblog.Log.Info(fmt.Sprintf("bob version %s %s/%s\n", bob.Version, runtime.GOOS, runtime.GOARCH))
 				os.Exit(0)
