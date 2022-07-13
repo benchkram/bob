@@ -1,7 +1,6 @@
 package nixruntest
 
 import (
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -122,7 +121,7 @@ func TestRun(t *testing.T) {
 	RunSpecs(t, "nix run suite")
 }
 
-func capture() {
+func startCapture() {
 	stdout = os.Stdout
 	stderr = os.Stderr
 
@@ -134,18 +133,12 @@ func capture() {
 	os.Stderr = pw
 }
 
-func output() string {
+func closeCapture() {
 	pw.Close()
-
-	b, err := io.ReadAll(pr)
-	Expect(err).NotTo(HaveOccurred())
-
 	pr.Close()
 
 	os.Stdout = stdout
 	os.Stderr = stderr
-
-	return string(b)
 }
 
 // useProject set up the project to be used
