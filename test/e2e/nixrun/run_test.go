@@ -57,7 +57,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Eventually(func() string {
 				scanner.Scan()
 				return scanner.Text()
-			}).Should(ContainSubstring("PHP 8.0.18"))
+			}, 2).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -88,7 +88,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Eventually(func() string {
 				scanner.Scan()
 				return scanner.Text()
-			}).Should(ContainSubstring("PHP 8.0.18"))
+			}, 2).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -119,7 +119,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Eventually(func() string {
 				scanner.Scan()
 				return scanner.Text()
-			}).Should(ContainSubstring("PHP 8.0.18"))
+			}, 2).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -150,7 +150,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Eventually(func() string {
 				scanner.Scan()
 				return scanner.Text()
-			}).Should(ContainSubstring("PHP 8.0.18"))
+			}, 2).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -187,7 +187,7 @@ var _ = Describe("Testing new nix implementation", func() {
 					return string(buf)
 				}
 				return ""
-			}).Should(ContainSubstring("PHP 8.0.18"))
+			}, 2).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -223,7 +223,7 @@ var _ = Describe("Testing new nix implementation", func() {
 					return string(buf)
 				}
 				return ""
-			}).Should(ContainSubstring("PHP 8.0.18"))
+			}, 2).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
