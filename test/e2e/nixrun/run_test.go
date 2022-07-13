@@ -1,10 +1,10 @@
 package nixruntest
 
 import (
+	"bufio"
 	"context"
 	"io"
 	"os"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -52,11 +52,15 @@ var _ = Describe("Testing new nix implementation", func() {
 			err = cmdr.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			time.Sleep(500 * time.Millisecond) // fixme
+			scanner := bufio.NewScanner(pr)
+			Eventually(func() string {
+				scanner.Scan()
+				return scanner.Text()
+			}).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(output()).To(ContainSubstring("PHP 8.0.18"))
+			output()
 		})
 	})
 
@@ -79,11 +83,15 @@ var _ = Describe("Testing new nix implementation", func() {
 			err = cmdr.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			time.Sleep(500 * time.Millisecond) // fixme
+			scanner := bufio.NewScanner(pr)
+			Eventually(func() string {
+				scanner.Scan()
+				return scanner.Text()
+			}).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(output()).To(ContainSubstring("PHP 8.0.18"))
+			output()
 		})
 	})
 
@@ -106,11 +114,15 @@ var _ = Describe("Testing new nix implementation", func() {
 			err = cmdr.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			time.Sleep(500 * time.Millisecond) // fixme
+			scanner := bufio.NewScanner(pr)
+			Eventually(func() string {
+				scanner.Scan()
+				return scanner.Text()
+			}).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(output()).To(ContainSubstring("PHP 8.0.18"))
+			output()
 		})
 	})
 
@@ -133,11 +145,15 @@ var _ = Describe("Testing new nix implementation", func() {
 			err = cmdr.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			time.Sleep(500 * time.Millisecond) // fixme
+			scanner := bufio.NewScanner(pr)
+			Eventually(func() string {
+				scanner.Scan()
+				return scanner.Text()
+			}).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(output()).To(ContainSubstring("PHP 8.0.18"))
+			output()
 		})
 	})
 
@@ -159,21 +175,22 @@ var _ = Describe("Testing new nix implementation", func() {
 			err = cmdr.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			time.Sleep(500 * time.Millisecond) // fixme
+			Eventually(func() string {
+				for _, v := range cmdr.Subcommands() {
+					if v.Name() != "server" {
+						continue
+					}
+					buf := make([]byte, 30)
+					_, err := io.ReadFull(v.Stdout(), buf)
+					Expect(err).NotTo(HaveOccurred())
+
+					return string(buf)
+				}
+				return ""
+			}).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
-
-			// Reading the output of server tab should show php version
-			for _, v := range cmdr.Subcommands() {
-				if v.Name() != "server" {
-					continue
-				}
-				buf := make([]byte, 30)
-				_, err := io.ReadFull(v.Stdout(), buf)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(buf)).To(ContainSubstring("PHP 8.0.18"))
-			}
 		})
 	})
 
@@ -194,21 +211,22 @@ var _ = Describe("Testing new nix implementation", func() {
 			err = cmdr.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			time.Sleep(500 * time.Millisecond) // fixme
+			Eventually(func() string {
+				for _, v := range cmdr.Subcommands() {
+					if v.Name() != "server" {
+						continue
+					}
+					buf := make([]byte, 30)
+					_, err := io.ReadFull(v.Stdout(), buf)
+					Expect(err).NotTo(HaveOccurred())
+
+					return string(buf)
+				}
+				return ""
+			}).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
-
-			// Reading the output of server tab should show php version
-			for _, v := range cmdr.Subcommands() {
-				if v.Name() != "server" {
-					continue
-				}
-				buf := make([]byte, 30)
-				_, err := io.ReadFull(v.Stdout(), buf)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(buf)).To(ContainSubstring("PHP 8.0.18"))
-			}
 		})
 	})
 })
