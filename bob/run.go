@@ -45,6 +45,17 @@ func (b *B) Run(ctx context.Context, runTaskName string) (_ ctl.Commander, err e
 		return nil, ErrRunDoesNotExist
 	}
 
+	if aggregate.UseNix && b.nix != nil {
+		for i, task := range aggregate.RTasks {
+			task.AddEnvironment(b.env)
+			aggregate.RTasks[i] = task
+		}
+		for i, task := range aggregate.BTasks {
+			task.AddEnvironment(b.env)
+			aggregate.BTasks[i] = task
+		}
+	}
+
 	// gather interactive tasks
 	childInteractiveTasks := runTasksInPipeline(runTaskName, aggregate)
 	interactiveTasks := []string{runTask.Name()}

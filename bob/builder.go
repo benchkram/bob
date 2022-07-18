@@ -24,6 +24,7 @@ func NewBuilder(b *B, task string, aggregate *bobfile.Bobfile, f BuildFunc) ctl.
 		task:      task,
 		aggregate: aggregate,
 		f:         f,
+		nix:       b.nix,
 	}
 	return builder
 }

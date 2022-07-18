@@ -42,6 +42,7 @@ func init() {
 	// runCmd
 	runCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
 	runCmd.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing a remote artifact store")
+	runCmd.Flags().StringSliceVar(&flagEnvVars, "env", []string{}, "Set environment variables to run task")
 	runCmd.AddCommand(runListCmd)
 	rootCmd.AddCommand(runCmd)
 

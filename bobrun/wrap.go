@@ -230,6 +230,10 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 		// FIXME: make run cmds ready for nix integration.
 		env := os.Environ()
 
+		if rw.run.UseNix() {
+			env = rw.run.Env()
+		}
+
 		pr, pw, err := os.Pipe()
 		errz.Fatal(err)
 
@@ -256,7 +260,7 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 			interp.Env(expand.ListEnviron(env...)),
 			interp.StdIO(os.Stdin, pw, pw),
 			// FIXME: why does this not work?
-			//interp.StdIO(os.Stdin, rw.stdout.w, rw.stderr.w),
+			// interp.StdIO(os.Stdin, rw.stdout.w, rw.stderr.w),
 		)
 		errz.Fatal(err)
 

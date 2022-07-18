@@ -172,12 +172,14 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	for key, run := range bobfile.RTasks {
 		run.SetDir(bobfile.dir)
 		run.SetName(key)
+		run.SetUseNix(bobfile.UseNix)
+		run.SetEnv([]string{})
 
 		bobfile.RTasks[key] = run
 	}
 
-	//// Initialize remote store in case of a valid remote url /  projectname.
-	//if bobfile.Project != "" {
+	// // Initialize remote store in case of a valid remote url /  projectname.
+	// if bobfile.Project != "" {
 	//	projectname, err := project.Parse(bobfile.Project)
 	//	if err != nil {
 	//		return nil, err
@@ -197,9 +199,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	//
 	//		bobfile.remotestore = NewRemotestore(url)
 	//	}
-	//} else {
+	// } else {
 	//	bobfile.Project = bobfile.dir
-	//}
+	// }
 
 	return bobfile, nil
 }

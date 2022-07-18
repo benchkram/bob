@@ -134,6 +134,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 				boblet.BTasks[key] = task
 			}
+			for key, task := range boblet.RTasks {
+				task.AddEnvironmentVariable(strings.ToUpper(variable), value)
+				boblet.RTasks[key] = task
+			}
 		}
 	}
 

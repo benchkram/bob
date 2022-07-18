@@ -3,6 +3,7 @@ package bobrun
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
@@ -38,11 +39,26 @@ type Run struct {
 
 	dir string
 
+	// env holds key=value pairs passed to the environment
+	// when the task is executed.
+	env []string
+
 	name string
+
+	// flag if its bobfile has Nix enabled
+	useNix bool
 }
 
 func (r *Run) Name() string {
 	return r.name
+}
+
+func (r *Run) SetEnv(env []string) {
+	r.env = env
+}
+
+func (r *Run) Env() []string {
+	return r.env
 }
 
 func (r *Run) SetName(name string) {
@@ -57,16 +73,22 @@ func (r *Run) SetDir(dir string) {
 	r.dir = dir
 }
 
-func New() *Run {
-	r := &Run{
-		Type:      RunTypeBinary,
-		DependsOn: []string{},
-		init:      []string{},
-		Path:      composeFileDefault,
+const EnvironSeparator = "="
 
-		didUpdate: make(chan struct{}),
-	}
-	return r
+func (r *Run) AddEnvironmentVariable(key, value string) {
+	r.env = append(r.env, strings.Join([]string{key, value}, EnvironSeparator))
+}
+
+func (r *Run) AddEnvironment(env []string) {
+	r.env = append(r.env, env...)
+}
+
+func (r *Run) SetUseNix(useNix bool) {
+	r.useNix = useNix
+}
+
+func (r *Run) UseNix() bool {
+	return r.useNix
 }
 
 // Command creates a run cmd and returns a Command interface to control it.
