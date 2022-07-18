@@ -33,10 +33,6 @@ type Run struct {
 	// initOnce see InitOnceDirty
 	initOnce []string
 
-	// didUpdate fires after the run task
-	// did a restart.
-	didUpdate chan struct{}
-
 	dir string
 
 	// env holds key=value pairs passed to the environment
