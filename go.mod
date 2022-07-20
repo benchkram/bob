@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.20.0
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cli/cli v1.14.0
-	github.com/compose-spec/compose-go v1.2.7
+	github.com/compose-spec/compose-go v1.2.8
 	github.com/deepmap/oapi-codegen v1.10.1
 	github.com/docker/cli v20.10.17+incompatible
 	github.com/docker/compose/v2 v2.6.0
