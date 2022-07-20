@@ -76,7 +76,7 @@ var _ = Describe("Test command start and wait", func() {
 
 	It("command started", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -105,7 +105,7 @@ var _ = Describe("Test command stop", func() {
 
 	It("command started", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -139,7 +139,7 @@ var _ = Describe("Test command stop when already exited gracefully", func() {
 
 	It("command started", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -169,7 +169,7 @@ var _ = Describe("Test command manual restart", func() {
 
 	It("command started", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -219,7 +219,7 @@ var _ = Describe("Test command restart", func() {
 
 	It("command started", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -264,7 +264,7 @@ var _ = Describe("Test Wait() called multiple times on command that succeeded", 
 
 	It("command started", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -295,7 +295,7 @@ var _ = Describe("Test Wait() called multiple times on command that returned err
 
 	It("command started", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptErrPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptErrPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -316,7 +316,7 @@ var _ = Describe("Test Stop() called multiple times on command that returned err
 
 	It("command started", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptErrPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptErrPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -340,7 +340,7 @@ var _ = Describe("Test Start() called multiple times", func() {
 
 	It("command started multiple times", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptErrPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptErrPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()
@@ -357,7 +357,7 @@ var _ = Describe("Test Stdin() and Stderr()", func() {
 
 	It("command started multiple times", func() {
 		var err error
-		cmd, err = NewCmd("test", "/bin/bash", []string{}, false, "-c", scriptEchoErrPath)
+		cmd, err = NewCmd("test", "/bin/bash", WithArgs("-c", scriptEchoErrPath))
 		Expect(err).NotTo(HaveOccurred())
 
 		err = cmd.Start()

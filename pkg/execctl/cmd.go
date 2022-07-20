@@ -34,6 +34,26 @@ var (
 // assert Cmd implements the Command interface
 var _ ctl.Command = (*Cmd)(nil)
 
+type Option func(c *Cmd)
+
+func WithStorePaths(storePaths []string) Option {
+	return func(c *Cmd) {
+		c.storePaths = storePaths
+	}
+}
+
+func WithUseNix(useNix bool) Option {
+	return func(c *Cmd) {
+		c.useNix = useNix
+	}
+}
+
+func WithArgs(args ...string) Option {
+	return func(c *Cmd) {
+		c.args = args
+	}
+}
+
 // Cmd allows to control a process started through os.Exec with additional start, stop and restart capabilities, and
 // provides readers/writers for the command's outputs and input, respectively.
 type Cmd struct {
@@ -59,14 +79,18 @@ type pipe struct {
 }
 
 // NewCmd creates a new Cmd, ready to be started
-func NewCmd(name string, exe string, storePaths []string, useNix bool, args ...string) (c *Cmd, err error) {
+func NewCmd(name string, exe string, opts ...Option) (c *Cmd, err error) {
 	c = &Cmd{
-		name:       name,
-		exe:        exe,
-		args:       args,
-		err:        make(chan error, 1),
-		storePaths: storePaths,
-		useNix:     useNix,
+		name: name,
+		exe:  exe,
+		err:  make(chan error, 1),
+	}
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(c)
 	}
 
 	// create pipes for stdout, stderr and stdin
