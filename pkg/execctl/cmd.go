@@ -122,12 +122,7 @@ func (c *Cmd) Start() error {
 
 	env := os.Environ()
 	if c.HasNixStorePaths() {
-		for k, v := range env {
-			pair := strings.SplitN(v, "=", 2)
-			if pair[0] == "PATH" {
-				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(c.storePaths), ":")
-			}
-		}
+		env = nix.ReplacePATH(c.storePaths, env)
 	}
 	c.cmd.Env = env
 	// assign the pipes to the command

@@ -231,12 +231,7 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 
 		env := os.Environ()
 		if rw.run.HasNixStorePaths() {
-			for k, v := range env {
-				pair := strings.SplitN(v, "=", 2)
-				if pair[0] == "PATH" {
-					env[k] = "PATH=" + strings.Join(nix.StorePathsBin(rw.run.storePaths), ":")
-				}
-			}
+			env = nix.ReplacePATH(rw.run.storePaths, env)
 		}
 
 		pr, pw, err := os.Pipe()
