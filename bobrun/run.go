@@ -97,7 +97,7 @@ func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 
 	switch r.Type {
 	case RunTypeBinary:
-		rc, err = execctl.NewCmd(r.name, r.Path, r.storePaths, r.UseNix(), ":")
+		rc, err = execctl.NewCmd(r.name, r.Path, r.storePaths, r.UseNix())
 		errz.Fatal(err)
 	case RunTypeCompose:
 		rc, err = r.composeCommand(ctx)
