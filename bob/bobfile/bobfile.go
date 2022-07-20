@@ -3,6 +3,7 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
+	"github.com/benchkram/bob/pkg/versionedsync/remotesyncstore"
 	"io/ioutil"
 	"net/url"
 	"path/filepath"
@@ -91,6 +92,8 @@ type Bobfile struct {
 
 	RemoteStoreHost string
 	remotestore     store.Store
+
+	versionedSyncStore *remotesyncstore.S
 }
 
 func NewBobfile() *Bobfile {
@@ -116,6 +119,14 @@ func (b *Bobfile) SetRemotestore(remote store.Store) {
 
 func (b *Bobfile) Remotestore() store.Store {
 	return b.remotestore
+}
+
+func (b *Bobfile) SetVersionedSyncStore(syncStore *remotesyncstore.S) {
+	b.versionedSyncStore = syncStore
+}
+
+func (b *Bobfile) VersionedSyncStore() *remotesyncstore.S {
+	return b.versionedSyncStore
 }
 
 // bobfileRead reads a bobfile and initializes private fields.
@@ -205,6 +216,13 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	//	bobfile.Project = bobfile.dir
 	//}
 
+	// write names to Sync objects
+	for name, _ := range bobfile.SyncCollections {
+		s := bobfile.SyncCollections[name]
+		s.SetName(name)
+		bobfile.SyncCollections[name] = s
+	}
+
 	return bobfile, nil
 }
 
@@ -243,6 +261,30 @@ func NewRemotestore(endpoint *url.URL, allowInsecure bool, token string) (s stor
 		proj,
 
 		remotestore.WithClient(
+			storeclient.New(protocol+endpoint.Host, token),
+		),
+	)
+	return s
+}
+
+func NewVersionedSyncStore(endpoint *url.URL, allowInsecure bool, token string) (s *remotesyncstore.S) {
+	const sep = "/"
+
+	parts := strings.Split(strings.TrimLeft(endpoint.Path, sep), sep)
+
+	username := parts[0]
+	proj := strings.Join(parts[1:], sep)
+
+	protocol := "https://"
+	if allowInsecure {
+		protocol = "http://"
+	}
+
+	s = remotesyncstore.New(
+		username,
+		proj,
+
+		remotesyncstore.WithClient(
 			storeclient.New(protocol+endpoint.Host, token),
 		),
 	)
@@ -338,6 +380,8 @@ func (b *Bobfile) Validate() (err error) {
 			}
 		}
 	}
+
+	// TODO: validate sync entries
 
 	return nil
 }

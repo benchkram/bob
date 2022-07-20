@@ -59,6 +59,9 @@ func init() {
 	rootCmd.AddCommand(CmdGit)
 
 	// syncCmd
+	cmdSyncListRemote.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing bob-server")
+	cmdSyncPush.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing bob-server")
+	cmdSyncPull.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing bob-server")
 	cmdSync.AddCommand(cmdSyncPush)
 	cmdSync.AddCommand(cmdSyncPull)
 	cmdSync.AddCommand(cmdSyncList)

@@ -3,6 +3,7 @@ package file
 import (
 	"io/ioutil"
 	"os"
+	"time"
 )
 
 // Exists return true when a file exists, false otherwise.
@@ -25,4 +26,12 @@ func Copy(dst, src string) error {
 	}
 
 	return nil
+}
+
+func LastModTime(filePath string) (time.Time, error) {
+	file, err := os.Stat(filePath)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return file.ModTime(), nil
 }
