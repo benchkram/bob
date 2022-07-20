@@ -17,20 +17,6 @@ var (
 	ErrCmdAlreadyStarted = errors.New("cmd already started")
 )
 
-// Command allows to execute a command and interact with it in real-time
-// type Command interface {
-// 	Start() error
-// 	Stop() error
-// 	Restart() error
-
-// 	Shutdown() error
-// 	Done() <-chan struct{}
-
-// 	Stdout() io.Reader
-// 	Stderr() io.Reader
-// 	Stdin() io.Writer
-// }
-
 // assert Cmd implements the Command interface
 var _ ctl.Command = (*Cmd)(nil)
 
