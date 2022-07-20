@@ -34,26 +34,6 @@ var (
 // assert Cmd implements the Command interface
 var _ ctl.Command = (*Cmd)(nil)
 
-type Option func(c *Cmd)
-
-func WithStorePaths(storePaths []string) Option {
-	return func(c *Cmd) {
-		c.storePaths = storePaths
-	}
-}
-
-func WithUseNix(useNix bool) Option {
-	return func(c *Cmd) {
-		c.useNix = useNix
-	}
-}
-
-func WithArgs(args ...string) Option {
-	return func(c *Cmd) {
-		c.args = args
-	}
-}
-
 // Cmd allows to control a process started through os.Exec with additional start, stop and restart capabilities, and
 // provides readers/writers for the command's outputs and input, respectively.
 type Cmd struct {
