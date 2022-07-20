@@ -37,8 +37,8 @@ func FromFileOrNew(path string) (hc *HashCache, err error) {
 		return nil, fmt.Errorf("failed to load hashcache from: %s: it is a directory", path)
 	}
 	f, err := os.Open(path)
-	defer f.Close()
 	errz.Fatal(err)
+	defer f.Close()
 	byteValue, err := ioutil.ReadAll(f)
 	errz.Fatal(err)
 	err = json.Unmarshal(byteValue, &hc)

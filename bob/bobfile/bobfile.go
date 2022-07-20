@@ -217,7 +217,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	//}
 
 	// write names to Sync objects
-	for name, _ := range bobfile.SyncCollections {
+	for name := range bobfile.SyncCollections {
 		s := bobfile.SyncCollections[name]
 		s.SetName(name)
 		bobfile.SyncCollections[name] = s

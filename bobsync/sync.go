@@ -27,6 +27,10 @@ type Sync struct {
 	cache *HashCache
 }
 
+func (s *Sync) GetName() string {
+	return s.name
+}
+
 func (s *Sync) SetName(name string) {
 	s.name = name
 }
@@ -34,17 +38,17 @@ func (s *Sync) SetName(name string) {
 func (s *Sync) Push(ctx context.Context, remoteStore remotesyncstore.S, localStore localsyncstore.S, bobDir string) (err error) {
 	defer errz.Recover(&err)
 
-	var collectionMustBeCreated bool
+	//var collectionMustBeCreated bool
 	// get collectionId ready
-	var collectionId string
-	collectionId, err = remoteStore.CollectionIdByName(ctx, s.name, s.Version)
+
+	s.remoteCollectionId, err = remoteStore.CollectionIdByName(ctx, s.name, s.Version)
 
 	// check if collections exists
 	switch err {
 	case nil:
 	case remotesyncstore.ErrCollectionNotFound:
-		collectionMustBeCreated = true
-		collectionId, err = remoteStore.CollectionCreate(ctx, s.name, s.Version, s.Path)
+		//collectionMustBeCreated = true
+		s.remoteCollectionId, err = remoteStore.CollectionCreate(ctx, s.name, s.Version, s.Path)
 		errz.Fatal(err)
 	default:
 		errz.Fatal(err)
@@ -62,7 +66,7 @@ func (s *Sync) Push(ctx context.Context, remoteStore remotesyncstore.S, localSto
 	err = s.cache.SaveToFile(absHashCachePath)
 	errz.Fatal(err)
 
-	remoteCollection, err := remoteStore.Collection(ctx, collectionId)
+	remoteCollection, err := remoteStore.Collection(ctx, s.remoteCollectionId)
 	errz.Fatal(err)
 
 	// create the delta
@@ -71,21 +75,19 @@ func (s *Sync) Push(ctx context.Context, remoteStore remotesyncstore.S, localSto
 	fmt.Printf("Local-Remote delta for %s\n", aurora.Bold(s.name))
 	fmt.Println(delta.PushOverview())
 
-	if !collectionMustBeCreated {
-		// TODO: prompt user and seek confirmation
-	}
+	// TODO: prompt user and seek confirmation
 
 	for _, f := range delta.LocalFilesMissingOnRemote {
 		srcReader, err := localStore.ReadFile(bobDir, s.Path, f.LocalPath)
 		errz.Fatal(err)
-		err = remoteStore.FileUpload(ctx, collectionId, f.LocalPath, srcReader)
+		err = remoteStore.FileUpload(ctx, s.remoteCollectionId, f.LocalPath, srcReader)
 		errz.Fatal(err)
 	}
 	for _, f := range delta.RemoteFilesMissingOnLocal {
 		if f.ID == nil {
 			return fmt.Errorf("ID not available can not delete from remote")
 		}
-		err = remoteStore.FileDelete(ctx, collectionId, *f.ID)
+		err = remoteStore.FileDelete(ctx, s.remoteCollectionId, *f.ID)
 		errz.Fatal(err)
 	}
 	for _, f := range delta.ToBeUpdated {
@@ -94,7 +96,7 @@ func (s *Sync) Push(ctx context.Context, remoteStore remotesyncstore.S, localSto
 		}
 		srcReader, err := localStore.ReadFile(bobDir, s.Path, f.LocalPath)
 		errz.Fatal(err)
-		err = remoteStore.FileUpdate(ctx, collectionId, *f.ID, srcReader)
+		err = remoteStore.FileUpdate(ctx, s.remoteCollectionId, *f.ID, srcReader)
 		errz.Fatal(err)
 	}
 
@@ -104,17 +106,16 @@ func (s *Sync) Push(ctx context.Context, remoteStore remotesyncstore.S, localSto
 func (s *Sync) Pull(ctx context.Context, remoteStore remotesyncstore.S, localStore localsyncstore.S, bobDir string) (err error) {
 	defer errz.Recover(&err)
 
-	var collectionMustBeCreated bool
+	//var collectionMustBeCreated bool
 	// get collectionId ready
-	var collectionId string
-	collectionId, err = remoteStore.CollectionIdByName(ctx, s.name, s.Version)
+	s.remoteCollectionId, err = remoteStore.CollectionIdByName(ctx, s.name, s.Version)
 
 	// check if collections exists
 	switch err {
 	case nil:
 	case remotesyncstore.ErrCollectionNotFound:
-		collectionMustBeCreated = true
-		collectionId, err = remoteStore.CollectionCreate(ctx, s.name, s.Version, s.Path)
+		//collectionMustBeCreated = true
+		s.remoteCollectionId, err = remoteStore.CollectionCreate(ctx, s.name, s.Version, s.Path)
 		errz.Fatal(err)
 	default:
 		errz.Fatal(err)
@@ -132,7 +133,7 @@ func (s *Sync) Pull(ctx context.Context, remoteStore remotesyncstore.S, localSto
 	err = s.cache.SaveToFile(absHashCachePath)
 	errz.Fatal(err)
 
-	remoteCollection, err := remoteStore.Collection(ctx, collectionId)
+	remoteCollection, err := remoteStore.Collection(ctx, s.remoteCollectionId)
 	errz.Fatal(err)
 
 	// create the delta
@@ -141,9 +142,7 @@ func (s *Sync) Pull(ctx context.Context, remoteStore remotesyncstore.S, localSto
 	fmt.Printf("Local-Remote delta for %s\n", aurora.Bold(s.name))
 	fmt.Println(delta.PullOverview())
 
-	if !collectionMustBeCreated {
-		// TODO: prompt user and seek confirmation
-	}
+	// TODO: prompt user and seek confirmation
 
 	for _, f := range delta.LocalFilesMissingOnRemote {
 		err := localStore.DeleteFile(bobDir, s.Path, f.LocalPath)
@@ -153,7 +152,7 @@ func (s *Sync) Pull(ctx context.Context, remoteStore remotesyncstore.S, localSto
 		if f.ID == nil {
 			return fmt.Errorf("ID not available can not downlaod from remote")
 		}
-		srcReader, err := remoteStore.File(ctx, collectionId, *f.ID)
+		srcReader, err := remoteStore.File(ctx, s.remoteCollectionId, *f.ID)
 		errz.Fatal(err)
 		err = localStore.WriteFile(bobDir, s.Path, f.LocalPath, srcReader)
 		errz.Fatal(err)
@@ -162,7 +161,7 @@ func (s *Sync) Pull(ctx context.Context, remoteStore remotesyncstore.S, localSto
 		if f.ID == nil {
 			return fmt.Errorf("ID not available can not downlaod from remote")
 		}
-		srcReader, err := remoteStore.File(ctx, collectionId, *f.ID)
+		srcReader, err := remoteStore.File(ctx, s.remoteCollectionId, *f.ID)
 		errz.Fatal(err)
 		err = localStore.WriteFile(bobDir, s.Path, f.LocalPath, srcReader)
 		errz.Fatal(err)
@@ -173,8 +172,6 @@ func (s *Sync) Pull(ctx context.Context, remoteStore remotesyncstore.S, localSto
 
 func (s *Sync) ListLocal(bobDir string) (err error) {
 	defer errz.Recover(&err)
-
-	// sync files in collection
 
 	absHashCachPath := filepath.Join(bobDir, hashCachePath)
 	if s.cache == nil {
@@ -188,7 +185,7 @@ func (s *Sync) ListLocal(bobDir string) (err error) {
 	errz.Fatal(err)
 
 	fmt.Printf("%s@%s (./%s)\n", aurora.Bold(s.name), aurora.Italic(s.Version), s.Path)
-	for p, _ := range *s.cache {
+	for p := range *s.cache {
 		fmt.Printf("\t%s\n", p)
 	}
 
@@ -200,8 +197,7 @@ func (s *Sync) ListRemote(ctx context.Context, store remotesyncstore.S) (err err
 	defer errz.Recover(&err)
 
 	// get collectionId ready
-	var collectionId string
-	collectionId, err = store.CollectionIdByName(ctx, s.name, s.Version)
+	s.remoteCollectionId, err = store.CollectionIdByName(ctx, s.name, s.Version)
 
 	// check if collections exists
 	switch err {
@@ -217,7 +213,7 @@ func (s *Sync) ListRemote(ctx context.Context, store remotesyncstore.S) (err err
 
 	for _, c := range collections {
 		fmt.Printf("%s@%s (./%s)", aurora.Bold(c.Name), aurora.Italic(c.Version), c.LocalPath)
-		if c.ID == collectionId {
+		if c.ID == s.remoteCollectionId {
 			fmt.Printf(" [synced to local]")
 		}
 		fmt.Println()
