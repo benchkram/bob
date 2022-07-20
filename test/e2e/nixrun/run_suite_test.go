@@ -121,7 +121,7 @@ func TestRun(t *testing.T) {
 	RunSpecs(t, "nix run suite")
 }
 
-func startCapture() {
+func startScan() {
 	stdout = os.Stdout
 	stderr = os.Stderr
 
@@ -133,12 +133,12 @@ func startCapture() {
 	os.Stderr = pw
 }
 
-func closeCapture() {
-	pw.Close()
-	pr.Close()
-
+func stopScan() {
 	os.Stdout = stdout
 	os.Stderr = stderr
+
+	pw.Close()
+	pr.Close()
 }
 
 // useProject set up the project to be used

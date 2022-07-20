@@ -44,8 +44,8 @@ var _ = Describe("Testing new nix implementation", func() {
 			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
-			startCapture()
-			defer closeCapture()
+			startScan()
+			defer stopScan()
 
 			cmdr, err := b.Run(context.Background(), "server")
 			Expect(err).NotTo(HaveOccurred())
@@ -75,8 +75,8 @@ var _ = Describe("Testing new nix implementation", func() {
 			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
-			startCapture()
-			defer closeCapture()
+			startScan()
+			defer stopScan()
 
 			cmdr, err := b.Run(context.Background(), "server")
 			Expect(err).NotTo(HaveOccurred())
@@ -106,8 +106,8 @@ var _ = Describe("Testing new nix implementation", func() {
 			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
-			startCapture()
-			defer closeCapture()
+			startScan()
+			defer stopScan()
 
 			cmdr, err := b.Run(context.Background(), "server")
 			Expect(err).NotTo(HaveOccurred())
@@ -137,8 +137,8 @@ var _ = Describe("Testing new nix implementation", func() {
 			b, err := Bob()
 			Expect(err).NotTo(HaveOccurred())
 
-			startCapture()
-			defer closeCapture()
+			startScan()
+			defer stopScan()
 
 			cmdr, err := b.Run(context.Background(), "server")
 			Expect(err).NotTo(HaveOccurred())
