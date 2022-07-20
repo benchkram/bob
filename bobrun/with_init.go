@@ -230,7 +230,7 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 		errz.Fatal(err)
 
 		env := os.Environ()
-		if len(rw.run.storePaths) > 0 && rw.run.UseNix() {
+		if rw.run.HasNixStorePaths() {
 			for k, v := range env {
 				pair := strings.SplitN(v, "=", 2)
 				if pair[0] == "PATH" {
