@@ -89,12 +89,6 @@ func (r *Run) SetStorePaths(storePaths []string) {
 	r.storePaths = storePaths
 }
 
-// HasNixStorePaths checks if the run has /nix/store paths
-// to be added to $PATH
-func (r *Run) HasNixStorePaths() bool {
-	return len(r.storePaths) > 0 && r.UseNix()
-}
-
 // Command creates a run cmd and returns a Command interface to control it.
 // To shutdown a Command() use a cancelable context.
 func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {

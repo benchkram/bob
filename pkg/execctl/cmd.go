@@ -111,7 +111,7 @@ func (c *Cmd) Start() error {
 	c.cmd = cmd
 
 	env := os.Environ()
-	if c.HasNixStorePaths() {
+	if c.useNix && len(c.storePaths) > 0 {
 		env = nix.ReplacePATH(c.storePaths, env)
 	}
 	c.cmd.Env = env
@@ -263,10 +263,4 @@ func (c *Cmd) Done() <-chan struct{} {
 		close(done)
 	}()
 	return done
-}
-
-// HasNixStorePaths checks if the cmd has /nix/store paths
-// to be added to $PATH
-func (c *Cmd) HasNixStorePaths() bool {
-	return len(c.storePaths) > 0 && c.useNix
 }
