@@ -37,7 +37,7 @@ type control struct {
 
 func (c *control) Running() bool {
 	// TODO: @Tasos that needs to be somehow implemented for the TUI
-	//panic("implement me")
+	// panic("implement me")
 	return true
 
 }
