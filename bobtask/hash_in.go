@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/bobutil"
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"gopkg.in/yaml.v2"
 
 	"github.com/benchkram/bob/bobtask/hash"
@@ -53,8 +55,9 @@ func (t *Task) HashIn() (taskHash hash.In, err error) {
 	}
 
 	// Hash the environment
-	sort.Strings(t.env)
-	environment := strings.Join(t.env, ",")
+	env := filterOutWhitelistEnv(t.env)
+	sort.Strings(env)
+	environment := strings.Join(env, ",")
 	err = h.AddBytes(bytes.NewBufferString(environment))
 	if err != nil {
 		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
@@ -72,4 +75,16 @@ func (t *Task) HashIn() (taskHash hash.In, err error) {
 	t.hashIn = &hashIn
 
 	return hashIn, nil
+}
+
+func filterOutWhitelistEnv(env []string) []string {
+	var result []string
+	for _, v := range env {
+		pair := strings.SplitN(v, "=", 2)
+		if sliceutil.Contains(bobutil.EnvWhitelist, pair[0]) {
+			continue
+		}
+		result = append(result, v)
+	}
+	return result
 }
