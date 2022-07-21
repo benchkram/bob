@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
@@ -19,11 +20,18 @@ to your .bashrc / .zshrc
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			if zsh {
-				err := rootCmd.GenZshCompletion(os.Stdout)
+				var buf bytes.Buffer
+				err := rootCmd.GenZshCompletion(&buf)
 				if err != nil {
 					boblog.Log.Error(err, "Unable to generate Zsh completion")
 					exit(1)
 				}
+				_, err = buf.WriteString("\ncompdef _bob bob\n")
+				if err != nil {
+					boblog.Log.Error(err, "Unable to generate Zsh completion")
+					exit(1)
+				}
+				fmt.Println(buf.String())
 			} else {
 				err := rootCmd.GenBashCompletionV2(os.Stdout, true)
 				if err != nil {
