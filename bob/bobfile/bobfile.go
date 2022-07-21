@@ -162,7 +162,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
-		task.SetDependencies(initializeDependencies(dir, task, bobfile))
+		task.SetDependencies(initializeDependencies(dir, task.DependenciesDirty, bobfile))
 		task.SetUseNix(bobfile.UseNix)
 
 		bobfile.BTasks[key] = task
@@ -174,6 +174,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		run.SetName(key)
 		run.SetUseNix(bobfile.UseNix)
 		run.SetEnv([]string{})
+
+		run.SetDependencies(initializeDependencies(dir, run.DependenciesDirty, bobfile))
+		run.SetUseNix(bobfile.UseNix)
 
 		bobfile.RTasks[key] = run
 	}
@@ -208,8 +211,8 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 
 // initializeDependencies gathers all dependencies for a task(task level and bobfile level)
 // and initialize them with bobfile dir and corresponding nixpkgs used
-func initializeDependencies(dir string, task bobtask.Task, bobfile *Bobfile) []nix.Dependency {
-	dependencies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
+func initializeDependencies(dir string, taskDependencies []string, bobfile *Bobfile) []nix.Dependency {
+	dependencies := sliceutil.Unique(append(taskDependencies, bobfile.Dependencies...))
 	dependencies = nix.AddDir(dir, dependencies)
 
 	taskDeps := make([]nix.Dependency, 0)

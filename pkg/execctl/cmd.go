@@ -9,26 +9,13 @@ import (
 	"sync"
 
 	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
 var (
 	ErrCmdAlreadyStarted = errors.New("cmd already started")
 )
-
-// Command allows to execute a command and interact with it in real-time
-// type Command interface {
-// 	Start() error
-// 	Stop() error
-// 	Restart() error
-
-// 	Shutdown() error
-// 	Done() <-chan struct{}
-
-// 	Stdout() io.Reader
-// 	Stderr() io.Reader
-// 	Stdin() io.Writer
-// }
 
 // assert Cmd implements the Command interface
 var _ ctl.Command = (*Cmd)(nil)
@@ -48,6 +35,8 @@ type Cmd struct {
 	interrupted bool
 	err         chan error
 	lastErr     error
+	storePaths  []string
+	useNix      bool
 }
 
 type pipe struct {
@@ -56,12 +45,18 @@ type pipe struct {
 }
 
 // NewCmd creates a new Cmd, ready to be started
-func NewCmd(name string, exe string, args ...string) (c *Cmd, err error) {
+func NewCmd(name string, exe string, opts ...Option) (c *Cmd, err error) {
 	c = &Cmd{
 		name: name,
 		exe:  exe,
-		args: args,
 		err:  make(chan error, 1),
+	}
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(c)
 	}
 
 	// create pipes for stdout, stderr and stdin
@@ -115,6 +110,11 @@ func (c *Cmd) Start() error {
 	cmd := exec.Command(c.exe, c.args...)
 	c.cmd = cmd
 
+	env := os.Environ()
+	if c.useNix && len(c.storePaths) > 0 {
+		env = nix.ReplacePATH(c.storePaths, env)
+	}
+	c.cmd.Env = env
 	// assign the pipes to the command
 	c.cmd.Stdout = c.stdout.w
 	c.cmd.Stderr = c.stderr.w

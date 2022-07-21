@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
+
+	"github.com/benchkram/bob/pkg/boblog"
 )
 
 var ErrInProgress = fmt.Errorf("in progress")

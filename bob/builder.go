@@ -19,12 +19,12 @@ type builder struct {
 	nix       *NixBuilder
 }
 
-func NewBuilder(b *B, task string, aggregate *bobfile.Bobfile, f BuildFunc) ctl.Builder {
+func NewBuilder(task string, aggregate *bobfile.Bobfile, f BuildFunc, nix *NixBuilder) ctl.Builder {
 	builder := &builder{
 		task:      task,
 		aggregate: aggregate,
 		f:         f,
-		nix:       b.nix,
+		nix:       nix,
 	}
 	return builder
 }

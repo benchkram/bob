@@ -13,7 +13,7 @@ func Exists(path string) bool {
 
 // Copy file to destination
 // TODO: Use io.Copy instead of completely reading, then writing the file to use Go optimizations.
-func Copy(dst, src string) error {
+func Copy(src, dst string) error {
 	input, err := ioutil.ReadFile(src)
 	if err != nil {
 		return err

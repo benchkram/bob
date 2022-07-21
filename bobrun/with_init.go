@@ -10,13 +10,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/ctl"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
 	"mvdan.cc/sh/interp"
 	"mvdan.cc/sh/syntax"
+
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/ctl"
 )
 
 // WithInit wraps a run-task to provide init functionality executed after
@@ -227,8 +229,10 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
 		errz.Fatal(err)
 
-		// FIXME: make run cmds ready for nix integration.
 		env := os.Environ()
+		if rw.run.UseNix() && len(rw.run.storePaths) > 0 {
+			env = nix.ReplacePATH(rw.run.storePaths, env)
+		}
 
 		if rw.run.UseNix() {
 			env = rw.run.Env()

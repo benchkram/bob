@@ -1,4 +1,4 @@
-package nixtest
+package nixruntest
 
 import (
 	"io/ioutil"
