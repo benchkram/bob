@@ -30,7 +30,7 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	}
 
 	if len(t.storePaths) > 0 && t.useNix {
-		env = append(env, "PATH="+strings.Join(nix.StorePathsBin(t.storePaths), ":"))
+		env = nix.AddPATH(t.storePaths, env)
 	}
 
 	for _, run := range t.cmds {

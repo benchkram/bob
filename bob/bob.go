@@ -75,6 +75,7 @@ func newBob(opts ...Option) *B {
 		}
 		opt(b)
 	}
+	b.keepWhitelistEnv()
 
 	return b
 }
@@ -198,4 +199,16 @@ func (b *B) read() (err error) {
 	}
 
 	return nil
+}
+
+// keepWhitelistEnv will keep whitelisted env variables
+// from local host
+func (b *B) keepWhitelistEnv() {
+	envWhitelist := []string{"HOME", "XDG_CACHE_HOME"}
+
+	for _, envKey := range envWhitelist {
+		if value, exists := os.LookupEnv(envKey); exists {
+			b.env = append(b.env, envKey+"="+value)
+		}
+	}
 }

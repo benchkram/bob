@@ -230,14 +230,12 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 		errz.Fatal(err)
 
 		env := os.Environ()
-		if rw.run.UseNix() && len(rw.run.storePaths) > 0 {
-			env = nix.ReplacePATH(rw.run.storePaths, env)
-		}
-
 		if rw.run.UseNix() {
 			env = rw.run.Env()
 		}
-
+		if rw.run.UseNix() && len(rw.run.storePaths) > 0 {
+			env = nix.AddPATH(rw.run.storePaths, env)
+		}
 		pr, pw, err := os.Pipe()
 		errz.Fatal(err)
 

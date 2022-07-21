@@ -112,7 +112,7 @@ func (c *Cmd) Start() error {
 
 	env := os.Environ()
 	if c.useNix && len(c.storePaths) > 0 {
-		env = nix.ReplacePATH(c.storePaths, env)
+		env = nix.AddPATH(c.storePaths, env)
 	}
 	c.cmd.Env = env
 	// assign the pipes to the command
