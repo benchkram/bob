@@ -52,6 +52,7 @@ func run(taskname string, noCache bool, allowInsecure bool) {
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
 		bob.WithInsecure(allowInsecure),
+		bob.WithEnvVariables(parseEnvVarsFlag(flagEnvVars)),
 	)
 	if err != nil {
 		exitCode = 1

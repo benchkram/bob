@@ -172,6 +172,8 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	for key, run := range bobfile.RTasks {
 		run.SetDir(bobfile.dir)
 		run.SetName(key)
+		run.SetUseNix(bobfile.UseNix)
+		run.SetEnv([]string{})
 
 		run.SetDependencies(initializeDependencies(dir, run.DependenciesDirty, bobfile))
 		run.SetUseNix(bobfile.UseNix)

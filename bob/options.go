@@ -63,3 +63,9 @@ func WithNixBuilder(nix *NixBuilder) Option {
 		b.nix = nix
 	}
 }
+
+func WithEnvVariables(env []string) Option {
+	return func(b *B) {
+		b.env = env
+	}
+}

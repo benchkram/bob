@@ -130,9 +130,13 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			for key, task := range boblet.BTasks {
 				// TODO: Create and use envvar sanitizer
 
-				task.AddEnvironment(strings.ToUpper(variable), value)
+				task.AddEnvironmentVariable(strings.ToUpper(variable), value)
 
 				boblet.BTasks[key] = task
+			}
+			for key, task := range boblet.RTasks {
+				task.AddEnvironmentVariable(strings.ToUpper(variable), value)
+				boblet.RTasks[key] = task
 			}
 		}
 	}
@@ -195,7 +199,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 				// println(envvar, value)
 
-				task.AddEnvironment(envvar, value)
+				task.AddEnvironmentVariable(envvar, value)
 
 				aggregate.BTasks[i] = task
 			}
