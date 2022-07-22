@@ -21,13 +21,11 @@ to your .bashrc / .zshrc
 		if len(args) == 0 {
 			if zsh {
 				var buf bytes.Buffer
-				err := rootCmd.GenZshCompletion(&buf)
-				if err != nil {
+				if err := rootCmd.GenZshCompletion(&buf); err != nil {
 					boblog.Log.Error(err, "Unable to generate Zsh completion")
 					exit(1)
 				}
-				_, err = buf.WriteString("\ncompdef _bob bob\n")
-				if err != nil {
+				if _, err := buf.WriteString("\ncompdef _bob bob\n"); err != nil {
 					boblog.Log.Error(err, "Unable to generate Zsh completion")
 					exit(1)
 				}
