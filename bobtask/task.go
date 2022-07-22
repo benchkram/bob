@@ -42,7 +42,7 @@ type Task struct {
 
 	// DependsOn are task which must succeed before this task
 	// can run.
-	DependsOn []string
+	DependsOn []string `yaml:"dependsOn"`
 
 	// TODO: Shall we add a optional environment?
 	// Like a docker image which can be used to build a target.

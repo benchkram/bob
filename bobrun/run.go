@@ -21,7 +21,7 @@ type Run struct {
 	Path string
 
 	// DependsOn run or build tasks
-	DependsOn []string
+	DependsOn []string `yaml:"dependsOn"`
 
 	// InitDirty runs run after this task has started and `initOnce`conpleted.
 	InitDirty string `yaml:"init"`
