@@ -407,7 +407,6 @@ func (t *Task) UnmarshalYAML(value *yaml.Node) (err error) {
 		errz.Fatal(errors.New("both `dependson` and `dependsOn` nodes detected near line " + strconv.Itoa(value.Line)))
 	}
 
-	// if both exists `dependson` takes priority
 	dependsOn := make([]string, 0)
 	if values.Lowercase != nil && len(values.Lowercase) > 0 {
 		dependsOn = values.Lowercase
