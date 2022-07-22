@@ -232,7 +232,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	aggregate.Dependencies = make([]string, 0)
 	aggregate.Dependencies = append(aggregate.Dependencies, allDeps...)
 
-	// Initialize remote store in case of a valid remote url / project name
+	// Initialize remote store for artifacts and sync in case of a valid remote url / project name
 	if aggregate.Project != "" {
 		projectName, err := project.Parse(aggregate.Project)
 		if err != nil {
@@ -259,6 +259,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			} else {
 				boblog.Log.V(1).Info(fmt.Sprintf("Using remote store: %s", url.String()))
 				aggregate.SetRemotestore(bobfile.NewRemotestore(url, b.allowInsecure, authCtx.Token))
+				aggregate.SetVersionedSyncStore(bobfile.NewVersionedSyncStore(url, b.allowInsecure, authCtx.Token))
 			}
 		}
 	} else {

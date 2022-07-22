@@ -1,6 +1,7 @@
 package filehash
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -29,4 +30,13 @@ func HashBytes(r io.Reader) ([]byte, error) {
 	}
 
 	return h.Sum(nil), nil
+}
+
+func HashAsString(file string) (string, error) {
+	b, err := Hash(file)
+	if err != nil {
+		return "", err
+	}
+	encryptedHash := hex.EncodeToString(b)
+	return encryptedHash, nil
 }

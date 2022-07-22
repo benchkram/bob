@@ -4,6 +4,7 @@
 package generated
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -92,6 +93,12 @@ type ClientInterface interface {
 	// GetHealth request
 	GetHealth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetProject request
+	GetProject(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ProjectExists request
+	ProjectExists(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetProjectArtifact request
 	GetProjectArtifact(ctx context.Context, projectName string, artifactId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -103,10 +110,63 @@ type ClientInterface interface {
 
 	// UploadArtifact request  with any body
 	UploadArtifactWithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteSyncCollection request
+	DeleteSyncCollection(ctx context.Context, projectName string, collectionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSyncCollection request
+	GetSyncCollection(ctx context.Context, projectName string, collectionId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteSyncFile request
+	DeleteSyncFile(ctx context.Context, projectName string, collectionId string, fileId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSyncFile request
+	GetSyncFile(ctx context.Context, projectName string, collectionId string, fileId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutSyncFile request  with any body
+	PutSyncFileWithBody(ctx context.Context, projectName string, collectionId string, fileId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSyncFiles request
+	GetSyncFiles(ctx context.Context, projectName string, collectionId string, params *GetSyncFilesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateSyncFile request  with any body
+	CreateSyncFileWithBody(ctx context.Context, projectName string, collectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSyncCollections request
+	GetSyncCollections(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateSyncCollection request  with any body
+	CreateSyncCollectionWithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateSyncCollection(ctx context.Context, projectName string, body CreateSyncCollectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetHealth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHealthRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetProject(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProjectRequest(c.Server, projectName)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ProjectExists(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewProjectExistsRequest(c.Server, projectName)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +225,126 @@ func (c *Client) UploadArtifactWithBody(ctx context.Context, projectName string,
 	return c.Client.Do(req)
 }
 
+func (c *Client) DeleteSyncCollection(ctx context.Context, projectName string, collectionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteSyncCollectionRequest(c.Server, projectName, collectionId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSyncCollection(ctx context.Context, projectName string, collectionId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSyncCollectionRequest(c.Server, projectName, collectionId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteSyncFile(ctx context.Context, projectName string, collectionId string, fileId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteSyncFileRequest(c.Server, projectName, collectionId, fileId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSyncFile(ctx context.Context, projectName string, collectionId string, fileId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSyncFileRequest(c.Server, projectName, collectionId, fileId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutSyncFileWithBody(ctx context.Context, projectName string, collectionId string, fileId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutSyncFileRequestWithBody(c.Server, projectName, collectionId, fileId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSyncFiles(ctx context.Context, projectName string, collectionId string, params *GetSyncFilesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSyncFilesRequest(c.Server, projectName, collectionId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateSyncFileWithBody(ctx context.Context, projectName string, collectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateSyncFileRequestWithBody(c.Server, projectName, collectionId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSyncCollections(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSyncCollectionsRequest(c.Server, projectName)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateSyncCollectionWithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateSyncCollectionRequestWithBody(c.Server, projectName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateSyncCollection(ctx context.Context, projectName string, body CreateSyncCollectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateSyncCollectionRequest(c.Server, projectName, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // NewGetHealthRequest generates requests for GetHealth
 func NewGetHealthRequest(server string) (*http.Request, error) {
 	var err error
@@ -185,6 +365,74 @@ func NewGetHealthRequest(server string) (*http.Request, error) {
 	queryURL := serverURL.ResolveReference(&operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetProjectRequest generates requests for GetProject
+func NewGetProjectRequest(server string, projectName string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewProjectExistsRequest generates requests for ProjectExists
+func NewProjectExistsRequest(server string, projectName string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("HEAD", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -344,6 +592,419 @@ func NewUploadArtifactRequestWithBody(server string, projectName string, content
 	return req, nil
 }
 
+// NewDeleteSyncCollectionRequest generates requests for DeleteSyncCollection
+func NewDeleteSyncCollectionRequest(server string, projectName string, collectionId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "collectionId", runtime.ParamLocationPath, collectionId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s/sync/collection/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetSyncCollectionRequest generates requests for GetSyncCollection
+func NewGetSyncCollectionRequest(server string, projectName string, collectionId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "collectionId", runtime.ParamLocationPath, collectionId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s/sync/collection/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteSyncFileRequest generates requests for DeleteSyncFile
+func NewDeleteSyncFileRequest(server string, projectName string, collectionId string, fileId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "collectionId", runtime.ParamLocationPath, collectionId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "fileId", runtime.ParamLocationPath, fileId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s/sync/collection/%s/file/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetSyncFileRequest generates requests for GetSyncFile
+func NewGetSyncFileRequest(server string, projectName string, collectionId string, fileId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "collectionId", runtime.ParamLocationPath, collectionId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "fileId", runtime.ParamLocationPath, fileId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s/sync/collection/%s/file/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutSyncFileRequestWithBody generates requests for PutSyncFile with any type of body
+func NewPutSyncFileRequestWithBody(server string, projectName string, collectionId string, fileId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "collectionId", runtime.ParamLocationPath, collectionId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "fileId", runtime.ParamLocationPath, fileId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s/sync/collection/%s/file/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetSyncFilesRequest generates requests for GetSyncFiles
+func NewGetSyncFilesRequest(server string, projectName string, collectionId string, params *GetSyncFilesParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "collectionId", runtime.ParamLocationPath, collectionId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s/sync/collection/%s/files", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	queryValues := queryURL.Query()
+
+	if params.WithLocation != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "withLocation", runtime.ParamLocationQuery, *params.WithLocation); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryURL.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateSyncFileRequestWithBody generates requests for CreateSyncFile with any type of body
+func NewCreateSyncFileRequestWithBody(server string, projectName string, collectionId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "collectionId", runtime.ParamLocationPath, collectionId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s/sync/collection/%s/files", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetSyncCollectionsRequest generates requests for GetSyncCollections
+func NewGetSyncCollectionsRequest(server string, projectName string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s/sync/collections", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateSyncCollectionRequest calls the generic CreateSyncCollection builder with application/json body
+func NewCreateSyncCollectionRequest(server string, projectName string, body CreateSyncCollectionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateSyncCollectionRequestWithBody(server, projectName, "application/json", bodyReader)
+}
+
+// NewCreateSyncCollectionRequestWithBody generates requests for CreateSyncCollection with any type of body
+func NewCreateSyncCollectionRequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/project/%s/sync/collections", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -390,6 +1051,12 @@ type ClientWithResponsesInterface interface {
 	// GetHealth request
 	GetHealthWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthResponse, error)
 
+	// GetProject request
+	GetProjectWithResponse(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*GetProjectResponse, error)
+
+	// ProjectExists request
+	ProjectExistsWithResponse(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*ProjectExistsResponse, error)
+
 	// GetProjectArtifact request
 	GetProjectArtifactWithResponse(ctx context.Context, projectName string, artifactId string, reqEditors ...RequestEditorFn) (*GetProjectArtifactResponse, error)
 
@@ -401,6 +1068,35 @@ type ClientWithResponsesInterface interface {
 
 	// UploadArtifact request  with any body
 	UploadArtifactWithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadArtifactResponse, error)
+
+	// DeleteSyncCollection request
+	DeleteSyncCollectionWithResponse(ctx context.Context, projectName string, collectionId string, reqEditors ...RequestEditorFn) (*DeleteSyncCollectionResponse, error)
+
+	// GetSyncCollection request
+	GetSyncCollectionWithResponse(ctx context.Context, projectName string, collectionId string, reqEditors ...RequestEditorFn) (*GetSyncCollectionResponse, error)
+
+	// DeleteSyncFile request
+	DeleteSyncFileWithResponse(ctx context.Context, projectName string, collectionId string, fileId string, reqEditors ...RequestEditorFn) (*DeleteSyncFileResponse, error)
+
+	// GetSyncFile request
+	GetSyncFileWithResponse(ctx context.Context, projectName string, collectionId string, fileId string, reqEditors ...RequestEditorFn) (*GetSyncFileResponse, error)
+
+	// PutSyncFile request  with any body
+	PutSyncFileWithBodyWithResponse(ctx context.Context, projectName string, collectionId string, fileId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutSyncFileResponse, error)
+
+	// GetSyncFiles request
+	GetSyncFilesWithResponse(ctx context.Context, projectName string, collectionId string, params *GetSyncFilesParams, reqEditors ...RequestEditorFn) (*GetSyncFilesResponse, error)
+
+	// CreateSyncFile request  with any body
+	CreateSyncFileWithBodyWithResponse(ctx context.Context, projectName string, collectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateSyncFileResponse, error)
+
+	// GetSyncCollections request
+	GetSyncCollectionsWithResponse(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*GetSyncCollectionsResponse, error)
+
+	// CreateSyncCollection request  with any body
+	CreateSyncCollectionWithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateSyncCollectionResponse, error)
+
+	CreateSyncCollectionWithResponse(ctx context.Context, projectName string, body CreateSyncCollectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateSyncCollectionResponse, error)
 }
 
 type GetHealthResponse struct {
@@ -420,6 +1116,49 @@ func (r GetHealthResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetHealthResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetProjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Project
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ProjectExistsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r ProjectExistsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ProjectExistsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -512,6 +1251,202 @@ func (r UploadArtifactResponse) StatusCode() int {
 	return 0
 }
 
+type DeleteSyncCollectionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteSyncCollectionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteSyncCollectionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSyncCollectionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SyncCollection
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSyncCollectionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSyncCollectionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteSyncFileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteSyncFileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteSyncFileResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSyncFileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SyncFile
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSyncFileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSyncFileResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutSyncFileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SyncFile
+}
+
+// Status returns HTTPResponse.Status
+func (r PutSyncFileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutSyncFileResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSyncFilesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]SyncFile
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSyncFilesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSyncFilesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateSyncFileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SyncFile
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateSyncFileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateSyncFileResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSyncCollectionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]SyncCollection
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSyncCollectionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSyncCollectionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateSyncCollectionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SyncCollection
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateSyncCollectionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateSyncCollectionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // GetHealthWithResponse request returning *GetHealthResponse
 func (c *ClientWithResponses) GetHealthWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthResponse, error) {
 	rsp, err := c.GetHealth(ctx, reqEditors...)
@@ -519,6 +1454,24 @@ func (c *ClientWithResponses) GetHealthWithResponse(ctx context.Context, reqEdit
 		return nil, err
 	}
 	return ParseGetHealthResponse(rsp)
+}
+
+// GetProjectWithResponse request returning *GetProjectResponse
+func (c *ClientWithResponses) GetProjectWithResponse(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*GetProjectResponse, error) {
+	rsp, err := c.GetProject(ctx, projectName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProjectResponse(rsp)
+}
+
+// ProjectExistsWithResponse request returning *ProjectExistsResponse
+func (c *ClientWithResponses) ProjectExistsWithResponse(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*ProjectExistsResponse, error) {
+	rsp, err := c.ProjectExists(ctx, projectName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseProjectExistsResponse(rsp)
 }
 
 // GetProjectArtifactWithResponse request returning *GetProjectArtifactResponse
@@ -557,6 +1510,95 @@ func (c *ClientWithResponses) UploadArtifactWithBodyWithResponse(ctx context.Con
 	return ParseUploadArtifactResponse(rsp)
 }
 
+// DeleteSyncCollectionWithResponse request returning *DeleteSyncCollectionResponse
+func (c *ClientWithResponses) DeleteSyncCollectionWithResponse(ctx context.Context, projectName string, collectionId string, reqEditors ...RequestEditorFn) (*DeleteSyncCollectionResponse, error) {
+	rsp, err := c.DeleteSyncCollection(ctx, projectName, collectionId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteSyncCollectionResponse(rsp)
+}
+
+// GetSyncCollectionWithResponse request returning *GetSyncCollectionResponse
+func (c *ClientWithResponses) GetSyncCollectionWithResponse(ctx context.Context, projectName string, collectionId string, reqEditors ...RequestEditorFn) (*GetSyncCollectionResponse, error) {
+	rsp, err := c.GetSyncCollection(ctx, projectName, collectionId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSyncCollectionResponse(rsp)
+}
+
+// DeleteSyncFileWithResponse request returning *DeleteSyncFileResponse
+func (c *ClientWithResponses) DeleteSyncFileWithResponse(ctx context.Context, projectName string, collectionId string, fileId string, reqEditors ...RequestEditorFn) (*DeleteSyncFileResponse, error) {
+	rsp, err := c.DeleteSyncFile(ctx, projectName, collectionId, fileId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteSyncFileResponse(rsp)
+}
+
+// GetSyncFileWithResponse request returning *GetSyncFileResponse
+func (c *ClientWithResponses) GetSyncFileWithResponse(ctx context.Context, projectName string, collectionId string, fileId string, reqEditors ...RequestEditorFn) (*GetSyncFileResponse, error) {
+	rsp, err := c.GetSyncFile(ctx, projectName, collectionId, fileId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSyncFileResponse(rsp)
+}
+
+// PutSyncFileWithBodyWithResponse request with arbitrary body returning *PutSyncFileResponse
+func (c *ClientWithResponses) PutSyncFileWithBodyWithResponse(ctx context.Context, projectName string, collectionId string, fileId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutSyncFileResponse, error) {
+	rsp, err := c.PutSyncFileWithBody(ctx, projectName, collectionId, fileId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutSyncFileResponse(rsp)
+}
+
+// GetSyncFilesWithResponse request returning *GetSyncFilesResponse
+func (c *ClientWithResponses) GetSyncFilesWithResponse(ctx context.Context, projectName string, collectionId string, params *GetSyncFilesParams, reqEditors ...RequestEditorFn) (*GetSyncFilesResponse, error) {
+	rsp, err := c.GetSyncFiles(ctx, projectName, collectionId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSyncFilesResponse(rsp)
+}
+
+// CreateSyncFileWithBodyWithResponse request with arbitrary body returning *CreateSyncFileResponse
+func (c *ClientWithResponses) CreateSyncFileWithBodyWithResponse(ctx context.Context, projectName string, collectionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateSyncFileResponse, error) {
+	rsp, err := c.CreateSyncFileWithBody(ctx, projectName, collectionId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateSyncFileResponse(rsp)
+}
+
+// GetSyncCollectionsWithResponse request returning *GetSyncCollectionsResponse
+func (c *ClientWithResponses) GetSyncCollectionsWithResponse(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*GetSyncCollectionsResponse, error) {
+	rsp, err := c.GetSyncCollections(ctx, projectName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSyncCollectionsResponse(rsp)
+}
+
+// CreateSyncCollectionWithBodyWithResponse request with arbitrary body returning *CreateSyncCollectionResponse
+func (c *ClientWithResponses) CreateSyncCollectionWithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateSyncCollectionResponse, error) {
+	rsp, err := c.CreateSyncCollectionWithBody(ctx, projectName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateSyncCollectionResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateSyncCollectionWithResponse(ctx context.Context, projectName string, body CreateSyncCollectionJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateSyncCollectionResponse, error) {
+	rsp, err := c.CreateSyncCollection(ctx, projectName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateSyncCollectionResponse(rsp)
+}
+
 // ParseGetHealthResponse parses an HTTP response from a GetHealthWithResponse call
 func ParseGetHealthResponse(rsp *http.Response) (*GetHealthResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -585,6 +1627,51 @@ func ParseGetHealthResponse(rsp *http.Response) (*GetHealthResponse, error) {
 		}
 		response.JSONDefault = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseGetProjectResponse parses an HTTP response from a GetProjectWithResponse call
+func ParseGetProjectResponse(rsp *http.Response) (*GetProjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Project
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseProjectExistsResponse parses an HTTP response from a ProjectExistsWithResponse call
+func ParseProjectExistsResponse(rsp *http.Response) (*ProjectExistsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ProjectExistsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
 	}
 
 	return response, nil
@@ -675,6 +1762,226 @@ func ParseUploadArtifactResponse(rsp *http.Response) (*UploadArtifactResponse, e
 	}
 
 	switch {
+	}
+
+	return response, nil
+}
+
+// ParseDeleteSyncCollectionResponse parses an HTTP response from a DeleteSyncCollectionWithResponse call
+func ParseDeleteSyncCollectionResponse(rsp *http.Response) (*DeleteSyncCollectionResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteSyncCollectionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParseGetSyncCollectionResponse parses an HTTP response from a GetSyncCollectionWithResponse call
+func ParseGetSyncCollectionResponse(rsp *http.Response) (*GetSyncCollectionResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSyncCollectionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SyncCollection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteSyncFileResponse parses an HTTP response from a DeleteSyncFileWithResponse call
+func ParseDeleteSyncFileResponse(rsp *http.Response) (*DeleteSyncFileResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteSyncFileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParseGetSyncFileResponse parses an HTTP response from a GetSyncFileWithResponse call
+func ParseGetSyncFileResponse(rsp *http.Response) (*GetSyncFileResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSyncFileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SyncFile
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutSyncFileResponse parses an HTTP response from a PutSyncFileWithResponse call
+func ParsePutSyncFileResponse(rsp *http.Response) (*PutSyncFileResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutSyncFileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SyncFile
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSyncFilesResponse parses an HTTP response from a GetSyncFilesWithResponse call
+func ParseGetSyncFilesResponse(rsp *http.Response) (*GetSyncFilesResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSyncFilesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []SyncFile
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateSyncFileResponse parses an HTTP response from a CreateSyncFileWithResponse call
+func ParseCreateSyncFileResponse(rsp *http.Response) (*CreateSyncFileResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateSyncFileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SyncFile
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSyncCollectionsResponse parses an HTTP response from a GetSyncCollectionsWithResponse call
+func ParseGetSyncCollectionsResponse(rsp *http.Response) (*GetSyncCollectionsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSyncCollectionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []SyncCollection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateSyncCollectionResponse parses an HTTP response from a CreateSyncCollectionWithResponse call
+func ParseCreateSyncCollectionResponse(rsp *http.Response) (*CreateSyncCollectionResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateSyncCollectionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SyncCollection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	}
 
 	return response, nil

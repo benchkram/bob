@@ -58,6 +58,16 @@ func init() {
 	CmdGit.AddCommand(CmdGitStatus)
 	rootCmd.AddCommand(CmdGit)
 
+	// syncCmd
+	cmdSyncListRemote.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing bob-server")
+	cmdSyncPush.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing bob-server")
+	cmdSyncPull.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing bob-server")
+	cmdSync.AddCommand(cmdSyncPush)
+	cmdSync.AddCommand(cmdSyncPull)
+	cmdSync.AddCommand(cmdSyncList)
+	cmdSync.AddCommand(cmdSyncListRemote)
+	rootCmd.AddCommand(cmdSync)
+
 	// authCmd
 	AuthCmd.AddCommand(AuthContextCreateCmd)
 	AuthContextCreateCmd.Flags().StringP("token", "t", "", "The token used for authentication")
