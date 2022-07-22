@@ -61,5 +61,5 @@ func TestTask_UnmarshalYAMLWithBothDependsOn(t *testing.T) {
 
 	var task Task
 	err := yaml.Unmarshal([]byte(withBoth), &task)
-	assert.EqualError(t, err, "both `dependson` and `dependsOn` exists for task")
+	assert.EqualError(t, err, "both `dependson` and `dependsOn` nodes detected near line 2")
 }

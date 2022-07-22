@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/nix"
@@ -403,7 +404,7 @@ func (t *Task) UnmarshalYAML(value *yaml.Node) (err error) {
 	errz.Fatal(err)
 
 	if len(values.Lowercase) > 0 && len(values.Camelcase) > 0 {
-		errz.Fatal(errors.New("both `dependson` and `dependsOn` exists for task"))
+		errz.Fatal(errors.New("both `dependson` and `dependsOn` nodes detected near line " + strconv.Itoa(value.Line)))
 	}
 
 	// if both exists `dependson` takes priority
