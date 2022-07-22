@@ -2,6 +2,7 @@ package bob
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -105,7 +106,7 @@ func (b *B) addRunTasksToAggregate(
 // readModePlain allows to read bobfiles without
 // doing sanitization.
 //
-// If prefix is given it's appended to the search path to asuure
+// If prefix is given it's appended to the search path to assure
 // correctness of the search path in case of recursive calls.
 func readImports(
 	a *bobfile.Bobfile,
@@ -131,7 +132,7 @@ func readImports(
 		}
 		if err != nil {
 			if errors.Is(err, bobfile.ErrBobfileNotFound) {
-				return nil, usererror.Wrap(err)
+				return nil, usererror.Wrapm(err, fmt.Sprintf("import of %s from %s/bob.yaml failed", imp, a.Dir()))
 			}
 			errz.Fatal(err)
 		}
