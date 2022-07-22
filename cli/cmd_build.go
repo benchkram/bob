@@ -131,10 +131,10 @@ func getBuildTasks() ([]string, error) {
 	return b.GetBuildTasks()
 }
 
-// initEnvVars will parse flagEnvVars and return the environment variables
-
-// --env VAR_ONE will keep VAR_ONE from host environment variable
-// --env VAR_ONE=value will overwrite value from host with `value`
+// parseEnvVarsFlag will parse flagEnvVars and return the environment variables
+// based on:
+//   --env VAR_ONE         uses VAR_ONE from host environment variable
+//   --env VAR_ONE=value   overwrites value from host with given `value`
 func parseEnvVarsFlag(flagEnvVars []string) []string {
 	var result []string
 	for _, v := range flagEnvVars {
