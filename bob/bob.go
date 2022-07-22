@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/auth"
-	"github.com/benchkram/bob/pkg/bobutil"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -205,7 +205,7 @@ func (b *B) read() (err error) {
 // keepWhitelistEnv will keep whitelisted env variables
 // from local host
 func (b *B) keepWhitelistEnv() {
-	for _, envKey := range bobutil.EnvWhitelist {
+	for _, envKey := range global.EnvWhitelist {
 		if value, exists := os.LookupEnv(envKey); exists {
 			b.env = append(b.env, envKey+"="+value)
 		}

@@ -11,9 +11,6 @@ import (
 
 var ErrCouldNotFindBobWorkspace = fmt.Errorf("Could not find a .bob.workspace file")
 
-// EnvWhitelist keep the whitelisted env variables when hermetic mode is on
-var EnvWhitelist = []string{"HOME", "XDG_CACHE_HOME"}
-
 // Hint on how git finds it top repo dir.
 // https://stackoverflow.com/questions/65499497/how-does-git-know-its-in-a-git-repo
 
