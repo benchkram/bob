@@ -1,13 +1,15 @@
 package bobtask
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/nix"
-
+	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
+	"gopkg.in/yaml.v3"
 
 	"github.com/benchkram/bob/bobtask/export"
 	"github.com/benchkram/bob/bobtask/hash"
@@ -387,4 +389,42 @@ func parseTargetImage(p string) []string {
 func keyExists(m map[string]interface{}, key string) bool {
 	_, ok := m[key]
 	return ok
+}
+
+func (t *Task) UnmarshalYAML(value *yaml.Node) (err error) {
+	defer errz.Recover(&err)
+
+	var values struct {
+		Lowercase []string `yaml:"dependson"`
+		Camelcase []string `yaml:"dependsOn"`
+	}
+
+	err = value.Decode(&values)
+	errz.Fatal(err)
+
+	if len(values.Lowercase) > 0 && len(values.Camelcase) > 0 {
+		errz.Fatal(errors.New("both `dependson` and `dependsOn` exists for task"))
+	}
+
+	// if both exists `dependson` takes priority
+	dependsOn := make([]string, 0)
+	if values.Lowercase != nil && len(values.Lowercase) > 0 {
+		dependsOn = values.Lowercase
+	}
+	if values.Camelcase != nil && len(values.Camelcase) > 0 {
+		dependsOn = values.Camelcase
+	}
+
+	// new type needed to avoid infinite loop
+	type TmpTask Task
+	var tmpTask TmpTask
+
+	err = value.Decode(&tmpTask)
+	errz.Fatal(err)
+
+	tmpTask.DependsOn = dependsOn
+
+	*t = Task(tmpTask)
+
+	return nil
 }
