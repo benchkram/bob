@@ -2,10 +2,13 @@ package bobrun
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/benchkram/errz"
+	"gopkg.in/yaml.v3"
 
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/execctl"
@@ -22,7 +25,7 @@ type Run struct {
 	Path string
 
 	// DependsOn run or build tasks
-	DependsOn []string
+	DependsOn []string `yaml:"dependsOn"`
 
 	// InitDirty runs run after this task has started and `initOnce`conpleted.
 	InitDirty string `yaml:"init"`
@@ -86,6 +89,7 @@ func (r *Run) SetDir(dir string) {
 func (r *Run) SetUseNix(useNix bool) {
 	r.useNix = useNix
 }
+
 const EnvironSeparator = "="
 
 func (r *Run) AddEnvironmentVariable(key, value string) {
@@ -109,6 +113,43 @@ func (r *Run) SetDependencies(dependencies []nix.Dependency) {
 
 func (r *Run) SetStorePaths(storePaths []string) {
 	r.storePaths = storePaths
+}
+
+func (r *Run) UnmarshalYAML(value *yaml.Node) (err error) {
+	defer errz.Recover(&err)
+
+	var values struct {
+		Lowercase []string `yaml:"dependson"`
+		Camelcase []string `yaml:"dependsOn"`
+	}
+
+	err = value.Decode(&values)
+	errz.Fatal(err)
+
+	if len(values.Lowercase) > 0 && len(values.Camelcase) > 0 {
+		errz.Fatal(errors.New("both `dependson` and `dependsOn` nodes detected near line " + strconv.Itoa(value.Line)))
+	}
+
+	dependsOn := make([]string, 0)
+	if values.Lowercase != nil && len(values.Lowercase) > 0 {
+		dependsOn = values.Lowercase
+	}
+	if values.Camelcase != nil && len(values.Camelcase) > 0 {
+		dependsOn = values.Camelcase
+	}
+
+	// new type needed to avoid infinite loop
+	type TmpRun Run
+	var tmpRun TmpRun
+
+	err = value.Decode(&tmpRun)
+	errz.Fatal(err)
+
+	tmpRun.DependsOn = dependsOn
+
+	*r = Run(tmpRun)
+
+	return nil
 }
 
 // Command creates a run cmd and returns a Command interface to control it.
