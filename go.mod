@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.20.0
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cli/cli v1.14.0
-	github.com/compose-spec/compose-go v1.2.7
+	github.com/compose-spec/compose-go v1.2.9
 	github.com/deepmap/oapi-codegen v1.10.1
 	github.com/docker/cli v20.10.17+incompatible
 	github.com/docker/compose/v2 v2.6.0
@@ -27,7 +27,7 @@ require (
 	github.com/sanity-io/litter v1.5.5
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.11.0
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.8.0
 	github.com/whilp/git-urls v1.0.0
 	github.com/xlab/treeprint v1.1.0
 	github.com/yargevad/filepathx v1.0.0
