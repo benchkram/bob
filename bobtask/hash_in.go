@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/pkg/bobutil"
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/sliceutil"
 	"gopkg.in/yaml.v2"
 
@@ -81,7 +81,7 @@ func filterOutWhitelistEnv(env []string) []string {
 	var result []string
 	for _, v := range env {
 		pair := strings.SplitN(v, "=", 2)
-		if sliceutil.Contains(bobutil.EnvWhitelist, pair[0]) {
+		if sliceutil.Contains(global.EnvWhitelist, pair[0]) {
 			continue
 		}
 		result = append(result, v)
