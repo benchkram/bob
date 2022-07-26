@@ -64,6 +64,7 @@ type SyncCollectionStub struct {
 type SyncFile struct {
 	EncryptedHash *string `json:"encrypted_hash,omitempty"`
 	Id            string  `json:"id"`
+	IsDirectory   bool    `json:"is_directory"`
 	LocalPath     string  `json:"local_path"`
 
 	// location to download the file using a GET request.
@@ -72,22 +73,25 @@ type SyncFile struct {
 
 // SyncFileCreate defines model for SyncFileCreate.
 type SyncFileCreate struct {
-	File      string `json:"file"`
-	LocalPath string `json:"local_path"`
+	File        string `json:"file"`
+	IsDirectory bool   `json:"is_directory"`
+	LocalPath   string `json:"local_path"`
 }
 
 // SyncFileStub defines model for SyncFileStub.
 type SyncFileStub struct {
 	EncryptedHash *string `json:"encrypted_hash,omitempty"`
 	Id            string  `json:"id"`
+	IsDirectory   bool    `json:"is_directory"`
 	LocalPath     string  `json:"local_path"`
 }
 
 // Updated version of the file, properties which are omitted will not be changed. At least one property has be included.
 type SyncFileUpdate struct {
-	File      *string `json:"file,omitempty"`
-	Id        string  `json:"id"`
-	LocalPath *string `json:"local_path,omitempty"`
+	File        *string `json:"file,omitempty"`
+	Id          string  `json:"id"`
+	IsDirectory bool    `json:"is_directory"`
+	LocalPath   *string `json:"local_path,omitempty"`
 }
 
 // GetSyncFilesParams defines parameters for GetSyncFiles.

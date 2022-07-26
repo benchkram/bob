@@ -51,6 +51,8 @@ var (
 
 	ErrInvalidRunType = fmt.Errorf("Invalid run type")
 
+	ErrDuplicateSyncPath = fmt.Errorf("found duplicate sync path in bob.yaml")
+
 	ProjectNameFormatHint = "project name should be in the form 'project' or 'registry.com/user/project'"
 )
 
@@ -82,7 +84,7 @@ type Bobfile struct {
 	Nixpkgs string `yaml:"nixpkgs"`
 
 	// SyncCollections are folder synchronisations through bob-server
-	SyncCollections bobsync.SyncMap `yaml:"sync"`
+	SyncCollections bobsync.SyncList `yaml:"syncCollections"`
 
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
@@ -215,14 +217,6 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	//} else {
 	//	bobfile.Project = bobfile.dir
 	//}
-
-	// write names to Sync objects
-	for name := range bobfile.SyncCollections {
-		s := bobfile.SyncCollections[name]
-		s.SetName(name)
-		bobfile.SyncCollections[name] = s
-	}
-
 	return bobfile, nil
 }
 
@@ -381,7 +375,16 @@ func (b *Bobfile) Validate() (err error) {
 		}
 	}
 
-	// TODO: validate sync entries
+	// no duplicate paths allowed
+	existingPaths := make(map[string]int)
+	for _, sync := range b.SyncCollections {
+		err = sync.Validate(b.Dir())
+		errz.Fatal(err)
+		existingPaths[sync.Path]++
+		if existingPaths[sync.Path] > 1 {
+			return usererror.Wrapm(ErrDuplicateSyncPath, fmt.Sprintf("invalid collection path %s", sync.Path))
+		}
+	}
 
 	return nil
 }

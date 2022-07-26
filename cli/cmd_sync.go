@@ -15,45 +15,48 @@ import (
 )
 
 var cmdSync = &cobra.Command{
-	Use:   "sync",
-	Short: "Sync (binary) test data via a bob-server.",
-	Args:  cobra.MinimumNArgs(0),
+	Use:   "sync [--force] [--insecure]",
+	Short: "Pull the sync collections defined in bobfile",
 	Long:  ``,
 	FParseErrWhitelist: cobra.FParseErrWhitelist{
 		UnknownFlags: true,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		// do nothing just show if the server can be contacted and maybe display status information
+		allowInsecure, err := cmd.PersistentFlags().GetBool("insecure")
+		errz.Fatal(err)
+		force, err := cmd.Flags().GetBool("force")
+		errz.Fatal(err)
+
+		runPull(allowInsecure, force)
 	},
 }
 
-var cmdSyncPush = &cobra.Command{
-	Use:   "push",
-	Short: "Make server collections exactly like local",
-	Long:  ``,
+var cmdSyncCreate = &cobra.Command{
+	Use:        "create collection_name path/to/dir",
+	Short:      "Create a new collection or collection version",
+	Long:       ``,
+	Args:       cobra.ExactArgs(2),
+	ArgAliases: []string{"collectionName", "path"},
 	Run: func(cmd *cobra.Command, args []string) {
 		allowInsecure, err := cmd.Flags().GetBool("insecure")
 		errz.Fatal(err)
-
-		runPush(allowInsecure)
-	},
-}
-
-var cmdSyncPull = &cobra.Command{
-	Use:   "pull",
-	Short: "Make local collections exactly like server",
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		allowInsecure, err := cmd.Flags().GetBool("insecure")
+		dry, err := cmd.Flags().GetBool("dry")
+		errz.Fatal(err)
+		version, err := cmd.Flags().GetString("set-version")
 		errz.Fatal(err)
 
-		runPull(allowInsecure)
+		// collection_name can be anything but not empty
+		collectionName := args[0]
+		// path is validated in createPush
+		path := args[1]
+
+		runCreatePush(collectionName, version, path, dry, allowInsecure)
 	},
 }
 
 var cmdSyncList = &cobra.Command{
-	Use:   "ls",
-	Short: "List files synced",
+	Use:   "ls-local",
+	Short: "List files tracked by sync",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		runList()
@@ -71,7 +74,7 @@ var cmdSyncListRemote = &cobra.Command{
 	},
 }
 
-func runPush(allowInsecure bool) {
+func runCreatePush(collectionName, version, path string, dry, allowInsecure bool) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
@@ -99,7 +102,7 @@ func runPush(allowInsecure bool) {
 		cancel()
 	}()
 
-	err = b.SyncPush(ctx)
+	err = b.SyncCreatePush(ctx, collectionName, version, path, dry)
 	if err != nil {
 		exitCode = 1
 		if errors.As(err, &usererror.Err) {
@@ -110,7 +113,7 @@ func runPush(allowInsecure bool) {
 	}
 }
 
-func runPull(allowInsecure bool) {
+func runPull(allowInsecure bool, force bool) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
@@ -138,7 +141,7 @@ func runPull(allowInsecure bool) {
 		cancel()
 	}()
 
-	err = b.SyncPull(ctx)
+	err = b.SyncPull(ctx, force)
 	if err != nil {
 		exitCode = 1
 		if errors.As(err, &usererror.Err) {
@@ -181,8 +184,8 @@ func runList() {
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
 		} else {
-			errz.Fatal(err)
 			errz.Log(err)
+			errz.Fatal(err)
 		}
 	}
 }

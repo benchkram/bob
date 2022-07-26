@@ -6,18 +6,19 @@ import (
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filehash"
-	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"sync"
 	"time"
 )
 
 type Fingerprint struct {
+	IsDir     bool
 	Hash      string
 	CreatedAt time.Time
 }
@@ -61,7 +62,19 @@ func (h *HashCache) SaveToFile(path string) (err error) {
 
 func (h *HashCache) Update(basePath string) (err error) {
 	defer errz.Recover(&err)
-	filePaths, err := filepathutil.ListRecursive(basePath)
+	var filePaths []string
+	err = filepath.Walk(basePath,
+		func(path string, _ os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if path == basePath {
+				return nil
+			}
+			filePaths = append(filePaths, path)
+			return nil
+		})
+	errz.Fatal(err)
 
 	saveMap := h.toInternalMap(filePaths, basePath)
 
@@ -113,14 +126,32 @@ func updater(saveMap *sync.Map, files <-chan string, result chan<- error) {
 			reHash = true
 		}
 		if reHash {
-			h, err := filehash.HashAsString(f)
+			fi, err := os.Stat(f)
 			if err != nil {
 				result <- err
 				continue
 			}
+			var h string
+			isDir := fi.IsDir()
+			if isDir {
+				hashBytes, err := filehash.HashString(filepath.Base(f))
+				if err != nil {
+					result <- err
+					continue
+				}
+				h = filehash.HashToString(hashBytes)
+			} else {
+				hashBytes, err := filehash.Hash(f)
+				h = filehash.HashToString(hashBytes)
+				if err != nil {
+					result <- err
+					continue
+				}
+			}
 			fp := Fingerprint{
 				Hash:      h,
 				CreatedAt: time.Now(),
+				IsDir:     isDir,
 			}
 			saveMap.Store(f, fp)
 		}
@@ -153,4 +184,13 @@ func (h *HashCache) overrideFromInternalMap(saveMap *sync.Map, basePath string) 
 		return true
 	})
 	return nil
+}
+
+func (h *HashCache) SortedKeys() []string {
+	keys := make([]string, 0)
+	for k := range *h {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

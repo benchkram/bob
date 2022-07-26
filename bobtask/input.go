@@ -45,7 +45,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
-			list, err := filepathutil.ListRecursive(input)
+			list, err := filepathutil.ListRecursive(input, false)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list input: %w", err)
 			}
@@ -54,7 +54,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 			continue
 		}
 
-		list, err := filepathutil.ListRecursive(input)
+		list, err := filepathutil.ListRecursive(input, false)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
 		}

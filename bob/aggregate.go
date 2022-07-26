@@ -266,6 +266,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
+	for _, sync := range aggregate.SyncCollections {
+		err = sync.Validate(aggregate.Dir())
+		errz.Fatal(err)
+	}
+
 	return aggregate, aggregate.Verify()
 }
 

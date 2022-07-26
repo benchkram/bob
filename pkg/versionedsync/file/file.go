@@ -15,20 +15,24 @@ type F struct {
 	// Hash is the hash generated on the server or client over the file content
 	// it is used to detect changes in the content when comparing local and remote
 	Hash string
+
+	IsDirectory bool
 }
 
-func FileFromRestType(f generated.SyncFile) *F {
+func FromRestType(f generated.SyncFile) *F {
 	return &F{
-		ID:        &f.Id,
-		LocalPath: f.LocalPath,
-		Hash:      *f.EncryptedHash,
+		ID:          &f.Id,
+		LocalPath:   f.LocalPath,
+		Hash:        *f.EncryptedHash,
+		IsDirectory: f.IsDirectory,
 	}
 }
 
-func FileFromRestStubType(f generated.SyncFileStub) *F {
+func FromRestStubType(f generated.SyncFileStub) *F {
 	return &F{
-		ID:        &f.Id,
-		LocalPath: f.LocalPath,
-		Hash:      *f.EncryptedHash,
+		ID:          &f.Id,
+		LocalPath:   f.LocalPath,
+		Hash:        *f.EncryptedHash,
+		IsDirectory: f.IsDirectory,
 	}
 }

@@ -1,12 +1,12 @@
 package filehash
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/cespare/xxhash/v2"
 	"io"
 	"os"
-
-	"github.com/cespare/xxhash/v2"
 )
 
 var (
@@ -32,11 +32,17 @@ func HashBytes(r io.Reader) ([]byte, error) {
 	return h.Sum(nil), nil
 }
 
-func HashAsString(file string) (string, error) {
-	b, err := Hash(file)
+func HashToString(bytes []byte) string {
+	return hex.EncodeToString(bytes)
+}
+
+func HashString(inp string) ([]byte, error) {
+	hash := New()
+	var buf bytes.Buffer
+	buf.WriteString(inp)
+	err := hash.AddBytes(bytes.NewReader(buf.Bytes()))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	encryptedHash := hex.EncodeToString(b)
-	return encryptedHash, nil
+	return hash.Sum(), nil
 }

@@ -4,25 +4,46 @@ import (
 	"fmt"
 	"github.com/benchkram/bob/pkg/versionedsync/collection"
 	"github.com/benchkram/bob/pkg/versionedsync/file"
+	"sort"
 )
+
+type FileList []*file.F
+
+// Len is the number of elements in the collection.
+func (f FileList) Len() int {
+	return len(f)
+}
+
+// Less reports whether the element with
+// index i should sort before the element with index j.
+func (f FileList) Less(i, j int) bool {
+	return (f)[i].LocalPath < (f)[j].LocalPath
+}
+
+// Swap swaps the elements with indexes i and j.
+func (f FileList) Swap(i, j int) {
+	tmpF := (f)[i]
+	(f)[i] = (f)[j]
+	(f)[j] = tmpF
+}
 
 type Delta struct {
 	// Unchanged are files which have the same hash on local and remote
 	// Files in this slice should always have an ID set
-	Unchanged []*file.F
+	Unchanged FileList
 	// ToBeUpdated are files which exist on local and remote but have different hashes
 	// Files in this slice should always have an ID set
-	ToBeUpdated []*file.F
+	ToBeUpdated FileList
 	// LocalFilesMissingOnRemote can be read different for push and pull
 	// push: what has to be created on the remote and is only on local
 	// pull: what has to be removed on local since it is not on remote
 	// Files in this slice never have an ID set
-	LocalFilesMissingOnRemote []*file.F
+	LocalFilesMissingOnRemote FileList
 	// RemoteFilesMissingOnLocal can be read different for push and pull
 	// push: what has to be removed on the remote and is only on remote
 	// pull: what has to be created on local since it is only on remote
 	// Files in this slice should always have an ID set
-	RemoteFilesMissingOnLocal []*file.F
+	RemoteFilesMissingOnLocal FileList
 }
 
 func (d *Delta) String() string {
@@ -102,10 +123,19 @@ func NewDelta(local HashCache, remote collection.C) *Delta {
 			// localPath non-existent on remote
 			delta.LocalFilesMissingOnRemote = append(delta.LocalFilesMissingOnRemote,
 				&file.F{
-					LocalPath: localPath,
-					Hash:      fingerprint.Hash,
+					LocalPath:   localPath,
+					Hash:        fingerprint.Hash,
+					IsDirectory: fingerprint.IsDir,
 				})
 		}
 	}
+	delta.Sort()
 	return delta
+}
+
+func (d *Delta) Sort() {
+	sort.Sort(d.Unchanged)
+	sort.Sort(d.ToBeUpdated)
+	sort.Sort(d.RemoteFilesMissingOnLocal)
+	sort.Sort(d.LocalFilesMissingOnRemote)
 }

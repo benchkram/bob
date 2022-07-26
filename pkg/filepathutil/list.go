@@ -23,7 +23,7 @@ func ClearListRecursiveCache() {
 	// listRecursiveCache = make(map[string][]string, 1024)
 }
 
-func ListRecursive(inp string) (all []string, err error) {
+func ListRecursive(inp string, includeDirs bool) (all []string, err error) {
 	// if result, ok := listRecursiveCache[inp]; ok {
 	// 	return result, nil
 	// }
@@ -67,7 +67,9 @@ func ListRecursive(inp string) (all []string, err error) {
 				if err != nil {
 					return nil, fmt.Errorf("failed to list dir: %w", err)
 				}
-
+				if includeDirs {
+					all = append(all, m)
+				}
 				all = append(all, files...)
 			}
 		}
@@ -77,7 +79,9 @@ func ListRecursive(inp string) (all []string, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to list dir: %w", err)
 		}
-
+		if includeDirs {
+			all = append(all, inp)
+		}
 		all = append(all, files...)
 	}
 

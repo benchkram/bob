@@ -17,10 +17,10 @@ type I interface {
 	Collection(ctx context.Context, projectName, collectionId string) (*generated.SyncCollection, error)
 	Collections(ctx context.Context, projectName string) ([]generated.SyncCollection, error)
 
-	FileCreate(ctx context.Context, projectName, collectionId, localPath string, src io.Reader) (*generated.SyncFile, error)
-	File(ctx context.Context, projectName, collectionId, fileId string) (*generated.SyncFile, io.ReadCloser, error)
+	FileCreate(ctx context.Context, projectName, collectionId, localPath string, isDir bool, src *io.Reader) (*generated.SyncFile, error)
+	File(ctx context.Context, projectName, collectionId, fileId string) (*generated.SyncFile, *io.ReadCloser, error)
 	Files(ctx context.Context, projectName, collectionId string, withLocation bool) ([]generated.SyncFile, error)
-	FileUpdate(ctx context.Context, projectName, collectionId, fileId, localPath string, src *io.Reader) (*generated.SyncFile, error)
+	FileUpdate(ctx context.Context, projectName, collectionId, fileId, localPath string, isDir bool, src *io.Reader) (*generated.SyncFile, error)
 	FileDelete(ctx context.Context, projectName, collectionId, fileId string) error
 }
 

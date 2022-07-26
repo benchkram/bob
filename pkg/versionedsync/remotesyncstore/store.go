@@ -2,11 +2,16 @@ package remotesyncstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	storeclient "github.com/benchkram/bob/pkg/store-client"
 	"github.com/benchkram/bob/pkg/versionedsync/collection"
 	"github.com/benchkram/errz"
 	"io"
+)
+
+var (
+	ErrFileIsDirectory = errors.New("collection file is a directory and can not be downloaded")
 )
 
 // S is a versioned sync store that handles the logic of accessing the bob-server to store collections and files
@@ -37,9 +42,9 @@ func New(username, project string, opts ...Option) *S {
 	return s
 }
 
-func (s *S) CollectionCreate(ctx context.Context, name, tag, path string) (cId string, err error) {
+func (s *S) CollectionCreate(ctx context.Context, name, tag string) (cId string, err error) {
 	defer errz.Recover(&err)
-	genC, err := s.client.CollectionCreate(ctx, s.project, collection.JoinNameAndVersion(name, tag), path)
+	genC, err := s.client.CollectionCreate(ctx, s.project, collection.JoinNameAndVersion(name, tag), "")
 	errz.Fatal(err)
 	c, err := collection.FromRestType(genC)
 	errz.Fatal(err)
@@ -80,21 +85,32 @@ func (s *S) Collections(ctx context.Context) (collections []*collection.C, err e
 }
 func (s *S) FileUpload(ctx context.Context, collectionId, localPath string, srcReader io.Reader) (err error) {
 	defer errz.Recover(&err)
-	_, err = s.client.FileCreate(ctx, s.project, collectionId, localPath, srcReader)
+	_, err = s.client.FileCreate(ctx, s.project, collectionId, localPath, false, &srcReader)
+	errz.Fatal(err)
+	return nil
+}
+
+func (s *S) MakeDir(ctx context.Context, collectionId, localPath string) (err error) {
+	defer errz.Recover(&err)
+	_, err = s.client.FileCreate(ctx, s.project, collectionId, localPath, true, nil)
 	errz.Fatal(err)
 	return nil
 
 }
-func (s *S) File(ctx context.Context, collectionId, fileId string) (r io.ReadCloser, err error) {
+
+func (s *S) File(ctx context.Context, collectionId, fileId string) (_ io.ReadCloser, err error) {
 	defer errz.Recover(&err)
 
-	_, r, err = s.client.File(ctx, s.project, collectionId, fileId)
+	_, rc, err := s.client.File(ctx, s.project, collectionId, fileId)
 	errz.Fatal(err)
-	return r, nil
+	if rc == nil {
+		return nil, ErrFileIsDirectory
+	}
+	return *rc, nil
 }
-func (s *S) FileUpdate(ctx context.Context, collectionId, fileId string, srcReader io.Reader) (err error) {
+func (s *S) FileUpdate(ctx context.Context, collectionId, fileId string, isDir bool, srcReader io.Reader) (err error) {
 	defer errz.Recover(&err)
-	_, err = s.client.FileUpdate(ctx, s.project, collectionId, fileId, "", &srcReader)
+	_, err = s.client.FileUpdate(ctx, s.project, collectionId, fileId, "", isDir, &srcReader)
 	errz.Fatal(err)
 	return nil
 }

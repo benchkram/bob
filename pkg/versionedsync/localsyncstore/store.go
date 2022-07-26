@@ -11,21 +11,22 @@ import (
 type S struct {
 }
 
-func (s *S) ReadFile(bobDir, collectionPath, localPath string) (r io.ReadCloser, err error) {
-	return os.Open(filepath.Join(bobDir, collectionPath, localPath))
+func (s *S) ReadFile(path string) (r io.ReadCloser, err error) {
+	return os.Open(path)
 }
 
-func (s *S) DeleteFile(bobDir, collectionPath, localPath string) (err error) {
-	return os.Remove(filepath.Join(bobDir, collectionPath, localPath))
+func (s *S) DeleteFile(path string) (err error) {
+	return os.Remove(path)
 }
 
 // WriteFile writes contents from read closer to a file
 // if the file exists it is replaced
-func (s *S) WriteFile(bobDir, collectionPath, localPath string, reader io.ReadCloser) (err error) {
+func (s *S) WriteFile(path string, reader io.ReadCloser) (err error) {
 	defer errz.Recover(&err)
-	absPath := filepath.Join(bobDir, collectionPath, localPath)
+	absPath, err := filepath.Abs(path)
+	errz.Fatal(err)
 	if file.Exists(absPath) {
-		err = s.DeleteFile(bobDir, collectionPath, localPath)
+		err = s.DeleteFile(absPath)
 		errz.Fatal(err)
 	}
 	outFile, err := os.Create(absPath)
@@ -33,6 +34,22 @@ func (s *S) WriteFile(bobDir, collectionPath, localPath string, reader io.ReadCl
 	_, err = io.Copy(outFile, reader)
 	err = reader.Close()
 	errz.Fatal(err)
+	return nil
+}
+
+func (s *S) MakeDir(path string) (err error) {
+	defer errz.Recover(&err)
+	// if path is a file: remove it
+	fi, err := os.Stat(path)
+	if os.IsExist(err) {
+		if !fi.IsDir() {
+			err = s.DeleteFile(path)
+		} // else do nothing, dir exists
+	} else if os.IsNotExist(err) {
+		return os.MkdirAll(path, 0774)
+	} else {
+		errz.Fatal(err)
+	}
 	return nil
 }
 

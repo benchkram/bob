@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"github.com/benchkram/bob/pkg/usererror"
@@ -254,26 +255,30 @@ func (c *c) Collections(ctx context.Context, projectName string) (collections []
 	return *res.JSON200, nil
 }
 
-func (c *c) FileCreate(ctx context.Context, projectName, collectionId, localPath string, src io.Reader) (f *generated.SyncFile, err error) {
+func (c *c) FileCreate(ctx context.Context, projectName, collectionId, localPath string, isDir bool, src *io.Reader) (f *generated.SyncFile, err error) {
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
 
 	go func() {
-
 		err0 := mpw.WriteField("local_path", localPath)
 		if err0 != nil {
 			_ = w.CloseWithError(err0)
 		}
-
-		fieldWriter, err0 := mpw.CreateFormFile("file", filepath.Base(localPath))
-		if err0 != nil {
-			_ = w.CloseWithError(err0)
-		}
-		_, err0 = io.Copy(fieldWriter, src)
+		err0 = mpw.WriteField("is_directory", strconv.FormatBool(isDir))
 		if err0 != nil {
 			_ = w.CloseWithError(err0)
 		}
 
+		if src != nil {
+			fieldWriter, err0 := mpw.CreateFormFile("file", filepath.Base(localPath))
+			if err0 != nil {
+				_ = w.CloseWithError(err0)
+			}
+			_, err0 = io.Copy(fieldWriter, *src)
+			if err0 != nil {
+				_ = w.CloseWithError(err0)
+			}
+		}
 		err0 = mpw.Close()
 		if err0 != nil {
 			_ = w.CloseWithError(err0)
@@ -317,7 +322,7 @@ func (c *c) FileCreate(ctx context.Context, projectName, collectionId, localPath
 	return resp.JSON200, nil
 }
 
-func (c *c) File(ctx context.Context, projectName, collectionId, fileId string) (f *generated.SyncFile, rc io.ReadCloser, err error) {
+func (c *c) File(ctx context.Context, projectName, collectionId, fileId string) (f *generated.SyncFile, rc *io.ReadCloser, err error) {
 	defer errz.Recover(&err)
 
 	res, err := c.clientWithResponses.GetSyncFileWithResponse(
@@ -349,18 +354,22 @@ func (c *c) File(ctx context.Context, projectName, collectionId, fileId string) 
 	if res.JSON200 == nil {
 		errz.Fatal(ErrEmptyResponse)
 	}
+	if !res.JSON200.IsDirectory {
 
-	res2, err := http.Get(*res.JSON200.Location)
-	errz.Fatal(err)
+		res2, err := http.Get(*res.JSON200.Location)
+		errz.Fatal(err)
 
-	if res2.StatusCode != http.StatusOK {
-		errz.Fatal(usererror.Wrapm(ErrDownloadFailed, fmt.Sprintf("reading from storage failed (Status %d)", res2.StatusCode)))
+		if res2.StatusCode != http.StatusOK {
+			errz.Fatal(usererror.Wrapm(ErrDownloadFailed, fmt.Sprintf("reading from storage failed (Status %d)", res2.StatusCode)))
+		}
+		if res2.Body == nil {
+			errz.Fatal(ErrEmptyResponse)
+		}
+		return res.JSON200, &res2.Body, nil
+	} else {
+		return res.JSON200, nil, nil
 	}
-	if res2.Body == nil {
-		errz.Fatal(ErrEmptyResponse)
-	}
 
-	return res.JSON200, res2.Body, nil
 }
 
 func (c *c) Files(ctx context.Context, projectName, collectionId string, withLocation bool) (files []generated.SyncFile, err error) {
@@ -402,7 +411,7 @@ func (c *c) Files(ctx context.Context, projectName, collectionId string, withLoc
 	return *res.JSON200, nil
 }
 
-func (c *c) FileUpdate(ctx context.Context, projectName, collectionId, fileId, localPath string, src *io.Reader) (file *generated.SyncFile, err error) {
+func (c *c) FileUpdate(ctx context.Context, projectName, collectionId, fileId, localPath string, isDir bool, src *io.Reader) (file *generated.SyncFile, err error) {
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
 
@@ -412,6 +421,11 @@ func (c *c) FileUpdate(ctx context.Context, projectName, collectionId, fileId, l
 			if err0 != nil {
 				_ = w.CloseWithError(err0)
 			}
+		}
+
+		err0 := mpw.WriteField("is_directory", strconv.FormatBool(isDir))
+		if err0 != nil {
+			_ = w.CloseWithError(err0)
 		}
 
 		if src != nil {
@@ -424,7 +438,7 @@ func (c *c) FileUpdate(ctx context.Context, projectName, collectionId, fileId, l
 				_ = w.CloseWithError(err0)
 			}
 		}
-		err0 := mpw.Close()
+		err0 = mpw.Close()
 		if err0 != nil {
 			_ = w.CloseWithError(err0)
 		}
