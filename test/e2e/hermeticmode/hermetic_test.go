@@ -14,6 +14,12 @@ const (
 	projectServer = "server"
 )
 
+/**
+To get the list of current environment variables for specific tasks or binaries
+we output the env command output in the ./envOutput file. In bobfiles we do that with
+`env > envOutput` shell command(that's why we need bash as a dependency), and in binaries we write
+the output of `env` command to the same envOutput file
+*/
 var _ = Describe("Testing hermetic mode for build tasks", func() {
 
 	AfterEach(func() {
@@ -77,7 +83,7 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 
 			// will contain HOME && PATH && VAR_ONE
 			Expect(len(envVariables)).Should(Equal(3))
-			assertKeyHasValue("VAR_ONE", "somevalue", envVariables)
+			Expect(keyHasValue("VAR_ONE", "somevalue", envVariables)).To(BeTrue())
 		})
 	})
 
@@ -100,7 +106,7 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 			// will contain HOME && PATH && VAR_ONE
 			Expect(len(envVariables)).Should(Equal(2))
 			// will overwrite whitelisted HOME
-			assertKeyHasValue("HOME", "newHomeValue", envVariables)
+			Expect(keyHasValue("HOME", "newHomeValue", envVariables)).To(BeTrue())
 		})
 	})
 })
@@ -132,7 +138,7 @@ var _ = Describe("Testing hermetic mode for init", func() {
 			Eventually(func() error {
 				envVariables, err = readLines("./envOutput")
 				return err
-			}, 5).Should(BeNil())
+			}, "5s").Should(BeNil())
 
 			Expect(len(envVariables) > 2).To(BeTrue())
 
@@ -162,7 +168,7 @@ var _ = Describe("Testing hermetic mode for init", func() {
 			Eventually(func() error {
 				envVariables, err = readLines("./envOutput")
 				return err
-			}, 5).Should(BeNil())
+			}, "5s").Should(BeNil())
 
 			// only HOME && PATH
 			Expect(len(envVariables)).Should(Equal(2))
@@ -196,9 +202,9 @@ var _ = Describe("Testing hermetic mode for init", func() {
 			Eventually(func() int {
 				envVariables, _ = readLines("./envOutput")
 				return len(envVariables)
-			}, 5).Should(Equal(3))
+			}, "5s").Should(Equal(3))
 
-			assertKeyHasValue("VAR_ONE", "somevalue", envVariables)
+			Expect(keyHasValue("VAR_ONE", "somevalue", envVariables)).To(BeTrue())
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -232,7 +238,7 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 			Eventually(func() bool {
 				envVariables, _ := readLines("./envOutput")
 				return len(envVariables) > 2
-			}, 5).Should(BeTrue())
+			}, "5s").Should(BeTrue())
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -260,7 +266,7 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 			Eventually(func() int {
 				envVariables, _ := readLines("./envOutput")
 				return len(envVariables)
-			}, 5).Should(Equal(2))
+			}, "5s").Should(Equal(2))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -291,9 +297,9 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 			Eventually(func() int {
 				envVariables, _ = readLines("./envOutput")
 				return len(envVariables)
-			}, 5).Should(Equal(3))
+			}, "5s").Should(Equal(3))
 
-			assertKeyHasValue("VAR_ONE", "somevalue", envVariables)
+			Expect(keyHasValue("VAR_ONE", "somevalue", envVariables)).To(BeTrue())
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -328,7 +334,7 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			Eventually(func() error {
 				envVariables, err = readLines("./envOutput")
 				return err
-			}, 5).Should(BeNil())
+			}, "5s").Should(BeNil())
 
 			Expect(len(envVariables) > 2).Should(BeTrue())
 
@@ -358,7 +364,7 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			Eventually(func() error {
 				envVariables, err = readLines("./envOutput")
 				return err
-			}, 5).Should(BeNil())
+			}, "5s").Should(BeNil())
 
 			// only HOME && PATH
 			Expect(len(envVariables)).Should(Equal(2))
@@ -391,12 +397,12 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			Eventually(func() error {
 				envVariables, err = readLines("./envOutput")
 				return err
-			}, 5).Should(BeNil())
+			}, "5s").Should(BeNil())
 
 			// will contain HOME && PATH && VAR_ONE
 			Expect(len(envVariables)).Should(Equal(3))
 
-			assertKeyHasValue("VAR_ONE", "somevalue", envVariables)
+			Expect(keyHasValue("VAR_ONE", "somevalue", envVariables)).To(BeTrue())
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())

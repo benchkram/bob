@@ -167,11 +167,13 @@ func releaseProject(name string) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func assertKeyHasValue(key, value string, env []string) {
+// keyHasValue checks that in env, the variable key has its value expectedValue
+func keyHasValue(key, expectedValue string, env []string) bool {
 	for _, v := range env {
 		pair := strings.SplitN(v, "=", 2)
 		if pair[0] == key {
-			Expect(pair[1]).To(Equal(value))
+			return pair[1] == expectedValue
 		}
 	}
+	return false
 }
