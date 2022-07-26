@@ -15,11 +15,11 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 		Expect(err).To(BeNil())
 	})
 	Context("with use-nix false", func() {
-		It("it will use all host env variables", func() {
+		It("should use all host env variables", func() {
 			useBobfile("build_with_use_nix_false")
 			defer releaseBobfile("build_with_use_nix_false")
 
-			b, err := Bob([]string{})
+			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
 			ctx := context.Background()
@@ -35,11 +35,11 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 	})
 
 	Context("with use-nix true", func() {
-		It("it will have only 2 variables", func() {
+		It("should have only 2 variables", func() {
 			useBobfile("build_with_use_nix_true")
 			defer releaseBobfile("build_with_use_nix_true")
 
-			b, err := Bob([]string{})
+			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
 			ctx := context.Background()
@@ -55,11 +55,13 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 	})
 
 	Context("with use-nix true and --env VAR_ONE=somevalue", func() {
-		It("it will have 3 variables", func() {
+		It("should have 3 variables", func() {
 			useBobfile("build_with_use_nix_true")
 			defer releaseBobfile("build_with_use_nix_true")
 
-			b, err := Bob([]string{"VAR_ONE=somevalue"})
+			b, err := BobSetup(
+				"VAR_ONE=somevalue",
+			)
 			Expect(err).NotTo(HaveOccurred())
 
 			ctx := context.Background()
@@ -76,11 +78,13 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 	})
 
 	Context("with use-nix true and --env HOME=newHomeValue", func() {
-		It("it will have 2 variables and whitelisted HOME will be overwritten", func() {
+		It("should have 2 variables and whitelisted HOME will be overwritten", func() {
 			useBobfile("build_with_use_nix_true")
 			defer releaseBobfile("build_with_use_nix_true")
 
-			b, err := Bob([]string{"HOME=newHomeValue"})
+			b, err := BobSetup(
+				"HOME=newHomeValue",
+			)
 			Expect(err).NotTo(HaveOccurred())
 
 			ctx := context.Background()
@@ -104,14 +108,14 @@ var _ = Describe("Testing hermetic mode for init", func() {
 		Expect(err).To(BeNil())
 	})
 	Context("with use-nix false", func() {
-		It("it will use all host env variables", func() {
+		It("should use all host env variables", func() {
 			useBobfile("init_with_use_nix_false")
 			defer releaseBobfile("init_with_use_nix_false")
 
 			useProject("server")
 			defer releaseProject("server")
 
-			b, err := Bob([]string{})
+			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
 			cmdr, err := b.Run(context.Background(), "server")
@@ -134,14 +138,14 @@ var _ = Describe("Testing hermetic mode for init", func() {
 	})
 
 	Context("with use-nix true", func() {
-		It("it will have only 2 variables", func() {
+		It("should have only 2 variables", func() {
 			useBobfile("init_with_use_nix_true")
 			defer releaseBobfile("init_with_use_nix_true")
 
 			useProject("server")
 			defer releaseProject("server")
 
-			b, err := Bob([]string{})
+			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
 			cmdr, err := b.Run(context.Background(), "server")
@@ -165,14 +169,16 @@ var _ = Describe("Testing hermetic mode for init", func() {
 	})
 
 	Context("with use-nix true and --env VAR_ONE=somevalue", func() {
-		It("it will have 3 variables", func() {
+		It("should have 3 variables", func() {
 			useBobfile("init_with_use_nix_true")
 			defer releaseBobfile("init_with_use_nix_true")
 
 			useProject("server")
 			defer releaseProject("server")
 
-			b, err := Bob([]string{"VAR_ONE=somevalue"})
+			b, err := BobSetup(
+				"VAR_ONE=somevalue",
+			)
 			Expect(err).NotTo(HaveOccurred())
 
 			cmdr, err := b.Run(context.Background(), "server")
@@ -202,14 +208,14 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 		Expect(err).To(BeNil())
 	})
 	Context("with use-nix false", func() {
-		It("it will use all host env variables", func() {
+		It("should use all host env variables", func() {
 			useBobfile("init_once_with_use_nix_false")
 			defer releaseBobfile("init_once_with_use_nix_false")
 
 			useProject("server")
 			defer releaseProject("server")
 
-			b, err := Bob([]string{})
+			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
 			cmdr, err := b.Run(context.Background(), "server")
@@ -229,14 +235,14 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 	})
 
 	Context("with use-nix true", func() {
-		It("it will have only 2 variables", func() {
+		It("should have only 2 variables", func() {
 			useBobfile("init_once_with_use_nix_true")
 			defer releaseBobfile("init_once_with_use_nix_true")
 
 			useProject("server")
 			defer releaseProject("server")
 
-			b, err := Bob([]string{})
+			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
 			cmdr, err := b.Run(context.Background(), "server")
@@ -257,14 +263,16 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 	})
 
 	Context("with use-nix true and --env VAR_ONE=somevalue", func() {
-		It("it will have 3 variables", func() {
+		It("should have 3 variables", func() {
 			useBobfile("init_once_with_use_nix_true")
 			defer releaseBobfile("init_once_with_use_nix_true")
 
 			useProject("server")
 			defer releaseProject("server")
 
-			b, err := Bob([]string{"VAR_ONE=somevalue"})
+			b, err := BobSetup(
+				"VAR_ONE=somevalue",
+			)
 			Expect(err).NotTo(HaveOccurred())
 
 			cmdr, err := b.Run(context.Background(), "server")
@@ -295,14 +303,14 @@ var _ = Describe("Testing hermetic mode for server", func() {
 	})
 
 	Context("with use-nix false", func() {
-		It("it will use all host env variables", func() {
+		It("should use all host env variables", func() {
 			useBobfile("binary_with_use_nix_false")
 			defer releaseBobfile("binary_with_use_nix_false")
 
 			useProject("server-with-env")
 			defer releaseProject("server-with-env")
 
-			b, err := Bob([]string{})
+			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
 			cmdr, err := b.Run(context.Background(), "server")
@@ -325,14 +333,14 @@ var _ = Describe("Testing hermetic mode for server", func() {
 	})
 
 	Context("with use-nix true", func() {
-		It("it will have only 2 variables", func() {
+		It("should have only 2 variables", func() {
 			useBobfile("binary_with_use_nix_true")
 			defer releaseBobfile("binary_with_use_nix_true")
 
 			useProject("server-with-env")
 			defer releaseProject("server-with-env")
 
-			b, err := Bob([]string{})
+			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
 			cmdr, err := b.Run(context.Background(), "server")
@@ -356,14 +364,16 @@ var _ = Describe("Testing hermetic mode for server", func() {
 	})
 
 	Context("with use-nix true and --env VAR_ONE=somevalue", func() {
-		It("it will have 3 variables", func() {
+		It("should have 3 variables", func() {
 			useBobfile("binary_with_use_nix_true")
 			defer releaseBobfile("binary_with_use_nix_true")
 
 			useProject("server-with-env")
 			defer releaseProject("server-with-env")
 
-			b, err := Bob([]string{"VAR_ONE=somevalue"})
+			b, err := BobSetup(
+				"VAR_ONE=somevalue",
+			)
 			Expect(err).NotTo(HaveOccurred())
 
 			cmdr, err := b.Run(context.Background(), "server")
