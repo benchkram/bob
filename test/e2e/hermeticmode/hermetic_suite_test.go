@@ -2,6 +2,7 @@ package hermeticmodetest
 
 import (
 	"bufio"
+	"context"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -19,6 +20,8 @@ import (
 var (
 	dir     string
 	version string
+
+	ctx context.Context
 )
 
 type project struct {
@@ -29,6 +32,8 @@ type project struct {
 }
 
 var _ = BeforeSuite(func() {
+	ctx = context.Background()
+
 	version = bob.Version
 	bob.Version = "1.0.0"
 

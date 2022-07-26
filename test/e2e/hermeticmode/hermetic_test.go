@@ -1,7 +1,6 @@
 package hermeticmodetest
 
 import (
-	"context"
 	"os"
 	"strings"
 
@@ -9,11 +8,19 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const (
+	runTaskServer = "server"
+
+	projectServer = "server"
+)
+
 var _ = Describe("Testing hermetic mode for build tasks", func() {
+
 	AfterEach(func() {
 		err := os.Remove("./envOutput")
 		Expect(err).To(BeNil())
 	})
+
 	Context("with use-nix false", func() {
 		It("should use all host env variables", func() {
 			useBobfile("build_with_use_nix_false")
@@ -22,7 +29,6 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
-			ctx := context.Background()
 			err = b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -42,7 +48,6 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
-			ctx := context.Background()
 			err = b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -64,7 +69,6 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			ctx := context.Background()
 			err = b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -87,7 +91,6 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			ctx := context.Background()
 			err = b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -107,18 +110,19 @@ var _ = Describe("Testing hermetic mode for init", func() {
 		err := os.Remove("./envOutput")
 		Expect(err).To(BeNil())
 	})
+
 	Context("with use-nix false", func() {
 		It("should use all host env variables", func() {
 			useBobfile("init_with_use_nix_false")
 			defer releaseBobfile("init_with_use_nix_false")
 
-			useProject("server")
-			defer releaseProject("server")
+			useProject(projectServer)
+			defer releaseProject(projectServer)
 
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdr, err := b.Run(context.Background(), "server")
+			cmdr, err := b.Run(ctx, runTaskServer)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cmdr.Start()
@@ -142,13 +146,13 @@ var _ = Describe("Testing hermetic mode for init", func() {
 			useBobfile("init_with_use_nix_true")
 			defer releaseBobfile("init_with_use_nix_true")
 
-			useProject("server")
-			defer releaseProject("server")
+			useProject(projectServer)
+			defer releaseProject(projectServer)
 
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdr, err := b.Run(context.Background(), "server")
+			cmdr, err := b.Run(ctx, runTaskServer)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cmdr.Start()
@@ -173,15 +177,15 @@ var _ = Describe("Testing hermetic mode for init", func() {
 			useBobfile("init_with_use_nix_true")
 			defer releaseBobfile("init_with_use_nix_true")
 
-			useProject("server")
-			defer releaseProject("server")
+			useProject(projectServer)
+			defer releaseProject(projectServer)
 
 			b, err := BobSetup(
 				"VAR_ONE=somevalue",
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdr, err := b.Run(context.Background(), "server")
+			cmdr, err := b.Run(ctx, runTaskServer)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cmdr.Start()
@@ -203,6 +207,7 @@ var _ = Describe("Testing hermetic mode for init", func() {
 })
 
 var _ = Describe("Testing hermetic mode for initOnce", func() {
+
 	AfterEach(func() {
 		err := os.Remove("./envOutput")
 		Expect(err).To(BeNil())
@@ -212,13 +217,13 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 			useBobfile("init_once_with_use_nix_false")
 			defer releaseBobfile("init_once_with_use_nix_false")
 
-			useProject("server")
-			defer releaseProject("server")
+			useProject(projectServer)
+			defer releaseProject(projectServer)
 
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdr, err := b.Run(context.Background(), "server")
+			cmdr, err := b.Run(ctx, runTaskServer)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cmdr.Start()
@@ -239,13 +244,13 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 			useBobfile("init_once_with_use_nix_true")
 			defer releaseBobfile("init_once_with_use_nix_true")
 
-			useProject("server")
-			defer releaseProject("server")
+			useProject(projectServer)
+			defer releaseProject(projectServer)
 
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdr, err := b.Run(context.Background(), "server")
+			cmdr, err := b.Run(ctx, runTaskServer)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cmdr.Start()
@@ -267,15 +272,15 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 			useBobfile("init_once_with_use_nix_true")
 			defer releaseBobfile("init_once_with_use_nix_true")
 
-			useProject("server")
-			defer releaseProject("server")
+			useProject(projectServer)
+			defer releaseProject(projectServer)
 
 			b, err := BobSetup(
 				"VAR_ONE=somevalue",
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdr, err := b.Run(context.Background(), "server")
+			cmdr, err := b.Run(ctx, runTaskServer)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cmdr.Start()
@@ -313,7 +318,7 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdr, err := b.Run(context.Background(), "server")
+			cmdr, err := b.Run(ctx, runTaskServer)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cmdr.Start()
@@ -343,7 +348,7 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdr, err := b.Run(context.Background(), "server")
+			cmdr, err := b.Run(ctx, runTaskServer)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cmdr.Start()
@@ -376,7 +381,7 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 
-			cmdr, err := b.Run(context.Background(), "server")
+			cmdr, err := b.Run(ctx, runTaskServer)
 			Expect(err).NotTo(HaveOccurred())
 
 			err = cmdr.Start()
