@@ -37,6 +37,7 @@ type Cmd struct {
 	lastErr     error
 	storePaths  []string
 	useNix      bool
+	env         []string
 }
 
 type pipe struct {
@@ -111,6 +112,10 @@ func (c *Cmd) Start() error {
 	c.cmd = cmd
 
 	env := os.Environ()
+
+	if c.useNix {
+		env = c.env
+	}
 	if c.useNix && len(c.storePaths) > 0 {
 		env = nix.AddPATH(c.storePaths, env)
 	}

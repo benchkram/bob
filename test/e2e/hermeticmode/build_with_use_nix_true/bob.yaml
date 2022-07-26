@@ -1,0 +1,6 @@
+use-nix: true
+build:
+  build:
+    cmd: env > envOutput
+dependencies:
+  - bash
