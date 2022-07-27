@@ -22,10 +22,8 @@ func MergeEnv(a []string, b []string) []string {
 		newEnv = append(newEnv, v)
 	}
 
-	// Add from `b` remaining ones
-	for _, v := range b {
-		newEnv = append(newEnv, v)
-	}
+	// Add all from `b`
+	newEnv = append(newEnv, b...)
 
 	return newEnv
 }
