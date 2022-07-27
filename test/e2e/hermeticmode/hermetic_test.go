@@ -11,7 +11,8 @@ import (
 const (
 	runTaskServer = "server"
 
-	projectServer = "server"
+	projectServer        = "server"
+	projectServerWithEnv = "server-with-env"
 )
 
 /**
@@ -318,8 +319,8 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			useBobfile("binary_with_use_nix_false")
 			defer releaseBobfile("binary_with_use_nix_false")
 
-			useProject("server-with-env")
-			defer releaseProject("server-with-env")
+			useProject(projectServerWithEnv)
+			defer releaseProject(projectServerWithEnv)
 
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
@@ -348,8 +349,8 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			useBobfile("binary_with_use_nix_true")
 			defer releaseBobfile("binary_with_use_nix_true")
 
-			useProject("server-with-env")
-			defer releaseProject("server-with-env")
+			useProject(projectServerWithEnv)
+			defer releaseProject(projectServerWithEnv)
 
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
@@ -379,8 +380,8 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			useBobfile("binary_with_use_nix_true")
 			defer releaseBobfile("binary_with_use_nix_true")
 
-			useProject("server-with-env")
-			defer releaseProject("server-with-env")
+			useProject(projectServerWithEnv)
+			defer releaseProject(projectServerWithEnv)
 
 			b, err := BobSetup(
 				"VAR_ONE=somevalue",
@@ -403,6 +404,255 @@ var _ = Describe("Testing hermetic mode for server", func() {
 			Expect(len(envVariables)).Should(Equal(3))
 
 			Expect(keyHasValue("VAR_ONE", "somevalue", envVariables)).To(BeTrue())
+
+			err = cmdr.Stop()
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+})
+
+var _ = Describe("Testing env variables overwrite when use-nix is false for build tasks", func() {
+	AfterEach(func() {
+		err := os.Remove("./envOutput")
+		Expect(err).To(BeNil())
+	})
+
+	When("bobfile has VAR_ONE=foo", func() {
+		It("should use the env variable from the bobfile ", func() {
+			useBobfile("build_with_use_nix_false_variables")
+			defer releaseBobfile("build_with_use_nix_false_variables")
+
+			b, err := BobSetup()
+			Expect(err).NotTo(HaveOccurred())
+
+			err = b.Build(ctx, "build")
+			Expect(err).NotTo(HaveOccurred())
+
+			dat, err := os.ReadFile("./envOutput")
+			Expect(err).NotTo(HaveOccurred())
+
+			envVariables := strings.Split(string(dat), "\n")
+
+			Expect(keyHasValue("VAR_ONE", "foo", envVariables)).To(BeTrue())
+		})
+	})
+
+	When("bobfile has VAR_ONE=foo and will build with --env VAR_ONE=bar", func() {
+		It("should overwrite VAR_ONE with bar ", func() {
+			useBobfile("build_with_use_nix_false_variables")
+			defer releaseBobfile("build_with_use_nix_false_variables")
+
+			b, err := BobSetup("VAR_ONE=bar")
+			Expect(err).NotTo(HaveOccurred())
+
+			err = b.Build(ctx, "build")
+			Expect(err).NotTo(HaveOccurred())
+
+			dat, err := os.ReadFile("./envOutput")
+			Expect(err).NotTo(HaveOccurred())
+
+			envVariables := strings.Split(string(dat), "\n")
+
+			Expect(keyHasValue("VAR_ONE", "bar", envVariables)).To(BeTrue())
+		})
+	})
+})
+
+var _ = Describe("Testing env variables overwrite when use-nix is false for init", func() {
+	AfterEach(func() {
+		err := os.Remove("./envOutput")
+		Expect(err).To(BeNil())
+	})
+
+	When("bobfile has VAR_ONE=foo", func() {
+		It("should use the env variable from the bobfile on init", func() {
+			useBobfile("init_with_use_nix_false_variables")
+			defer releaseBobfile("init_with_use_nix_false_variables")
+
+			useProject(projectServer)
+			defer releaseProject(projectServer)
+
+			b, err := BobSetup()
+			Expect(err).NotTo(HaveOccurred())
+
+			cmdr, err := b.Run(ctx, runTaskServer)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = cmdr.Start()
+			Expect(err).NotTo(HaveOccurred())
+
+			var envVariables []string
+			Eventually(func() error {
+				envVariables, err = readLines("./envOutput")
+				return err
+			}, "5s").Should(BeNil())
+
+			Expect(keyHasValue("VAR_ONE", "foo", envVariables)).To(BeTrue())
+
+			err = cmdr.Stop()
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
+	When("bobfile has VAR_ONE=foo and will run with --env VAR_ONE=bar", func() {
+		It("should overwrite VAR_ONE with bar ", func() {
+			useBobfile("init_with_use_nix_false_variables")
+			defer releaseBobfile("init_with_use_nix_false_variables")
+
+			useProject(projectServer)
+			defer releaseProject(projectServer)
+
+			b, err := BobSetup("VAR_ONE=bar")
+			Expect(err).NotTo(HaveOccurred())
+
+			cmdr, err := b.Run(ctx, runTaskServer)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = cmdr.Start()
+			Expect(err).NotTo(HaveOccurred())
+
+			var envVariables []string
+			Eventually(func() error {
+				envVariables, err = readLines("./envOutput")
+				return err
+			}, "5s").Should(BeNil())
+
+			Expect(keyHasValue("VAR_ONE", "bar", envVariables)).To(BeTrue())
+
+			err = cmdr.Stop()
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
+})
+
+var _ = Describe("Testing env variables overwrite when use-nix is false for initOnce", func() {
+	AfterEach(func() {
+		err := os.Remove("./envOutput")
+		Expect(err).To(BeNil())
+	})
+
+	When("bobfile has VAR_ONE=foo", func() {
+		It("should use the env variable from the bobfile on initOnce", func() {
+			useBobfile("init_once_with_use_nix_false_variables")
+			defer releaseBobfile("init_once_with_use_nix_false_variables")
+
+			useProject(projectServer)
+			defer releaseProject(projectServer)
+
+			b, err := BobSetup()
+			Expect(err).NotTo(HaveOccurred())
+
+			cmdr, err := b.Run(ctx, runTaskServer)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = cmdr.Start()
+			Expect(err).NotTo(HaveOccurred())
+
+			var envVariables []string
+			Eventually(func() error {
+				envVariables, err = readLines("./envOutput")
+				return err
+			}, "5s").Should(BeNil())
+
+			Expect(keyHasValue("VAR_ONE", "foo", envVariables)).To(BeTrue())
+
+			err = cmdr.Stop()
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
+	When("bobfile has VAR_ONE=foo and will run with --env VAR_ONE=bar", func() {
+		It("should overwrite VAR_ONE with bar ", func() {
+			useBobfile("init_once_with_use_nix_false_variables")
+			defer releaseBobfile("init_once_with_use_nix_false_variables")
+
+			useProject(projectServer)
+			defer releaseProject(projectServer)
+
+			b, err := BobSetup("VAR_ONE=bar")
+			Expect(err).NotTo(HaveOccurred())
+
+			cmdr, err := b.Run(ctx, runTaskServer)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = cmdr.Start()
+			Expect(err).NotTo(HaveOccurred())
+
+			var envVariables []string
+			Eventually(func() error {
+				envVariables, err = readLines("./envOutput")
+				return err
+			}, "5s").Should(BeNil())
+
+			Expect(keyHasValue("VAR_ONE", "bar", envVariables)).To(BeTrue())
+
+			err = cmdr.Stop()
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+})
+
+var _ = Describe("Testing env variables overwrite when use-nix is false for server", func() {
+	AfterEach(func() {
+		err := os.Remove("./envOutput")
+		Expect(err).To(BeNil())
+	})
+
+	When("bobfile has VAR_ONE=foo", func() {
+		It("should use the env variable from the bobfile on server run", func() {
+			useBobfile("binary_with_use_nix_false_variables")
+			defer releaseBobfile("binary_with_use_nix_false_variables")
+
+			useProject(projectServerWithEnv)
+			defer releaseProject(projectServerWithEnv)
+
+			b, err := BobSetup()
+			Expect(err).NotTo(HaveOccurred())
+
+			cmdr, err := b.Run(ctx, runTaskServer)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = cmdr.Start()
+			Expect(err).NotTo(HaveOccurred())
+
+			var envVariables []string
+			Eventually(func() error {
+				envVariables, err = readLines("./envOutput")
+				return err
+			}, "5s").Should(BeNil())
+
+			Expect(keyHasValue("VAR_ONE", "foo", envVariables)).To(BeTrue())
+
+			err = cmdr.Stop()
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
+	When("bobfile has VAR_ONE=foo and will run with --env VAR_ONE=bar", func() {
+		It("should overwrite VAR_ONE with bar ", func() {
+			useBobfile("binary_with_use_nix_false_variables")
+			defer releaseBobfile("binary_with_use_nix_false_variables")
+
+			useProject(projectServerWithEnv)
+			defer releaseProject(projectServerWithEnv)
+
+			b, err := BobSetup("VAR_ONE=bar")
+			Expect(err).NotTo(HaveOccurred())
+
+			cmdr, err := b.Run(ctx, runTaskServer)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = cmdr.Start()
+			Expect(err).NotTo(HaveOccurred())
+
+			var envVariables []string
+			Eventually(func() error {
+				envVariables, err = readLines("./envOutput")
+				return err
+			}, "5s").Should(BeNil())
+
+			Expect(keyHasValue("VAR_ONE", "bar", envVariables)).To(BeTrue())
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())

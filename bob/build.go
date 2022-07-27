@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/benchkram/bob/pkg/env"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/playbook"
@@ -26,11 +27,12 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	b.PrintVersionCompatibility(ag)
 
+	for i, task := range ag.BTasks {
+		task.SetEnv(env.MergeEnv(task.Env(), b.env))
+		ag.BTasks[i] = task
+	}
+
 	if ag.UseNix && b.nix != nil {
-		for i, task := range ag.BTasks {
-			task.AddEnvironment(b.env)
-			ag.BTasks[i] = task
-		}
 		fmt.Println("Building nix dependencies...")
 		err = b.nix.BuildNixDependenciesInPipeline(ag, taskName)
 		errz.Fatal(err)
