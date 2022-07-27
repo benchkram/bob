@@ -30,6 +30,8 @@ func init() {
 
 	// clone
 	CmdClone.Flags().Bool("fail-fast", false, "Fail on first error without user prompt")
+	CmdClone.Flags().Bool("ssh", false, "Prefer ssh for cloning")
+	CmdClone.Flags().Bool("https", false, "Prefer https for cloning")
 	rootCmd.AddCommand(CmdClone)
 
 	// workspace
