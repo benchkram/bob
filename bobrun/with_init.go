@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	env2 "github.com/benchkram/bob/pkg/env"
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
@@ -230,7 +230,7 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
 		errz.Fatal(err)
 
-		env := env2.MergeEnv(rw.run.env, os.Environ())
+		env := envutil.MergeEnv(rw.run.env, os.Environ())
 		if rw.run.UseNix() {
 			env = rw.run.Env()
 		}

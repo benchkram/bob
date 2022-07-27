@@ -1,8 +1,8 @@
-package env
+package envutil
 
 import "strings"
 
-// MergeEnv will merge to environment lists
+// MergeEnv will merge 2 environment lists
 // See tests for usage
 func MergeEnv(a []string, b []string) []string {
 	envKeys := make(map[string]bool)

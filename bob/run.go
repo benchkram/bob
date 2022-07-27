@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/benchkram/bob/pkg/env"
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
@@ -47,11 +47,11 @@ func (b *B) Run(ctx context.Context, runTaskName string) (_ ctl.Commander, err e
 	}
 
 	for i, task := range aggregate.RTasks {
-		task.SetEnv(env.MergeEnv(task.Env(), b.env))
+		task.SetEnv(envutil.MergeEnv(task.Env(), b.env))
 		aggregate.RTasks[i] = task
 	}
 	for i, task := range aggregate.BTasks {
-		task.SetEnv(env.MergeEnv(task.Env(), b.env))
+		task.SetEnv(envutil.MergeEnv(task.Env(), b.env))
 		aggregate.BTasks[i] = task
 	}
 

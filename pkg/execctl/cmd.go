@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/benchkram/bob/pkg/ctl"
-	env2 "github.com/benchkram/bob/pkg/env"
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -117,7 +117,7 @@ func (c *Cmd) Start() error {
 	if c.useNix {
 		env = c.env
 	} else {
-		env = env2.MergeEnv(c.env, env)
+		env = envutil.MergeEnv(c.env, env)
 	}
 	if c.useNix && len(c.storePaths) > 0 {
 		env = nix.AddPATH(c.storePaths, env)
