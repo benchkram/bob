@@ -37,6 +37,6 @@ func TestMergeEnv(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Log(tc.description)
-		assert.Equal(t, tc.expectedResult, MergeEnv(tc.first, tc.second))
+		assert.Equal(t, tc.expectedResult, Merge(tc.first, tc.second))
 	}
 }

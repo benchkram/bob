@@ -2,9 +2,10 @@ package envutil
 
 import "strings"
 
-// MergeEnv will merge 2 environment lists
-// See tests for usage
-func MergeEnv(a []string, b []string) []string {
+// Merge two lists of environment variables in the "key=value" format.
+// If variables are duplicated, the one from `b` is kept.
+// See tests for details.
+func Merge(a []string, b []string) []string {
 	envKeys := make(map[string]bool)
 
 	for _, v := range b {

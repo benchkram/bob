@@ -64,6 +64,7 @@ type Bobfile struct {
 
 	Imports []string `yaml:"import,omitempty"`
 
+	// Variables is a map of variables that can be used in the tasks.
 	Variables VariableMap
 
 	// BTasks build tasks
@@ -378,9 +379,9 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
-// Env returns the bobfile environment in the form "key=value"
+// Vars returns the bobfile variables in the form "key=value"
 // based on its Variables
-func (b *Bobfile) Env() []string {
+func (b *Bobfile) Vars() []string {
 	var env []string
 	for key, value := range b.Variables {
 		env = append(env, strings.Join([]string{key, value}, "="))
