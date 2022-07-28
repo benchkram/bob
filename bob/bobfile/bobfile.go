@@ -377,7 +377,3 @@ func CreateDummyBobfile(dir string, overwrite bool) (err error) {
 	}
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
-
-func IsBobfile(file string) bool {
-	return strings.Contains(filepath.Base(file), global.BobFileName)
-}
