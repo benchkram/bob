@@ -15,6 +15,3 @@ run:
     dependson:
       - build
     init: "env > envOutput"
-    dependencies:
-      - bash
-

@@ -69,10 +69,6 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 	errz.Fatal(err)
 	nixDependencies = append(nixDependencies, runTasksDependencies...)
 
-	if len(nixDependencies) == 0 {
-		return nil
-	}
-
 	depStorePathMapping, err := nix.BuildDependencies(
 		nix.UniqueDeps(append(nix.DefaultPackages(ag.Nixpkgs), nixDependencies...)),
 		n.cache,

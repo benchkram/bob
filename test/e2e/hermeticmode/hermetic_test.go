@@ -18,8 +18,7 @@ const (
 /**
 To get the list of current environment variables for specific tasks or binaries
 we output the env command output in the ./envOutput file. In bobfiles we do that with
-`env > envOutput` shell command(that's why we need bash as a dependency), and in binaries we write
-the output of `env` command to the same envOutput file
+`env > envOutput` shell command, and in binaries we write the output of `env` command to the same envOutput file
 */
 var _ = Describe("Testing hermetic mode for build tasks", func() {
 
