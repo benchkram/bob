@@ -125,20 +125,12 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		// 	projectNames[boblet.Project] = true
 		// }
 		for key, task := range boblet.BTasks {
-			env := envutil.MergeEnv(boblet.Env(), b.env)
-			if !task.UseNix() {
-				env = envutil.MergeEnv(os.Environ(), env)
-			}
-			task.SetEnv(env)
+			task.SetEnv(envForTask(task.UseNix(), boblet.Env(), b.env))
 			boblet.BTasks[key] = task
 		}
 
 		for key, task := range boblet.RTasks {
-			env := envutil.MergeEnv(boblet.Env(), b.env)
-			if !task.UseNix() {
-				env = envutil.MergeEnv(os.Environ(), env)
-			}
-			task.SetEnv(env)
+			task.SetEnv(envForTask(task.UseNix(), boblet.Env(), b.env))
 			boblet.RTasks[key] = task
 		}
 	}
@@ -296,4 +288,14 @@ func taskNameToEnvironment(taskname string, exportname string) string {
 	envvar = strings.ToUpper(envvar)
 
 	return envvar
+}
+
+// envForTask gives environment variables for a task
+// For hermetic mode will use only variables from bobfile and CLI
+// and for non-hermetic mode will use CLI > Bobfile > OS, where CLI will have top priority
+func envForTask(hermeticMode bool, bobfileEnv []string, cliEnv []string) []string {
+	if hermeticMode {
+		return envutil.MergeEnv(bobfileEnv, cliEnv)
+	}
+	return envutil.MergeEnv(os.Environ(), envutil.MergeEnv(bobfileEnv, cliEnv))
 }
