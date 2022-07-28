@@ -114,7 +114,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// projectNames := map[string]bool{}
 
 	for _, boblet := range append(bobs, aggregate) {
-
 		// FIXME: As we don't refer to a child task by projectname but by path
 		// it seems to be save to allow duplicate projectnames.
 		//
@@ -125,29 +124,13 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		// 	}
 		// 	projectNames[boblet.Project] = true
 		// }
-
-		// add env vars and build tasks
-		for variable, value := range boblet.Variables {
-			for key, task := range boblet.BTasks {
-				// TODO: Create and use envvar sanitizer
-
-				task.AddEnvironmentVariable(strings.ToUpper(variable), value)
-
-				boblet.BTasks[key] = task
-			}
-			for key, task := range boblet.RTasks {
-				task.AddEnvironmentVariable(strings.ToUpper(variable), value)
-				boblet.RTasks[key] = task
-			}
-		}
-
 		for key, task := range boblet.BTasks {
-			task.SetEnv(envutil.MergeEnv(task.Env(), b.env))
+			task.SetEnv(envutil.MergeEnv(boblet.Env(), b.env))
 			boblet.BTasks[key] = task
 		}
 
 		for key, task := range boblet.RTasks {
-			task.SetEnv(envutil.MergeEnv(task.Env(), b.env))
+			task.SetEnv(envutil.MergeEnv(boblet.Env(), b.env))
 			boblet.RTasks[key] = task
 		}
 	}
