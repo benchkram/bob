@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/benchkram/errz"
 	"gopkg.in/yaml.v3"
@@ -88,12 +87,6 @@ func (r *Run) SetDir(dir string) {
 
 func (r *Run) SetUseNix(useNix bool) {
 	r.useNix = useNix
-}
-
-const EnvironSeparator = "="
-
-func (r *Run) AddEnvironmentVariable(key, value string) {
-	r.env = append(r.env, strings.Join([]string{key, value}, EnvironSeparator))
 }
 
 func (r *Run) UseNix() bool {
