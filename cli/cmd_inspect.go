@@ -75,7 +75,7 @@ func runEnv(taskname string) {
 		errz.Fatal(err)
 	}
 
-	task, ok = bobfile.BTasks[taskname]
+	task = bobfile.BTasks[taskname]
 
 	taskEnv := task.Env()
 	if len(task.StorePaths()) > 0 && task.UseNix() {
