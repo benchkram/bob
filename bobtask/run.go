@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/logrusorgru/aurora"
@@ -21,14 +22,11 @@ import (
 func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
-	env := os.Environ()
 	// TODO: warn when overwriting envvar from the environment
-	env = append(env, t.env...)
-
+	env := envutil.MergeEnv(t.env, os.Environ())
 	if t.useNix {
 		env = t.env
 	}
-
 	if len(t.storePaths) > 0 && t.useNix {
 		env = nix.AddPATH(t.storePaths, env)
 	}
