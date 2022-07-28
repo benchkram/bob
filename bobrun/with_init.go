@@ -229,11 +229,10 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
 		errz.Fatal(err)
 
-		env := os.Environ()
+		env := rw.run.Env()
 		if rw.run.UseNix() && len(rw.run.storePaths) > 0 {
-			env = nix.ReplacePATH(rw.run.storePaths, env)
+			env = nix.AddPATH(rw.run.storePaths, env)
 		}
-
 		pr, pw, err := os.Pipe()
 		errz.Fatal(err)
 

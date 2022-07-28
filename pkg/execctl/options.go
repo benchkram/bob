@@ -19,3 +19,9 @@ func WithArgs(args ...string) Option {
 		c.args = args
 	}
 }
+
+func WithEnv(env []string) Option {
+	return func(c *Cmd) {
+		c.env = env
+	}
+}

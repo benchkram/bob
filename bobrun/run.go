@@ -49,16 +49,28 @@ type Run struct {
 	// in the order which they need to be added to PATH
 	storePaths []string
 
-	// flag if its bobfile has Nix enabled
-	useNix bool
-
 	dir string
 
+	// env holds key=value pairs passed to the environment
+	// when the task is executed.
+	env []string
+
 	name string
+
+	// flag if its bobfile has Nix enabled
+	useNix bool
 }
 
 func (r *Run) Name() string {
 	return r.name
+}
+
+func (r *Run) SetEnv(env []string) {
+	r.env = env
+}
+
+func (r *Run) Env() []string {
+	return r.env
 }
 
 func (r *Run) SetName(name string) {
@@ -137,7 +149,13 @@ func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 
 	switch r.Type {
 	case RunTypeBinary:
-		rc, err = execctl.NewCmd(r.name, r.Path, execctl.WithStorePaths(r.storePaths), execctl.WithUseNix(r.UseNix()))
+		rc, err = execctl.NewCmd(
+			r.name,
+			r.Path,
+			execctl.WithEnv(r.Env()),
+			execctl.WithStorePaths(r.storePaths),
+			execctl.WithUseNix(r.UseNix()),
+		)
 		errz.Fatal(err)
 	case RunTypeCompose:
 		rc, err = r.composeCommand(ctx)

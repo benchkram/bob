@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/usererror"
 
@@ -53,6 +54,10 @@ type B struct {
 
 	// authStore is used to store authentication credentials for remote store
 	authStore *auth.Store
+
+	// env is a list of strings representing the environment in the form "key=value"
+	// This will be used only if use-nix is true
+	env []string
 }
 
 func newBob(opts ...Option) *B {
@@ -71,6 +76,7 @@ func newBob(opts ...Option) *B {
 		}
 		opt(b)
 	}
+	b.keepWhitelistEnv()
 
 	return b
 }
@@ -166,6 +172,10 @@ func (b *B) Dir() string {
 	return b.dir
 }
 
+func (b *B) Nix() *NixBuilder {
+	return b.nix
+}
+
 func (b *B) write() (err error) {
 	defer errz.Recover(&err)
 
@@ -194,4 +204,14 @@ func (b *B) read() (err error) {
 	}
 
 	return nil
+}
+
+// keepWhitelistEnv will keep whitelisted env variables
+// from local host
+func (b *B) keepWhitelistEnv() {
+	for _, envKey := range global.EnvWhitelist {
+		if value, exists := os.LookupEnv(envKey); exists {
+			b.env = append(b.env, envKey+"="+value)
+		}
+	}
 }

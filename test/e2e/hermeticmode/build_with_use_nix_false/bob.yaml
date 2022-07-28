@@ -1,0 +1,4 @@
+use-nix: false
+build:
+  build:
+    cmd: env > envOutput

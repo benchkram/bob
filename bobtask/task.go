@@ -45,18 +45,6 @@ type Task struct {
 	// can run.
 	DependsOn []string `yaml:"dependsOn"`
 
-	// TODO: Shall we add a optional environment?
-	// Like a docker image which can be used to build a target.
-	// It's more effort but allows for more or less fixed build tool
-	// versions acros systems.
-	//
-	// Another options would be to provide versions for a
-	// task and build tool.. But each build tool needs manual
-	// handling to figure out it's version.
-	//
-	// !!Needs Decission!!
-	Environment string
-
 	// Target defines the output of a task.
 	TargetDirty TargetEntry `yaml:"target,omitempty"`
 	target      *target.T
@@ -199,6 +187,10 @@ func (t *Task) SetStorePaths(storePaths []string) {
 	t.storePaths = storePaths
 }
 
+func (t *Task) StorePaths() []string {
+	return t.storePaths
+}
+
 // Project returns the projectname. In case of a non existing projectname the
 // tasks local directory is returned.
 func (t *Task) Project() string {
@@ -239,9 +231,10 @@ func (t *Task) WithBuildinfoStore(s buildinfostore.Store) *Task {
 
 const EnvironSeparator = "="
 
-func (t *Task) AddEnvironment(key, value string) {
+func (t *Task) AddEnvironmentVariable(key, value string) {
 	t.env = append(t.env, strings.Join([]string{key, value}, EnvironSeparator))
 }
+
 func (t *Task) AddExportPrefix(prefix string) {
 	for i, e := range t.Exports {
 		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))

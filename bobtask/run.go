@@ -21,17 +21,9 @@ import (
 func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
-	env := os.Environ()
-	// TODO: warn when overwriting envvar from the environment
-	env = append(env, t.env...)
-
+	env := t.Env()
 	if len(t.storePaths) > 0 && t.useNix {
-		for k, v := range env {
-			pair := strings.SplitN(v, "=", 2)
-			if pair[0] == "PATH" {
-				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(t.storePaths), ":")
-			}
-		}
+		env = nix.AddPATH(t.storePaths, env)
 	}
 
 	for _, run := range t.cmds {

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/benchkram/errz"
@@ -42,7 +43,7 @@ var buildCmd = &cobra.Command{
 			taskname = args[0]
 		}
 
-		runBuild(dummy, taskname, noCache, allowInsecure)
+		runBuild(dummy, taskname, noCache, allowInsecure, flagEnvVars)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getBuildTasks()
@@ -63,7 +64,7 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(dummy bool, taskname string, noCache, allowInsecure bool) {
+func runBuild(dummy bool, taskname string, noCache, allowInsecure bool, flagEnvVars []string) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
@@ -81,6 +82,7 @@ func runBuild(dummy bool, taskname string, noCache, allowInsecure bool) {
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
 		bob.WithInsecure(allowInsecure),
+		bob.WithEnvVariables(parseEnvVarsFlag(flagEnvVars)),
 	)
 	if err != nil {
 		exitCode = 1
@@ -127,4 +129,23 @@ func getBuildTasks() ([]string, error) {
 		return nil, err
 	}
 	return b.GetBuildTasks()
+}
+
+// parseEnvVarsFlag will parse flagEnvVars and return the environment variables
+// based on:
+//   --env VAR_ONE         uses VAR_ONE from host environment variable
+//   --env VAR_ONE=value   overwrites value from host with given `value`
+func parseEnvVarsFlag(flagEnvVars []string) []string {
+	var result []string
+	for _, v := range flagEnvVars {
+		if strings.Contains(v, "=") {
+			result = append(result, v)
+		} else {
+			// get it from host
+			value := os.Getenv(v)
+			result = append(result, v+"="+value)
+		}
+	}
+
+	return result
 }

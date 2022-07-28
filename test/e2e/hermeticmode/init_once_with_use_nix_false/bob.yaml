@@ -1,0 +1,15 @@
+use-nix: false
+build:
+  build:
+    input: |-
+      ./server/main.go
+    cmd: go build -o app
+    target: app
+run:
+  server:
+    type: binary
+    path: ./app
+    dependson:
+      - build
+    initOnce: "env > envOutput"
+

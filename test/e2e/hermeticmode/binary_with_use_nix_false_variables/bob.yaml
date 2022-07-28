@@ -1,0 +1,16 @@
+use-nix: false
+variables:
+  VAR_ONE: foo
+build:
+  build:
+    input: |-
+      ./server/main.go
+    cmd: go build -o app
+    target: app
+run:
+  server:
+    type: binary
+    path: ./app
+    dependson:
+      - build
+

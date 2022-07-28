@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/errz"
 	"github.com/hashicorp/go-version"
 	"github.com/logrusorgru/aurora"
@@ -113,7 +114,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// projectNames := map[string]bool{}
 
 	for _, boblet := range append(bobs, aggregate) {
-
 		// FIXME: As we don't refer to a child task by projectname but by path
 		// it seems to be save to allow duplicate projectnames.
 		//
@@ -124,16 +124,14 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		// 	}
 		// 	projectNames[boblet.Project] = true
 		// }
+		for key, task := range boblet.BTasks {
+			task.SetEnv(prepareEnvironment(task.UseNix(), boblet.Vars(), b.env))
+			boblet.BTasks[key] = task
+		}
 
-		// add env vars and build tasks
-		for variable, value := range boblet.Variables {
-			for key, task := range boblet.BTasks {
-				// TODO: Create and use envvar sanitizer
-
-				task.AddEnvironment(strings.ToUpper(variable), value)
-
-				boblet.BTasks[key] = task
-			}
+		for key, task := range boblet.RTasks {
+			task.SetEnv(prepareEnvironment(task.UseNix(), boblet.Vars(), b.env))
+			boblet.RTasks[key] = task
 		}
 	}
 
@@ -195,7 +193,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 				// println(envvar, value)
 
-				task.AddEnvironment(envvar, value)
+				task.AddEnvironmentVariable(envvar, value)
 
 				aggregate.BTasks[i] = task
 			}
@@ -290,4 +288,15 @@ func taskNameToEnvironment(taskname string, exportname string) string {
 	envvar = strings.ToUpper(envvar)
 
 	return envvar
+}
+
+// prepareEnvironment for a task.
+// For hermetic mode will use only variables from bobfile and CLI
+// and for non-hermetic mode will use CLI > Bobfile > OS, where CLI will have top priority
+func prepareEnvironment(hermeticMode bool, vars []string, cliEnv []string) []string {
+	if hermeticMode {
+		return envutil.Merge(vars, cliEnv)
+	}
+
+	return envutil.Merge(os.Environ(), envutil.Merge(vars, cliEnv))
 }
