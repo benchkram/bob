@@ -45,18 +45,6 @@ type Task struct {
 	// can run.
 	DependsOn []string `yaml:"dependsOn"`
 
-	// TODO: Shall we add a optional environment?
-	// Like a docker image which can be used to build a target.
-	// It's more effort but allows for more or less fixed build tool
-	// versions acros systems.
-	//
-	// Another options would be to provide versions for a
-	// task and build tool.. But each build tool needs manual
-	// handling to figure out it's version.
-	//
-	// !!Needs Decission!!
-	Environment string
-
 	// Target defines the output of a task.
 	TargetDirty TargetEntry `yaml:"target,omitempty"`
 	target      *target.T
