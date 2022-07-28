@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/benchkram/bob/pkg/ctl"
-	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -112,10 +111,7 @@ func (c *Cmd) Start() error {
 	cmd := exec.Command(c.exe, c.args...)
 	c.cmd = cmd
 
-	env := envutil.MergeEnv(c.env, os.Environ())
-	if c.useNix {
-		env = c.env
-	}
+	env := c.env
 	if c.useNix && len(c.storePaths) > 0 {
 		env = nix.AddPATH(c.storePaths, env)
 	}

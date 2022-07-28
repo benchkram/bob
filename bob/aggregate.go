@@ -125,12 +125,20 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		// 	projectNames[boblet.Project] = true
 		// }
 		for key, task := range boblet.BTasks {
-			task.SetEnv(envutil.MergeEnv(boblet.Env(), b.env))
+			env := envutil.MergeEnv(boblet.Env(), b.env)
+			if !task.UseNix() {
+				env = envutil.MergeEnv(os.Environ(), env)
+			}
+			task.SetEnv(env)
 			boblet.BTasks[key] = task
 		}
 
 		for key, task := range boblet.RTasks {
-			task.SetEnv(envutil.MergeEnv(boblet.Env(), b.env))
+			env := envutil.MergeEnv(boblet.Env(), b.env)
+			if !task.UseNix() {
+				env = envutil.MergeEnv(os.Environ(), env)
+			}
+			task.SetEnv(env)
 			boblet.RTasks[key] = task
 		}
 	}
