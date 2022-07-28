@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/errz"
 	"github.com/hashicorp/go-version"
 	"github.com/logrusorgru/aurora"
@@ -138,6 +139,16 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 				task.AddEnvironmentVariable(strings.ToUpper(variable), value)
 				boblet.RTasks[key] = task
 			}
+		}
+
+		for key, task := range boblet.BTasks {
+			task.SetEnv(envutil.MergeEnv(task.Env(), b.env))
+			boblet.BTasks[key] = task
+		}
+
+		for key, task := range boblet.RTasks {
+			task.SetEnv(envutil.MergeEnv(task.Env(), b.env))
+			boblet.RTasks[key] = task
 		}
 	}
 

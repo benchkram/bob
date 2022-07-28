@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
@@ -44,15 +43,6 @@ func (b *B) Run(ctx context.Context, runTaskName string) (_ ctl.Commander, err e
 	runTask, ok := aggregate.RTasks[runTaskName]
 	if !ok {
 		return nil, ErrRunDoesNotExist
-	}
-
-	for i, task := range aggregate.RTasks {
-		task.SetEnv(envutil.MergeEnv(task.Env(), b.env))
-		aggregate.RTasks[i] = task
-	}
-	for i, task := range aggregate.BTasks {
-		task.SetEnv(envutil.MergeEnv(task.Env(), b.env))
-		aggregate.BTasks[i] = task
 	}
 
 	// gather interactive tasks

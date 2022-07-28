@@ -96,10 +96,6 @@ func (r *Run) AddEnvironmentVariable(key, value string) {
 	r.env = append(r.env, strings.Join([]string{key, value}, EnvironSeparator))
 }
 
-func (r *Run) AddEnvironment(env []string) {
-	r.env = append(r.env, env...)
-}
-
 func (r *Run) UseNix() bool {
 	return r.useNix
 }

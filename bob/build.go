@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/playbook"
@@ -26,11 +25,6 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	errz.Fatal(err)
 
 	b.PrintVersionCompatibility(ag)
-
-	for i, task := range ag.BTasks {
-		task.SetEnv(envutil.MergeEnv(task.Env(), b.env))
-		ag.BTasks[i] = task
-	}
 
 	if ag.UseNix && b.nix != nil {
 		fmt.Println("Building nix dependencies...")
