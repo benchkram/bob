@@ -187,6 +187,10 @@ func (t *Task) SetStorePaths(storePaths []string) {
 	t.storePaths = storePaths
 }
 
+func (t *Task) StorePaths() []string {
+	return t.storePaths
+}
+
 // Project returns the projectname. In case of a non existing projectname the
 // tasks local directory is returned.
 func (t *Task) Project() string {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
@@ -68,8 +69,20 @@ func runEnv(taskname string) {
 		exit(1)
 	}
 
-	for _, env := range task.Env() {
-		println(env)
+	// Build nix dependencies
+	if bobfile.UseNix && b.Nix() != nil {
+		err = b.Nix().BuildNixDependencies(bobfile, []string{taskname}, []string{})
+		errz.Fatal(err)
+	}
+
+	task, ok = bobfile.BTasks[taskname]
+
+	taskEnv := task.Env()
+	if len(task.StorePaths()) > 0 && task.UseNix() {
+		taskEnv = nix.AddPATH(task.StorePaths(), task.Env())
+	}
+	for _, e := range taskEnv {
+		println(e)
 	}
 }
 
@@ -113,7 +126,7 @@ func runExport(taskname string) {
 var inspectArtifactCmd = &cobra.Command{
 	Use:   "artifact",
 	Short: "Inspect artifacts by id",
-	//Args:  cobra.ExactArgs(1),
+	// Args:  cobra.ExactArgs(1),
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if inspectArtifactId == "" {

@@ -172,6 +172,10 @@ func (b *B) Dir() string {
 	return b.dir
 }
 
+func (b *B) Nix() *NixBuilder {
+	return b.nix
+}
+
 func (b *B) write() (err error) {
 	defer errz.Recover(&err)
 
