@@ -112,12 +112,9 @@ func (c *Cmd) Start() error {
 	cmd := exec.Command(c.exe, c.args...)
 	c.cmd = cmd
 
-	env := os.Environ()
-
+	env := envutil.MergeEnv(c.env, os.Environ())
 	if c.useNix {
 		env = c.env
-	} else {
-		env = envutil.MergeEnv(c.env, env)
 	}
 	if c.useNix && len(c.storePaths) > 0 {
 		env = nix.AddPATH(c.storePaths, env)
