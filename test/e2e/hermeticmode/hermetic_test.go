@@ -26,7 +26,7 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 		Expect(err).To(BeNil())
 	})
 
-	Context("with use-nix true", func() {
+	Context("with default hermetic mode", func() {
 		It("should have only 2 variables", func() {
 			useBobfile("build_with_use_nix_true")
 			defer releaseBobfile("build_with_use_nix_true")
@@ -45,7 +45,7 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 		})
 	})
 
-	Context("with use-nix true and --env VAR_ONE=somevalue", func() {
+	Context("with --env VAR_ONE=somevalue", func() {
 		It("should have 3 variables", func() {
 			useBobfile("build_with_use_nix_true")
 			defer releaseBobfile("build_with_use_nix_true")
@@ -67,7 +67,7 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 		})
 	})
 
-	Context("with use-nix true and --env HOME=newHomeValue", func() {
+	Context("with --env HOME=newHomeValue", func() {
 		It("should have 2 variables and whitelisted HOME will be overwritten", func() {
 			useBobfile("build_with_use_nix_true")
 			defer releaseBobfile("build_with_use_nix_true")
@@ -97,7 +97,7 @@ var _ = Describe("Testing hermetic mode for init", func() {
 		Expect(err).To(BeNil())
 	})
 
-	Context("with use-nix true", func() {
+	Context("with default hermetic mode", func() {
 		It("should have only 2 variables", func() {
 			useBobfile("init_with_use_nix_true")
 			defer releaseBobfile("init_with_use_nix_true")
@@ -128,7 +128,7 @@ var _ = Describe("Testing hermetic mode for init", func() {
 		})
 	})
 
-	Context("with use-nix true and --env VAR_ONE=somevalue", func() {
+	Context("with --env VAR_ONE=somevalue", func() {
 		It("should have 3 variables", func() {
 			useBobfile("init_with_use_nix_true")
 			defer releaseBobfile("init_with_use_nix_true")
@@ -169,7 +169,7 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 		Expect(err).To(BeNil())
 	})
 
-	Context("with use-nix true", func() {
+	Context("with default hermetic mode", func() {
 		It("should have only 2 variables", func() {
 			useBobfile("init_once_with_use_nix_true")
 			defer releaseBobfile("init_once_with_use_nix_true")
@@ -197,7 +197,7 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 		})
 	})
 
-	Context("with use-nix true and --env VAR_ONE=somevalue", func() {
+	Context("with --env VAR_ONE=somevalue", func() {
 		It("should have 3 variables", func() {
 			useBobfile("init_once_with_use_nix_true")
 			defer releaseBobfile("init_once_with_use_nix_true")
@@ -237,7 +237,7 @@ var _ = Describe("Testing hermetic mode for server", func() {
 		Expect(err).To(BeNil())
 	})
 
-	Context("with use-nix true", func() {
+	Context("with default hermetic mode", func() {
 		It("should have only 2 variables", func() {
 			useBobfile("binary_with_use_nix_true")
 			defer releaseBobfile("binary_with_use_nix_true")
@@ -268,7 +268,7 @@ var _ = Describe("Testing hermetic mode for server", func() {
 		})
 	})
 
-	Context("with use-nix true and --env VAR_ONE=somevalue", func() {
+	Context("with  --env VAR_ONE=somevalue", func() {
 		It("should have 3 variables", func() {
 			useBobfile("binary_with_use_nix_true")
 			defer releaseBobfile("binary_with_use_nix_true")

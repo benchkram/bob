@@ -1,4 +1,4 @@
-use-nix: true
+
 
 variables:
   VERSION: v0.0.0
