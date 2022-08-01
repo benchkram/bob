@@ -169,12 +169,10 @@ func executeBuildTasksInPipeline(
 	buildTasks = sliceutil.Unique(buildTasks)
 
 	// Build nix dependencies
-	if nix != nil {
-		fmt.Println("Building nix dependencies...")
-		err = nix.BuildNixDependencies(aggregate, buildTasks, append(runTasksInPipeline, runTaskName))
-		errz.Fatal(err)
-		fmt.Println("Succeeded building nix dependencies")
-	}
+	fmt.Println("Building nix dependencies...")
+	err = nix.BuildNixDependencies(aggregate, buildTasks, append(runTasksInPipeline, runTaskName))
+	errz.Fatal(err)
+	fmt.Println("Succeeded building nix dependencies")
 
 	// Initiate each build
 	for _, buildTask := range buildTasks {

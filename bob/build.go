@@ -26,12 +26,10 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	b.PrintVersionCompatibility(ag)
 
-	if b.nix != nil {
-		fmt.Println("Building nix dependencies...")
-		err = b.nix.BuildNixDependenciesInPipeline(ag, taskName)
-		errz.Fatal(err)
-		fmt.Println("Succeeded building nix dependencies")
-	}
+	fmt.Println("Building nix dependencies...")
+	err = b.nix.BuildNixDependenciesInPipeline(ag, taskName)
+	errz.Fatal(err)
+	fmt.Println("Succeeded building nix dependencies")
 
 	playbook, err := ag.Playbook(
 		taskName,

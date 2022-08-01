@@ -70,10 +70,8 @@ func runEnv(taskname string) {
 	}
 
 	// Build nix dependencies
-	if b.Nix() != nil {
-		err = b.Nix().BuildNixDependencies(bobfile, []string{taskname}, []string{})
-		errz.Fatal(err)
-	}
+	err = b.Nix().BuildNixDependencies(bobfile, []string{taskname}, []string{})
+	errz.Fatal(err)
 
 	task = bobfile.BTasks[taskname]
 
