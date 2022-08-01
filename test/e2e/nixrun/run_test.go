@@ -16,22 +16,6 @@ var _ = Describe("Testing new nix implementation", func() {
 	AfterEach(func() {
 		filepathutil.ClearListRecursiveCache()
 	})
-	Context("with use-nix false", func() {
-		It("run without errors", func() {
-			useBobfile("with_use_nix_false")
-			defer releaseBobfile("with_use_nix_false")
-
-			useProject("server")
-			defer releaseProject("server")
-
-			b, err := Bob()
-			Expect(err).NotTo(HaveOccurred())
-
-			ctx := context.Background()
-			_, err = b.Run(ctx, "server")
-			Expect(err).NotTo(HaveOccurred())
-		})
-	})
 
 	Context("init with use-nix true and dependencies set on bob file", func() {
 		It("installs dependencies set on bob file level for init", func() {

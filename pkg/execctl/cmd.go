@@ -36,7 +36,6 @@ type Cmd struct {
 	err         chan error
 	lastErr     error
 	storePaths  []string
-	useNix      bool
 	env         []string
 }
 
@@ -112,7 +111,7 @@ func (c *Cmd) Start() error {
 	c.cmd = cmd
 
 	env := c.env
-	if c.useNix && len(c.storePaths) > 0 {
+	if len(c.storePaths) > 0 {
 		env = nix.AddPATH(c.storePaths, env)
 	}
 	c.cmd.Env = env

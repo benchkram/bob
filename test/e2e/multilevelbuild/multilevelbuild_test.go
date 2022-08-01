@@ -216,6 +216,9 @@ var _ = Describe("Test bob multilevel build", func() {
 func requiresRebuildMustMatchFixtures(b *bob.B, fixtures []requiresRebuildFixture) {
 	aggregate, err := b.Aggregate()
 	Expect(err).NotTo(HaveOccurred())
+
+	err = b.Nix().BuildNixDependenciesInPipeline(aggregate, bob.BuildAllTargetName)
+
 	pb, err := aggregate.Playbook(bob.BuildAllTargetName)
 	Expect(err).NotTo(HaveOccurred())
 

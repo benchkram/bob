@@ -80,10 +80,6 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 	for _, name := range buildTasksInPipeline {
 		t := ag.BTasks[name]
 
-		if !t.UseNix() {
-			continue
-		}
-
 		// construct used dependencies for this task
 		deps := nix.DefaultPackages(ag.Nixpkgs)
 		deps = append(deps, t.Dependencies()...)
@@ -98,10 +94,6 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 
 	for _, name := range runTasksInPipeline {
 		t := ag.RTasks[name]
-
-		if !t.UseNix() {
-			continue
-		}
 
 		// construct used dependencies for this task
 		deps := nix.DefaultPackages(ag.Nixpkgs)

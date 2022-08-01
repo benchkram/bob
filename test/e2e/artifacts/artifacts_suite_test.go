@@ -1,6 +1,7 @@
 package artifactstest
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -8,6 +9,7 @@ import (
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/test/setup"
 
@@ -73,10 +75,15 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	buildinfoStore, err = bob.BuildinfoStore(storageDir)
 	Expect(err).NotTo(HaveOccurred())
+
+	nixBuilder, err := NixBuilder()
+	Expect(err).NotTo(HaveOccurred())
+
 	b, err = bob.Bob(
 		bob.WithDir(dir),
 		bob.WithFilestore(artifactStore),
 		bob.WithBuildinfoStore(buildinfoStore),
+		bob.WithNixBuilder(nixBuilder),
 	)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -84,11 +91,16 @@ var _ = BeforeSuite(func() {
 		storageDir,
 		bob.WithDir(dir),
 		bob.WithCachingEnabled(false),
+		bob.WithNixBuilder(nixBuilder),
 	)
 	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
+	for _, file := range tmpFiles {
+		err := os.Remove(file)
+		Expect(err).NotTo(HaveOccurred())
+	}
 	err := cleanup()
 	Expect(err).NotTo(HaveOccurred())
 })
@@ -96,4 +108,25 @@ var _ = AfterSuite(func() {
 func TestAdd(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "artifacts suite")
+}
+
+// tmpFiles tracks temporarily created files in these tests
+// to be cleaned up at the end.
+var tmpFiles []string
+
+func NixBuilder() (*bob.NixBuilder, error) {
+	file, err := ioutil.TempFile("", ".nix_cache*")
+	if err != nil {
+		return nil, err
+	}
+	name := file.Name()
+	file.Close()
+
+	tmpFiles = append(tmpFiles, name)
+	cache, err := nix.NewCacheStore(nix.WithPath(name))
+	if err != nil {
+		return nil, err
+	}
+
+	return bob.NewNixBuilder(bob.WithCache(cache)), nil
 }

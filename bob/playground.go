@@ -412,6 +412,8 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 		TargetDirty: m,
 	}
 
+	bobfile.Dependencies = []string{"docker", "go_1_18"}
+
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
@@ -429,6 +431,8 @@ func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite boo
 	bobfile.BTasks["openapi"] = bobtask.Task{
 		Exports: exports,
 	}
+	bobfile.Dependencies = []string{"docker", "go_1_18"}
+
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
@@ -452,6 +456,9 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool, projectName 
 		CmdDirty:    "go build -o runsecondlevel",
 		TargetDirty: "runsecondlevel",
 	}
+
+	bobfile.Dependencies = []string{"docker", "go_1_18"}
+
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
@@ -474,6 +481,8 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool, projectName s
 	bobfile.BTasks["print"] = bobtask.Task{
 		CmdDirty: "echo hello-third-level",
 	}
+
+	bobfile.Dependencies = []string{"docker", "go_1_18"}
 
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }

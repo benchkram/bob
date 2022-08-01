@@ -22,7 +22,7 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
 	env := t.Env()
-	if len(t.storePaths) > 0 && t.useNix {
+	if len(t.storePaths) > 0 {
 		env = nix.AddPATH(t.storePaths, env)
 	}
 
