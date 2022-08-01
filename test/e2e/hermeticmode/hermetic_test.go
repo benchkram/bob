@@ -28,8 +28,8 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 
 	Context("with default hermetic mode", func() {
 		It("should have only 2 variables", func() {
-			useBobfile("build_with_use_nix_true")
-			defer releaseBobfile("build_with_use_nix_true")
+			useBobfile("build")
+			defer releaseBobfile("build")
 
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
@@ -47,8 +47,8 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 
 	Context("with --env VAR_ONE=somevalue", func() {
 		It("should have 3 variables", func() {
-			useBobfile("build_with_use_nix_true")
-			defer releaseBobfile("build_with_use_nix_true")
+			useBobfile("build")
+			defer releaseBobfile("build")
 
 			b, err := BobSetup(
 				"VAR_ONE=somevalue",
@@ -69,8 +69,8 @@ var _ = Describe("Testing hermetic mode for build tasks", func() {
 
 	Context("with --env HOME=newHomeValue", func() {
 		It("should have 2 variables and whitelisted HOME will be overwritten", func() {
-			useBobfile("build_with_use_nix_true")
-			defer releaseBobfile("build_with_use_nix_true")
+			useBobfile("build")
+			defer releaseBobfile("build")
 
 			b, err := BobSetup(
 				"HOME=newHomeValue",
@@ -99,8 +99,8 @@ var _ = Describe("Testing hermetic mode for init", func() {
 
 	Context("with default hermetic mode", func() {
 		It("should have only 2 variables", func() {
-			useBobfile("init_with_use_nix_true")
-			defer releaseBobfile("init_with_use_nix_true")
+			useBobfile("init")
+			defer releaseBobfile("init")
 
 			useProject(projectServer)
 			defer releaseProject(projectServer)
@@ -130,8 +130,8 @@ var _ = Describe("Testing hermetic mode for init", func() {
 
 	Context("with --env VAR_ONE=somevalue", func() {
 		It("should have 3 variables", func() {
-			useBobfile("init_with_use_nix_true")
-			defer releaseBobfile("init_with_use_nix_true")
+			useBobfile("init")
+			defer releaseBobfile("init")
 
 			useProject(projectServer)
 			defer releaseProject(projectServer)
@@ -171,8 +171,8 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 
 	Context("with default hermetic mode", func() {
 		It("should have only 2 variables", func() {
-			useBobfile("init_once_with_use_nix_true")
-			defer releaseBobfile("init_once_with_use_nix_true")
+			useBobfile("init_once")
+			defer releaseBobfile("init_once")
 
 			useProject(projectServer)
 			defer releaseProject(projectServer)
@@ -199,8 +199,8 @@ var _ = Describe("Testing hermetic mode for initOnce", func() {
 
 	Context("with --env VAR_ONE=somevalue", func() {
 		It("should have 3 variables", func() {
-			useBobfile("init_once_with_use_nix_true")
-			defer releaseBobfile("init_once_with_use_nix_true")
+			useBobfile("init_once")
+			defer releaseBobfile("init_once")
 
 			useProject(projectServer)
 			defer releaseProject(projectServer)
@@ -239,8 +239,8 @@ var _ = Describe("Testing hermetic mode for server", func() {
 
 	Context("with default hermetic mode", func() {
 		It("should have only 2 variables", func() {
-			useBobfile("binary_with_use_nix_true")
-			defer releaseBobfile("binary_with_use_nix_true")
+			useBobfile("binary")
+			defer releaseBobfile("binary")
 
 			useProject(projectServerWithEnv)
 			defer releaseProject(projectServerWithEnv)
@@ -270,8 +270,8 @@ var _ = Describe("Testing hermetic mode for server", func() {
 
 	Context("with  --env VAR_ONE=somevalue", func() {
 		It("should have 3 variables", func() {
-			useBobfile("binary_with_use_nix_true")
-			defer releaseBobfile("binary_with_use_nix_true")
+			useBobfile("binary")
+			defer releaseBobfile("binary")
 
 			useProject(projectServerWithEnv)
 			defer releaseProject(projectServerWithEnv)
