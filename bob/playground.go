@@ -413,6 +413,7 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 	}
 
 	bobfile.Dependencies = []string{"docker", "go_1_18"}
+	bobfile.Nixpkgs = "https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz"
 
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
@@ -432,6 +433,7 @@ func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite boo
 		Exports: exports,
 	}
 	bobfile.Dependencies = []string{"docker", "go_1_18"}
+	bobfile.Nixpkgs = "https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz"
 
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
@@ -458,6 +460,7 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool, projectName 
 	}
 
 	bobfile.Dependencies = []string{"docker", "go_1_18"}
+	bobfile.Nixpkgs = "https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz"
 
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
@@ -483,6 +486,7 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool, projectName s
 	}
 
 	bobfile.Dependencies = []string{"docker", "go_1_18"}
+	bobfile.Nixpkgs = "https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz"
 
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
