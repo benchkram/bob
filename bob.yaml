@@ -25,3 +25,4 @@ dependencies:
   - docker
   - gcc
 
+use-nix: true
