@@ -26,6 +26,9 @@ jobs:
       - name: Install nix derivations
         run: bob install
 
+      - name: Check environment
+        run: printenv
+
       - name: Check 'go mod tidy'
         run: bob build gomodtidy
           
