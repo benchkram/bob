@@ -26,3 +26,4 @@ dependencies:
   - gcc
 
 use-nix: true
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/5857574d45925585baffde730369414319228a84.tar.gz
