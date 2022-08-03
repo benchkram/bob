@@ -218,6 +218,7 @@ func requiresRebuildMustMatchFixtures(b *bob.B, fixtures []requiresRebuildFixtur
 	Expect(err).NotTo(HaveOccurred())
 
 	err = b.Nix().BuildNixDependenciesInPipeline(aggregate, bob.BuildAllTargetName)
+	Expect(err).NotTo(HaveOccurred())
 
 	pb, err := aggregate.Playbook(bob.BuildAllTargetName)
 	Expect(err).NotTo(HaveOccurred())
