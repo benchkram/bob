@@ -1,5 +1,3 @@
-
-
 variables:
   VERSION: v0.0.0
 
@@ -11,7 +9,7 @@ build:
   gomodtidy:
     cmd: go mod tidy
 
-  lint: 
+  lint:
     cmd: CGO_ENABLED=0 golangci-lint run --timeout=10m0s
 
   test:
@@ -24,6 +22,3 @@ dependencies:
   - golangci-lint
   - docker
   - gcc
-
-use-nix: true
-nixpkgs: https://github.com/NixOS/nixpkgs/archive/5857574d45925585baffde730369414319228a84.tar.gz
