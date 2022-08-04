@@ -39,4 +39,4 @@ jobs:
         run: git config --global user.name "builder" && git config --global user.email "builder@bob.build"
 
       - name: Run tests
-        run: bob build test
+        run: go test ./...
