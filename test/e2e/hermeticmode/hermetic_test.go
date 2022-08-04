@@ -19,7 +19,7 @@ To get the list of current environment variables for specific tasks or binaries
 we output the env command output in the ./envOutput file. In bobfiles we do that with
 `env > envOutput` shell command, and in binaries we write the output of `env` command to the same envOutput file
 */
-var _ = Describe("Testing hermetic mode for build tasks", func() {
+var _ = FDescribe("Testing hermetic mode for build tasks", func() {
 
 	AfterEach(func() {
 		err := os.Remove("./envOutput")
