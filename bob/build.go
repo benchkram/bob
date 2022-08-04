@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/benchkram/errz"
 
@@ -25,6 +26,12 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	errz.Fatal(err)
 
 	b.PrintVersionCompatibility(ag)
+
+	fmt.Println("BUILD", taskName)
+	fmt.Println("DEBUG ENV FOR", taskName)
+	for _, v := range os.Environ() {
+		fmt.Println(v)
+	}
 
 	fmt.Println("Building nix dependencies...")
 	err = b.nix.BuildNixDependenciesInPipeline(ag, taskName)
