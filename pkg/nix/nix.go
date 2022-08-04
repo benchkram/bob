@@ -77,11 +77,6 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 
 // buildPackage builds a nix package: nix-build --no-out-link -E 'with import <nixpkgs> { }; pkg' and returns the store path
 func buildPackage(pkgName string, nixpkgs string) (string, error) {
-	fmt.Println("DEBUG ENV")
-	for _, v := range os.Environ() {
-		fmt.Println(v)
-	}
-
 	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
