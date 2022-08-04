@@ -39,18 +39,10 @@ var _ = BeforeSuite(func() {
 
 	// Initialize mock bob files from local directory
 	bobFiles := []string{
-		"build_with_use_nix_false",
-		"build_with_use_nix_true",
-		"init_with_use_nix_false",
-		"init_with_use_nix_true",
-		"init_once_with_use_nix_false",
-		"init_once_with_use_nix_true",
-		"binary_with_use_nix_false",
-		"binary_with_use_nix_true",
-		"build_with_use_nix_false_variables",
-		"init_with_use_nix_false_variables",
-		"init_once_with_use_nix_false_variables",
-		"binary_with_use_nix_false_variables",
+		"build",
+		"init",
+		"init_once",
+		"binary",
 	}
 	nameToBobfile := make(map[string]*bobfile.Bobfile)
 	for _, name := range bobFiles {

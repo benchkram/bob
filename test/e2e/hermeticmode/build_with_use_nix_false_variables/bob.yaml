@@ -1,6 +1,0 @@
-use-nix: false
-variables:
-  VAR_ONE: foo
-build:
-  build:
-    cmd: env > envOutput

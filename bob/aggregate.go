@@ -125,12 +125,12 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		// 	projectNames[boblet.Project] = true
 		// }
 		for key, task := range boblet.BTasks {
-			task.SetEnv(prepareEnvironment(task.UseNix(), boblet.Vars(), b.env))
+			task.SetEnv(envutil.Merge(boblet.Vars(), b.env))
 			boblet.BTasks[key] = task
 		}
 
 		for key, task := range boblet.RTasks {
-			task.SetEnv(prepareEnvironment(task.UseNix(), boblet.Vars(), b.env))
+			task.SetEnv(envutil.Merge(boblet.Vars(), b.env))
 			boblet.RTasks[key] = task
 		}
 	}
@@ -288,15 +288,4 @@ func taskNameToEnvironment(taskname string, exportname string) string {
 	envvar = strings.ToUpper(envvar)
 
 	return envvar
-}
-
-// prepareEnvironment for a task.
-// For hermetic mode will use only variables from bobfile and CLI
-// and for non-hermetic mode will use CLI > Bobfile > OS, where CLI will have top priority
-func prepareEnvironment(hermeticMode bool, vars []string, cliEnv []string) []string {
-	if hermeticMode {
-		return envutil.Merge(vars, cliEnv)
-	}
-
-	return envutil.Merge(os.Environ(), envutil.Merge(vars, cliEnv))
 }

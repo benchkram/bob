@@ -16,24 +16,8 @@ var _ = Describe("Testing new nix implementation", func() {
 	AfterEach(func() {
 		filepathutil.ClearListRecursiveCache()
 	})
-	Context("with use-nix false", func() {
-		It("run without errors", func() {
-			useBobfile("with_use_nix_false")
-			defer releaseBobfile("with_use_nix_false")
 
-			useProject("server")
-			defer releaseProject("server")
-
-			b, err := Bob()
-			Expect(err).NotTo(HaveOccurred())
-
-			ctx := context.Background()
-			_, err = b.Run(ctx, "server")
-			Expect(err).NotTo(HaveOccurred())
-		})
-	})
-
-	Context("init with use-nix true and dependencies set on bob file", func() {
+	Context("init with dependencies set on bob file", func() {
 		It("installs dependencies set on bob file level for init", func() {
 			useBobfile("init_with_bob_dependencies")
 			defer releaseBobfile("init_with_bob_dependencies")
@@ -64,7 +48,7 @@ var _ = Describe("Testing new nix implementation", func() {
 		})
 	})
 
-	Context("init with use-nix true and dependencies set on task level", func() {
+	Context("init with dependencies set on task level", func() {
 		It("installs dependencies set on task level for init", func() {
 			useBobfile("init_with_task_dependencies")
 			defer releaseBobfile("init_with_task_dependencies")
@@ -95,7 +79,7 @@ var _ = Describe("Testing new nix implementation", func() {
 		})
 	})
 
-	Context("initOnce with use-nix true and dependencies set on bob file", func() {
+	Context("initOnce with dependencies set on bob file", func() {
 		It("installs dependencies set on bob file level for initOnce", func() {
 			useBobfile("init_once_with_bob_dependencies")
 			defer releaseBobfile("init_once_with_bob_dependencies")
@@ -126,7 +110,7 @@ var _ = Describe("Testing new nix implementation", func() {
 		})
 	})
 
-	Context("initOnce with use-nix true and dependencies set on task level", func() {
+	Context("initOnce with dependencies set on task level", func() {
 		It("installs dependencies set on task level for initOnce", func() {
 			useBobfile("init_once_with_task_dependencies")
 			defer releaseBobfile("init_once_with_task_dependencies")

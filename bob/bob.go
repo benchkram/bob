@@ -56,7 +56,6 @@ type B struct {
 	authStore *auth.Store
 
 	// env is a list of strings representing the environment in the form "key=value"
-	// This will be used only if use-nix is true
 	env []string
 }
 

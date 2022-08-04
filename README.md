@@ -1,4 +1,5 @@
-# Bob 
+# Bob
+
 <p>
     <a href="https://github.com/benchkram/bob/releases">
         <img src="https://img.shields.io/github/release/benchkram/bob.svg" alt="Latest Release">
@@ -12,9 +13,11 @@
 </p>
 
 
-Bob is a build system with [Nix]( https://nixos.org/) as it's package manager to enable [hermetic builds](https://bazel.build/concepts/hermeticity).
+Bob is a build system with [Nix]( https://nixos.org/) as it's package manager to
+enable [hermetic builds](https://bazel.build/concepts/hermeticity).
 
 Why is this useful?
+
 * Isolate builds from the host system to get rid of "Works on My Machine".
 * No more building in docker.
 * Easily jump between different versions of a programming language.
@@ -27,6 +30,7 @@ Despite build isolation Bob allows you to:
 - **Multi-Repo Tooling** Easily manage multi-repo setups, with bulk Git operations.
 
 ## Getting Started
+
 Documentation is available at [bob.build](https://bob.build/docs)
 
 ## Install
@@ -34,6 +38,7 @@ Documentation is available at [bob.build](https://bob.build/docs)
 ### Release builds
 
 [Download](https://github.com/benchkram/bob/releases) the latest release from GitHub.
+
 ### Install from Source
 
 If you already have Go 1.17 or later installed, the short version is:
@@ -48,25 +53,24 @@ For shell autocompletion (bash and zsh supported) add `source <(bob completion)`
 
 ### Build System
 
-Bobs generates its internal build graph from tasks described in a `bob.yaml` file (we usually refer to it as "bobfile").  
+Bobs generates its internal build graph from tasks described in a `bob.yaml` file (we usually refer to it as "bobfile")
+.  
 The basic components of a build task are:
 
 - **input**: Whenever an input changes, the task's commands need to be re-executed [default: *]
 - **cmd**: Commands to be executed
 - **target**: File(s) or directories that are created when the commands are run and can be reused in other tasks.
-- **dependencies** Dependencies managed by the Nix package manager (requires: `use-nix: true`)
+- **dependencies** Dependencies managed by the Nix package manager
 
 Example of a `bob.yaml` file:
 
 ```yaml
-use-nix: true
-
 build:
   build:
     input: ./main.go
     cmd: go build -o ./app
     target: ./app
-    dependencies: [git, go_1_18]
+    dependencies: [ git, go_1_18 ]
 ```
 
 Multiline `sh` and `bash` commands are entirely possible, and are powered by [mvdan/sh](https://github.com/mvdan/sh).
@@ -139,7 +143,6 @@ Cloning an existing workspace from a remote git repository:
 ```bash
 bob clone git@github.com:benchkram/bob.git
 ```
-
 
 ### Dependencies
 

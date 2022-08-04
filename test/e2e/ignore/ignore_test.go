@@ -7,6 +7,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/playbook"
+	"github.com/benchkram/errz"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -66,6 +67,10 @@ var _ = Describe("Test bob build", func() {
 func checkTaskState(b *bob.B, taskname string, expectedState playbook.State) {
 	aggregate, err := b.Aggregate()
 	Expect(err).NotTo(HaveOccurred())
+
+	err = b.Nix().BuildNixDependenciesInPipeline(aggregate, taskname)
+	errz.Fatal(err)
+
 	pb, err := aggregate.Playbook(taskname)
 	Expect(err).NotTo(HaveOccurred())
 

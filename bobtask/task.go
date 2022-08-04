@@ -102,9 +102,6 @@ type Task struct {
 	// storePaths contain /nix/store/* paths
 	// in the order which they need to be added to PATH
 	storePaths []string
-
-	// flag if its bobfile has Nix enabled
-	useNix bool
 }
 
 type TargetEntry interface{}
@@ -239,14 +236,6 @@ func (t *Task) AddExportPrefix(prefix string) {
 	for i, e := range t.Exports {
 		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))
 	}
-}
-
-func (t *Task) SetUseNix(useNix bool) {
-	t.useNix = useNix
-}
-
-func (t *Task) UseNix() bool {
-	return t.useNix
 }
 
 // AddToSkippedInputs add filenames with permission issues to the task's

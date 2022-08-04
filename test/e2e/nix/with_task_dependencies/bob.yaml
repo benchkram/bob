@@ -7,5 +7,4 @@ dependencies:
     - git
     - go_1_18
     - hello
-use-nix: true
 nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz

@@ -39,7 +39,6 @@ var _ = BeforeSuite(func() {
 
 	// Initialize mock bob files from local directory
 	bobFiles := []string{
-		"with_use_nix_false",
 		"init_with_bob_dependencies",
 		"init_with_task_dependencies",
 		"init_once_with_bob_dependencies",

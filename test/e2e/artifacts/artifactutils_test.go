@@ -63,6 +63,10 @@ func buildTask(b *bob.B, taskname string) (_ *playbook.Status, err error) {
 
 	aggregate, err := b.Aggregate()
 	errz.Fatal(err)
+
+	err = b.Nix().BuildNixDependenciesInPipeline(aggregate, taskname)
+	errz.Fatal(err)
+
 	pb, err := aggregate.Playbook(taskname)
 	errz.Fatal(err)
 

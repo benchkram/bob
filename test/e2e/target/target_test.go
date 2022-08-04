@@ -6,7 +6,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bobtask/buildinfo"
-
+	"github.com/benchkram/errz"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -26,6 +26,10 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/build3"
+
+			err = b.Nix().BuildNixDependenciesInPipeline(aggregate, globaltaskname)
+			errz.Fatal(err)
+
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
@@ -47,6 +51,9 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/build3"
+			err = b.Nix().BuildNixDependenciesInPipeline(aggregate, globaltaskname)
+			errz.Fatal(err)
+
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
@@ -60,7 +67,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(hashInAfterBuild).To(Equal(hashInBeforeBuild))
 		})
 
-		//var hashes hash.Hashes
+		// var hashes hash.Hashes
 		var all *buildinfo.I
 		It("hashes of task `all` must exist and be valid", func() {
 			buildinfos, err := buildinfoStore.GetBuildInfos()
@@ -95,6 +102,9 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/build3"
+			err = b.Nix().BuildNixDependenciesInPipeline(aggregate, globaltaskname)
+			errz.Fatal(err)
+
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
@@ -112,6 +122,9 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			globaltaskname := "second-level/third-level/print"
+			err = b.Nix().BuildNixDependenciesInPipeline(aggregate, globaltaskname)
+			errz.Fatal(err)
+
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 

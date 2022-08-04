@@ -74,9 +74,6 @@ type Bobfile struct {
 
 	Dependencies []string `yaml:"dependencies"`
 
-	// UseNix is a flag to indicate if nix is used
-	// by any task inside a bobfile
-	UseNix bool `yaml:"use-nix"`
 	// Nixpkgs specifies an optional nixpkgs source.
 	Nixpkgs string `yaml:"nixpkgs"`
 
@@ -164,7 +161,6 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		// initialize docker registry for task
 		task.SetDockerRegistryClient()
 		task.SetDependencies(initializeDependencies(dir, task.DependenciesDirty, bobfile))
-		task.SetUseNix(bobfile.UseNix)
 
 		bobfile.BTasks[key] = task
 	}
@@ -173,11 +169,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	for key, run := range bobfile.RTasks {
 		run.SetDir(bobfile.dir)
 		run.SetName(key)
-		run.SetUseNix(bobfile.UseNix)
 		run.SetEnv([]string{})
 
 		run.SetDependencies(initializeDependencies(dir, run.DependenciesDirty, bobfile))
-		run.SetUseNix(bobfile.UseNix)
 
 		bobfile.RTasks[key] = run
 	}

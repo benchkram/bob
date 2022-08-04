@@ -26,21 +26,6 @@ var _ = Describe("Testing new nix implementation", func() {
 	AfterEach(func() {
 		filepathutil.ClearListRecursiveCache()
 	})
-	Context("with use-nix false", func() {
-		It("build without errors", func() {
-			bob.Version = "1.0.0"
-			// update bob.yaml with mock content
-			err := os.Rename("with_use_nix_false.yaml", "bob.yaml")
-			Expect(err).NotTo(HaveOccurred())
-
-			b, err := Bob()
-			Expect(err).NotTo(HaveOccurred())
-
-			ctx := context.Background()
-			err = b.Build(ctx, "build")
-			Expect(err).NotTo(HaveOccurred())
-		})
-	})
 
 	Context("with task dependencies", func() {
 		It("task dependency go_1_17 will have priority to bob file go_1_18", func() {
@@ -149,49 +134,6 @@ var _ = Describe("Testing new nix implementation", func() {
 
 			err = os.Chdir(dir)
 			Expect(err).NotTo(HaveOccurred())
-		})
-	})
-
-	Context("with use_nix false in a second level bobfile", func() {
-		It("will build dependencies only from first level", func() {
-			Expect(os.Rename("with_second_level_use_nix_false.yaml", "bob.yaml")).NotTo(HaveOccurred())
-			Expect(os.Rename("with_second_level_use_nix_false_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
-
-			b, err := Bob()
-			Expect(err).NotTo(HaveOccurred())
-
-			capture()
-			ctx := context.Background()
-			err = b.Build(ctx, "build")
-			Expect(err).NotTo(HaveOccurred())
-			output := output()
-
-			// will run both because build depends on second
-			Expect(output).To(ContainSubstring("Hello second!"))
-			Expect(output).To(ContainSubstring("Hello build!"))
-
-			// but should not build dependencies from second level because of use_nix false
-			Expect(output).To(Not(ContainSubstring("go-1.16")))
-		})
-	})
-
-	Context("with use_nix false in parent but true in second level", func() {
-		It("will not build dependencies from parent", func() {
-			Expect(os.Rename("with_use_nix_false_in_parent_true_in_child.yaml", "bob.yaml")).NotTo(HaveOccurred())
-			Expect(os.Rename("with_use_nix_false_in_parent_true_in_child_second_level.yaml", dir+"/second_level/bob.yaml")).NotTo(HaveOccurred())
-
-			b, err := Bob()
-			Expect(err).NotTo(HaveOccurred())
-			capture()
-
-			err = b.Build(context.Background(), "build")
-			Expect(err).NotTo(HaveOccurred())
-
-			out := output()
-			// Build will run
-			Expect(out).To(ContainSubstring("Hello build cmd!"))
-			// but umbrella bobfile dependencies will not be built because of use_nix false
-			Expect(out).To(Not(ContainSubstring("vim")))
 		})
 	})
 })

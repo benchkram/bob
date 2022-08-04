@@ -22,13 +22,13 @@ jobs:
       - uses: benchkram/bob-setup-action@v1
         with:
           version: 0.5.1-rc
-      
+
       - name: Install nix derivations
         run: bob install
 
       - name: Check 'go mod tidy'
         run: bob build gomodtidy
-          
+
       - name: Lint code
         run: bob build lint
 

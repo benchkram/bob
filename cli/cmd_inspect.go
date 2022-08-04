@@ -70,15 +70,13 @@ func runEnv(taskname string) {
 	}
 
 	// Build nix dependencies
-	if bobfile.UseNix && b.Nix() != nil {
-		err = b.Nix().BuildNixDependencies(bobfile, []string{taskname}, []string{})
-		errz.Fatal(err)
-	}
+	err = b.Nix().BuildNixDependencies(bobfile, []string{taskname}, []string{})
+	errz.Fatal(err)
 
 	task = bobfile.BTasks[taskname]
 
 	taskEnv := task.Env()
-	if len(task.StorePaths()) > 0 && task.UseNix() {
+	if len(task.StorePaths()) > 0 {
 		taskEnv = nix.AddPATH(task.StorePaths(), task.Env())
 	}
 	for _, e := range taskEnv {

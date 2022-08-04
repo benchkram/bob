@@ -56,9 +56,6 @@ type Run struct {
 	env []string
 
 	name string
-
-	// flag if its bobfile has Nix enabled
-	useNix bool
 }
 
 func (r *Run) Name() string {
@@ -83,14 +80,6 @@ func (r *Run) Dir() string {
 
 func (r *Run) SetDir(dir string) {
 	r.dir = dir
-}
-
-func (r *Run) SetUseNix(useNix bool) {
-	r.useNix = useNix
-}
-
-func (r *Run) UseNix() bool {
-	return r.useNix
 }
 
 func (r *Run) Dependencies() []nix.Dependency {
@@ -154,7 +143,6 @@ func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 			r.Path,
 			execctl.WithEnv(r.Env()),
 			execctl.WithStorePaths(r.storePaths),
-			execctl.WithUseNix(r.UseNix()),
 		)
 		errz.Fatal(err)
 	case RunTypeCompose:

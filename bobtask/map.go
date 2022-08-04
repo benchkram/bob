@@ -124,10 +124,6 @@ func (tm Map) CollectTasksInPipeline(taskName string) ([]string, error) {
 func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependency, error) {
 	var nixDependencies []nix.Dependency
 	for _, taskFromMap := range tm {
-		if !taskFromMap.UseNix() {
-			continue
-		}
-
 		// only add dependencies of whitelisted tasks.
 		for _, taskName := range whitelist {
 			if taskFromMap.Name() == taskName {
