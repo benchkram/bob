@@ -33,6 +33,13 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 		fmt.Println(v)
 	}
 
+	for _, v := range ag.BTasks {
+		fmt.Println("DEBUG BUILD TASK ENV", v.Name())
+		for _, e := range v.Env() {
+			fmt.Println(e)
+		}
+	}
+
 	fmt.Println("Building nix dependencies...")
 	err = b.nix.BuildNixDependenciesInPipeline(ag, taskName)
 	errz.Fatal(err)

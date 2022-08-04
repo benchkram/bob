@@ -44,51 +44,6 @@ var _ = FDescribe("Testing hermetic mode for build tasks", func() {
 			Expect(len(envVariables)).Should(Equal(2))
 		})
 	})
-
-	Context("with --env VAR_ONE=somevalue", func() {
-		It("should have 3 variables", func() {
-			useBobfile("build")
-			defer releaseBobfile("build")
-
-			b, err := BobSetup(
-				"VAR_ONE=somevalue",
-			)
-			Expect(err).NotTo(HaveOccurred())
-
-			err = b.Build(ctx, "build")
-			Expect(err).NotTo(HaveOccurred())
-
-			envVariables, err := readLines("./envOutput")
-			Expect(err).NotTo(HaveOccurred())
-
-			// will contain HOME && PATH && VAR_ONE
-			Expect(len(envVariables)).Should(Equal(3))
-			Expect(keyHasValue("VAR_ONE", "somevalue", envVariables)).To(BeTrue())
-		})
-	})
-
-	Context("with --env HOME=newHomeValue", func() {
-		It("should have 2 variables and whitelisted HOME will be overwritten", func() {
-			useBobfile("build")
-			defer releaseBobfile("build")
-
-			b, err := BobSetup(
-				"HOME=newHomeValue",
-			)
-			Expect(err).NotTo(HaveOccurred())
-
-			err = b.Build(ctx, "build")
-			Expect(err).NotTo(HaveOccurred())
-
-			envVariables, err := readLines("./envOutput")
-			Expect(err).NotTo(HaveOccurred())
-
-			// will contain HOME && PATH && VAR_ONE
-			Expect(len(envVariables)).Should(Equal(2))
-			// will overwrite whitelisted HOME
-			Expect(keyHasValue("HOME", "newHomeValue", envVariables)).To(BeTrue())
-		})
-	})
 })
 
 var _ = Describe("Testing hermetic mode for init", func() {
