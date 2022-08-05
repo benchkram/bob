@@ -20,7 +20,10 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Install bob
-        run: make install
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+        run: go install
 
       - name: Install nix derivations
         run: bob install
