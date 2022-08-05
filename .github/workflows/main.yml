@@ -19,9 +19,8 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - uses: benchkram/bob-setup-action@v1
-        with:
-          version: 0.5.1-rc
+      - name: Install bob
+        run: make install
 
       - name: Install nix derivations
         run: bob install
