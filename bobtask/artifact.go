@@ -85,7 +85,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	// targets
 	for _, fname := range targets {
-		info, err := os.Stat(fname)
+		info, err := os.Lstat(fname)
 		errz.Fatal(err)
 
 		// trim the tasks directory from the internal name
@@ -96,6 +96,15 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		internalName = strings.TrimPrefix(internalName, tempdir)
 		internalName = strings.TrimPrefix(internalName, "/")
 
+		// archiver needs the source path in case of a symlink,
+		// so it can call `os.Readlink(source)`.
+		var source string
+		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			abs, err := filepath.Abs(fname)
+			errz.Fatal(err)
+			source = abs
+		}
+
 		// open the file
 		file, err := os.Open(fname)
 		errz.Fatal(err)
@@ -104,6 +113,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 			FileInfo: archiver.FileInfo{
 				FileInfo:   info,
 				CustomName: filepath.Join(__targets, internalName),
+				SourcePath: source,
 			},
 			ReadCloser: file,
 		})
@@ -292,6 +302,13 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 				fallthrough
 			default:
 				dst := filepath.Join(t.dir, filename)
+
+				// symlink
+				if archiveFile.FileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+					err = os.Symlink(header.Linkname, dst)
+					errz.Fatal(err)
+					continue
+				}
 
 				// extract to destination
 				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
