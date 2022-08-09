@@ -278,6 +278,7 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
 				errz.Fatal(err)
 				_, err = io.Copy(f, archiveFile)
+				// closing the file right away to reduce the number of open files
 				_ = f.Close()
 				errz.Fatal(err)
 
@@ -296,8 +297,9 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 				// extract to destination
 				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
 				errz.Fatal(err)
-				defer f.Close()
 				_, err = io.Copy(f, archiveFile)
+				// closing the file right away to reduce the number of open files
+				_ = f.Close()
 				errz.Fatal(err)
 			}
 		}
