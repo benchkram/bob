@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
@@ -21,6 +22,7 @@ func init() {
 	inspectArtifactCmd.Flags().StringVarP(&inspectArtifactId, "id", "",
 		inspectArtifactId, "inspect artifact with id")
 
+	inspectCmd.AddCommand(inputCmd)
 	inspectCmd.AddCommand(envCmd)
 	inspectCmd.AddCommand(exportCmd)
 	inspectArtifactCmd.AddCommand(inspectArtifactListCmd)
@@ -180,4 +182,43 @@ func runInspectArtifactList() {
 		boblog.Log.Error(err, "Unable to generate artifact list")
 	}
 	fmt.Println(out)
+}
+
+var inputCmd = &cobra.Command{
+	Use:   "input",
+	Short: "List inputs",
+	Args:  cobra.ExactArgs(1),
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		taskname := args[0]
+		runInspectInputs(taskname)
+	},
+}
+
+// runInspectInputs list artifacts in relation to tasks
+func runInspectInputs(taskname string) {
+	b, err := bob.Bob()
+	boblog.Log.Error(err, "Unable to initialise bob")
+
+	bobfile, err := b.Aggregate()
+	boblog.Log.Error(err, "Unable to aggregate bob file")
+
+	task, ok := bobfile.BTasks[taskname]
+	if !ok {
+		fmt.Printf("%s\n", aurora.Red("Task does not exists"))
+		exit(1)
+	}
+
+	task = bobfile.BTasks[taskname]
+
+	inputs := task.Inputs()
+	inputs = sort.StringSlice(inputs)
+	for i, e := range inputs {
+		fmt.Println(e)
+		if i > 10 {
+			break
+		}
+	}
+
+	fmt.Printf("Task %s has %d inputs\n", taskname, len(inputs))
 }
