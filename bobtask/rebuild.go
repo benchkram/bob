@@ -2,8 +2,10 @@ package bobtask
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/errz"
 )
@@ -31,10 +33,12 @@ func (t *Task) NeedsRebuild(options *RebuildOptions) (_ bool, err error) {
 	_, err = t.buildInfoStore.GetBuildInfo(hashIn.String())
 	if err != nil {
 		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
+			boblog.Log.V(4).Info(fmt.Sprintf("%s, Searching for input hash %s failed, [inputs: %d]", t.name, hashIn.String(), len(t.Inputs())))
 			return true, nil
 		}
 		errz.Fatal(err)
 	}
+	boblog.Log.V(4).Info(fmt.Sprintf("%s, Searching for input hash %s succeeded, , [inputs: %d]", t.name, hashIn.String(), len(t.Inputs())))
 
 	// storedHashes, err := t.ReadHashes()
 	// if err != nil {
