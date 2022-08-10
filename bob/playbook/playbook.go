@@ -319,17 +319,13 @@ func (p *Playbook) TaskStatus(taskname string) (ts *Status, _ error) {
 }
 
 // TaskCompleted sets a task to completed
-func (p *Playbook) TaskCompleted(taskname string) (err error) {
+func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 	defer errz.Recover(&err)
 
 	task, ok := p.Tasks[taskname]
 	if !ok {
 		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
-
-	// compute input hash
-	hashIn, err := task.Task.HashIn()
-	errz.Fatal(err)
 
 	buildInfo, err := task.ReadBuildinfo()
 	if err != nil {

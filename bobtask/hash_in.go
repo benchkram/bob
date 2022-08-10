@@ -10,7 +10,9 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/sliceutil"
+	"github.com/benchkram/errz"
 	"gopkg.in/yaml.v2"
 
 	"github.com/benchkram/bob/bobtask/hash"
@@ -18,8 +20,18 @@ import (
 )
 
 // HashIn computes a hash containing inputs, environment and the task description.
-func (t *Task) HashIn() (taskHash hash.In, err error) {
+// forceRecomputation will reload the inputs and sync with the file system before creating the hash.
+func (t *Task) HashIn(forceRecomputation ...bool) (taskHash hash.In, err error) {
+	if len(forceRecomputation) > 0 && forceRecomputation[0] {
+		t.hashIn = nil
+
+		inputs, err := t.filteredInputs()
+		errz.Fatal(err)
+		t.inputs = inputs
+	}
+
 	if t.hashIn != nil {
+		boblog.Log.V(4).Info(fmt.Sprintf("Reusing hash for task %s, using %d input files ", t.Name(), len(t.inputs)))
 		return *t.hashIn, nil
 	}
 
@@ -73,6 +85,8 @@ func (t *Task) HashIn() (taskHash hash.In, err error) {
 
 	// store hash for reuse
 	t.hashIn = &hashIn
+
+	boblog.Log.V(4).Info(fmt.Sprintf("Computed hash [h: %s] for task [t: %s], using [inputs:%d] input files ", t.hashIn.String(), t.Name(), len(t.inputs)))
 
 	return hashIn, nil
 }
