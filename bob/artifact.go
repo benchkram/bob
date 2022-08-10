@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"time"
 
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -48,7 +49,7 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 
 		hi, err := task.HashIn()
 		errz.Fatal(err)
-		fmt.Fprintln(buf, task.Name(), " [hashIn:"+hi.String()+")")
+		fmt.Fprintln(buf, task.Name(), " [hashIn: "+hi.String()+"]")
 
 		// additionaly check if there is a artifact match by inputHash
 		for _, m := range metadataAll {
@@ -68,7 +69,11 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 			}
 
 			if match {
-				fmt.Fprintln(buf, "  "+m.InputHash)
+				fmt.Fprintln(buf, "  "+m.InputHash+
+					" ("+
+					string(m.TargetType)+","+
+					m.CreatedAt.Format(time.Stamp)+
+					")")
 			}
 		}
 	}
