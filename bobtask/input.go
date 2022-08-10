@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filepathutil"
 )
 
@@ -62,10 +63,27 @@ func (t *Task) filteredInputs() ([]string, error) {
 		inputs = append(inputs, list...)
 	}
 
-	// also ignore file targets stored in the same directory
+	// also ignore file & dir targets stored in the same directory
 	if t.target != nil {
 		if t.target.Type == target.Path {
-			ignores = append(ignores, t.target.Paths...)
+			for _, path := range t.target.Paths {
+				if file.Exists(path) {
+					info, err := os.Stat(path)
+					if err != nil {
+						return nil, fmt.Errorf("failed to stat %s: %w", path, err)
+					}
+
+					if info.IsDir() {
+						list, err := filepathutil.ListRecursive(path)
+						if err != nil {
+							return nil, fmt.Errorf("failed to list input: %w", err)
+						}
+						ignores = append(ignores, list...)
+						continue
+					}
+				}
+				ignores = append(ignores, t.target.Paths...)
+			}
 		}
 	}
 

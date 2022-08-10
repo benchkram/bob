@@ -248,6 +248,10 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 	}
 	defer artifact.Close()
 
+	// Assure tasks is cleaned up before unpacking
+	err = t.Clean()
+	errz.Fatal(err)
+
 	archiveReader := newArchiveReader()
 	err = archiveReader.Open(artifact, 0)
 	errz.Fatal(err)
