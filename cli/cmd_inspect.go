@@ -212,12 +212,9 @@ func runInspectInputs(taskname string) {
 	task = bobfile.BTasks[taskname]
 
 	inputs := task.Inputs()
-	inputs = sort.StringSlice(inputs)
-	for i, e := range inputs {
+	sort.Strings(inputs)
+	for _, e := range inputs {
 		fmt.Println(e)
-		if i > 10 {
-			break
-		}
 	}
 
 	fmt.Printf("Task %s has %d inputs\n", taskname, len(inputs))
