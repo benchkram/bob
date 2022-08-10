@@ -168,6 +168,9 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	// but could still be possible to load the targets from the artifact store.
 	// If a task needs a rebuild due to a dependency change => rebuild.
 	if rebuildRequired && rebuildCause != DependencyChanged && rebuildCause != TaskForcedRebuild {
+		// Assure tasks are cleaned up before unpacking
+		err = task.Clean()
+		errz.Fatal(err)
 		success, err := task.ArtifactUnpack(hashIn)
 		errz.Fatal(err)
 		if success {
