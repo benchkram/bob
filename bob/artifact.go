@@ -46,7 +46,9 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 	for _, key := range sortedKeys {
 		task := bobfile.BTasks[key]
 
-		fmt.Fprintln(buf, task.Name())
+		hi, err := task.HashIn()
+		errz.Fatal(err)
+		fmt.Fprintln(buf, task.Name(), " [hashIn:"+hi.String()+")")
 
 		// additionaly check if there is a artifact match by inputHash
 		for _, m := range metadataAll {
