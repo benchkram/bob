@@ -28,7 +28,7 @@ var ErrUnexpectedTaskState = fmt.Errorf("task state is unsexpected")
 type Playbook struct {
 	// taskChannel is closed when the root
 	// task completes.
-	taskChannel chan bobtask.Task
+	taskChannel chan *bobtask.Task
 
 	// errorChannel to transport errors to the caller
 	errorChannel chan error
@@ -54,7 +54,7 @@ type Playbook struct {
 
 func New(root string, opts ...Option) *Playbook {
 	p := &Playbook{
-		taskChannel:   make(chan bobtask.Task, 10),
+		taskChannel:   make(chan *bobtask.Task, 10),
 		errorChannel:  make(chan error),
 		Tasks:         make(StatusMap),
 		enableCaching: true,
@@ -264,7 +264,7 @@ func (p *Playbook) Done() {
 }
 
 // TaskChannel returns the next task
-func (p *Playbook) TaskChannel() <-chan bobtask.Task {
+func (p *Playbook) TaskChannel() <-chan *bobtask.Task {
 	return p.taskChannel
 }
 

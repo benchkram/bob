@@ -16,7 +16,7 @@ func (b *Bobfile) Playbook(taskName string, opts ...playbook.Option) (*playbook.
 			return err
 		}
 
-		pb.Tasks[tn] = playbook.NewStatus(task)
+		pb.Tasks[tn] = playbook.NewStatus(&task)
 
 		return nil
 	})

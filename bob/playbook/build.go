@@ -62,10 +62,10 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		c := p.TaskChannel()
 		for t := range c {
 			// copy for processing
-			task := t
-			processedTasks = append(processedTasks, &task)
+			//task := t
+			processedTasks = append(processedTasks, t)
 
-			err := p.build(ctx, &task)
+			err := p.build(ctx, t)
 			if err != nil {
 				done <- err
 				break

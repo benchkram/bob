@@ -10,7 +10,7 @@ import (
 // Status holds the state of a task
 // inside a playbook.
 type Status struct {
-	bobtask.Task
+	*bobtask.Task
 
 	stateMu sync.RWMutex
 	state   State
@@ -21,7 +21,7 @@ type Status struct {
 	Error error
 }
 
-func NewStatus(task bobtask.Task) *Status {
+func NewStatus(task *bobtask.Task) *Status {
 	return &Status{
 		Task:  task,
 		state: StatePending,
