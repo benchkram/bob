@@ -25,36 +25,39 @@ var colorPool = []aurora.Color{
 }
 var round = 10 * time.Millisecond
 
+// pickTaskColors picks a display color for each task in the playbook.
+func (p *Playbook) pickTaskColors() {
+	tasks := []string{}
+	for _, t := range p.Tasks {
+		tasks = append(tasks, t.Name())
+	}
+	sort.Strings(tasks)
+
+	// Adjust padding of first column based on the taskname length.
+	// Also assign fixed color to the tasks.
+	p.namePad = 0
+	for i, name := range tasks {
+		if len(name) > p.namePad {
+			p.namePad = len(name)
+		}
+
+		color := colorPool[i%len(colorPool)]
+		p.Tasks[name].Task.SetColor(color)
+	}
+	p.namePad += 14
+
+	dependencies := len(tasks) - 1
+	rootName := p.Tasks[p.root].ColoredName()
+	boblog.Log.V(1).Info(fmt.Sprintf("Running task %s with %d dependencies", rootName, dependencies))
+}
+
 // Build the playbook starting at root.
 func (p *Playbook) Build(ctx context.Context) (err error) {
 	done := make(chan error)
 
-	{
-		tasks := []string{}
-		for _, t := range p.Tasks {
-			tasks = append(tasks, t.Name())
-		}
-		sort.Strings(tasks)
-
-		// Adjust padding of first column based on the taskname length.
-		// Also assign fixed color to the tasks.
-		p.namePad = 0
-		for i, name := range tasks {
-			if len(name) > p.namePad {
-				p.namePad = len(name)
-			}
-
-			color := colorPool[i%len(colorPool)]
-			p.Tasks[name].Task.SetColor(color)
-		}
-		p.namePad += 14
-
-		dependencies := len(tasks) - 1
-		rootName := p.Tasks[p.root].ColoredName()
-		boblog.Log.V(1).Info(fmt.Sprintf("Running task %s with %d dependencies", rootName, dependencies))
-	}
-
 	processedTasks := []*bobtask.Task{}
+
+	p.pickTaskColors()
 
 	go func() {
 		// TODO: Run a worker pool so that multiple tasks can run in parallel.
@@ -95,28 +98,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		)
 	}
 
-	// summary
-	boblog.Log.V(1).Info("")
-	boblog.Log.V(1).Info(aurora.Bold("● ● ● ●").BrightGreen().String())
-	t := fmt.Sprintf("Ran %d tasks in %s ", len(processedTasks), p.ExecutionTime().Round(round))
-	boblog.Log.V(1).Info(aurora.Bold(t).BrightGreen().String())
-	for _, t := range processedTasks {
-		stat, err := p.TaskStatus(t.Name())
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		execTime := ""
-		status := stat.State()
-		if status != StateNoRebuildRequired {
-			execTime = fmt.Sprintf("\t(%s)", stat.ExecutionTime().Round(round))
-		}
-
-		taskName := t.Name()
-		boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, status.Summary(), execTime))
-	}
-	boblog.Log.V(1).Info("")
+	p.summary(processedTasks)
 
 	return err
 }
