@@ -109,21 +109,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	bobs, err := readImports(aggregate, false)
 	errz.Fatal(err)
 
-	// FIXME: As we don't refer to a child task by projectname but by path
-	// it seems to be save to allow duplicate projectnames.
-	// projectNames := map[string]bool{}
-
 	for _, boblet := range append(bobs, aggregate) {
-		// FIXME: As we don't refer to a child task by projectname but by path
-		// it seems to be save to allow duplicate projectnames.
-		//
-		// Make sure project names are unique
-		// if boblet.Project != "" {
-		// 	if ok := projectNames[boblet.Project]; ok {
-		// 		return nil, usererror.Wrap(fmt.Errorf("%w found, [%s]", ErrDuplicateProjectName, boblet.Project))
-		// 	}
-		// 	projectNames[boblet.Project] = true
-		// }
 		for key, task := range boblet.BTasks {
 			task.SetEnv(envutil.Merge(boblet.Vars(), b.env))
 			boblet.BTasks[key] = task
@@ -134,10 +120,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			boblet.RTasks[key] = task
 		}
 	}
-
-	// FIXME: As we don't refer to a child task by projectname but by path
-	// it seems to be save to allow duplicate projectnames.
-	// projectNames := map[string]bool{}
 
 	if aggregate.Project == "" {
 		// TODO: maybe don't leak absolute path of environment

@@ -1,4 +1,8 @@
 version: 0
+dependencies: [
+  go_1_18,
+  oapicodegen_v1.6.0.nix,
+]
 build:
   generate-api:
     input: openapi.yaml

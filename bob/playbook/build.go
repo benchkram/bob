@@ -65,10 +65,10 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		c := p.TaskChannel()
 		for t := range c {
 			// copy for processing
-			task := t
-			processedTasks = append(processedTasks, &task)
+			//task := t
+			processedTasks = append(processedTasks, t)
 
-			err := p.build(ctx, &task)
+			err := p.build(ctx, t)
 			if err != nil {
 				done <- err
 				break
@@ -154,11 +154,22 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	// task might need a rebuild due to a input change.
 	// but could still be possible to load the targets from the artifact store.
 	// If a task needs a rebuild due to a dependency change => rebuild.
-	if rebuildRequired && rebuildCause != DependencyChanged && rebuildCause != TaskForcedRebuild {
-		success, err := task.ArtifactUnpack(hashIn)
-		errz.Fatal(err)
-		if success {
-			rebuildRequired = false
+	//if rebuildRequired && rebuildCause != DependencyChanged && rebuildCause != TaskForcedRebuild {
+	if rebuildRequired {
+		switch rebuildCause {
+		case TaskInputChanged:
+			fallthrough
+		case TargetInvalid:
+			boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s, unpacking artifact", p.namePad, coloredName, rebuildCause))
+			// TODO: validate if unpack is required?
+			success, err := task.ArtifactUnpack(hashIn)
+			errz.Fatal(err)
+			if success {
+				rebuildRequired = false
+			}
+		case TaskForcedRebuild:
+		case DependencyChanged:
+		default:
 		}
 	}
 
