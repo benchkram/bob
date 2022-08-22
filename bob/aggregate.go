@@ -148,9 +148,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// The file is prefixed with all paths to make it relative to dir of the the top Bobfile:
 	//   `openapi.yaml => sencond-level/openapi.yaml`
 	//
-	// TODO: Exports should be part of a packed file and should be evaluated when running a playbook or at least after Unpack().
-	// Looks like this is the wrong place to presume that all child tasks are comming from child bobfiles
-	// must exist.
 	for i, task := range aggregate.BTasks {
 		for _, dependentTaskName := range task.DependsOn {
 
@@ -159,6 +156,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 				return nil, usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
 			}
 
+			// TODO: Exports should be part of a packed file and should be evaluated
+			// when running a playbook or at least after Unpack().
+			// Looks like this is the wrong place to presume that all child tasks
+			// are comming from child bobfile must exist.
 			for exportname, export := range dependentTask.Exports {
 				// fmt.Printf("Task %s exports %s\n", dependentTaskName, export)
 
@@ -244,6 +245,8 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	} else {
 		aggregate.Project = aggregate.Dir()
 	}
+
+	// TODO: exclude targets from child tasks
 
 	return aggregate, aggregate.Verify()
 }

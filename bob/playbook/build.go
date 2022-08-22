@@ -59,19 +59,40 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	p.pickTaskColors()
 
+	runningJobs := 0
+	const numJobs = 5
+	jobs := make(chan *bobtask.Task, numJobs)
+
+	go func() {
+		for j := range jobs {
+			boblog.Log.V(5).Info(fmt.Sprintf("RUNNING JOBS  %d ", runningJobs))
+			go func(t *bobtask.Task) {
+				runningJobs++
+				err := p.build(ctx, t)
+				if err != nil {
+					// cancel all running jobs
+					ctx.Done()
+					done <- err
+				}
+				runningJobs--
+			}(j)
+		}
+	}()
+
 	go func() {
 		// TODO: Run a worker pool so that multiple tasks can run in parallel.
 
 		c := p.TaskChannel()
 		for t := range c {
-			// copy for processing
-			//task := t
 			processedTasks = append(processedTasks, t)
-
-			err := p.build(ctx, t)
+			jobs <- t
+			err = p.Play()
 			if err != nil {
-				done <- err
-				break
+				if errors.Is(err, ErrDone) {
+					break
+				} else {
+					errz.Fatal(err)
+				}
 			}
 		}
 
@@ -86,6 +107,8 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		p.Done()
 	}
 	errz.Fatal(err)
+
+	close(jobs)
 
 	// iterate through tasks and log
 	// skipped input files.

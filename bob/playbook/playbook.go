@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/benchkram/bob/bobtask"
@@ -50,6 +51,10 @@ type Playbook struct {
 	// enableCaching allows artifacts to be read & written to a store.
 	// Default: true.
 	enableCaching bool
+
+	// playMutex assures recomputation
+	// can only be done sequentially.
+	playMutex sync.Mutex
 }
 
 func New(root string, opts ...Option) *Playbook {
@@ -185,6 +190,9 @@ func (p *Playbook) play() error {
 		return ErrDone
 	}
 
+	p.playMutex.Lock()
+	defer p.playMutex.Unlock()
+
 	if p.start.IsZero() {
 		p.start = time.Now()
 	}
@@ -211,7 +219,7 @@ func (p *Playbook) play() error {
 				}
 
 				state := t.State()
-				if state != StateCompleted && state != StateNoRebuildRequired {
+				if state != StateCompleted && state != StateNoRebuildRequired && state != StateRunning {
 					// A dependent task is not completed.
 					// So this task is not yet ready to run.
 					return nil
@@ -225,12 +233,16 @@ func (p *Playbook) play() error {
 			return nil
 		case StateCompleted:
 			return nil
+		case StateRunning:
+			return nil
 		default:
 		}
 
 		// fmt.Printf("sending task %s to channel\n", task.Task.Name())
 		// setting the task start time before passing it to channel
 		task.Start = time.Now()
+		// TODO: for async assure to handle send to a closed channel.
+		_ = p.setTaskState(task.Name(), StateRunning, nil)
 		p.taskChannel <- task.Task
 		return taskQueued
 	})
@@ -534,5 +546,6 @@ const (
 	StateCompleted         State = "COMPLETED"
 	StateNoRebuildRequired State = "CACHED"
 	StateFailed            State = "FAILED"
+	StateRunning           State = "RUNNING"
 	StateCanceled          State = "CANCELED"
 )
