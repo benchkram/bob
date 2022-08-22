@@ -236,7 +236,7 @@ func (p *Playbook) play() error {
 	})
 
 	// taskQueued => return nil (happy path)
-	// taskFailed => return PlaybookFailed
+	// taskFailed => return PlaybookFailed (ErrFailed)
 	// default    => return err
 	if err != nil {
 		if errors.Is(err, taskQueued) {
