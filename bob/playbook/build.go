@@ -103,8 +103,10 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		close(done)
 	}()
 
+	//for i := 0; i < workers; i++ {
 	err = p.Play()
 	errz.Fatal(err)
+	//}
 
 	err = <-done
 	if err != nil {

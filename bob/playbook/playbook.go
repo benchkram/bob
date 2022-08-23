@@ -211,7 +211,7 @@ func (p *Playbook) play() error {
 			return err
 		}
 
-		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\t walking", p.namePad, taskname))
+		//boblog.Log.V(3).Info(fmt.Sprintf("%-*s\t walking", p.namePad, taskname))
 
 		switch task.State() {
 		case StatePending:
@@ -322,7 +322,7 @@ func (p *Playbook) setTaskState(taskname string, state State, taskError error) e
 		task.End = time.Now()
 	}
 
-	p.Tasks[taskname] = task
+	//p.Tasks[taskname] = task
 	return nil
 }
 
