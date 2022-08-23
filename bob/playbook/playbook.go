@@ -24,7 +24,7 @@ import (
 
 var ErrDone = fmt.Errorf("playbook is done")
 var ErrFailed = fmt.Errorf("playbook failed")
-var ErrUnexpectedTaskState = fmt.Errorf("task state is unsexpected")
+var ErrUnexpectedTaskState = fmt.Errorf("task state is unexpected")
 
 type Playbook struct {
 	// taskChannel is closed when the root
@@ -51,6 +51,9 @@ type Playbook struct {
 	// enableCaching allows artifacts to be read & written to a store.
 	// Default: true.
 	enableCaching bool
+
+	// number of parallel running tasks
+	parallel int
 
 	// playMutex assures recomputation
 	// can only be done sequentially.
@@ -208,6 +211,8 @@ func (p *Playbook) play() error {
 			return err
 		}
 
+		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\t walking", p.namePad, taskname))
+
 		switch task.State() {
 		case StatePending:
 			// Check if all dependent tasks are completed
@@ -219,7 +224,7 @@ func (p *Playbook) play() error {
 				}
 
 				state := t.State()
-				if state != StateCompleted && state != StateNoRebuildRequired && state != StateRunning {
+				if state != StateCompleted && state != StateNoRebuildRequired {
 					// A dependent task is not completed.
 					// So this task is not yet ready to run.
 					return nil
@@ -260,11 +265,32 @@ func (p *Playbook) play() error {
 		return err
 	}
 
+	// Avoid finishing the playbook before all task are done running
+	if p.numRunningTasks() > 0 {
+		return nil
+	}
+
 	// no work done, usually happens when
 	// no task needs a rebuild.
 	p.Done()
 
 	return nil
+}
+
+func (p *Playbook) numRunningTasks() int {
+	var parallel int
+	_ = p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if task.State() == StateRunning {
+			parallel++
+		}
+
+		return nil
+	})
+	return parallel
 }
 
 func (p *Playbook) Done() {
@@ -391,6 +417,8 @@ func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 					return err
 				}
 				buildInfo.Targets[hashIn] = h
+			case StateRunning:
+				return nil
 			default:
 				boblog.Log.V(1).Info(string(task.state))
 				return ErrUnexpectedTaskState

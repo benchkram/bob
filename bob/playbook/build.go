@@ -60,7 +60,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	p.pickTaskColors()
 
 	// Setup worker pool and queue
-	const workers = 1
+	const workers = 3
 	queue := make(chan *bobtask.Task, workers)
 	for i := 0; i < workers; i++ {
 		go func(workerID int) {
@@ -114,7 +114,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	close(queue)
 
-	// iterate through tasks and log
+	// iterate through tasks and logs
 	// skipped input files.
 	var skippedInputs int
 	for _, task := range processedTasks {

@@ -7,3 +7,9 @@ func WithCachingEnabled(enable bool) Option {
 		p.enableCaching = enable
 	}
 }
+
+func WithParallel(parallel int) Option {
+	return func(p *Playbook) {
+		p.parallel = parallel
+	}
+}
