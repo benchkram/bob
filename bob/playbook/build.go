@@ -59,33 +59,37 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	p.pickTaskColors()
 
-	runningJobs := 0
-	const numJobs = 5
-	jobs := make(chan *bobtask.Task, numJobs)
+	// Setup worker pool and queue
+	const workers = 1
+	queue := make(chan *bobtask.Task, workers)
+	for i := 0; i < workers; i++ {
+		go func(workerID int) {
+			boblog.Log.V(5).Info(fmt.Sprintf("Spawning worker %d", workerID))
+			for t := range queue {
 
-	go func() {
-		for j := range jobs {
-			boblog.Log.V(5).Info(fmt.Sprintf("RUNNING JOBS  %d ", runningJobs))
-			go func(t *bobtask.Task) {
-				runningJobs++
+				boblog.Log.V(5).Info(fmt.Sprintf("RUNNING task %s on worker  %d ", t.Name(), workerID))
+
 				err := p.build(ctx, t)
 				if err != nil {
 					// cancel all running jobs
 					ctx.Done()
 					done <- err
 				}
-				runningJobs--
-			}(j)
-		}
-	}()
+			}
+			boblog.Log.V(5).Info(fmt.Sprintf("Shutdown worker %d", workerID))
+		}(i + 1)
+	}
 
+	// TODO: wait for remaining tasks to finish
+
+	// Listen for tasks from the playbook and forward them to the worker pool
 	go func() {
-		// TODO: Run a worker pool so that multiple tasks can run in parallel.
-
 		c := p.TaskChannel()
 		for t := range c {
+			boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
 			processedTasks = append(processedTasks, t)
-			jobs <- t
+
+			queue <- t
 			err = p.Play()
 			if err != nil {
 				if errors.Is(err, ErrDone) {
@@ -108,7 +112,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	}
 	errz.Fatal(err)
 
-	close(jobs)
+	close(queue)
 
 	// iterate through tasks and log
 	// skipped input files.
