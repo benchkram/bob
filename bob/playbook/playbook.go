@@ -55,6 +55,8 @@ type Playbook struct {
 	// number of parallel running tasks
 	parallel int
 
+	predictedNumOfTasks int
+
 	// playMutex assures recomputation
 	// can only be done sequentially.
 	playMutex sync.Mutex
@@ -62,11 +64,12 @@ type Playbook struct {
 
 func New(root string, opts ...Option) *Playbook {
 	p := &Playbook{
-		taskChannel:   make(chan *bobtask.Task, 10),
 		errorChannel:  make(chan error),
 		Tasks:         make(StatusMap),
 		enableCaching: true,
 		root:          root,
+
+		predictedNumOfTasks: 100000,
 	}
 
 	for _, opt := range opts {
@@ -75,6 +78,10 @@ func New(root string, opts ...Option) *Playbook {
 		}
 		opt(p)
 	}
+
+	// Try to make the task channel the same size as the number of tasks.
+	// In the unlikely case all task would be ready to be executed at the same time.
+	p.taskChannel = make(chan *bobtask.Task, p.predictedNumOfTasks)
 
 	return p
 }

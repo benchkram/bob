@@ -429,9 +429,6 @@ func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite boo
 	exports := make(export.Map)
 	exports["openapi"] = "openapi.yaml"
 	exports["openapi2"] = "openapi2.yaml"
-	bobfile.BTasks["openapi"] = bobtask.Task{
-		Exports: exports,
-	}
 	bobfile.Dependencies = []string{"docker", "go_1_18", "git"}
 	bobfile.Nixpkgs = "https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz"
 

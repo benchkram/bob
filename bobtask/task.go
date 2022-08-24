@@ -12,7 +12,6 @@ import (
 	"github.com/logrusorgru/aurora"
 	"gopkg.in/yaml.v3"
 
-	"github.com/benchkram/bob/bobtask/export"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/buildinfostore"
@@ -48,9 +47,6 @@ type Task struct {
 	// Target defines the output of a task.
 	TargetDirty TargetEntry `yaml:"target,omitempty"`
 	target      *target.T
-
-	// Exports other tasks can reuse.
-	Exports export.Map `yaml:"exports"`
 
 	// defines the rebuild strategy
 	RebuildDirty string `yaml:"rebuild,omitempty"`
@@ -111,7 +107,6 @@ func Make(opts ...TaskOption) Task {
 		inputs:               []string{},
 		cmds:                 []string{},
 		DependsOn:            []string{},
-		Exports:              make(export.Map),
 		env:                  []string{},
 		rebuild:              RebuildOnChange,
 		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
@@ -155,10 +150,6 @@ func (t *Task) Env() []string {
 
 func (t *Task) Rebuild() RebuildType {
 	return t.rebuild
-}
-
-func (t *Task) GetExports() export.Map {
-	return t.Exports
 }
 
 func (t *Task) SetDir(dir string) {
@@ -230,12 +221,6 @@ const EnvironSeparator = "="
 
 func (t *Task) AddEnvironmentVariable(key, value string) {
 	t.env = append(t.env, strings.Join([]string{key, value}, EnvironSeparator))
-}
-
-func (t *Task) AddExportPrefix(prefix string) {
-	for i, e := range t.Exports {
-		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))
-	}
 }
 
 // AddToSkippedInputs add filenames with permission issues to the task's

@@ -17,7 +17,6 @@ import (
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/auth"
-	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -136,52 +135,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 	// Merge runs into one Bobfile
 	aggregate = b.addRunTasksToAggregate(aggregate, bobs)
-
-	// TODO: Gather missing tasks from remote  & Unpack?
-
-	// Gather environment from dependent tasks.
-	//
-	// Each export is translated into environment variables named:
-	//   `second-level/openapi => SECOND_LEVEL_OPENAPI`
-	// hyphens`-` are translated to underscores`_`.
-	//
-	// The file is prefixed with all paths to make it relative to dir of the the top Bobfile:
-	//   `openapi.yaml => sencond-level/openapi.yaml`
-	//
-	for i, task := range aggregate.BTasks {
-		for _, dependentTaskName := range task.DependsOn {
-
-			dependentTask, ok := aggregate.BTasks[dependentTaskName]
-			if !ok {
-				return nil, usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
-			}
-
-			// TODO: Exports should be part of a packed file and should be evaluated
-			// when running a playbook or at least after Unpack().
-			// Looks like this is the wrong place to presume that all child tasks
-			// are comming from child bobfile must exist.
-			for exportname, export := range dependentTask.Exports {
-				// fmt.Printf("Task %s exports %s\n", dependentTaskName, export)
-
-				envvar := taskNameToEnvironment(dependentTaskName, exportname)
-
-				value := filepath.Join(dependentTask.Dir(), string(export))
-
-				// Make the path relative to the aggregates dir.
-				dir := aggregate.Dir()
-				if !strings.HasSuffix(dir, "/") {
-					dir = dir + "/"
-				}
-				value = strings.TrimPrefix(value, dir)
-
-				// println(envvar, value)
-
-				task.AddEnvironmentVariable(envvar, value)
-
-				aggregate.BTasks[i] = task
-			}
-		}
-	}
 
 	// Assure tasks are correctly initialised.
 	for i, task := range aggregate.BTasks {

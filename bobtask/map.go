@@ -53,10 +53,6 @@ func (tm Map) Sanitize() (err error) {
 
 	for key, task := range tm {
 
-		sanitizedExports, err := task.sanitizeExports(task.Exports)
-		errz.Fatal(err)
-		task.Exports = sanitizedExports
-
 		err = task.parseTargets()
 		errz.Fatal(err)
 

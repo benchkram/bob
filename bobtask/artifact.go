@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -43,14 +42,13 @@ func newArchiveReader() archiver.Reader { return newArchive() }
 func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	defer errz.Recover(&err)
 
-	if t.target == nil && len(t.Exports) == 0 {
+	if t.target == nil {
 		return nil
 	}
 
 	boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] creating artifact [%s] in localstore", t.name, artifactName))
 
 	targets := []string{}
-	exports := []string{}
 	tempdir := ""
 	if t.target != nil {
 		if t.target.Type == target.Docker {
@@ -68,10 +66,6 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		for _, target := range targets {
 			defer func(dst string) { _ = os.Remove(dst) }(target)
 		}
-	}
-
-	for _, path := range t.Exports {
-		exports = append(exports, filepath.Join(t.dir, path.String()))
 	}
 
 	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
@@ -114,45 +108,6 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 				FileInfo:   info,
 				CustomName: filepath.Join(__targets, internalName),
 				SourcePath: source,
-			},
-			ReadCloser: file,
-		})
-		errz.Fatal(err)
-
-		err = file.Close()
-		errz.Fatal(err)
-	}
-
-	// exports
-	exportSummary, err := json.Marshal(t.Exports)
-	errz.Fatal(err)
-	err = archiveWriter.Write(archiver.File{
-		FileInfo: archiver.FileInfo{
-			FileInfo: fileInfo{
-				name: __summary,
-				data: exportSummary,
-			},
-			CustomName: filepath.Join(__exports, __summary),
-		},
-		ReadCloser: io.NopCloser(bytes.NewBuffer(exportSummary)),
-	})
-
-	for _, fname := range exports {
-		info, err := os.Stat(fname)
-		errz.Fatal(err)
-
-		// get file's name for the inside of the archive
-		internalName, err := archiver.NameInArchive(info, fname, fname)
-		errz.Fatal(err)
-
-		// open the file
-		file, err := os.Open(fname)
-		errz.Fatal(err)
-
-		err = archiveWriter.Write(archiver.File{
-			FileInfo: archiver.FileInfo{
-				FileInfo:   info,
-				CustomName: filepath.Join(__exports, internalName),
 			},
 			ReadCloser: file,
 		})
@@ -324,9 +279,6 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 				errz.Fatal(err)
 			}
 		}
-
-		// exports
-		// TODO: handle exports
 	}
 
 	return true, nil

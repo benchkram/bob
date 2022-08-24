@@ -13,3 +13,9 @@ func WithParallel(parallel int) Option {
 		p.parallel = parallel
 	}
 }
+
+func WithPredictedNumOfTasks(tasks int) Option {
+	return func(p *Playbook) {
+		p.predictedNumOfTasks = tasks
+	}
+}

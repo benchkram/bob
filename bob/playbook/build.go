@@ -61,7 +61,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	// Setup worker pool and queue
 	const workers = 3
-	queue := make(chan *bobtask.Task, workers)
+	queue := make(chan *bobtask.Task)
 	for i := 0; i < workers; i++ {
 		go func(workerID int) {
 			boblog.Log.V(5).Info(fmt.Sprintf("Spawning worker %d", workerID))
@@ -80,8 +80,6 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		}(i + 1)
 	}
 
-	// TODO: wait for remaining tasks to finish
-
 	// Listen for tasks from the playbook and forward them to the worker pool
 	go func() {
 		c := p.TaskChannel()
@@ -89,7 +87,10 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
 			processedTasks = append(processedTasks, t)
 
+			// blocks till
 			queue <- t
+
+			// Initiate another playbook
 			err = p.Play()
 			if err != nil {
 				if errors.Is(err, ErrDone) {
@@ -103,10 +104,8 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		close(done)
 	}()
 
-	//for i := 0; i < workers; i++ {
 	err = p.Play()
 	errz.Fatal(err)
-	//}
 
 	err = <-done
 	if err != nil {
