@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/benchkram/bob/bobtask"
@@ -53,7 +54,8 @@ func (p *Playbook) pickTaskColors() {
 
 // Build the playbook starting at root.
 func (p *Playbook) Build(ctx context.Context) (err error) {
-	done := make(chan error)
+	processingErrorsMutex := sync.Mutex{}
+	processingErrors := []error{}
 
 	processedTasks := []*bobtask.Task{}
 
@@ -71,9 +73,11 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 				err := p.build(ctx, t)
 				if err != nil {
-					// cancel all running jobs
-					ctx.Done()
-					done <- err
+					p.Done()
+
+					processingErrorsMutex.Lock()
+					processingErrors = append(processingErrors, err)
+					processingErrorsMutex.Unlock()
 				}
 			}
 			boblog.Log.V(5).Info(fmt.Sprintf("Shutdown worker %d", workerID))
@@ -100,18 +104,12 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 				}
 			}
 		}
-
-		close(done)
 	}()
 
 	err = p.Play()
 	errz.Fatal(err)
 
-	err = <-done
-	if err != nil {
-		p.Done()
-	}
-	errz.Fatal(err)
+	<-p.DoneChan()
 
 	close(queue)
 

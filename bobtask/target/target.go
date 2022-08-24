@@ -11,30 +11,27 @@ type Target interface {
 	Verify() bool
 	Exists() bool
 
-	WithHash(string) Target
+	WithExpectedHash(string) Target
 	WithDir(string) Target
 }
 
 type T struct {
+	Paths []string   `yaml:"Paths"`
+	Type  TargetType `yaml:"Type"`
+
 	// working dir of target
 	dir string
 
-	// last computed hash of target
-	hash string
+	// expectedHash is the last computed hash of the target used to verify the targets integrity.
+	// Loaded from the system and created on a previous run
+	expectedHash string
+
+	// currentHash is the currenlty created hash during the run.
+	// Reused to avoid multiple computations.
+	currentHash string
 
 	// dockerRegistryClient utility functions to handle requests with local docker registry
 	dockerRegistryClient dockermobyutil.RegistryClient
-
-	Paths []string   `yaml:"Paths"`
-	Type  TargetType `yaml:"Type"`
-}
-
-func Make() T {
-	return T{
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		Paths:                []string{},
-		Type:                 Path,
-	}
 }
 
 func New() *T {
@@ -58,23 +55,14 @@ const (
 
 const DefaultType = Path
 
-func (t *T) clone() *T {
-	target := new()
-	target.dir = t.dir
-	target.Paths = t.Paths
-	target.Type = t.Type
-	return target
+func (t *T) WithDir(dir string) Target {
+	t.dir = dir
+	return t
 }
 
-func (t *T) WithDir(dir string) Target {
-	target := t.clone()
-	target.dir = dir
-	return target
-}
-func (t *T) WithHash(hash string) Target {
-	target := t.clone()
-	target.hash = hash
-	return target
+func (t *T) WithExpectedHash(expectedHash string) Target {
+	t.expectedHash = expectedHash
+	return t
 }
 
 func ParseType(str string) (TargetType, error) {

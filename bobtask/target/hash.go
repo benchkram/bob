@@ -1,7 +1,6 @@
 package target
 
 import (
-	"bytes"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -29,7 +28,12 @@ func (t *T) Hash() (empty string, _ error) {
 }
 
 func (t *T) filepathHash() (empty string, _ error) {
-	aggregatedHashes := bytes.NewBuffer([]byte{})
+	if t.currentHash != "" {
+		return t.currentHash, nil
+	}
+
+	//aggregatedHashes := bytes.NewBuffer([]byte{})
+	h := filehash.New()
 	for _, f := range t.Paths {
 		target := filepath.Join(t.dir, f)
 
@@ -49,15 +53,9 @@ func (t *T) filepathHash() (empty string, _ error) {
 				if fi.IsDir() {
 					return nil
 				}
-
-				h, err := filehash.Hash(p)
+				err = h.AddFile(p)
 				if err != nil {
 					return fmt.Errorf("failed to hash target %q: %w", f, err)
-				}
-
-				_, err = aggregatedHashes.Write(h)
-				if err != nil {
-					return fmt.Errorf("failed to write target hash to aggregated hash %q: %w", f, err)
 				}
 
 				return nil
@@ -66,24 +64,16 @@ func (t *T) filepathHash() (empty string, _ error) {
 			}
 			// TODO: what happens on a empty dir?
 		} else {
-			h, err := filehash.Hash(target)
+			err = h.AddFile(target)
 			if err != nil {
 				return empty, fmt.Errorf("failed to hash target %q: %w", f, err)
-			}
-
-			_, err = aggregatedHashes.Write(h)
-			if err != nil {
-				return empty, fmt.Errorf("failed to write target hash to aggregated hash %q: %w", f, err)
 			}
 		}
 	}
 
-	h, err := filehash.HashBytes(aggregatedHashes)
-	if err != nil {
-		return empty, fmt.Errorf("failed to write aggregated target hash: %w", err)
-	}
+	t.currentHash = hex.EncodeToString(h.Sum())
 
-	return hex.EncodeToString(h), nil
+	return t.currentHash, nil
 }
 
 func (t *T) dockerImagesHash() (string, error) {

@@ -11,7 +11,7 @@ import (
 )
 
 // Target takes care of populating the targets members correctly.
-// It returns a nil in case of a not existing target and a nil error.
+// It returns a nil in case of a non existing target and a nil error.
 func (t *Task) Target() (empty target.Target, _ error) {
 	if t.target == nil {
 		return empty, nil
@@ -25,7 +25,7 @@ func (t *Task) Target() (empty target.Target, _ error) {
 		return empty, err
 	}
 
-	hash, err := t.ReadBuildinfo()
+	buildInfo, err := t.ReadBuildinfo()
 	if err != nil {
 		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
 			return t.target.WithDir(t.dir), nil
@@ -33,12 +33,12 @@ func (t *Task) Target() (empty target.Target, _ error) {
 		return empty, err
 	}
 
-	targetHash, ok := hash.Targets[hashIn]
+	expectedTargetHash, ok := buildInfo.Targets[hashIn]
 	if !ok {
 		return t.target.WithDir(t.dir), nil
 	}
 
-	return t.target.WithDir(t.dir).WithHash(targetHash), nil
+	return t.target.WithDir(t.dir).WithExpectedHash(expectedTargetHash), nil
 }
 
 func (t *Task) TargetExists() bool {

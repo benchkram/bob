@@ -42,6 +42,8 @@ type Playbook struct {
 	namePad int
 
 	done bool
+	// doneChannel is closed when the playbook is done.
+	doneChannel chan struct{}
 
 	// start is the point in time the playbook started
 	start time.Time
@@ -51,9 +53,6 @@ type Playbook struct {
 	// enableCaching allows artifacts to be read & written to a store.
 	// Default: true.
 	enableCaching bool
-
-	// number of parallel running tasks
-	parallel int
 
 	predictedNumOfTasks int
 
@@ -66,6 +65,7 @@ func New(root string, opts ...Option) *Playbook {
 	p := &Playbook{
 		errorChannel:  make(chan error),
 		Tasks:         make(StatusMap),
+		doneChannel:   make(chan struct{}),
 		enableCaching: true,
 		root:          root,
 
@@ -305,7 +305,11 @@ func (p *Playbook) Done() {
 		p.done = true
 		p.end = time.Now()
 		close(p.taskChannel)
+		close(p.doneChannel)
 	}
+}
+func (p *Playbook) DoneChan() chan struct{} {
+	return p.doneChannel
 }
 
 // TaskChannel returns the next task
