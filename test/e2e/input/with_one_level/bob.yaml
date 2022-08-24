@@ -1,0 +1,29 @@
+build:
+  generateHello:
+    cmd: touch hello.txt
+    target: hello.txt
+  build:
+    input: "*"
+    cmd: echo "Hello build!"
+    dependson:
+      - generateHello
+      - fileTargets
+      - directoryTarget
+  fileTargets:
+    cmd: |-      
+      mkdir -p server/rest-api
+      touch ./server/rest-api/fileTargets.txt
+      touch another-fileTargets.txt
+    target: |-
+      server/rest-api/fileTargets.txt
+      another-fileTargets.txt
+    dependson:
+      - simpleBuild
+  directoryTarget:
+    cmd: mkdir some-dir
+    target: some-dir
+  simpleBuild:
+    cmd: echo simple
+
+
+

@@ -47,7 +47,7 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 }
 
 // Sanitize task map and write filtered & sanitized
-// propertys from dirty members to plain (e.g. dirtyInputs -> filter&sanitize -> inputs)
+// properties from dirty members to plain (e.g. dirtyInputs -> filter&sanitize -> inputs)
 func (tm Map) Sanitize() (err error) {
 	defer errz.Recover(&err)
 
@@ -133,4 +133,35 @@ func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependen
 	}
 
 	return nixDependencies, nil
+}
+
+// ChildrenForTask gets all children for task by name
+func (tm Map) ChildrenForTask(name string) Map {
+	children := make(Map, 0)
+
+	collectChildren(name, tm, children)
+
+	return children
+}
+
+// collectChildren collects all children for a task by name inside children container
+// from allTasks
+func collectChildren(name string, allTasks Map, children Map) {
+	t, ok := allTasks[name]
+
+	if !ok {
+		return
+	}
+
+	if len(t.DependsOn) == 0 {
+		return
+	}
+
+	for _, v := range t.DependsOn {
+		children[v] = allTasks[v]
+	}
+
+	for _, v := range t.DependsOn {
+		collectChildren(v, allTasks, children)
+	}
 }

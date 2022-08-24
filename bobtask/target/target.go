@@ -1,7 +1,7 @@
 package target
 
 import (
-	"fmt"
+	"path/filepath"
 
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 )
@@ -13,6 +13,7 @@ type Target interface {
 
 	WithHash(string) Target
 	WithDir(string) Target
+	GetPaths() []string
 }
 
 type T struct {
@@ -27,14 +28,6 @@ type T struct {
 
 	Paths []string   `yaml:"Paths"`
 	Type  TargetType `yaml:"Type"`
-}
-
-func Make() T {
-	return T{
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		Paths:                []string{},
-		Type:                 Path,
-	}
 }
 
 func New() *T {
@@ -77,13 +70,16 @@ func (t *T) WithHash(hash string) Target {
 	return target
 }
 
-func ParseType(str string) (TargetType, error) {
-	switch {
-	case str == string(Path):
-		return Path, nil
-	case str == string(Docker):
-		return Docker, nil
-	default:
-		return DefaultType, fmt.Errorf("Invalid Target type. Only supports 'path' and 'docker-image' as type.")
+// GetPaths with dir
+func (t *T) GetPaths() []string {
+	if len(t.Paths) == 0 {
+		return []string{}
 	}
+
+	var pathsWithDir []string
+	for _, v := range t.Paths {
+		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))
+	}
+
+	return pathsWithDir
 }

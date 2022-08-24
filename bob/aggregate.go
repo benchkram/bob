@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/envutil"
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 	"github.com/hashicorp/go-version"
 	"github.com/logrusorgru/aurora"
@@ -245,6 +246,33 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
+	// remove from each task input the targets of its children
+	for i, task := range aggregate.BTasks {
+		children := aggregate.BTasks.ChildrenForTask("build")
+
+		childrenPaths := make([]string, 0)
+		for _, v := range children {
+			target, _ := v.Target()
+
+			if target == nil {
+				continue
+			}
+			childrenPaths = append(childrenPaths, target.GetPaths()...)
+		}
+
+		inputsWithoutChildrenTargets := make([]string, 0)
+		for _, input := range task.Inputs() {
+			if sliceutil.Contains(childrenPaths, input) {
+				continue
+			}
+			inputsWithoutChildrenTargets = append(inputsWithoutChildrenTargets, input)
+		}
+
+		task.SetInputs(inputsWithoutChildrenTargets)
+
+		aggregate.BTasks[i] = task
+	}
+
 	return aggregate, aggregate.Verify()
 }
 
@@ -257,7 +285,9 @@ func addTaskPrefix(prefix, taskname string) string {
 // taskNameToEnvironment
 //
 // Each taskname is translated into environment variables like:
-//   `second-level/openapi_exportname => SECOND_LEVEL_OPENAPI_EXPORTNAME`
+//
+//	`second-level/openapi_exportname => SECOND_LEVEL_OPENAPI_EXPORTNAME`
+//
 // Hyphens`-` are translated to underscores`_`.
 func taskNameToEnvironment(taskname string, exportname string) string {
 

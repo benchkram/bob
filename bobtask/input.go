@@ -17,6 +17,10 @@ func (t *Task) Inputs() []string {
 	return t.inputs
 }
 
+func (t *Task) SetInputs(inputs []string) {
+	t.inputs = inputs
+}
+
 // filteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
 func (t *Task) filteredInputs() ([]string, error) {
@@ -143,11 +147,12 @@ func unique(ss []string) []string {
 // Split splits a single-line "input" to a slice of inputs.
 //
 // It currently supports the following syntaxes:
-//  Input: |-
-//    main1.go
-//    someotherfile
-//  Output:
-//    [ "./main1.go", "!someotherfile" ]
+//
+//	Input: |-
+//	  main1.go
+//	  someotherfile
+//	Output:
+//	  [ "./main1.go", "!someotherfile" ]
 func split(inputDirty string) []string {
 
 	// Replace leading and trailing spaces for clarity.
