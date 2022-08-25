@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
 	"sort"
 	"sync"
 	"time"
@@ -63,12 +62,12 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	p.pickTaskColors()
 
 	// Setup worker pool and queue
-	workers := runtime.NumCPU()
+	parallelJobs := p.jobs
 	queue := make(chan *bobtask.Task)
 
-	boblog.Log.Info(fmt.Sprintf("Using %d workers", workers))
+	boblog.Log.Info(fmt.Sprintf("Using %d workers", parallelJobs))
 
-	for i := 0; i < workers; i++ {
+	for i := 0; i < parallelJobs; i++ {
 		go func(workerID int) {
 			boblog.Log.V(5).Info(fmt.Sprintf("Spawning worker %d", workerID))
 			for t := range queue {

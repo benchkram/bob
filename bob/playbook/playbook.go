@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"runtime"
 	"sort"
 	"sync"
 	"time"
@@ -59,6 +60,9 @@ type Playbook struct {
 	// playMutex assures recomputation
 	// can only be done sequentially.
 	playMutex sync.Mutex
+
+	// jobs is the maximum number of parallel jobs
+	jobs int
 }
 
 func New(root string, opts ...Option) *Playbook {
@@ -68,6 +72,8 @@ func New(root string, opts ...Option) *Playbook {
 		doneChannel:   make(chan struct{}),
 		enableCaching: true,
 		root:          root,
+
+		jobs: runtime.NumCPU(),
 
 		predictedNumOfTasks: 100000,
 	}

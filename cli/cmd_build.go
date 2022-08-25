@@ -38,12 +38,19 @@ var buildCmd = &cobra.Command{
 		allowInsecure, err := cmd.Flags().GetBool("insecure")
 		errz.Fatal(err)
 
+		jobs, err := cmd.Flags().GetInt("jobs")
+		errz.Fatal(err)
+		if jobs < 1 {
+			boblog.Log.Error(err, "jobs must be greater than 0")
+			os.Exit(1)
+		}
+
 		taskname := global.DefaultBuildTask
 		if len(args) > 0 {
 			taskname = args[0]
 		}
 
-		runBuild(dummy, taskname, noCache, allowInsecure, flagEnvVars)
+		runBuild(dummy, taskname, noCache, allowInsecure, flagEnvVars, jobs)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getBuildTasks()
@@ -64,7 +71,7 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(dummy bool, taskname string, noCache, allowInsecure bool, flagEnvVars []string) {
+func runBuild(dummy bool, taskname string, noCache, allowInsecure bool, flagEnvVars []string, jobs int) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
@@ -83,6 +90,7 @@ func runBuild(dummy bool, taskname string, noCache, allowInsecure bool, flagEnvV
 		bob.WithCachingEnabled(!noCache),
 		bob.WithInsecure(allowInsecure),
 		bob.WithEnvVariables(parseEnvVarsFlag(flagEnvVars)),
+		bob.WithJobs(jobs),
 	)
 	if err != nil {
 		exitCode = 1

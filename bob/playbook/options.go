@@ -13,3 +13,9 @@ func WithPredictedNumOfTasks(tasks int) Option {
 		p.predictedNumOfTasks = tasks
 	}
 }
+
+func WithJobs(jobs int) Option {
+	return func(p *Playbook) {
+		p.jobs = jobs
+	}
+}

@@ -69,3 +69,9 @@ func WithEnvVariables(env []string) Option {
 		b.env = env
 	}
 }
+
+func WithJobs(jobs int) Option {
+	return func(b *B) {
+		b.jobs = jobs
+	}
+}
