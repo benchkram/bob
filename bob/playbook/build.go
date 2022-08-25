@@ -73,11 +73,14 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 				err := p.build(ctx, t)
 				if err != nil {
-					p.Done()
-
 					processingErrorsMutex.Lock()
 					processingErrors = append(processingErrors, err)
 					processingErrorsMutex.Unlock()
+
+					// Any error occured during a build put the
+					// playbook in a done state. This prevents
+					// further tasks be queued for execution.
+					p.Done()
 				}
 			}
 			boblog.Log.V(5).Info(fmt.Sprintf("Shutdown worker %d", workerID))
@@ -91,10 +94,11 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
 			processedTasks = append(processedTasks, t)
 
-			// blocks till
+			// blocks till a worker is available
 			queue <- t
 
-			// Initiate another playbook
+			// initiate another playbook run
+			// as there might be workers without assigned tasks left.
 			err = p.Play()
 			if err != nil {
 				if errors.Is(err, ErrDone) {
@@ -126,7 +130,12 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	p.summary(processedTasks)
 
-	return err
+	if len(processingErrors) > 0 {
+		// Pass only the very first processing error.
+		return processingErrors[0]
+	}
+
+	return nil
 }
 
 // didWriteBuildOutput assures that a new line is added
