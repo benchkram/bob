@@ -1,0 +1,4 @@
+build:
+  build:
+    cmd: touch third-level.txt
+    target: third-level.txt

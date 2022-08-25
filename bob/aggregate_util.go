@@ -109,7 +109,7 @@ func (b *B) addRunTasksToAggregate(
 // If prefix is given it's appended to the search path to assure
 // correctness of the search path in case of recursive calls.
 func readImports(
-	a *bobfile.Bobfile,
+	agg *bobfile.Bobfile,
 	readModePlain bool,
 	prefix ...string,
 ) (imports []*bobfile.Bobfile, err error) {
@@ -121,24 +121,24 @@ func readImports(
 	}
 
 	imports = []*bobfile.Bobfile{}
-	for _, imp := range a.Imports {
+	for _, name := range agg.Imports {
 		// read bobfile
 		var boblet *bobfile.Bobfile
 		var err error
 		if readModePlain {
-			boblet, err = bobfile.BobfileReadPlain(filepath.Join(p, imp))
+			boblet, err = bobfile.BobfileReadPlain(filepath.Join(p, name))
 		} else {
-			boblet, err = bobfile.BobfileRead(filepath.Join(p, imp))
+			boblet, err = bobfile.BobfileRead(filepath.Join(p, name))
 		}
 		if err != nil {
 			if errors.Is(err, bobfile.ErrBobfileNotFound) {
-				return nil, usererror.Wrapm(err, fmt.Sprintf("import of %s from %s/bob.yaml failed", imp, a.Dir()))
+				return nil, usererror.Wrapm(err, fmt.Sprintf("import of %s from %s/bob.yaml failed", name, agg.Dir()))
 			}
 			errz.Fatal(err)
 		}
 		imports = append(imports, boblet)
 
-		// read imports rescursively
+		// read imports recursively
 		childImports, err := readImports(boblet, readModePlain, boblet.Dir())
 		errz.Fatal(err)
 		imports = append(imports, childImports...)

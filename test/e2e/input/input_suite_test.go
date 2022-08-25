@@ -2,12 +2,9 @@ package inputest
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/benchkram/bob/bob"
@@ -21,6 +18,8 @@ var (
 	version string
 
 	ctx context.Context
+
+	nameToBobfile map[string]*bobfile.Bobfile
 )
 
 var _ = BeforeSuite(func() {
@@ -32,36 +31,25 @@ var _ = BeforeSuite(func() {
 	// Initialize mock bob files from local directory
 	bobFiles := []string{
 		"with_one_level",
+		"with_second_level",
+		"with_second_level/second_level",
+		"with_three_level",
+		"with_three_level/second_level",
+		"with_three_level/second_level/third_level",
 	}
-	nameToBobfile := make(map[string]*bobfile.Bobfile)
+	nameToBobfile = make(map[string]*bobfile.Bobfile)
 	for _, name := range bobFiles {
 		abs, err := filepath.Abs("./" + name)
 		Expect(err).NotTo(HaveOccurred())
 		bf, err := bobfile.BobfileRead(abs)
 		Expect(err).NotTo(HaveOccurred())
-		nameToBobfile[strings.ReplaceAll(name, "/", "_")] = bf
-	}
-
-	testDir, err := ioutil.TempDir("", "input-test-*")
-	Expect(err).NotTo(HaveOccurred())
-
-	dir = testDir
-	err = os.Chdir(dir)
-	Expect(err).NotTo(HaveOccurred())
-
-	// Save bob files in dir to have them available in tests
-	for name, bf := range nameToBobfile {
-		err = bf.BobfileSave(dir, name+".yaml")
-		Expect(err).NotTo(HaveOccurred())
+		nameToBobfile[name] = bf
 	}
 })
 
 var _ = AfterSuite(func() {
-	err := os.RemoveAll(dir)
-	Expect(err).NotTo(HaveOccurred())
-
 	for _, file := range tmpFiles {
-		err = os.Remove(file)
+		err := os.Remove(file)
 		Expect(err).NotTo(HaveOccurred())
 	}
 
@@ -69,12 +57,8 @@ var _ = AfterSuite(func() {
 })
 
 func TestInput(t *testing.T) {
-	fmt.Println(os.Getenv("PATH"))
-
 	_, err := exec.LookPath("nix")
 	if err != nil {
-		fmt.Println("eroarea", err)
-
 		// Allow skipping tests only locally.
 		// CI is always set to true on GitHub actions.
 		// https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
@@ -84,16 +68,4 @@ func TestInput(t *testing.T) {
 	}
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "input suite")
-}
-
-// useBobfile sets the right bobfile to be used for test
-func useBobfile(name string) {
-	err := os.Rename(name+".yaml", "bob.yaml")
-	Expect(err).NotTo(HaveOccurred())
-}
-
-// releaseBobfile will revert changes done in useBobfile
-func releaseBobfile(name string) {
-	err := os.Rename("bob.yaml", name+".yaml")
-	Expect(err).NotTo(HaveOccurred())
 }

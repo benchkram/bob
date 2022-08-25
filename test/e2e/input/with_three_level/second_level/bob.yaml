@@ -1,0 +1,8 @@
+import:
+  - third_level
+build:
+  generateHello:
+    cmd: touch hello.txt
+    target: hello.txt
+    dependson:
+      - third_level/build

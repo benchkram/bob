@@ -107,7 +107,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
-	bobs, err := readImports(aggregate, false)
+	bobs, err := readImports(aggregate, false, wd)
 	errz.Fatal(err)
 
 	for _, boblet := range append(bobs, aggregate) {
@@ -247,8 +247,8 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	}
 
 	// remove from each task input the targets of its children
-	for i, task := range aggregate.BTasks {
-		children := aggregate.BTasks.ChildrenForTask("build")
+	for name, task := range aggregate.BTasks {
+		children := aggregate.BTasks.ChildrenForTask(name)
 
 		childrenPaths := make([]string, 0)
 		for _, v := range children {
@@ -270,7 +270,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 		task.SetInputs(inputsWithoutChildrenTargets)
 
-		aggregate.BTasks[i] = task
+		aggregate.BTasks[name] = task
 	}
 
 	return aggregate, aggregate.Verify()

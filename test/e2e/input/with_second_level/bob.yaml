@@ -1,0 +1,8 @@
+import:
+  - second_level
+build:
+  build:
+    input: "*"
+    cmd: echo "Hello build!"
+    dependson:
+      - second_level/generateHello

@@ -1,0 +1,4 @@
+build:
+  generateHello:
+    cmd: touch hello.txt
+    target: hello.txt
