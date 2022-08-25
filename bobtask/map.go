@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/pkg/boberror"
@@ -163,5 +164,34 @@ func collectChildren(name string, allTasks Map, children Map) {
 
 	for _, v := range t.DependsOn {
 		collectChildren(v, allTasks, children)
+	}
+}
+
+// ClearInputsOfChildrenTargets removes from each build task input
+// the targets of its children(tasks from dependson)
+func (tm Map) ClearInputsOfChildrenTargets() {
+	for name, task := range tm {
+		children := tm.ChildrenForTask(name)
+
+		childrenPaths := make([]string, 0)
+		for _, v := range children {
+			target, _ := v.Target()
+			if target == nil {
+				continue
+			}
+			childrenPaths = append(childrenPaths, target.GetPaths()...)
+		}
+
+		inputsWithoutChildrenTargets := make([]string, 0)
+		for _, input := range task.Inputs() {
+			if sliceutil.Contains(childrenPaths, input) {
+				continue
+			}
+			inputsWithoutChildrenTargets = append(inputsWithoutChildrenTargets, input)
+		}
+
+		task.SetInputs(inputsWithoutChildrenTargets)
+
+		tm[name] = task
 	}
 }

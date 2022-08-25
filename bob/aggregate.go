@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/envutil"
-	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 	"github.com/hashicorp/go-version"
 	"github.com/logrusorgru/aurora"
@@ -246,32 +245,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
-	// remove from each task input the targets of its children
-	for name, task := range aggregate.BTasks {
-		children := aggregate.BTasks.ChildrenForTask(name)
-
-		childrenPaths := make([]string, 0)
-		for _, v := range children {
-			target, _ := v.Target()
-
-			if target == nil {
-				continue
-			}
-			childrenPaths = append(childrenPaths, target.GetPaths()...)
-		}
-
-		inputsWithoutChildrenTargets := make([]string, 0)
-		for _, input := range task.Inputs() {
-			if sliceutil.Contains(childrenPaths, input) {
-				continue
-			}
-			inputsWithoutChildrenTargets = append(inputsWithoutChildrenTargets, input)
-		}
-
-		task.SetInputs(inputsWithoutChildrenTargets)
-
-		aggregate.BTasks[name] = task
-	}
+	aggregate.BTasks.ClearInputsOfChildrenTargets()
 
 	return aggregate, aggregate.Verify()
 }
