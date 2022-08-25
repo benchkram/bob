@@ -57,7 +57,6 @@ var _ = Describe("Test bob build", func() {
 
 			Expect(rebuildRequired).To(BeTrue())
 			Expect(rebuildCause).To(Equal(playbook.TaskForcedRebuild))
-
 		})
 	})
 })

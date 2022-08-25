@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"sort"
 	"sync"
 	"time"
@@ -62,15 +63,16 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	p.pickTaskColors()
 
 	// Setup worker pool and queue
-	const workers = 3
+	workers := runtime.NumCPU()
 	queue := make(chan *bobtask.Task)
+
+	boblog.Log.Info(fmt.Sprintf("Using %d workers", workers))
+
 	for i := 0; i < workers; i++ {
 		go func(workerID int) {
 			boblog.Log.V(5).Info(fmt.Sprintf("Spawning worker %d", workerID))
 			for t := range queue {
-
 				boblog.Log.V(5).Info(fmt.Sprintf("RUNNING task %s on worker  %d ", t.Name(), workerID))
-
 				err := p.build(ctx, t)
 				if err != nil {
 					processingErrorsMutex.Lock()
@@ -83,7 +85,6 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 					p.Done()
 				}
 			}
-			boblog.Log.V(5).Info(fmt.Sprintf("Shutdown worker %d", workerID))
 		}(i + 1)
 	}
 
