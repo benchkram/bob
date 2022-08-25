@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 
+	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/multilinecmd"
 	"github.com/benchkram/bob/pkg/nix"
@@ -47,6 +47,20 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 	return nil
 }
 
+func (tm Map) FilterInputs() (err error) {
+	defer errz.Recover(&err)
+
+	for key, task := range tm {
+		inputs, err := task.filteredInputs()
+		errz.Fatal(err)
+		task.inputs = inputs
+
+		tm[key] = task
+	}
+
+	return nil
+}
+
 // Sanitize task map and write filtered & sanitized
 // properties from dirty members to plain (e.g. dirtyInputs -> filter&sanitize -> inputs)
 func (tm Map) Sanitize() (err error) {
@@ -60,10 +74,6 @@ func (tm Map) Sanitize() (err error) {
 
 		err = task.parseTargets()
 		errz.Fatal(err)
-
-		inputs, err := task.filteredInputs()
-		errz.Fatal(err)
-		task.inputs = inputs
 
 		task.cmds = multilinecmd.Split(task.CmdDirty)
 		task.rebuild = task.sanitizeRebuild(task.RebuildDirty)
@@ -136,62 +146,63 @@ func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependen
 	return nixDependencies, nil
 }
 
-// ChildrenForTask gets all children for task by name
-func (tm Map) ChildrenForTask(name string) Map {
-	children := make(Map, 0)
+// IgnoreChildTargets fills the `InputAdditionalIgnores` field of each task
+// with the targets of each tasks children.
+func (tm Map) IgnoreChildTargets() (err error) {
+	defer errz.Recover(&err)
 
-	collectChildren(name, tm, children)
+	for name, umbrellaTask := range tm {
 
-	return children
-}
-
-// collectChildren collects all children for a task by name inside children container
-// from allTasks
-func collectChildren(name string, allTasks Map, children Map) {
-	t, ok := allTasks[name]
-
-	if !ok {
-		return
-	}
-
-	if len(t.DependsOn) == 0 {
-		return
-	}
-
-	for _, v := range t.DependsOn {
-		children[v] = allTasks[v]
-	}
-
-	for _, v := range t.DependsOn {
-		collectChildren(v, allTasks, children)
-	}
-}
-
-// ClearInputsOfChildrenTargets removes from each build task input
-// the targets of its children(tasks from dependson)
-func (tm Map) ClearInputsOfChildrenTargets() {
-	for name, task := range tm {
-		children := tm.ChildrenForTask(name)
-
-		childrenPaths := make([]string, 0)
-		for _, v := range children {
-			target, _ := v.Target()
-			if target == nil {
-				continue
+		err := tm.Walk(name, "", func(tn string, task Task, err error) error {
+			if err != nil {
+				return err
 			}
-			childrenPaths = append(childrenPaths, target.GetPaths()...)
-		}
 
-		inputsWithoutChildrenTargets := make([]string, 0)
-		for _, input := range task.Inputs() {
-			if sliceutil.Contains(childrenPaths, input) {
-				continue
+			t, err := task.Target()
+			if err != nil {
+				return err
 			}
-			inputsWithoutChildrenTargets = append(inputsWithoutChildrenTargets, input)
-		}
+			if t != nil {
+				if t.Type() == target.Path {
+					for _, p := range t.Paths() {
+						if umbrellaTask.Dir() == task.Dir() {
+							// everything good.. use them as they are
+							umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, p)
+						} else {
 
-		task.SetInputs(inputsWithoutChildrenTargets)
+							//    List of cases to be covered.
+							//
+							//     umbrellaDIR                 currentTargetDIR      currentTargetPATH
+							//
+							//     .                           second-level          second-level/target
+							//     .                           .                     aaa/bbb/target
+							//     .                           second-level          aaa/second-level/target
+							//
+							//     second-level                second-level          second-level/target
+							//     second-level                third-level           second-level/third-level/target
+							//     second-level                third-level           second-level/third-level/aaa/bbb/target
+							//     second-level                third-level           second-level/
+							//
+							//     second-level/third-level    third-level           second-level/third-level/target
+							//
+							//     third-level    fouth-level           second-level/third-level/fourth-level/target
 
-		tm[name] = task
+							relP, err := filepath.Rel(umbrellaTask.Dir(), p)
+							if err != nil {
+								return err
+							}
+							umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, relP)
+						}
+					}
+				}
+			}
+
+			return nil
+		})
+		errz.Fatal(err)
+
+		tm[name] = umbrellaTask
 	}
+
+	return nil
 }

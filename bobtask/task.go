@@ -34,6 +34,9 @@ type Task struct {
 
 	// InputDirty is the representation read from a bobfile.
 	InputDirty string `yaml:"input"`
+	// InputAdditionalIgnores is a list of ignores
+	// usually the child targets.
+	InputAdditionalIgnores []string
 	// inputs is filtered by ignored & sanitized
 	inputs []string
 
@@ -108,14 +111,15 @@ type TargetEntry interface{}
 
 func Make(opts ...TaskOption) Task {
 	t := Task{
-		inputs:               []string{},
-		cmds:                 []string{},
-		DependsOn:            []string{},
-		Exports:              make(export.Map),
-		env:                  []string{},
-		rebuild:              RebuildOnChange,
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		dependencies:         []nix.Dependency{},
+		inputs:                 []string{},
+		InputAdditionalIgnores: []string{},
+		cmds:                   []string{},
+		DependsOn:              []string{},
+		Exports:                make(export.Map),
+		env:                    []string{},
+		rebuild:                RebuildOnChange,
+		dockerRegistryClient:   dockermobyutil.NewRegistryClient(),
+		dependencies:           []nix.Dependency{},
 	}
 
 	for _, opt := range opts {
@@ -305,15 +309,16 @@ func (t *Task) parseTargets() error {
 	}
 
 	if len(targets) > 0 {
-		t.target = target.New()
-		t.target.Paths = targets
-		t.target.Type = targetType
+		t.target = target.New(
+			target.WithType(targetType),
+			target.WithTargetPaths(targets),
+		)
 	}
 
 	return nil
 }
 
-func parseTargetMap(tm map[string]interface{}) ([]string, target.TargetType, error) {
+func parseTargetMap(tm map[string]interface{}) ([]string, target.Type, error) {
 
 	// check first if both directives are selected
 	if keyExists(tm, pathSelector) && keyExists(tm, imageSelector) {

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/benchkram/errz"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -24,7 +25,7 @@ var _ = Describe("Testing input for a task", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	When("input is * and task depends on another task with a target", func() {
+	FWhen("input is * and task depends on another task with a target", func() {
 		It("should not include the children tasks targets in input", func() {
 			func() {
 				bf, ok := nameToBobfile["with_one_level"]
@@ -44,6 +45,7 @@ var _ = Describe("Testing input for a task", func() {
 			taskName := "build"
 
 			bobfile, err := b.Aggregate()
+			errz.Log(err)
 			Expect(err).NotTo(HaveOccurred())
 
 			task, ok := bobfile.BTasks[taskName]

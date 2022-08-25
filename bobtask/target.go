@@ -50,7 +50,7 @@ func (t *Task) TargetExists() bool {
 // and has not been there before the task ran.
 func (t *Task) Clean() error {
 	if t.target != nil {
-		for _, f := range t.target.Paths {
+		for _, f := range t.target.PathsPlain() {
 			if t.dir == "" {
 				return fmt.Errorf("task dir not set")
 			}
