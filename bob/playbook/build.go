@@ -75,7 +75,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 				err := p.build(ctx, t)
 				if err != nil {
 					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, err)
+					processingErrors = append(processingErrors, fmt.Errorf("[task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 
 					// Any error occured during a build put the
@@ -101,11 +101,12 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			// as there might be workers without assigned tasks left.
 			err = p.Play()
 			if err != nil {
-				if errors.Is(err, ErrDone) {
-					break
-				} else {
-					errz.Fatal(err)
+				if !errors.Is(err, ErrDone) {
+					processingErrorsMutex.Lock()
+					processingErrors = append(processingErrors, fmt.Errorf("[task: %s], %w", t.Name(), err))
+					processingErrorsMutex.Unlock()
 				}
+				break
 			}
 		}
 	}()
