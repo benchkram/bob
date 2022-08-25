@@ -112,7 +112,9 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	}()
 
 	err = p.Play()
-	errz.Fatal(err)
+	if err != nil {
+		return err
+	}
 
 	<-p.DoneChan()
 
