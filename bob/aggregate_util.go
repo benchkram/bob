@@ -121,24 +121,24 @@ func readImports(
 	}
 
 	imports = []*bobfile.Bobfile{}
-	for _, imp := range a.Imports {
+	for _, importPath := range a.Imports {
 		// read bobfile
 		var boblet *bobfile.Bobfile
 		var err error
 		if readModePlain {
-			boblet, err = bobfile.BobfileReadPlain(filepath.Join(p, imp))
+			boblet, err = bobfile.BobfileReadPlain(filepath.Join(p, importPath))
 		} else {
-			boblet, err = bobfile.BobfileRead(filepath.Join(p, imp))
+			boblet, err = bobfile.BobfileRead(filepath.Join(p, importPath))
 		}
 		if err != nil {
 			if errors.Is(err, bobfile.ErrBobfileNotFound) {
-				return nil, usererror.Wrapm(err, fmt.Sprintf("import of %s from %s/bob.yaml failed", imp, a.Dir()))
+				return nil, usererror.Wrapm(err, fmt.Sprintf("import of %s from %s/bob.yaml failed", importPath, a.Dir()))
 			}
 			errz.Fatal(err)
 		}
 		imports = append(imports, boblet)
 
-		// read imports rescursively
+		// read imports recursively
 		childImports, err := readImports(boblet, readModePlain, boblet.Dir())
 		errz.Fatal(err)
 		imports = append(imports, childImports...)

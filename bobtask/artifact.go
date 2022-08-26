@@ -51,7 +51,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	targets := []string{}
 	tempdir := ""
 	if t.target != nil {
-		if t.target.Type == target.Docker {
+		if t.target.Type() == target.Docker {
 			targets, err = t.saveDockerImageTargets()
 			errz.Fatal(err)
 		} else {
@@ -62,7 +62,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	// in case of docker images, clear newly created targets by
 	// images after archiving it in artifacts
-	if t.target.Type == target.Docker {
+	if t.target.Type() == target.Docker {
 		for _, target := range targets {
 			defer func(dst string) { _ = os.Remove(dst) }(target)
 		}
@@ -121,7 +121,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	metadata.Taskname = t.name
 	metadata.Project = t.Project()
 	metadata.InputHash = artifactName.String()
-	metadata.TargetType = t.target.Type
+	metadata.TargetType = t.target.Type()
 	bin, err := yaml.Marshal(metadata)
 	errz.Fatal(err)
 
@@ -139,7 +139,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 func (t *Task) pathTargets() ([]string, error) {
 	targets := []string{}
-	for _, path := range t.target.Paths {
+	for _, path := range t.target.PathsPlain() {
 		stat, err := os.Stat(filepath.Join(t.dir, path))
 		if err != nil {
 			return targets, err
@@ -172,7 +172,7 @@ func (t *Task) saveDockerImageTargets() ([]string, error) {
 	targets := []string{}
 
 	// TODO: change this path based implementation to docker tag
-	for _, image := range t.target.Paths {
+	for _, image := range t.target.PathsPlain() {
 		boblog.Log.V(2).Info(fmt.Sprintf("[image:%s] saving docker image", image))
 		target, err := t.dockerRegistryClient.ImageSave(image)
 		if err != nil {

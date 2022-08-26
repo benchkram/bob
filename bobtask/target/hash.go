@@ -17,7 +17,7 @@ import (
 
 // Hash creates a hash for the entire target
 func (t *T) Hash() (empty string, _ error) {
-	switch t.Type {
+	switch t.TypeSerialize {
 	case Path:
 		return t.filepathHash()
 	case Docker:
@@ -34,7 +34,7 @@ func (t *T) filepathHash() (empty string, _ error) {
 
 	//aggregatedHashes := bytes.NewBuffer([]byte{})
 	h := filehash.New()
-	for _, f := range t.Paths {
+	for _, f := range t.PathsSerialize {
 		target := filepath.Join(t.dir, f)
 
 		if !file.Exists(target) {
@@ -80,7 +80,7 @@ func (t *T) dockerImagesHash() (string, error) {
 
 	var hash string
 
-	for _, image := range t.Paths {
+	for _, image := range t.PathsSerialize {
 		h, err := t.dockerRegistryClient.ImageHash(image)
 		if err != nil {
 			if errors.Is(err, dockermobyutil.ErrImageNotFound) {

@@ -22,7 +22,7 @@ type ArtifactMetadata struct {
 
 	// TargetType sets the type of target, path/docker,
 	// default sets to `path`
-	TargetType target.TargetType `yaml:"target_type,omitempty"`
+	TargetType target.Type `yaml:"target_type,omitempty"`
 }
 
 func NewArtifactMetadata() *ArtifactMetadata {
