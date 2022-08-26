@@ -1,6 +1,9 @@
 
-<img src="https://bob.build/assets/logo.654a7917.svg" />
+<p align="center">
+  <img src="https://bob.build/assets/logo.654a7917.svg" />
+</p>
 
+---
 
 <p>
     <a href="https://github.com/benchkram/bob/releases">
