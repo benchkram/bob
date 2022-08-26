@@ -61,7 +61,7 @@ The basic components of a build task are:
 
 - **input**: Whenever an input changes, the task's commands need to be re-executed.
 - **cmd**: Commands to be executed
-- **target**: File(s) or directories that are created, cached locally.
+- **target**: Files, directories or docker images created during execution of *cmd*
 - **dependencies** Dependencies managed by the Nix package manager
 
 Example of a `bob.yaml` file:
