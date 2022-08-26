@@ -1,4 +1,6 @@
-# Bob
+
+<img src="https://bob.build/assets/logo.654a7917.svg" />
+
 
 <p>
     <a href="https://github.com/benchkram/bob/releases">
@@ -20,6 +22,7 @@ Why is this useful?
 * Get rid of "Works on My Machine".
 * No more building in docker.
 * Easily jump between different versions of a programming language.
+
 
 ## Vision
 Write Once, Build Once, Anywhere.
@@ -70,5 +73,5 @@ Multiline `sh` and `bash` commands are entirely possible, powered by [mvdan/sh](
 
 
 
-Comparison:
+### Comparison
 * [Dagger vs. Bob](https://medium.com/benchkram/dagger-vs-bob-2e917cd185d3)
