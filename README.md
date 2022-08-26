@@ -6,7 +6,7 @@
 Write Once, Build Once, Anywhere.
 </p>
 <p align="center">
-Designed to relieve the pain from microservice development.
+A build system for microservices
 </p>
 
 ---
