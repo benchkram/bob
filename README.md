@@ -29,7 +29,7 @@ Bob is a high-level build system that isolates pipelines from the host system by
 Why is this useful?
 
 * Get rid of "Works on My Machine".
-* No more building in docker.
+* No more building in Docker.
 * Easily jump between different versions of a programming language.
 
 
