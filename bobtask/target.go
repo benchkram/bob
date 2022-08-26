@@ -17,13 +17,14 @@ func (t *Task) Target() (empty target.Target, _ error) {
 		return empty, nil
 	}
 
-	hashIn, err := t.HashIn()
-	if err != nil {
-		if errors.Is(err, ErrHashInDoesNotExist) {
-			return t.target.WithDir(t.dir), nil
-		}
-		return empty, err
-	}
+	//  TODO: ???
+	// hashIn, err := t.HashIn()
+	// if err != nil {
+	// 	if errors.Is(err, ErrHashInDoesNotExist) {
+	// 		return t.target.WithDir(t.dir), nil
+	// 	}
+	// 	return empty, err
+	// }
 
 	buildInfo, err := t.ReadBuildinfo()
 	if err != nil {
@@ -33,12 +34,11 @@ func (t *Task) Target() (empty target.Target, _ error) {
 		return empty, err
 	}
 
-	expectedTargetHash, ok := buildInfo.Targets[hashIn]
-	if !ok {
+	if buildInfo.Target.Checksum == "" {
 		return t.target.WithDir(t.dir), nil
 	}
 
-	return t.target.WithDir(t.dir).WithExpectedHash(expectedTargetHash), nil
+	return t.target.WithDir(t.dir).WithExpectedHash(buildInfo.Target.Checksum), nil
 }
 
 func (t *Task) TargetExists() bool {

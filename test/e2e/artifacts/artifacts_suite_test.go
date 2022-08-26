@@ -31,7 +31,7 @@ import (
 // 4  dne                changed/dne  exists               | 0 1 1 |     =>   no-rebuild-required (update target from artifact)
 //
 // Following cases are tested in artifact_test.go
-// 5  exists             unchanged    dne                  | 1 0 0 |     =>   no-rebuild-required (update artifact from valid target)
+// 5  exists             unchanged    dne                  | 1 0 0 |     =>   rebuild-required (to assure the target is correctly pushed to the local store)
 // 6  exists             unchanged    exists               | 1 0 1 |     =>   no-rebuild-required
 // 7  exists             changed      dne                  | 1 1 0 |     =>   rebuild
 // 8  exists             changed      exists               | 1 1 1 |     =>   no-rebuild-required (update target from artifact)

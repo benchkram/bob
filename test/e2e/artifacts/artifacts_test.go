@@ -44,7 +44,7 @@ var _ = Describe("Test artifact and target invalidation", func() {
 
 			state, err := buildTask(b, "build")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCompleted))
 
 			exists, err := artifactExists(artifactID)
 			Expect(err).NotTo(HaveOccurred())
@@ -131,7 +131,7 @@ var _ = Describe("Test artifact and docker-target invalidation", func() {
 
 			state, err := buildTask(b, bob.BuildTargetDockerImageName)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCompleted))
 
 			exists, err := artifactExists(artifactID)
 			Expect(err).NotTo(HaveOccurred())

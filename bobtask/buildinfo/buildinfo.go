@@ -22,18 +22,12 @@ type I struct {
 	// Info holds data about the creator of this object.
 	Info Creator
 
-	// Targets hold hash values on all related
-	// targets in the build chain.
-	Targets Targets
+	Target TargetBuildInfo
 }
 
 func New() *I {
-	return &I{
-		Targets: make(Targets),
-	}
+	return &I{}
 }
 func Make() I {
-	return I{
-		Targets: make(Targets),
-	}
+	return I{}
 }

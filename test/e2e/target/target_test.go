@@ -85,14 +85,8 @@ var _ = Describe("Test bob's file target handling", func() {
 			Expect(all).NotTo(BeNil())
 		})
 
-		It("target hashes of child tasks WITH a valid target must exist ", func() {
-			Expect(len(all.Targets)).To(Equal(3))
-		})
-
-		It("target hashes of child tasks WITHOUT a valid target must NOT exist ", func() {
-			// print does not have a target and therfore should not store a hash
-			_, ok := all.Targets["second-level/third-level/print"]
-			Expect(ok).To(BeFalse())
+		It("target checksum must be non empty", func() {
+			Expect(all.Target.Checksum).NotTo(BeEmpty())
 		})
 
 		// ----- Check creation of hashes on child tasks -----
@@ -114,7 +108,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buildinfo).NotTo(BeNil())
-			Expect(len(buildinfo.Targets)).To(Equal(1))
+			Expect(buildinfo.Target.Checksum).NotTo(BeEmpty())
 		})
 
 		It("target hash of task `/second-level/third-level/print` must NOT exist", func() {
@@ -134,7 +128,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buildinfo).NotTo(BeNil())
-			Expect(len(buildinfo.Targets)).To(Equal(0))
+			Expect(buildinfo.Target.Checksum).To(BeEmpty())
 		})
 	})
 })

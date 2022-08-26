@@ -166,6 +166,8 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 		}
 		if target != nil {
 			// In case of a invalid traget a rebuild is required
+
+			// TODO: simplify verify by check size + modification time of target.
 			rebuildRequired = !target.Verify()
 
 			// Try to load a target from the store when a rebuild is required.
@@ -180,11 +182,16 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 				} else {
 					boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] failed to get target from store", taskname))
 				}
+			} else {
+				// Hint: Once there was a time when we created the target in the store
+				// in case no rebuild was required and the target doesn't exist.
+				// Though this should only be done after the target was really build..
+				// If loaded from a remote.. it anyway is synced through the local store.
+				if !task.ArtifactExists(hashIn) {
+					boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(target not in local store)", p.namePad, coloredName))
+					return true, TargetInvalid, err
+				}
 			}
-			// Hint: Once there was a time when we created the target in the store
-			// in case no rebuild was required and the target doesn't exist.
-			// Though this should only be done after the target was really build..
-			// If loaded from a remote.. it anyway is synced through the local store.
 
 			if rebuildRequired {
 				boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(invalid targets)", p.namePad, coloredName))
@@ -401,48 +408,50 @@ func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 			return err
 		}
 
-		buildInfo.Targets[hashIn] = targetHash
+		buildInfo.Target.Checksum = targetHash
+		buildInfo.Target.Modified = time.Time{} // TODO:
+		buildInfo.Target.Size = 0               // TODO:
 
-		// gather target hashes of dependent tasks
-		err = p.Tasks.walk(taskname, func(tn string, task *Status, err error) error {
-			if err != nil {
-				return err
-			}
-			if taskname == tn {
-				return nil
-			}
+		// // gather target hashes of dependent tasks
+		// err = p.Tasks.walk(taskname, func(tn string, task *Status, err error) error {
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	if taskname == tn {
+		// 		return nil
+		// 	}
 
-			target, err := task.Target()
-			if err != nil {
-				return err
-			}
-			if target == nil {
-				return nil
-			}
+		// 	target, err := task.Target()
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	if target == nil {
+		// 		return nil
+		// 	}
 
-			switch task.State() {
-			case StateCompleted:
-				fallthrough
-			case StateNoRebuildRequired:
-				h, err := target.Hash()
-				if err != nil {
-					return err
-				}
-				hashIn, err := task.HashIn()
-				if err != nil {
-					return err
-				}
-				buildInfo.Targets[hashIn] = h
-			case StateRunning:
-				return nil
-			default:
-				boblog.Log.V(1).Info(string(task.state))
-				return ErrUnexpectedTaskState
-			}
+		// 	switch task.State() {
+		// 	case StateCompleted:
+		// 		fallthrough
+		// 	case StateNoRebuildRequired:
+		// 		h, err := target.Hash()
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		// 		hashIn, err := task.HashIn()
+		// 		if err != nil {
+		// 			return err
+		// 		}
+		// 		buildInfo.Targets[hashIn] = h
+		// 	case StateRunning:
+		// 		return nil
+		// 	default:
+		// 		boblog.Log.V(1).Info(string(task.state))
+		// 		return ErrUnexpectedTaskState
+		// 	}
 
-			return nil
-		})
-		errz.Fatal(err)
+		// 	return nil
+		// })
+		// errz.Fatal(err)
 	}
 
 	err = p.storeHash(taskname, buildInfo)
