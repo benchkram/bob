@@ -80,5 +80,5 @@ Multiline `sh` and `bash` commands are entirely possible, powered by [mvdan/sh](
 
 
 # Comparisons
-* [Dagger vs. Bob](https://medium.com/benchkram/dagger-vs-bob-2e917cd185d3)
-* [Mage vs. Bob](https://medium.com/benchkram/build-system-comparison-mage-vs-bob-aaf4665e3d5c)
+* [Dagger vs. bob](https://medium.com/benchkram/dagger-vs-bob-2e917cd185d3)
+* [Mage vs. bob](https://medium.com/benchkram/build-system-comparison-mage-vs-bob-aaf4665e3d5c)
