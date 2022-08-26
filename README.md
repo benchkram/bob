@@ -2,6 +2,12 @@
 <p align="center">
   <img  width="300" src="https://bob.build/assets/logo.654a7917.svg" />
 </p>
+<p align="center">
+Write Once, Build Once, Anywhere.
+</p>
+<p align="center">
+Designed to relieve the pain from microservice development.
+</p>
 
 ---
 
@@ -27,10 +33,8 @@ Why is this useful?
 * Easily jump between different versions of a programming language.
 
 
-## Vision
-Write Once, Build Once, Anywhere.
 
-**Designed to relieve the pain from microservice development.**
+
 ## Getting Started
 
 Documentation is available at [bob.build](https://bob.build/docs)
