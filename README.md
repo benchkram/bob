@@ -3,7 +3,7 @@
   <img  width="300" src="https://bob.build/assets/logo.654a7917.svg" />
 </p>
 <p align="center">
-Write Once, Build Once, Anywhere.
+Write Once, Build Once, Anywhere
 </p>
 <p align="center">
 A build system for microservices
