@@ -179,11 +179,11 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	// Tasks without predecessors don't need recomputation.
 	// If a task has a predecssor it might happen that the
 	// task altered the filesystem. For this case hashes must be recomputated.
-	var recomputeInputs bool
-	if len(task.DependsOn) > 0 {
-		recomputeInputs = true
-	}
-	hashIn, err := task.HashIn(recomputeInputs)
+	// var recomputeInputs bool
+	// if len(task.DependsOn) > 0 {
+	// 	recomputeInputs = true
+	// }
+	hashIn, err := task.HashIn()
 	errz.Fatal(err)
 
 	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.Name(), hashIn)

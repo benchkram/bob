@@ -225,23 +225,3 @@ func addTaskPrefix(prefix, taskname string) string {
 	taskname = strings.TrimPrefix(taskname, "/")
 	return taskname
 }
-
-// taskNameToEnvironment
-//
-// Each taskname is translated into environment variables like:
-//
-//	`second-level/openapi_exportname => SECOND_LEVEL_OPENAPI_EXPORTNAME`
-//
-// Hyphens`-` are translated to underscores`_`.
-func taskNameToEnvironment(taskname string, exportname string) string {
-
-	splits := strings.Split(taskname, "/")
-	splits = append(splits, exportname)
-
-	envvar := strings.Join(splits, "_")
-	envvar = strings.ReplaceAll(envvar, "-", "_")
-	envvar = strings.ReplaceAll(envvar, ".", "_")
-	envvar = strings.ToUpper(envvar)
-
-	return envvar
-}

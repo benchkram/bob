@@ -165,7 +165,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 			return true, "", err
 		}
 		if target != nil {
-			// On a invalid traget a rebuild is required
+			// In case of a invalid traget a rebuild is required
 			rebuildRequired = !target.Verify()
 
 			// Try to load a target from the store when a rebuild is required.
@@ -180,12 +180,11 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 				} else {
 					boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] failed to get target from store", taskname))
 				}
-			} else {
-				if !task.ArtifactExists(hashIn) && p.enableCaching {
-					err = task.ArtifactPack(hashIn)
-					boblog.Log.Error(err, "Unable to send target to store")
-				}
 			}
+			// Hint: Once there was a time when we created the target in the store
+			// in case no rebuild was required and the target doesn't exist.
+			// Though this should only be done after the target was really build..
+			// If loaded from a remote.. it anyway is synced through the local store.
 
 			if rebuildRequired {
 				boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(invalid targets)", p.namePad, coloredName))

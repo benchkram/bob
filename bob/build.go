@@ -42,8 +42,8 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	// HINT: It's not easily possible to parallelize hash computation
 	// with building nix dependecies.. as the storePaths computed by
 	// BuildNixDependenciesInPipeline are considered in the task input hash.
-	err = playbook.PreComputeInputHashes()
-	errz.Fatal(err)
+	// err = playbook.PreComputeInputHashes()
+	// errz.Fatal(err)
 
 	remote := ag.Remotestore()
 
