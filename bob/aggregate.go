@@ -59,8 +59,10 @@ func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, e
 		}
 	}
 
-	wd, _ := os.Getwd()
-	aggregate, err = bobfile.BobfileReadPlain(wd)
+	// Passing "." instead of the absPath so the
+	// tasks can be initialized with the relativve path.
+	// The absolut path is only stored in `aggregate.Project`.
+	aggregate, err = bobfile.BobfileReadPlain(".")
 	errz.Fatal(err)
 
 	if !file.Exists(global.BobFileName) {
@@ -73,6 +75,13 @@ func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, e
 
 	bobs, err := readImports(aggregate, true)
 	errz.Fatal(err)
+
+	if aggregate.Project == "" {
+		// TODO: maybe don't leak absolute path of environment
+
+		wd, _ := os.Getwd()
+		aggregate.Project = wd
+	}
 
 	// set project names for all bobfiles and build tasks
 	aggregate, bobs = syncProjectName(aggregate, bobs)
@@ -94,8 +103,10 @@ func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, e
 func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)
 
-	wd, _ := os.Getwd()
-	aggregate, err = bobfile.BobfileRead(wd)
+	// Passing "." instead of the absPath so the
+	// tasks can be initialized with the relativve path.
+	// The absolut path is only stored in `aggregate.Project`.
+	aggregate, err = bobfile.BobfileRead(".")
 	errz.Fatal(err)
 
 	if !file.Exists(global.BobFileName) {
@@ -123,7 +134,8 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 	if aggregate.Project == "" {
 		// TODO: maybe don't leak absolute path of environment
-		aggregate.Project = aggregate.Dir()
+		wd, _ := os.Getwd()
+		aggregate.Project = wd
 	}
 
 	// set project names for all bobfiles and build tasks
@@ -245,6 +257,12 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
+	err = aggregate.BTasks.IgnoreChildTargets()
+	errz.Fatal(err)
+
+	err = aggregate.BTasks.FilterInputs()
+	errz.Fatal(err)
+
 	return aggregate, aggregate.Verify()
 }
 
@@ -257,7 +275,9 @@ func addTaskPrefix(prefix, taskname string) string {
 // taskNameToEnvironment
 //
 // Each taskname is translated into environment variables like:
-//   `second-level/openapi_exportname => SECOND_LEVEL_OPENAPI_EXPORTNAME`
+//
+//	`second-level/openapi_exportname => SECOND_LEVEL_OPENAPI_EXPORTNAME`
+//
 // Hyphens`-` are translated to underscores`_`.
 func taskNameToEnvironment(taskname string, exportname string) string {
 

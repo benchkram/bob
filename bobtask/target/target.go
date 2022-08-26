@@ -1,7 +1,7 @@
 package target
 
 import (
-	"fmt"
+	"path/filepath"
 
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 )
@@ -13,6 +13,10 @@ type Target interface {
 
 	WithHash(string) Target
 	WithDir(string) Target
+
+	Paths() []string
+	PathsPlain() []string
+	Type() Type
 }
 
 type T struct {
@@ -25,44 +29,42 @@ type T struct {
 	// dockerRegistryClient utility functions to handle requests with local docker registry
 	dockerRegistryClient dockermobyutil.RegistryClient
 
-	Paths []string   `yaml:"Paths"`
-	Type  TargetType `yaml:"Type"`
+	// exposed due to yaml marshalling
+	PathsSerialize []string `yaml:"Paths"`
+	TypeSerialize  Type     `yaml:"Type"`
 }
 
-func Make() T {
-	return T{
+func New(opts ...Option) *T {
+	t := &T{
 		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		Paths:                []string{},
-		Type:                 Path,
+		PathsSerialize:       []string{},
+		TypeSerialize:        Path,
 	}
-}
 
-func New() *T {
-	return new()
-}
-
-func new() *T {
-	return &T{
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		Paths:                []string{},
-		Type:                 Path,
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(t)
 	}
+
+	return t
 }
 
-type TargetType string
+type Type string
 
 const (
-	Path   TargetType = "path"
-	Docker TargetType = "docker"
+	Path   Type = "path"
+	Docker Type = "docker"
 )
 
 const DefaultType = Path
 
 func (t *T) clone() *T {
-	target := new()
+	target := New()
 	target.dir = t.dir
-	target.Paths = t.Paths
-	target.Type = t.Type
+	target.PathsSerialize = t.PathsSerialize
+	target.TypeSerialize = t.TypeSerialize
 	return target
 }
 
@@ -77,13 +79,26 @@ func (t *T) WithHash(hash string) Target {
 	return target
 }
 
-func ParseType(str string) (TargetType, error) {
-	switch {
-	case str == string(Path):
-		return Path, nil
-	case str == string(Docker):
-		return Docker, nil
-	default:
-		return DefaultType, fmt.Errorf("Invalid Target type. Only supports 'path' and 'docker-image' as type.")
+// Paths in relation to the umrella bobfile
+func (t *T) Paths() []string {
+	if len(t.PathsSerialize) == 0 {
+		return []string{}
 	}
+
+	var pathsWithDir []string
+	for _, v := range t.PathsSerialize {
+		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))
+	}
+
+	return pathsWithDir
+}
+
+// PathsPlain does return the pure target path
+// as given in the bobfile.
+func (t *T) PathsPlain() []string {
+	return t.PathsSerialize
+}
+
+func (t *T) Type() Type {
+	return t.TypeSerialize
 }

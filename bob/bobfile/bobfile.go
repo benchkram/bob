@@ -149,6 +149,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	for key, task := range bobfile.BTasks {
 		task.SetDir(bobfile.dir)
 		task.SetName(key)
+		task.InputAdditionalIgnores = []string{}
 
 		task.InputDirty = fmt.Sprintf("%s\n%s", task.InputDirty, defaultIgnores)
 

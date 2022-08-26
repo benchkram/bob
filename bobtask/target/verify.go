@@ -7,7 +7,7 @@ import (
 // Verify existence and integrity of targets.
 // Returns true when no targets defined.
 func (t *T) Verify() bool {
-	switch t.Type {
+	switch t.TypeSerialize {
 	case Path:
 		return t.verifyFile(t.hash)
 	case Docker:
@@ -18,7 +18,7 @@ func (t *T) Verify() bool {
 }
 
 func (t *T) verifyFile(groundTruth string) bool {
-	if len(t.Paths) == 0 {
+	if len(t.PathsSerialize) == 0 {
 		return true
 	}
 
@@ -43,7 +43,7 @@ func (t *T) verifyFile(groundTruth string) bool {
 
 func (t *T) verifyDocker(groundTruth string) bool {
 
-	if len(t.Paths) == 0 {
+	if len(t.PathsSerialize) == 0 {
 		return true
 	}
 
