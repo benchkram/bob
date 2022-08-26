@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="https://bob.build/assets/logo.654a7917.svg" />
+  <img  width="300" src="https://bob.build/assets/logo.654a7917.svg" />
 </p>
 
 ---
