@@ -70,8 +70,7 @@ Example of a `bob.yaml` file:
 build:
   build:
     input: "*"
-    cmd: |
-      go build -o ./app
+    cmd: go build -o ./app
     target: ./app
     dependencies: [ git, go_1_18 ]
 ```
@@ -80,5 +79,6 @@ Multiline `sh` and `bash` commands are entirely possible, powered by [mvdan/sh](
 
 
 
-# Comparison
+# Comparisons
 * [Dagger vs. Bob](https://medium.com/benchkram/dagger-vs-bob-2e917cd185d3)
+* [Mage vs. Bob](https://medium.com/benchkram/build-system-comparison-mage-vs-bob-aaf4665e3d5c)
