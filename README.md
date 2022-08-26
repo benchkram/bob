@@ -41,7 +41,7 @@ Documentation is available at [bob.build](https://bob.build/docs)
 
 # Install
 
-[docs-installation](https://bob.build/docs/getting-started/installation)
+[install](https://bob.build/docs/getting-started/installation)
 
 If you wanna go wild and have Go 1.17 or later installed, the short version is:
 
