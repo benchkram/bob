@@ -35,11 +35,11 @@ Why is this useful?
 
 
 
-## Getting Started
+# Getting Started
 
 Documentation is available at [bob.build](https://bob.build/docs)
 
-## Install
+# Install
 
 [docs-installation](https://bob.build/docs/getting-started/installation)
 
@@ -53,7 +53,7 @@ go install
 
 For shell autocompletion (bash and zsh supported) add `source <(bob completion)` to your `.bashrc`/`.zshrc`.
 
-### How it works
+# How it works
 Bobs generates its internal build graph from tasks described in a `bob.yaml` file (usually refered to as "Bobfile").
 Each build step is executed in a sandbox shell only using the given dependecies required from the nix package manager.
 
@@ -80,5 +80,5 @@ Multiline `sh` and `bash` commands are entirely possible, powered by [mvdan/sh](
 
 
 
-### Comparison
+# Comparison
 * [Dagger vs. Bob](https://medium.com/benchkram/dagger-vs-bob-2e917cd185d3)
