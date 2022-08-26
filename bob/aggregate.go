@@ -257,7 +257,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
-	// /aggregate.BTasks.ClearInputsOfChildrenTargets()
 	err = aggregate.BTasks.IgnoreChildTargets()
 	errz.Fatal(err)
 
