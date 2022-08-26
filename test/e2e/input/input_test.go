@@ -25,7 +25,7 @@ var _ = Describe("Testing input for a task", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	FWhen("input is * and task depends on another task with a target", func() {
+	When("input is * and task depends on another task with a target", func() {
 		It("should not include the children tasks targets in input", func() {
 			func() {
 				bf, ok := nameToBobfile["with_one_level"]
