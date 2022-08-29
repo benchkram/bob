@@ -34,11 +34,11 @@ func (t *Task) Target() (empty target.Target, _ error) {
 		return empty, err
 	}
 
-	if buildInfo.Target.Checksum == "" {
+	if buildInfo.Target.Hash == "" {
 		return t.target.WithDir(t.dir), nil
 	}
 
-	return t.target.WithDir(t.dir).WithExpectedHash(buildInfo.Target.Checksum), nil
+	return t.target.WithDir(t.dir).WithExpectedHash(buildInfo.Target.Hash), nil
 }
 
 func (t *Task) TargetExists() bool {

@@ -3,7 +3,7 @@ package bobtask
 import (
 	"time"
 
-	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/bobtask/targettype"
 )
 
 type ArtifactMetadata struct {
@@ -22,13 +22,13 @@ type ArtifactMetadata struct {
 
 	// TargetType sets the type of target, path/docker,
 	// default sets to `path`
-	TargetType target.Type `yaml:"target_type,omitempty"`
+	TargetType targettype.T `yaml:"target_type,omitempty"`
 }
 
 func NewArtifactMetadata() *ArtifactMetadata {
 	am := &ArtifactMetadata{
 		CreatedAt:  time.Now(),
-		TargetType: target.Path,
+		TargetType: targettype.Path,
 	}
 	return am
 }

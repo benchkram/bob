@@ -8,7 +8,7 @@ import (
 
 	"github.com/benchkram/errz"
 
-	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/multilinecmd"
 	"github.com/benchkram/bob/pkg/nix"
@@ -159,7 +159,7 @@ func (tm Map) IgnoreChildTargets() (err error) {
 				return err
 			}
 			if t != nil {
-				if t.Type() == target.Path {
+				if t.Type() == targettype.Path {
 					for _, p := range t.Paths() {
 						if umbrellaTask.Dir() == task.Dir() {
 							// everything good.. use them as they are

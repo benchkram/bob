@@ -9,22 +9,15 @@ import (
 // Exists determines if the target exists without
 // validating it's integrety.
 func (t *T) Exists() bool {
-	switch t.TypeSerialize {
-	case Path:
-		return t.existsFile()
-	case Docker:
-		return t.existsDocker()
-	default:
-		return t.existsFile()
-	}
+	return t.existsFile() && t.existsDocker()
 }
 
 func (t *T) existsFile() bool {
-	if len(t.PathsSerialize) == 0 {
+	if len(t.filesystemEntries) == 0 {
 		return true
 	}
 	// check plain existence
-	for _, f := range t.PathsSerialize {
+	for _, f := range t.filesystemEntries {
 		target := filepath.Join(t.dir, f)
 		if !file.Exists(target) {
 			return false
@@ -35,11 +28,11 @@ func (t *T) existsFile() bool {
 }
 
 func (t *T) existsDocker() bool {
-	if len(t.PathsSerialize) == 0 {
+	if len(t.dockerImages) == 0 {
 		return true
 	}
 
-	for _, f := range t.PathsSerialize {
+	for _, f := range t.dockerImages {
 		exists, err := t.dockerRegistryClient.ImageExists(f)
 		if err != nil {
 			return false

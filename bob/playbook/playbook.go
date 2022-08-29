@@ -408,9 +408,9 @@ func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 			return err
 		}
 
-		buildInfo.Target.Checksum = targetHash
-		buildInfo.Target.Modified = time.Time{} // TODO:
-		buildInfo.Target.Size = 0               // TODO:
+		// buildInfo.Target.Hash = targetHash
+		// buildInfo.Target.Modified = time.Time{} // TODO:
+		// buildInfo.Target.Size = 0               // TODO:
 
 		// // gather target hashes of dependent tasks
 		// err = p.Tasks.walk(taskname, func(tn string, task *Status, err error) error {

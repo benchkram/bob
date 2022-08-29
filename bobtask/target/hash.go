@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/benchkram/bob/bobtask/buildinfo"
+	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/usererror"
 
@@ -15,12 +17,26 @@ import (
 	"github.com/benchkram/bob/pkg/filehash"
 )
 
+func (t *T) ComputeBuildInfo() (bi *buildinfo.I, err error) {
+	bi = buildinfo.New()
+
+	for _, path := range t.filesystemEntries {
+		println(path)
+	}
+
+	for _, image := range t.dockerImages {
+		println(image)
+	}
+
+	return bi, nil
+}
+
 // Hash creates a hash for the entire target
 func (t *T) Hash() (empty string, _ error) {
 	switch t.TypeSerialize {
-	case Path:
+	case targettype.Path:
 		return t.filepathHash()
-	case Docker:
+	case targettype.Docker:
 		return t.dockerImagesHash()
 	default:
 		return t.filepathHash()

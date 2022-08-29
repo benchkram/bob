@@ -14,6 +14,7 @@ import (
 
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/store"
@@ -303,7 +304,7 @@ func (t *Task) parseTargets() error {
 	return nil
 }
 
-func parseTargetMap(tm map[string]interface{}) ([]string, target.Type, error) {
+func parseTargetMap(tm map[string]interface{}) ([]string, targettype.T, error) {
 
 	// check first if both directives are selected
 	if keyExists(tm, pathSelector) && keyExists(tm, imageSelector) {
@@ -317,7 +318,7 @@ func parseTargetMap(tm map[string]interface{}) ([]string, target.Type, error) {
 			return nil, target.DefaultType, err
 		}
 
-		return targets, target.Path, nil
+		return targets, targettype.Path, nil
 	}
 
 	images, ok := tm[imageSelector]
@@ -325,7 +326,7 @@ func parseTargetMap(tm map[string]interface{}) ([]string, target.Type, error) {
 		return nil, target.DefaultType, ErrInvalidTargetDefinition
 	}
 
-	return parseTargetImage(images.(string)), target.Docker, nil
+	return parseTargetImage(images.(string)), targettype.Docker, nil
 }
 
 func parseTargetPath(p string) ([]string, error) {

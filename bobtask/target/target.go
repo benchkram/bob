@@ -3,47 +3,57 @@ package target
 import (
 	"path/filepath"
 
+	"github.com/benchkram/bob/bobtask/buildinfo"
+	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 )
 
 type Target interface {
-	Hash() (string, error)
+	ComputeBuildInfo() (string, error) // Snapshot() compute current state from the filesystem.
+
+	//Buildinfo() (buildinfo.TargetBuildInfo, error)
 	Verify() bool
 	Exists() bool
 
 	WithExpectedHash(string) Target
 	WithDir(string) Target
 
-	Paths() []string
-	PathsPlain() []string
-	Type() Type
+	// Paths() []string
+	// PathsPlain() []string
+	// Type() targettype.T
 }
 
 type T struct {
 	// working dir of target
 	dir string
 
-	// expectedHash is the last computed hash of the target used to verify the targets integrity.
-	// Loaded from the system and created on a previous run
-	expectedHash string
+	// expected is the last valid buildinfo of the target used to verify the targets integrity.
+	// Loaded from the system and created on a previous run. Can be nil.
+	expected *buildinfo.Targets
 
 	// currentHash is the currenlty created hash during the run.
-	// Reused to avoid multiple computations.
-	currentHash string
+	// current to avoid multiple computations.
+	// current string
 
 	// dockerRegistryClient utility functions to handle requests with local docker registry
 	dockerRegistryClient dockermobyutil.RegistryClient
 
+	// dockerImages an array of docker tags
+	dockerImages []string
+	// filesystemEntries an array of filesystem entries,
+	// E.g. files or entire directories.
+	filesystemEntries []string
+
 	// exposed due to yaml marshalling
-	PathsSerialize []string `yaml:"Paths"`
-	TypeSerialize  Type     `yaml:"Type"`
+	// PathsSerialize []string     `yaml:"Paths"`
+	// TypeSerialize  targettype.T `yaml:"Type"`
 }
 
 func New(opts ...Option) *T {
 	t := &T{
 		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		PathsSerialize:       []string{},
-		TypeSerialize:        Path,
+		// PathsSerialize:       []string{},
+		// TypeSerialize:        DefaultType,
 	}
 
 	for _, opt := range opts {
@@ -56,20 +66,13 @@ func New(opts ...Option) *T {
 	return t
 }
 
-type Type string
-
-const (
-	Path   Type = "path"
-	Docker Type = "docker"
-)
-
-const DefaultType = Path
+const DefaultType = targettype.Path
 
 func (t *T) clone() *T {
 	target := New()
 	target.dir = t.dir
-	target.PathsSerialize = t.PathsSerialize
-	target.TypeSerialize = t.TypeSerialize
+	// target.PathsSerialize = t.PathsSerialize
+	// target.TypeSerialize = t.TypeSerialize
 	return target
 }
 
@@ -78,10 +81,10 @@ func (t *T) WithDir(dir string) Target {
 	return t
 }
 
-func (t *T) WithExpectedHash(expectedHash string) Target {
-	t.expectedHash = expectedHash
-	return t
-}
+// func (t *T) WithExpectedHash(expectedHash string) Target {
+// 	t.expectedHash = expectedHash
+// 	return t
+// }
 
 // Paths in relation to the umrella bobfile
 func (t *T) Paths() []string {
@@ -103,6 +106,6 @@ func (t *T) PathsPlain() []string {
 	return t.PathsSerialize
 }
 
-func (t *T) Type() Type {
+func (t *T) Type() targettype.T {
 	return t.TypeSerialize
 }

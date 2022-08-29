@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filepathutil"
 )
@@ -69,7 +69,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 
 	// Also ignore file & dir targets stored in the same directory
 	if t.target != nil {
-		if t.target.Type() == target.Path {
+		if t.target.Type() == targettype.Path {
 			for _, path := range t.target.PathsPlain() {
 				if file.Exists(path) {
 					info, err := os.Stat(path)

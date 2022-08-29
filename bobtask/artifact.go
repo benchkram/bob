@@ -18,7 +18,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/benchkram/bob/bobtask/hash"
-	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/boblog"
 )
 
@@ -51,7 +51,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	targets := []string{}
 	tempdir := ""
 	if t.target != nil {
-		if t.target.Type() == target.Docker {
+		if t.target.Type() == targettype.Docker {
 			targets, err = t.saveDockerImageTargets()
 			errz.Fatal(err)
 		} else {
@@ -62,7 +62,7 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	// in case of docker images, clear newly created targets by
 	// images after archiving it in artifacts
-	if t.target.Type() == target.Docker {
+	if t.target.Type() == targettype.Docker {
 		for _, target := range targets {
 			defer func(dst string) { _ = os.Remove(dst) }(target)
 		}
@@ -239,7 +239,7 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 			}
 
 			switch meta.TargetType {
-			case target.Docker:
+			case targettype.Docker:
 				// load the docker image from destination
 				dst := filepath.Join(os.TempDir(), filename)
 
@@ -258,7 +258,7 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 				// delete the unpacked docker image archive
 				// after `docker load`
 				defer func() { _ = os.Remove(dst) }()
-			case target.Path:
+			case targettype.Path:
 				fallthrough
 			default:
 				dst := filepath.Join(t.dir, filename)

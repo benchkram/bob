@@ -1,6 +1,7 @@
 package target
 
 import (
+	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/boblog"
 )
 
@@ -8,9 +9,9 @@ import (
 // Returns true when no targets defined.
 func (t *T) Verify() bool {
 	switch t.TypeSerialize {
-	case Path:
+	case targettype.Path:
 		return t.verifyFile(t.expectedHash)
-	case Docker:
+	case targettype.Docker:
 		return t.verifyDocker(t.expectedHash)
 	default:
 		return t.verifyFile(t.expectedHash)
