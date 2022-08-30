@@ -2,11 +2,11 @@ package playbook
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
-	"github.com/hako/durafmt"
 	"github.com/logrusorgru/aurora"
 )
 
@@ -17,10 +17,7 @@ func (p *Playbook) summary(processedTasks []*bobtask.Task) (err error) {
 	boblog.Log.V(1).Info("")
 	boblog.Log.V(1).Info(aurora.Bold("● ● ● ●").BrightGreen().String())
 
-	duration, err := durafmt.ParseString(p.ExecutionTime().String())
-	errz.Fatal(err)
-
-	t := fmt.Sprintf("Ran %d tasks in %s", len(processedTasks), duration.LimitFirstN(1).InternationalString())
+	t := fmt.Sprintf("Ran %d tasks in %s", len(processedTasks), displayDuration(p.ExecutionTime()))
 
 	boblog.Log.V(1).Info(aurora.Bold(t).BrightGreen().String())
 	for _, t := range processedTasks {
@@ -33,12 +30,7 @@ func (p *Playbook) summary(processedTasks []*bobtask.Task) (err error) {
 		execTime := ""
 		status := stat.State()
 		if status != StateNoRebuildRequired {
-			duration, err = durafmt.ParseString(stat.ExecutionTime().String())
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-			execTime = fmt.Sprintf("\t(%s)", duration.LimitFirstN(1).InternationalString())
+			execTime = fmt.Sprintf("\t(%s)", displayDuration(stat.ExecutionTime()))
 		}
 
 		taskName := t.Name()
@@ -46,4 +38,11 @@ func (p *Playbook) summary(processedTasks []*bobtask.Task) (err error) {
 	}
 	boblog.Log.V(1).Info("")
 	return nil
+}
+
+func displayDuration(d time.Duration) string {
+	if d.Seconds() > 1 {
+		return fmt.Sprintf("%.2fs", float64(d)/float64(time.Second))
+	}
+	return fmt.Sprintf("%.2fms", float64(d)/float64(time.Millisecond))
 }
