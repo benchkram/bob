@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"time"
 
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/boblog"
@@ -23,7 +22,6 @@ var colorPool = []aurora.Color{
 	aurora.YellowFg,
 	aurora.RedFg,
 }
-var round = 10 * time.Millisecond
 
 // pickTaskColors picks a display color for each task in the playbook.
 func (p *Playbook) pickTaskColors() {
