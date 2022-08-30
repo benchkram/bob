@@ -9,105 +9,104 @@ import (
 	"path/filepath"
 
 	"github.com/benchkram/bob/bobtask/buildinfo"
-	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filehash"
 )
 
-func (t *T) ComputeBuildInfo() (bi *buildinfo.I, err error) {
-	bi = buildinfo.New()
+// BuildInfo reads file info and computes the target hash
+// for filesystem and docker targets.
+func (t *T) BuildInfo() (bi *buildinfo.Targets, err error) {
+	defer errz.Recover(&err)
 
-	for _, path := range t.filesystemEntries {
-		println(path)
+	if t.current != nil {
+		return t.current, nil
 	}
 
+	bi = buildinfo.NewTargets()
+
+	// Filesystem
+	buildInfoFilesystem, err := t.buildinfoFiles(t.filesystemEntries)
+	errz.Fatal(err)
+	bi.Filesystem = buildInfoFilesystem
+
+	// Docker
 	for _, image := range t.dockerImages {
-		println(image)
+		hash, err := t.dockerImageHash(image)
+		errz.Fatal(err)
+
+		bi.Docker[image] = buildinfo.BuildInfoDocker{Hash: hash}
 	}
+
+	t.current = bi
 
 	return bi, nil
 }
 
-// Hash creates a hash for the entire target
-func (t *T) Hash() (empty string, _ error) {
-	switch t.TypeSerialize {
-	case targettype.Path:
-		return t.filepathHash()
-	case targettype.Docker:
-		return t.dockerImagesHash()
-	default:
-		return t.filepathHash()
-	}
-}
+func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error) {
 
-func (t *T) filepathHash() (empty string, _ error) {
-	if t.currentHash != "" {
-		return t.currentHash, nil
-	}
-
-	//aggregatedHashes := bytes.NewBuffer([]byte{})
 	h := filehash.New()
-	for _, f := range t.PathsSerialize {
-		target := filepath.Join(t.dir, f)
+	for _, path := range paths {
+		path = filepath.Join(t.dir, path)
 
-		if !file.Exists(target) {
-			return empty, usererror.Wrapm(fmt.Errorf("target does not exist %q", f), "failed to hash target")
+		if !file.Exists(path) {
+			return buildinfo.BuildInfoFiles{}, usererror.Wrapm(fmt.Errorf("target does not exist %q", path), "failed to hash target")
 		}
-		fi, err := os.Stat(target)
+		targetInfo, err := os.Stat(path)
 		if err != nil {
-			return empty, fmt.Errorf("failed to get file info %q: %w", f, err)
+			return buildinfo.BuildInfoFiles{}, fmt.Errorf("failed to get file info %q: %w", path, err)
 		}
 
-		if fi.IsDir() {
-			if err := filepath.WalkDir(target, func(p string, fi fs.DirEntry, err error) error {
+		if targetInfo.IsDir() {
+			if err := filepath.WalkDir(path, func(p string, f fs.DirEntry, err error) error {
 				if err != nil {
 					return err
 				}
-				if fi.IsDir() {
+				if f.IsDir() {
 					return nil
 				}
+
 				err = h.AddFile(p)
 				if err != nil {
 					return fmt.Errorf("failed to hash target %q: %w", f, err)
 				}
 
+				info, err := f.Info()
+				if err != nil {
+					return fmt.Errorf("failed to get file info %q: %w", p, err)
+				}
+				bi.Files[p] = buildinfo.BuildInfoFile{Modified: info.ModTime(), Size: info.Size()}
+
 				return nil
 			}); err != nil {
-				return empty, fmt.Errorf("failed to walk dir %q: %w", target, err)
+				return buildinfo.BuildInfoFiles{}, fmt.Errorf("failed to walk dir %q: %w", path, err)
 			}
 			// TODO: what happens on a empty dir?
 		} else {
-			err = h.AddFile(target)
+			err = h.AddFile(path)
 			if err != nil {
-				return empty, fmt.Errorf("failed to hash target %q: %w", f, err)
+				return buildinfo.BuildInfoFiles{}, fmt.Errorf("failed to hash target %q: %w", path, err)
 			}
+			bi.Files[path] = buildinfo.BuildInfoFile{Modified: targetInfo.ModTime(), Size: targetInfo.Size()}
 		}
 	}
 
-	t.currentHash = hex.EncodeToString(h.Sum())
+	bi.Hash = hex.EncodeToString(h.Sum())
 
-	return t.currentHash, nil
+	return bi, nil
 }
 
-func (t *T) dockerImagesHash() (string, error) {
-
-	var hash string
-
-	for _, image := range t.PathsSerialize {
-		h, err := t.dockerRegistryClient.ImageHash(image)
-		if err != nil {
-			if errors.Is(err, dockermobyutil.ErrImageNotFound) {
-				return "", usererror.Wrapm(err, "failed to fetch docker image hash")
-			} else {
-				return "", fmt.Errorf("failed to get docker image hash info %q: %w", image, err)
-			}
+func (t *T) dockerImageHash(image string) (string, error) {
+	hash, err := t.dockerRegistryClient.ImageHash(image)
+	if err != nil {
+		if errors.Is(err, dockermobyutil.ErrImageNotFound) {
+			return "", usererror.Wrapm(err, "failed to fetch docker image hash")
+		} else {
+			return "", fmt.Errorf("failed to get docker image hash info %q: %w", image, err)
 		}
-		hash = hash + h
-
 	}
-
 	return hash, nil
 }

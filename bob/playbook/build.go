@@ -236,30 +236,40 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 
 	taskSuccessFul = true
 
-	err = task.VerifyAfter()
-	errz.Fatal(err)
+	// err = task.VerifyAfter()
+	// errz.Fatal(err)
 
-	target, err := task.Target()
-	if err != nil {
-		errz.Fatal(err)
-	}
+	// target, err := task.Target()
+	// if err != nil {
+	// 	errz.Fatal(err)
+	// }
 
 	// Check targets are created correctly.
 	// On success the target hash is computed
 	// inside TaskCompleted().
-	if target != nil {
-		if !target.Exists() {
-			boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s\t(invalid targets)", p.namePad, coloredName, StateFailed))
-			err = p.TaskFailed(task.Name(), fmt.Errorf("targets not created"))
-			if err != nil {
-				if errors.Is(err, ErrFailed) {
-					return err
-				}
+	// if target != nil {
+	// 	if !target.Exists() {
+	// 		boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s\t(invalid targets)", p.namePad, coloredName, StateFailed))
+	// 		err = p.TaskFailed(task.Name(), fmt.Errorf("targets not created"))
+	// 		if err != nil {
+	// 			if errors.Is(err, ErrFailed) {
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// TODO: check if the error handling works as intended, in case of a not created target inside `cmd:`
+	// the user should get a correct error message that his cmd does not create the target as expected.
+	err = p.TaskCompleted(task.Name(), hashIn)
+	if err != nil {
+		err = p.TaskFailed(task.Name(), fmt.Errorf("failed to finish the task (building succeeded), %w", err))
+		if err != nil {
+			if errors.Is(err, ErrFailed) {
+				return err
 			}
 		}
 	}
-
-	err = p.TaskCompleted(task.Name(), hashIn)
 	errz.Fatal(err)
 
 	taskStatus, err := p.TaskStatus(task.Name())

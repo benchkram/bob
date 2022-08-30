@@ -4,17 +4,29 @@ import (
 	"time"
 )
 
-// Targets maps in(put) hashes to target hashes
-//type Targets map[hash.In][]TargetBuildInfo
 type Targets struct {
-	File   map[string]BuildInfoFile   `yaml:"file"`
-	Docker map[string]BuildInfoDocker `yaml:"docker"`
+	Filesystem BuildInfoFiles             `yaml:"file"`
+	Docker     map[string]BuildInfoDocker `yaml:"docker"`
+}
+
+func NewTargets() *Targets {
+	return &Targets{}
+}
+
+func MakeTargets() Targets {
+	return Targets{}
+}
+
+type BuildInfoFiles struct {
+	// Hash contains the hash of all files
+	Hash string `yaml:"hash"`
+	// Files contains modtime & size of each file
+	Files map[string]BuildInfoFile `yaml:"file"`
 }
 
 type BuildInfoFile struct {
-	Hash     string    `yaml:"hash"`
 	Modified time.Time `yaml:"modified"`
-	Size     int       `yaml:"size"`
+	Size     int64     `yaml:"size"`
 }
 
 type BuildInfoDocker struct {
@@ -22,16 +34,17 @@ type BuildInfoDocker struct {
 }
 
 // Creator information
-type Creator struct {
-	Taskname  string
-	InputHash string
+type Meta struct {
+	Task      string `yaml:"task"`
+	InputHash string `yaml:"input_hash"`
 }
 
 type I struct {
-	// Info holds data about the creator of this object.
-	Info Creator
-
+	// Target aggregates buildinfos of multiple files or docker images
 	Target Targets
+
+	// Meta holds data about the creator of this object.
+	Meta Meta
 }
 
 func New() *I {

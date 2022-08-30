@@ -1,22 +1,19 @@
 package target
 
 import (
-	"path/filepath"
-
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 )
 
 type Target interface {
-	ComputeBuildInfo() (string, error) // Snapshot() compute current state from the filesystem.
+	BuildInfo() (*buildinfo.Targets, error)
 
-	//Buildinfo() (buildinfo.TargetBuildInfo, error)
 	Verify() bool
-	Exists() bool
+	// Exists() bool
 
-	WithExpectedHash(string) Target
-	WithDir(string) Target
+	// WithExpectedHash(string) Target
+	// WithDir(string) Target
 
 	// Paths() []string
 	// PathsPlain() []string
@@ -31,9 +28,9 @@ type T struct {
 	// Loaded from the system and created on a previous run. Can be nil.
 	expected *buildinfo.Targets
 
-	// currentHash is the currenlty created hash during the run.
-	// current to avoid multiple computations.
-	// current string
+	// current is the currenlty created buildInfo during the run.
+	// current avoids recomputations.
+	current *buildinfo.Targets
 
 	// dockerRegistryClient utility functions to handle requests with local docker registry
 	dockerRegistryClient dockermobyutil.RegistryClient
@@ -86,26 +83,26 @@ func (t *T) WithDir(dir string) Target {
 // 	return t
 // }
 
-// Paths in relation to the umrella bobfile
-func (t *T) Paths() []string {
-	if len(t.PathsSerialize) == 0 {
-		return []string{}
-	}
+// // Paths in relation to the umrella bobfile
+// func (t *T) Paths() []string {
+// 	if len(t.PathsSerialize) == 0 {
+// 		return []string{}
+// 	}
 
-	var pathsWithDir []string
-	for _, v := range t.PathsSerialize {
-		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))
-	}
+// 	var pathsWithDir []string
+// 	for _, v := range t.PathsSerialize {
+// 		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))
+// 	}
 
-	return pathsWithDir
-}
+// 	return pathsWithDir
+// }
 
-// PathsPlain does return the pure target path
-// as given in the bobfile.
-func (t *T) PathsPlain() []string {
-	return t.PathsSerialize
-}
+// // PathsPlain does return the pure target path
+// // as given in the bobfile.
+// func (t *T) PathsPlain() []string {
+// 	return t.PathsSerialize
+// }
 
-func (t *T) Type() targettype.T {
-	return t.TypeSerialize
-}
+// func (t *T) Type() targettype.T {
+// 	return t.TypeSerialize
+// }

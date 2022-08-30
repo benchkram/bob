@@ -5,8 +5,8 @@ import (
 	"github.com/benchkram/errz"
 )
 
-// ReadBuildinfo indexed by the input hash from the store
-func (t *Task) ReadBuildinfo() (bi *buildinfo.I, err error) {
+// ReadBuildInfo indexed by the input hash from the store
+func (t *Task) ReadBuildInfo() (bi *buildinfo.I, err error) {
 	defer errz.Recover(&err)
 
 	hashIn, err := t.HashIn()

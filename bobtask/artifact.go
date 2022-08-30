@@ -22,8 +22,8 @@ import (
 	"github.com/benchkram/bob/pkg/boblog"
 )
 
-const __targets = "targets"
-const __exports = "exports"
+const __targetsFilesystem = "targets/filesystem"
+const __targetsDocker = "targets/docker"
 const __summary = "__summary"
 const __metadata = "__metadata"
 
@@ -38,7 +38,7 @@ func newArchive() archiveIO             { return archiver.NewTarGz() } // TODO: 
 func newArchiveWriter() archiver.Writer { return newArchive() }
 func newArchiveReader() archiver.Reader { return newArchive() }
 
-// ArtifactPack creates an archive for a target & exports.
+// ArtifactPack creates an archive for a target
 func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	defer errz.Recover(&err)
 
@@ -48,24 +48,23 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] creating artifact [%s] in localstore", t.name, artifactName))
 
-	targets := []string{}
-	tempdir := ""
-	if t.target != nil {
-		if t.target.Type() == targettype.Docker {
-			targets, err = t.saveDockerImageTargets()
-			errz.Fatal(err)
-		} else {
-			targets, err = t.pathTargets()
-			errz.Fatal(err)
-		}
-	}
+	buildInfo, err := t.target.BuildInfo()
+	errz.Fatal(err)
 
+	dockerTargets := []string{}
+	tempdir := ""
+
+	// gather docker targets
+	for dockerTarget := range buildInfo.Docker {
+		targets, err := t.saveDockerImageTargets([]string{dockerTarget})
+		errz.Fatal(err)
+		dockerTargets = append(dockerTargets, targets...)
+
+	}
 	// in case of docker images, clear newly created targets by
 	// images after archiving it in artifacts
-	if t.target.Type() == targettype.Docker {
-		for _, target := range targets {
-			defer func(dst string) { _ = os.Remove(dst) }(target)
-		}
+	for _, target := range dockerTargets {
+		defer func(dst string) { _ = os.Remove(dst) }(target)
 	}
 
 	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
@@ -77,8 +76,8 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	errz.Fatal(err)
 	defer archiveWriter.Close()
 
-	// targets
-	for _, fname := range targets {
+	// targets filesystem
+	for fname := range buildInfo.Filesystem.Files {
 		info, err := os.Lstat(fname)
 		errz.Fatal(err)
 
@@ -106,7 +105,47 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 		err = archiveWriter.Write(archiver.File{
 			FileInfo: archiver.FileInfo{
 				FileInfo:   info,
-				CustomName: filepath.Join(__targets, internalName),
+				CustomName: filepath.Join(__targetsFilesystem, internalName),
+				SourcePath: source,
+			},
+			ReadCloser: file,
+		})
+		errz.Fatal(err)
+
+		err = file.Close()
+		errz.Fatal(err)
+	}
+
+	// targets docker
+	for _, fname := range dockerTargets {
+		info, err := os.Lstat(fname)
+		errz.Fatal(err)
+
+		// trim the tasks directory from the internal name
+		internalName := strings.TrimPrefix(fname, t.dir)
+		// saved docker images are temporarly stored in the tmp dir,
+		// this assures it's not added as prefix.
+		internalName = strings.TrimPrefix(internalName, os.TempDir())
+		internalName = strings.TrimPrefix(internalName, tempdir)
+		internalName = strings.TrimPrefix(internalName, "/")
+
+		// archiver needs the source path in case of a symlink,
+		// so it can call `os.Readlink(source)`.
+		var source string
+		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			abs, err := filepath.Abs(fname)
+			errz.Fatal(err)
+			source = abs
+		}
+
+		// open the file
+		file, err := os.Open(fname)
+		errz.Fatal(err)
+
+		err = archiveWriter.Write(archiver.File{
+			FileInfo: archiver.FileInfo{
+				FileInfo:   info,
+				CustomName: filepath.Join(__targetsDocker, internalName),
 				SourcePath: source,
 			},
 			ReadCloser: file,
@@ -121,7 +160,6 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	metadata.Taskname = t.name
 	metadata.Project = t.Project()
 	metadata.InputHash = artifactName.String()
-	metadata.TargetType = t.target.Type()
 	bin, err := yaml.Marshal(metadata)
 	errz.Fatal(err)
 
@@ -137,42 +175,41 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	return nil
 }
 
-func (t *Task) pathTargets() ([]string, error) {
-	targets := []string{}
-	for _, path := range t.target.PathsPlain() {
-		stat, err := os.Stat(filepath.Join(t.dir, path))
-		if err != nil {
-			return targets, err
-		}
+// func (t *Task) pathTargets() ([]string, error) {
+// 	targets := []string{}
+// 	for _, path := range t.target.PathsPlain() {
+// 		stat, err := os.Stat(filepath.Join(t.dir, path))
+// 		if err != nil {
+// 			return targets, err
+// 		}
 
-		if stat.IsDir() {
-			// TODO: Read all files from dir.
-			root := filepath.Join(t.dir, path)
-			_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-				if d.IsDir() {
-					return nil
-				}
+// 		if stat.IsDir() {
+// 			// TODO: Read all files from dir.
+// 			root := filepath.Join(t.dir, path)
+// 			_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+// 				if err != nil {
+// 					return err
+// 				}
+// 				if d.IsDir() {
+// 					return nil
+// 				}
 
-				targets = append(targets, path)
-				return nil
-			})
-		} else {
-			targets = append(targets, filepath.Join(t.dir, path))
-		}
+// 				targets = append(targets, path)
+// 				return nil
+// 			})
+// 		} else {
+// 			targets = append(targets, filepath.Join(t.dir, path))
+// 		}
 
-	}
-	return targets, nil
-}
+// 	}
+// 	return targets, nil
+// }
 
 // saveDockerImageTargets calls `docker save` and returns a path to the tar archive.
-func (t *Task) saveDockerImageTargets() ([]string, error) {
+func (t *Task) saveDockerImageTargets(in []string) ([]string, error) {
 	targets := []string{}
 
-	// TODO: change this path based implementation to docker tag
-	for _, image := range t.target.PathsPlain() {
+	for _, image := range in {
 		boblog.Log.V(2).Info(fmt.Sprintf("[image:%s] saving docker image", image))
 		target, err := t.dockerRegistryClient.ImageSave(image)
 		if err != nil {

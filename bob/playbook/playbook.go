@@ -388,7 +388,7 @@ func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
 
-	buildInfo, err := task.ReadBuildinfo()
+	buildInfo, err := task.ReadBuildInfo()
 	if err != nil {
 		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
 			// assure buildinfo is initialized correctly
@@ -397,75 +397,31 @@ func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 			errz.Fatal(err)
 		}
 	}
-	buildInfo.Info.Taskname = task.Name()
+	buildInfo.Meta.Task = task.Name()
+	buildInfo.Meta.InputHash = hashIn.String()
 
+	// Compute buildinfo for the target
 	target, err := task.Task.Target()
 	errz.Fatal(err)
-
 	if target != nil {
-		targetHash, err := target.Hash()
-		if err != nil {
-			return err
-		}
-
-		// buildInfo.Target.Hash = targetHash
-		// buildInfo.Target.Modified = time.Time{} // TODO:
-		// buildInfo.Target.Size = 0               // TODO:
-
-		// // gather target hashes of dependent tasks
-		// err = p.Tasks.walk(taskname, func(tn string, task *Status, err error) error {
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	if taskname == tn {
-		// 		return nil
-		// 	}
-
-		// 	target, err := task.Target()
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	if target == nil {
-		// 		return nil
-		// 	}
-
-		// 	switch task.State() {
-		// 	case StateCompleted:
-		// 		fallthrough
-		// 	case StateNoRebuildRequired:
-		// 		h, err := target.Hash()
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 		hashIn, err := task.HashIn()
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 		buildInfo.Targets[hashIn] = h
-		// 	case StateRunning:
-		// 		return nil
-		// 	default:
-		// 		boblog.Log.V(1).Info(string(task.state))
-		// 		return ErrUnexpectedTaskState
-		// 	}
-
-		// 	return nil
-		// })
-		// errz.Fatal(err)
+		bi, err := target.BuildInfo()
+		errz.Fatal(err)
+		buildInfo.Target = bi
 	}
 
+	// Store buildinfo
 	err = p.storeHash(taskname, buildInfo)
 	errz.Fatal(err)
 
-	// TODO: use target hash?
+	// Store targets in the artifact store
 	if p.enableCaching {
 		err = p.pack(taskname, hashIn)
 		errz.Fatal(err)
 	}
 
+	// update task state and trigger another playbook run
 	err = p.setTaskState(taskname, StateCompleted, nil)
 	errz.Fatal(err)
-
 	err = p.play()
 	if err != nil {
 		if !errors.Is(err, ErrDone) {
