@@ -65,7 +65,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		c := p.TaskChannel()
 		for t := range c {
 			// copy for processing
-			//task := t
+			// task := t
 			processedTasks = append(processedTasks, t)
 
 			err := p.build(ctx, t)
@@ -98,9 +98,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		)
 	}
 
-	p.summary(processedTasks)
-
-	return err
+	return p.summary(processedTasks)
 }
 
 // didWriteBuildOutput assures that a new line is added
@@ -154,7 +152,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	// task might need a rebuild due to a input change.
 	// but could still be possible to load the targets from the artifact store.
 	// If a task needs a rebuild due to a dependency change => rebuild.
-	//if rebuildRequired && rebuildCause != DependencyChanged && rebuildCause != TaskForcedRebuild {
+	// if rebuildRequired && rebuildCause != DependencyChanged && rebuildCause != TaskForcedRebuild {
 	if rebuildRequired {
 		switch rebuildCause {
 		case TaskInputChanged:
