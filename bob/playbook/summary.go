@@ -33,7 +33,7 @@ func (p *Playbook) summary(processedTasks []*bobtask.Task) (err error) {
 		execTime := ""
 		status := stat.State()
 		if status != StateNoRebuildRequired {
-			duration, err = durafmt.ParseString(p.ExecutionTime().String())
+			duration, err = durafmt.ParseString(stat.ExecutionTime().String())
 			if err != nil {
 				fmt.Println(err)
 				continue
