@@ -47,5 +47,5 @@ func displayDuration(d time.Duration) string {
 	if d.Seconds() > 1 {
 		return fmt.Sprintf("%.1fs", float64(d)/float64(time.Second))
 	}
-	return fmt.Sprintf("%.1fms", float64(d)/float64(time.Millisecond))
+	return fmt.Sprintf("%.1fms", float64(d)/float64(time.Millisecond)+0.1) // add .1ms so that it never returns 0.0ms
 }
