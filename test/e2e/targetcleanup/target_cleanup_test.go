@@ -26,7 +26,9 @@ var _ = Describe("Testing cleaning up dir targets", func() {
 
 			// we create an empty file inside sub-dir
 			emptyFile, err := os.Create("./sub-dir/empty-file")
-			defer emptyFile.Close()
+			Expect(err).NotTo(HaveOccurred())
+			err = emptyFile.Close()
+			Expect(err).NotTo(HaveOccurred())
 
 			dirContents, err = contentsOfDir("sub-dir")
 			Expect(err).NotTo(HaveOccurred())
