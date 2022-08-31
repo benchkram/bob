@@ -42,10 +42,10 @@ func (p *Playbook) summary(processedTasks []*bobtask.Task) (err error) {
 
 func displayDuration(d time.Duration) string {
 	if d.Minutes() > 1 {
-		return fmt.Sprintf("%.2fm", float64(d)/float64(time.Minute))
+		return fmt.Sprintf("%.1fm", float64(d)/float64(time.Minute))
 	}
 	if d.Seconds() > 1 {
-		return fmt.Sprintf("%.2fs", float64(d)/float64(time.Second))
+		return fmt.Sprintf("%.1fs", float64(d)/float64(time.Second))
 	}
-	return fmt.Sprintf("%.2fms", float64(d)/float64(time.Millisecond))
+	return fmt.Sprintf("%.1fms", float64(d)/float64(time.Millisecond))
 }
