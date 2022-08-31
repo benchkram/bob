@@ -1,0 +1,8 @@
+build:
+  build:
+    cmd: |-
+      mkdir sub-dir
+      touch ./sub-dir/non-empty-file
+      echo "Hello World!" > ./sub-dir/non-empty-file
+    target: sub-dir
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
