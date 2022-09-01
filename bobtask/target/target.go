@@ -1,8 +1,9 @@
 package target
 
 import (
+	"path/filepath"
+
 	"github.com/benchkram/bob/bobtask/buildinfo"
-	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 )
 
@@ -10,10 +11,17 @@ type Target interface {
 	BuildInfo() (*buildinfo.Targets, error)
 
 	Verify() bool
+	VerifyShallow() bool
+	Resolve() error
+
+	FilesystemEntries() []string
+	FilesystemEntriesPlain() []string
+	FilesystemEntriesRaw() []string
+	FilesystemEntriesRawPlain() []string
 	// Exists() bool
 
-	// WithExpectedHash(string) Target
-	// WithDir(string) Target
+	WithExpected(*buildinfo.Targets) *T
+	WithDir(string) *T
 
 	// Paths() []string
 	// PathsPlain() []string
@@ -37,9 +45,19 @@ type T struct {
 
 	// dockerImages an array of docker tags
 	dockerImages []string
-	// filesystemEntries an array of filesystem entries,
-	// E.g. files or entire directories.
-	filesystemEntries []string
+	// filesystemEntries is an array of files,
+	// read from the filesystem.
+	// resolve(filesystemEntriesRaw) = filesystemEntriesRaw.
+	//
+	// Usually the first required when IgnoreChildtargets() is called
+	// on aggregate level.
+	filesystemEntries *[]string
+	// filesystemEntriesRaw is an array of files or directories,
+	// as defined by the user.
+	//
+	// Used to verify that targets are created
+	// without verifying against expected buildinfo.
+	filesystemEntriesRaw []string
 
 	// exposed due to yaml marshalling
 	// PathsSerialize []string     `yaml:"Paths"`
@@ -63,46 +81,47 @@ func New(opts ...Option) *T {
 	return t
 }
 
-const DefaultType = targettype.Path
-
-func (t *T) clone() *T {
-	target := New()
-	target.dir = t.dir
-	// target.PathsSerialize = t.PathsSerialize
-	// target.TypeSerialize = t.TypeSerialize
-	return target
-}
-
-func (t *T) WithDir(dir string) Target {
+func (t *T) WithDir(dir string) *T {
 	t.dir = dir
 	return t
 }
 
-// func (t *T) WithExpectedHash(expectedHash string) Target {
-// 	t.expectedHash = expectedHash
-// 	return t
-// }
+// FilesystemEntries in relation to the umrella bobfile
+func (t *T) FilesystemEntries() []string {
 
-// // Paths in relation to the umrella bobfile
-// func (t *T) Paths() []string {
-// 	if len(t.PathsSerialize) == 0 {
-// 		return []string{}
-// 	}
+	if len(*t.filesystemEntries) == 0 {
+		return []string{}
+	}
 
-// 	var pathsWithDir []string
-// 	for _, v := range t.PathsSerialize {
-// 		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))
-// 	}
+	var pathsWithDir []string
+	for _, v := range *t.filesystemEntries {
+		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))
+	}
 
-// 	return pathsWithDir
-// }
+	return pathsWithDir
+}
 
-// // PathsPlain does return the pure target path
-// // as given in the bobfile.
-// func (t *T) PathsPlain() []string {
-// 	return t.PathsSerialize
-// }
+func (t *T) FilesystemEntriesRaw() []string {
 
-// func (t *T) Type() targettype.T {
-// 	return t.TypeSerialize
-// }
+	var pathsWithDir []string
+	for _, v := range t.filesystemEntriesRaw {
+		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))
+	}
+
+	return pathsWithDir
+}
+
+// FilesystemEntriesPlain does return the pure path
+// as given in the bobfile.
+func (t *T) FilesystemEntriesPlain() []string {
+	return *t.filesystemEntries
+}
+
+func (t *T) FilesystemEntriesRawPlain() []string {
+	return t.filesystemEntriesRaw
+}
+
+func (t *T) WithExpected(expected *buildinfo.Targets) *T {
+	t.expected = expected
+	return t
+}

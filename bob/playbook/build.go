@@ -15,43 +15,6 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
-var colorPool = []aurora.Color{
-	1,
-	aurora.BlueFg,
-	aurora.GreenFg,
-	aurora.CyanFg,
-	aurora.MagentaFg,
-	aurora.YellowFg,
-	aurora.RedFg,
-}
-var round = 10 * time.Millisecond
-
-// pickTaskColors picks a display color for each task in the playbook.
-func (p *Playbook) pickTaskColors() {
-	tasks := []string{}
-	for _, t := range p.Tasks {
-		tasks = append(tasks, t.Name())
-	}
-	sort.Strings(tasks)
-
-	// Adjust padding of first column based on the taskname length.
-	// Also assign fixed color to the tasks.
-	p.namePad = 0
-	for i, name := range tasks {
-		if len(name) > p.namePad {
-			p.namePad = len(name)
-		}
-
-		color := colorPool[i%len(colorPool)]
-		p.Tasks[name].Task.SetColor(color)
-	}
-	p.namePad += 14
-
-	dependencies := len(tasks) - 1
-	rootName := p.Tasks[p.root].ColoredName()
-	boblog.Log.V(1).Info(fmt.Sprintf("Running task %s with %d dependencies", rootName, dependencies))
-}
-
 // Build the playbook starting at root.
 func (p *Playbook) Build(ctx context.Context) (err error) {
 	processingErrorsMutex := sync.Mutex{}
@@ -81,6 +44,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 					// Any error occured during a build put the
 					// playbook in a done state. This prevents
 					// further tasks be queued for execution.
+
 					p.Done()
 				}
 			}
@@ -149,6 +113,7 @@ var didWriteBuildOutput bool
 func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	defer errz.Recover(&err)
 
+	// A task id flagged succesful before
 	var taskSuccessFul bool
 	var taskErr error
 	defer func() {
@@ -222,8 +187,6 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		boblog.Log.V(1).Info("")
 		didWriteBuildOutput = true
 	}
-	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\trunning task...", p.namePad, coloredName))
-
 	err = task.Clean()
 	errz.Fatal(err)
 
@@ -234,6 +197,9 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	}
 	errz.Fatal(err)
 
+	// TODO: think about if this is correctlty placed.
+	// Could also be done after the task completed correctly?
+	// Ass target verification is no don einside TaskCompleted()
 	taskSuccessFul = true
 
 	// err = task.VerifyAfter()
@@ -263,7 +229,6 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	// the user should get a correct error message that his cmd does not create the target as expected.
 	err = p.TaskCompleted(task.Name(), hashIn)
 	if err != nil {
-		err = p.TaskFailed(task.Name(), fmt.Errorf("failed to finish the task (building succeeded), %w", err))
 		if err != nil {
 			if errors.Is(err, ErrFailed) {
 				return err
@@ -303,4 +268,41 @@ func logSkippedInputs(count int, taskname string, skippedInputs []string) int {
 	}
 
 	return count
+}
+
+var colorPool = []aurora.Color{
+	1,
+	aurora.BlueFg,
+	aurora.GreenFg,
+	aurora.CyanFg,
+	aurora.MagentaFg,
+	aurora.YellowFg,
+	aurora.RedFg,
+}
+var round = 10 * time.Millisecond
+
+// pickTaskColors picks a display color for each task in the playbook.
+func (p *Playbook) pickTaskColors() {
+	tasks := []string{}
+	for _, t := range p.Tasks {
+		tasks = append(tasks, t.Name())
+	}
+	sort.Strings(tasks)
+
+	// Adjust padding of first column based on the taskname length.
+	// Also assign fixed color to the tasks.
+	p.namePad = 0
+	for i, name := range tasks {
+		if len(name) > p.namePad {
+			p.namePad = len(name)
+		}
+
+		color := colorPool[i%len(colorPool)]
+		p.Tasks[name].Task.SetColor(color)
+	}
+	p.namePad += 14
+
+	dependencies := len(tasks) - 1
+	rootName := p.Tasks[p.root].ColoredName()
+	boblog.Log.V(1).Info(fmt.Sprintf("Running task %s with %d dependencies", rootName, dependencies))
 }

@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/bobtask/targettype"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filepathutil"
 )
@@ -69,24 +69,24 @@ func (t *Task) filteredInputs() ([]string, error) {
 
 	// Also ignore file & dir targets stored in the same directory
 	if t.target != nil {
-		if t.target.Type() == targettype.Path {
-			for _, path := range t.target.PathsPlain() {
-				if file.Exists(path) {
-					info, err := os.Stat(path)
-					if err != nil {
-						return nil, fmt.Errorf("failed to stat %s: %w", path, err)
-					}
-
-					if info.IsDir() {
-						list, err := filepathutil.ListRecursive(path)
-						if err != nil {
-							return nil, fmt.Errorf("failed to list input: %w", err)
-						}
-						ignores = append(ignores, list...)
-						continue
-					}
+		for _, path := range t.target.FilesystemEntriesRaw() {
+			if file.Exists(path) {
+				boblog.Log.V(1).Info(path)
+				info, err := os.Stat(path)
+				if err != nil {
+					return nil, fmt.Errorf("failed to stat %s: %w", path, err)
 				}
-				ignores = append(ignores, t.target.PathsPlain()...)
+
+				if info.IsDir() {
+					list, err := filepathutil.ListRecursive(path)
+					if err != nil {
+						return nil, fmt.Errorf("failed to list input: %w", err)
+					}
+					ignores = append(ignores, list...)
+					continue
+				}
+
+				ignores = append(ignores, t.target.FilesystemEntriesRaw()...)
 			}
 		}
 	}

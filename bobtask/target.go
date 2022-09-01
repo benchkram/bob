@@ -17,28 +17,30 @@ func (t *Task) Target() (empty target.Target, _ error) {
 		return empty, nil
 	}
 
-	//  TODO: ???
-	// hashIn, err := t.HashIn()
-	// if err != nil {
-	// 	if errors.Is(err, ErrHashInDoesNotExist) {
-	// 		return t.target.WithDir(t.dir), nil
-	// 	}
-	// 	return empty, err
-	// }
+	// ReadBuildInfo is dependent on the inputHash of the task.
+	// For this reason we cannot read build info on target creation,
+	// as this happens right after parsing the config.
+	// Computing the input must be avoided till the task is actually
+	// passed to the worker.
 
-	buildInfo, err := t.ReadBuildinfo()
+	buildInfo, err := t.ReadBuildInfo()
 	if err != nil {
 		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
-			return t.target.WithDir(t.dir), nil
+			tt := t.target.WithDir(t.dir)
+			return tt, tt.Resolve()
 		}
 		return empty, err
 	}
 
-	if buildInfo.Target.Hash == "" {
-		return t.target.WithDir(t.dir), nil
+	// This indicates the previous build did not contain any targets.
+	// TODO: Is this necessary? Document why this is necessary.
+	if len(buildInfo.Target.Filesystem.Files) == 0 && len(buildInfo.Target.Docker) == 0 {
+		tt := t.target.WithDir(t.dir)
+		return tt, tt.Resolve()
 	}
 
-	return t.target.WithDir(t.dir).WithExpectedHash(buildInfo.Target.Hash), nil
+	tt := t.target.WithDir(t.dir).WithExpected(&buildInfo.Target)
+	return tt, tt.Resolve()
 }
 
 func (t *Task) TargetExists() bool {
@@ -50,7 +52,7 @@ func (t *Task) TargetExists() bool {
 // and has not been there before the task ran.
 func (t *Task) Clean() error {
 	if t.target != nil {
-		for _, f := range t.target.PathsPlain() {
+		for _, f := range t.target.FilesystemEntriesRawPlain() {
 			if t.dir == "" {
 				return fmt.Errorf("task dir not set")
 			}

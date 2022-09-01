@@ -10,11 +10,14 @@ type Targets struct {
 }
 
 func NewTargets() *Targets {
-	return &Targets{}
+	return &Targets{
+		Filesystem: MakeBuildInfoFiles(),
+		Docker:     make(map[string]BuildInfoDocker),
+	}
 }
 
 func MakeTargets() Targets {
-	return Targets{}
+	return *NewTargets()
 }
 
 type BuildInfoFiles struct {
@@ -22,6 +25,15 @@ type BuildInfoFiles struct {
 	Hash string `yaml:"hash"`
 	// Files contains modtime & size of each file
 	Files map[string]BuildInfoFile `yaml:"file"`
+}
+
+func NewBuildInfoFiles() *BuildInfoFiles {
+	return &BuildInfoFiles{
+		Files: make(map[string]BuildInfoFile),
+	}
+}
+func MakeBuildInfoFiles() BuildInfoFiles {
+	return *NewBuildInfoFiles()
 }
 
 type BuildInfoFile struct {
@@ -48,7 +60,9 @@ type I struct {
 }
 
 func New() *I {
-	return &I{}
+	return &I{
+		Target: MakeTargets(),
+	}
 }
 
 func Make() I {

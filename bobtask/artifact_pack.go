@@ -1,10 +1,8 @@
 package bobtask
 
 import (
-	"archive/tar"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -18,13 +16,11 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/benchkram/bob/bobtask/hash"
-	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/boblog"
 )
 
 const __targetsFilesystem = "targets/filesystem"
 const __targetsDocker = "targets/docker"
-const __summary = "__summary"
 const __metadata = "__metadata"
 
 var ErrInvalidTarHeaderType = fmt.Errorf("invalid tar header type")
@@ -48,8 +44,9 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] creating artifact [%s] in localstore", t.name, artifactName))
 
-	buildInfo, err := t.target.BuildInfo()
+	target, err := t.Target()
 	errz.Fatal(err)
+	buildInfo, err := target.BuildInfo()
 
 	dockerTargets := []string{}
 	tempdir := ""
@@ -75,6 +72,8 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 	err = archiveWriter.Create(artifact)
 	errz.Fatal(err)
 	defer archiveWriter.Close()
+
+	boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] file in buildinfo %d", t.name, len(buildInfo.Filesystem.Files)))
 
 	// targets filesystem
 	for fname := range buildInfo.Filesystem.Files {
@@ -220,105 +219,6 @@ func (t *Task) saveDockerImageTargets(in []string) ([]string, error) {
 	}
 
 	return targets, nil
-}
-
-// ArtifactUnpack unpacks a artifact from the localstore if it exists.
-// Return true on a succesful unpack operation.
-func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
-	defer errz.Recover(&err)
-
-	meta, err := t.GetArtifactMetadata(artifactName.String())
-	errz.Fatal(err)
-
-	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
-	if err != nil {
-		_, ok := err.(*fs.PathError)
-		if ok {
-			return false, nil
-		}
-		errz.Fatal(err)
-	}
-	defer artifact.Close()
-
-	// Assure tasks is cleaned up before unpacking
-	err = t.Clean()
-	errz.Fatal(err)
-
-	archiveReader := newArchiveReader()
-	err = archiveReader.Open(artifact, 0)
-	errz.Fatal(err)
-	defer archiveReader.Close()
-
-	for {
-		archiveFile, err := archiveReader.Read()
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			errz.Fatal(err)
-		}
-
-		header, ok := archiveFile.Header.(*tar.Header)
-		if !ok {
-			return false, ErrInvalidTarHeaderType
-		}
-
-		// targets
-		if strings.HasPrefix(header.Name, __targets) {
-
-			filename := strings.TrimPrefix(header.Name, __targets+"/")
-
-			// create directory structure
-			dir := filepath.Dir(filename)
-			if dir != "." && dir != "/" {
-				err = os.MkdirAll(filepath.Join(t.dir, dir), 0775)
-				errz.Fatal(err)
-			}
-
-			switch meta.TargetType {
-			case targettype.Docker:
-				// load the docker image from destination
-				dst := filepath.Join(os.TempDir(), filename)
-
-				// extract to destination
-				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
-				errz.Fatal(err)
-				_, err = io.Copy(f, archiveFile)
-				// closing the file right away to reduce the number of open files
-				_ = f.Close()
-				errz.Fatal(err)
-
-				boblog.Log.V(2).Info(fmt.Sprintf("[task:%s] loading docker image from %s", t.name, dst))
-				err = t.dockerRegistryClient.ImageLoad(dst)
-				errz.Fatal(err)
-
-				// delete the unpacked docker image archive
-				// after `docker load`
-				defer func() { _ = os.Remove(dst) }()
-			case targettype.Path:
-				fallthrough
-			default:
-				dst := filepath.Join(t.dir, filename)
-
-				// symlink
-				if archiveFile.FileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-					err = os.Symlink(header.Linkname, dst)
-					errz.Fatal(err)
-					continue
-				}
-
-				// extract to destination
-				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
-				errz.Fatal(err)
-				_, err = io.Copy(f, archiveFile)
-				// closing the file right away to reduce the number of open files
-				_ = f.Close()
-				errz.Fatal(err)
-			}
-		}
-	}
-
-	return true, nil
 }
 
 // ArtifactExists return true when the artifact exists in localstore

@@ -8,8 +8,8 @@ import (
 
 	"github.com/benchkram/errz"
 
-	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/boberror"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/multilinecmd"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -154,41 +154,36 @@ func (tm Map) IgnoreChildTargets() (err error) {
 				return err
 			}
 
-			t, err := task.Target()
-			if err != nil {
-				return err
-			}
-			if t != nil {
-				if t.Type() == targettype.Path {
-					for _, p := range t.Paths() {
-						if umbrellaTask.Dir() == task.Dir() {
-							// everything good.. use them as they are
-							umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, p)
-						} else {
+			if task.target != nil {
+				boblog.Log.V(5).Info("IgnoreChildTargets")
+				for _, p := range task.target.FilesystemEntriesRaw() {
+					if umbrellaTask.Dir() == task.Dir() {
+						// everything good.. use them as they are
+						umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, p)
+					} else {
 
-							//    List of cases to be covered.
-							//
-							//     umbrellaDIR                 currentTargetDIR      currentTargetPATH
-							//
-							//     .                           second-level          second-level/target
-							//     .                           .                     aaa/bbb/target
-							//     .                           second-level          aaa/second-level/target
-							//
-							//     second-level                second-level          second-level/target
-							//     second-level                third-level           second-level/third-level/target
-							//     second-level                third-level           second-level/third-level/aaa/bbb/target
-							//     second-level                third-level           second-level/
-							//
-							//     second-level/third-level    third-level           second-level/third-level/target
-							//
-							//     third-level    fouth-level           second-level/third-level/fourth-level/target
+						//    List of cases to be covered.
+						//
+						//     umbrellaDIR                 currentTargetDIR      currentTargetPATH
+						//
+						//     .                           second-level          second-level/target
+						//     .                           .                     aaa/bbb/target
+						//     .                           second-level          aaa/second-level/target
+						//
+						//     second-level                second-level          second-level/target
+						//     second-level                third-level           second-level/third-level/target
+						//     second-level                third-level           second-level/third-level/aaa/bbb/target
+						//     second-level                third-level           second-level/
+						//
+						//     second-level/third-level    third-level           second-level/third-level/target
+						//
+						//     third-level    fouth-level           second-level/third-level/fourth-level/target
 
-							relP, err := filepath.Rel(umbrellaTask.Dir(), p)
-							if err != nil {
-								return err
-							}
-							umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, relP)
+						relP, err := filepath.Rel(umbrellaTask.Dir(), p)
+						if err != nil {
+							return err
 						}
+						umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, relP)
 					}
 				}
 			}

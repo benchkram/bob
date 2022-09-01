@@ -8,12 +8,14 @@ import (
 	"path/filepath"
 
 	"github.com/benchkram/bob/bobtask/buildinfo"
+	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/errz"
 )
 
 // var ErrBuildInfoDoesNotExist = fmt.Errorf("build info does not exist")
 
 type s struct {
+	// dir is the base directory of the store
 	dir string
 }
 
@@ -114,4 +116,8 @@ func (s *s) Clean() (err error) {
 	}
 
 	return nil
+}
+
+func (s *s) BuildInfoExists(id string) bool {
+	return file.Exists(filepath.Join(s.dir, id))
 }

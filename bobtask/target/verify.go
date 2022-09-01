@@ -9,37 +9,47 @@ import (
 	"github.com/benchkram/bob/pkg/filehash"
 )
 
-// VerifyShallow can be used to compare targets against a existing
-// buildinfo. It will only check if the size or modification time of
-// files changed. Docker targets are verified similarly as in plain verify
+// Hint: comparing the modification time is tricky as a unpack
+// form a tar archive changes the modification time of a file.
+
+// VerifyShallow compare targets against a existing
+// buildinfo. It will only check if the size of any of the files changed.
+// Docker targets are verified similarly as in plain verify
 // as there is no performance penality.
-// Verify returns fails in case of there is nothing to compare against.
+// In case the expect buildinfo does not exist Verify checks against filesystemEntriesRaw.
 func (t *T) VerifyShallow() bool {
 	return t.verifyFilesystemShallow() && t.verifyDocker()
 }
 
-// Verify existence and integrity of targets.
-// Returns true when no targets are defined.
+// Verify existence and integrity of targets against a expected buildinfo.
+// In case the expect buildinfo does not exist Verify checks against filesystemEntriesRaw.
+//
+// Verify returns true when no targets are defined.
+// Verify returns when there is nothing to compare against.
 func (t *T) Verify() bool {
 	return t.verifyFilesystem() && t.verifyDocker()
 }
 
 func (t *T) preConditionsFilesystem() bool {
-	if len(t.filesystemEntries) == 0 {
+	if len(*t.filesystemEntries) == 0 && len(t.filesystemEntriesRaw) == 0 {
+		boblog.Log.V(2).Info("BBBBBBB")
 		return true
 	}
 
 	// In case there was no previous local build
-	// verify return false indicating that there can't
+	// verify returns false indicating that there can't
 	// exist a valid target from a previous build.
 	// Loading from the cash must be handled by the calling function.
 	if t.expected == nil {
+		boblog.Log.V(2).Info("CCCCCCCCC")
 		return false
 	}
 
+	_ = t.Resolve()
 	// This usually indicates a file was added/removed manually
 	// from a target directory.
-	if len(t.expected.Filesystem.Files) != len(t.filesystemEntries) {
+	if len(t.expected.Filesystem.Files) != len(*t.filesystemEntries) {
+		boblog.Log.V(2).Info(fmt.Sprintf("DDDDDDDD [%d/%d]", len(t.expected.Filesystem.Files), len(*t.filesystemEntries)))
 		return false
 	}
 
@@ -52,9 +62,9 @@ func (t *T) verifyFilesystemShallow() bool {
 		return false
 	}
 
-	for _, path := range t.filesystemEntries {
+	for _, path := range *t.filesystemEntries {
 
-		fileInfo, err := os.Stat(path)
+		fileInfo, err := os.Lstat(path)
 		if err != nil {
 			return false
 		}
@@ -64,9 +74,10 @@ func (t *T) verifyFilesystemShallow() bool {
 			return false
 		}
 
-		// A shallow verify only compares modTime & size of the target
-		if fileInfo.ModTime() != expectedFileInfo.Modified ||
-			fileInfo.Size() != expectedFileInfo.Size {
+		// A shallow verify compares the size of the target
+		if fileInfo.Size() != expectedFileInfo.Size {
+			boblog.Log.V(2).Info(fmt.Sprintf("failed to verify [%s], different sizes [current: %d != expected: %d]",
+				path, fileInfo.Size(), expectedFileInfo.Size))
 			return false
 		}
 	}
@@ -76,13 +87,16 @@ func (t *T) verifyFilesystemShallow() bool {
 
 func (t *T) verifyFilesystem() bool {
 
+	boblog.Log.V(2).Info("11111111111")
+
 	if !t.preConditionsFilesystem() {
 		return false
 	}
 
+	boblog.Log.V(2).Info("222222222222")
 	h := filehash.New()
 
-	for _, path := range t.filesystemEntries {
+	for _, path := range *t.filesystemEntries {
 
 		fileInfo, err := os.Stat(path)
 		if err != nil {
@@ -91,19 +105,35 @@ func (t *T) verifyFilesystem() bool {
 
 		expectedFileInfo, ok := t.expected.Filesystem.Files[path]
 		if !ok {
+			boblog.Log.V(2).Info("33333333333")
+
 			return false
 		}
 
-		// Compare modTime & size of the target
-		if fileInfo.ModTime() != expectedFileInfo.Modified ||
-			fileInfo.Size() != expectedFileInfo.Size {
+		// Compare size of the target
+		if fileInfo.Size() != expectedFileInfo.Size {
+			boblog.Log.V(2).Info("777777")
 			return false
 		}
 
-		h.AddFile(path)
+		err = h.AddFile(path)
+		if err != nil {
+			boblog.Log.V(2).Info("55555")
+			return false
+		}
 	}
 
-	return hex.EncodeToString(h.Sum()) == t.expected.Filesystem.Hash
+	boblog.Log.V(2).Info("6666666")
+
+	if t.expected == nil {
+		boblog.Log.V(2).Info("nilnilnil")
+	}
+
+	ret := hex.EncodeToString(h.Sum()) == t.expected.Filesystem.Hash
+
+	boblog.Log.V(2).Info("7777")
+
+	return ret
 }
 
 // func (t *T) verifyFile(groundTruth string) bool {
