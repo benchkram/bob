@@ -9,6 +9,10 @@ import (
 func (t *Task) ReadBuildInfo() (bi *buildinfo.I, err error) {
 	defer errz.Recover(&err)
 
+	if t.buildInfoStore == nil {
+		return bi, ErrBuildinfostoreIsNil
+	}
+
 	hashIn, err := t.HashIn()
 	errz.Fatal(err)
 
@@ -21,6 +25,10 @@ func (t *Task) ReadBuildInfo() (bi *buildinfo.I, err error) {
 // WriteBuildinfo indexed by the input hash to the store
 func (t *Task) WriteBuildinfo(buildinfo *buildinfo.I) (err error) {
 	defer errz.Recover(&err)
+
+	if t.buildInfoStore == nil {
+		return ErrBuildinfostoreIsNil
+	}
 
 	hashIn, err := t.HashIn()
 	errz.Fatal(err)

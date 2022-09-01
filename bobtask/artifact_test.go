@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/store/filestore"
 	"github.com/benchkram/errz"
@@ -13,17 +15,21 @@ import (
 )
 
 func TestPackAndUnpackArtifacts(t *testing.T) {
-
+	boblog.SetLogLevel(10)
 	testdir, err := ioutil.TempDir("", "test-pack-and-unpack-artifact")
 	assert.Nil(t, err)
 	storage, err := ioutil.TempDir("", "test-pack-and-unpack-artifact-store")
 	assert.Nil(t, err)
+	buildinfoStorage, err := ioutil.TempDir("", "test-pack-and-unpack-buildinfo-store")
+	assert.Nil(t, err)
 	defer func() {
 		os.RemoveAll(testdir)
 		os.RemoveAll(storage)
+		os.RemoveAll(buildinfoStorage)
 	}()
 
 	artifactStore := filestore.New(storage)
+	buildinfoStore := buildinfostore.New(buildinfoStorage)
 
 	assert.Nil(t, os.MkdirAll(filepath.Join(testdir, ".bbuild"), 0774))
 	assert.Nil(t, os.MkdirAll(filepath.Join(testdir, ".bbuild/dirone"), 0774))
@@ -36,6 +42,7 @@ func TestPackAndUnpackArtifacts(t *testing.T) {
 	tsk := Make()
 	tsk.dir = testdir
 	tsk.local = artifactStore
+	tsk.buildInfoStore = buildinfoStore
 	tsk.name = "mytaskname"
 
 	tsk.TargetDirty = ".bbuild/dirone/"

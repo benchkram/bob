@@ -75,7 +75,7 @@ var _ = Describe("Test bob's file target handling", func() {
 
 			var found bool
 			for _, bi := range buildinfos {
-				if bi.Info.Taskname == "all" {
+				if bi.Meta.Task == "all" {
 					all = bi
 					found = true
 					break
@@ -86,7 +86,7 @@ var _ = Describe("Test bob's file target handling", func() {
 		})
 
 		It("target checksum must be non empty", func() {
-			Expect(all.Target.Checksum).NotTo(BeEmpty())
+			Expect(all.Target.Filesystem.Hash).NotTo(BeEmpty())
 		})
 
 		// ----- Check creation of hashes on child tasks -----
@@ -108,7 +108,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buildinfo).NotTo(BeNil())
-			Expect(buildinfo.Target.Checksum).NotTo(BeEmpty())
+			Expect(buildinfo.Target.Filesystem.Hash).NotTo(BeEmpty())
 		})
 
 		It("target hash of task `/second-level/third-level/print` must NOT exist", func() {
@@ -128,7 +128,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buildinfo).NotTo(BeNil())
-			Expect(buildinfo.Target.Checksum).To(BeEmpty())
+			Expect(buildinfo.Target.Filesystem.Hash).To(BeEmpty())
 		})
 	})
 })

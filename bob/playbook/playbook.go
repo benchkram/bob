@@ -121,7 +121,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 		return true, TaskForcedRebuild, nil
 	}
 
-	rebuildRequired, err = task.NeedsRebuild(&bobtask.RebuildOptions{HashIn: &hashIn})
+	rebuildRequired, err = task.NeedsRebuild()
 	errz.Fatal(err)
 	if rebuildRequired {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
@@ -167,6 +167,11 @@ func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildReq
 			// TODO: simplify verify by check size + modification time of target.
 			targetValid := target.VerifyShallow()
 			boblog.Log.V(3).Info(fmt.Sprintf("%-*s\t 11111 TargetValid is %t", p.namePad, coloredName, targetValid))
+
+			if targetValid {
+				return false, "", nil
+			}
+
 			rebuildRequired = !targetValid
 
 			// // Try to load a target from the store when a rebuild is required.
