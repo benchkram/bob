@@ -84,7 +84,7 @@ const (
 	TargetInvalid     RebuildCause = "target-invalid"
 )
 
-// TaskNeedsRebuild check if a tasks need a rebuild by looking at it's hash value
+// TaskNeedsRebuild check if a tasks need a rebuild by looking at its hash value,
 // and it's child tasks.
 func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildRequired bool, cause RebuildCause, err error) {
 	ts, ok := p.Tasks[taskname]
@@ -206,7 +206,7 @@ func (p *Playbook) play() error {
 			for _, dependentTaskName := range task.Task.DependsOn {
 				t, ok := p.Tasks[dependentTaskName]
 				if !ok {
-					//fmt.Printf("Task %s does not exist", dependentTaskName)
+					// fmt.Printf("Task %s does not exist", dependentTaskName)
 					return usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
 				}
 

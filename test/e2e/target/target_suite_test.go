@@ -35,7 +35,7 @@ var _ = BeforeSuite(func() {
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	buildinfoStore = buildinfostore.New(filepath.Join(storageDir, global.BobCacheBuildinfoDir))
+	buildinfoStore = buildinfostore.NewBsonStore(filepath.Join(storageDir, global.BobCacheBuildinfoDir))
 
 	nixBuilder, err := NixBuilder()
 	Expect(err).NotTo(HaveOccurred())

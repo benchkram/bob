@@ -1,7 +1,6 @@
 package buildinfostore
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,39 +8,39 @@ import (
 
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/errz"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // var ErrBuildInfoDoesNotExist = fmt.Errorf("build info does not exist")
 
-type s struct {
+type b struct {
 	dir string
 }
 
-// New creates a filestore. The caller is responsible to pass a
+// NewBsonStore creates a bsonStore. The caller is responsible to pass an
 // existing directory.
-func New(dir string) Store {
-	s := &s{
+func NewBsonStore(dir string) Store {
+	bs := &b{
 		dir: dir,
 	}
 
-	return s
+	return bs
 }
 
 // NewBuildInfo creates a new build info file.
-func (s *s) NewBuildInfo(id string, info *buildinfo.I) (err error) {
+func (s *b) NewBuildInfo(id string, info *buildinfo.I) (err error) {
 	defer errz.Recover(&err)
 
-	b, err := json.Marshal(info)
+	data, err := bson.Marshal(info)
 	errz.Fatal(err)
 
-	err = ioutil.WriteFile(filepath.Join(s.dir, id), b, 0666)
+	err = ioutil.WriteFile(filepath.Join(s.dir, id), data, 0666)
 	errz.Fatal(err)
 
 	return nil
 }
 
-// GetArtifact opens a file
-func (s *s) GetBuildInfo(id string) (info *buildinfo.I, err error) {
+func (s *b) GetBuildInfo(id string) (info *buildinfo.I, err error) {
 	defer errz.Recover(&err)
 
 	info = &buildinfo.I{}
@@ -52,16 +51,16 @@ func (s *s) GetBuildInfo(id string) (info *buildinfo.I, err error) {
 	}
 	errz.Fatal(err)
 	defer f.Close()
-	b, err := ioutil.ReadAll(f)
+	data, err := ioutil.ReadAll(f)
 	errz.Fatal(err)
 
-	err = json.Unmarshal(b, info)
+	err = bson.Unmarshal(data, info)
 	errz.Fatal(err)
 
 	return info, nil
 }
 
-func (s *s) GetBuildInfos() (_ []*buildinfo.I, err error) {
+func (s *b) GetBuildInfos() (_ []*buildinfo.I, err error) {
 	defer errz.Recover(&err)
 
 	buildinfos := []*buildinfo.I{}
@@ -78,7 +77,7 @@ func (s *s) GetBuildInfos() (_ []*buildinfo.I, err error) {
 		errz.Fatal(err)
 
 		bi := &buildinfo.I{}
-		err = json.Unmarshal(b, bi)
+		err = bson.Unmarshal(b, bi)
 		errz.Fatal(err)
 
 		buildinfos = append(buildinfos, bi)
@@ -87,7 +86,7 @@ func (s *s) GetBuildInfos() (_ []*buildinfo.I, err error) {
 	return buildinfos, nil
 }
 
-func (s *s) Clean() (err error) {
+func (s *b) Clean() (err error) {
 	defer errz.Recover(&err)
 
 	homeDir, err := os.UserHomeDir()
