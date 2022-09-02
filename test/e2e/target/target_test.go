@@ -33,7 +33,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
-			hashIn, err := task.HashIn()
+			hashIn, err := task.HashInAlways()
 			Expect(err).NotTo(HaveOccurred())
 
 			hashInBeforeBuild = hashIn.String()
@@ -57,7 +57,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
-			hashIn, err := task.HashIn()
+			hashIn, err := task.HashInAlways()
 			Expect(err).NotTo(HaveOccurred())
 
 			hashInAfterBuild = hashIn.String()

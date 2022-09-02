@@ -21,7 +21,6 @@ type Target interface {
 	// Exists() bool
 
 	WithExpected(*buildinfo.Targets) *T
-	WithDir(string) *T
 
 	// Paths() []string
 	// PathsPlain() []string
@@ -81,11 +80,6 @@ func New(opts ...Option) *T {
 	return t
 }
 
-func (t *T) WithDir(dir string) *T {
-	t.dir = dir
-	return t
-}
-
 // FilesystemEntries in relation to the umrella bobfile
 func (t *T) FilesystemEntries() []string {
 
@@ -102,7 +96,6 @@ func (t *T) FilesystemEntries() []string {
 }
 
 func (t *T) FilesystemEntriesRaw() []string {
-
 	var pathsWithDir []string
 	for _, v := range t.filesystemEntriesRaw {
 		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))

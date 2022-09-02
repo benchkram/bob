@@ -69,14 +69,14 @@ func (t *Task) filteredInputs() ([]string, error) {
 
 	// Also ignore file & dir targets stored in the same directory
 	if t.target != nil {
-		for _, path := range t.target.FilesystemEntriesRaw() {
+		boblog.Log.V(5).Info(fmt.Sprintf("Removing my own [ask: %s] targets from input list", t.Name()))
+		for _, path := range t.target.FilesystemEntriesRawPlain() {
 			if file.Exists(path) {
 				boblog.Log.V(1).Info(path)
 				info, err := os.Stat(path)
 				if err != nil {
 					return nil, fmt.Errorf("failed to stat %s: %w", path, err)
 				}
-
 				if info.IsDir() {
 					list, err := filepathutil.ListRecursive(path)
 					if err != nil {
@@ -85,8 +85,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 					ignores = append(ignores, list...)
 					continue
 				}
-
-				ignores = append(ignores, t.target.FilesystemEntriesRaw()...)
+				ignores = append(ignores, t.target.FilesystemEntriesRawPlain()...)
 			}
 		}
 	}

@@ -153,6 +153,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 
 	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.Name(), hashIn)
 	errz.Fatal(err)
+	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuildRequired, rebuildCause))
 
 	// task might need a rebuild due to a input change.
 	// but could still be possible to load the targets from the artifact store.
@@ -170,6 +171,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 			if success {
 				rebuildRequired = false
 			}
+		case TargetNotInLocalStore:
 		case TaskForcedRebuild:
 		case DependencyChanged:
 		default:

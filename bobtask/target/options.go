@@ -4,6 +4,12 @@ import "github.com/benchkram/bob/bobtask/buildinfo"
 
 type Option func(t *T)
 
+func WithDir(dir string) Option {
+	return func(t *T) {
+		t.dir = dir
+	}
+}
+
 func WithFilesystemEntries(entries []string) Option {
 	return func(t *T) {
 		t.filesystemEntriesRaw = entries

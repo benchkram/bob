@@ -12,7 +12,7 @@ type RebuildOptions struct {
 	HashIn *hash.In
 }
 
-// NeedsRebuild returns true if the `In` hash does not exist in the hash storage
+// NeedsRebuild returns true if the `In` hash does not exist in the buildinfo storage
 func (t *Task) NeedsRebuild() (_ bool, err error) {
 	defer errz.Recover(&err)
 
@@ -21,9 +21,9 @@ func (t *Task) NeedsRebuild() (_ bool, err error) {
 
 	if t.buildInfoStore.BuildInfoExists(hashIn.String()) {
 		boblog.Log.V(4).Info(fmt.Sprintf("%s, Searching for input hash %s succeeded", t.name, hashIn.String()))
-		return true, nil
+		return false, nil
 	}
 
 	boblog.Log.V(4).Info(fmt.Sprintf("%s, Searching for input hash %s failed", t.name, hashIn.String()))
-	return false, nil
+	return true, nil
 }

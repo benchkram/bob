@@ -223,12 +223,7 @@ func (t *Task) saveDockerImageTargets(in []string) ([]string, error) {
 
 // ArtifactExists return true when the artifact exists in localstore
 func (t *Task) ArtifactExists(artifactName hash.In) bool {
-	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
-	if err != nil {
-		return false
-	}
-	artifact.Close()
-	return true
+	return t.local.ArtifactExists(context.TODO(), artifactName.String())
 }
 
 // GetArtifactMetadata creates a new artifact instance to retrive Metadata

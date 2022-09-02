@@ -26,8 +26,7 @@ func (t *Task) Target() (empty target.Target, _ error) {
 	buildInfo, err := t.ReadBuildInfo()
 	if err != nil {
 		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
-			tt := t.target.WithDir(t.dir)
-			return tt, tt.Resolve()
+			return t.target, t.target.Resolve()
 		}
 		return empty, err
 	}
@@ -35,11 +34,10 @@ func (t *Task) Target() (empty target.Target, _ error) {
 	// This indicates the previous build did not contain any targets.
 	// TODO: Is this necessary? Document why this is necessary.
 	if len(buildInfo.Target.Filesystem.Files) == 0 && len(buildInfo.Target.Docker) == 0 {
-		tt := t.target.WithDir(t.dir)
-		return tt, tt.Resolve()
+		return t.target, t.target.Resolve()
 	}
 
-	tt := t.target.WithDir(t.dir).WithExpected(&buildInfo.Target)
+	tt := t.target.WithExpected(&buildInfo.Target)
 	return tt, tt.Resolve()
 }
 

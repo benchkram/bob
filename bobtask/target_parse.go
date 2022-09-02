@@ -72,6 +72,7 @@ func (t *Task) parseTargets() error {
 		t.target = target.New(
 			target.WithFilesystemEntries(filesystemEntries),
 			target.WithDockerImages(dockerImages),
+			target.WithDir(t.dir),
 		)
 	}
 

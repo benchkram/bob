@@ -146,7 +146,7 @@ func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependen
 // with the targets of each tasks children.
 func (tm Map) IgnoreChildTargets() (err error) {
 	defer errz.Recover(&err)
-
+	boblog.Log.V(5).Info("111111 IgnoreChildTargets 1111")
 	for name, umbrellaTask := range tm {
 
 		err := tm.Walk(name, "", func(tn string, task Task, err error) error {
@@ -155,10 +155,12 @@ func (tm Map) IgnoreChildTargets() (err error) {
 			}
 
 			if task.target != nil {
-				boblog.Log.V(5).Info("IgnoreChildTargets")
+				boblog.Log.V(5).Info(fmt.Sprintf("IgnoreChildTargets [task %s] [numTarget: %d]", task.Name(), len(task.target.FilesystemEntriesRaw())))
 				for _, p := range task.target.FilesystemEntriesRaw() {
+					boblog.Log.V(5).Info(fmt.Sprintf("plain: %s", p))
 					if umbrellaTask.Dir() == task.Dir() {
 						// everything good.. use them as they are
+						boblog.Log.V(5).Info(fmt.Sprintf("used: %s", p))
 						umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, p)
 					} else {
 
@@ -183,6 +185,7 @@ func (tm Map) IgnoreChildTargets() (err error) {
 						if err != nil {
 							return err
 						}
+						boblog.Log.V(5).Info(fmt.Sprintf("used rel: %s", relP))
 						umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, relP)
 					}
 				}
