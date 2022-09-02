@@ -70,7 +70,7 @@ var _ = Describe("Test bob's file target handling", func() {
 		// var hashes hash.Hashes
 		var all *buildinfo.I
 		It("hashes of task `all` must exist and be valid", func() {
-			buildinfos, err := buildinfoStore.GetBuildInfos()
+			buildinfos, err := buildInfoStore.GetBuildInfos()
 			Expect(err).NotTo(HaveOccurred())
 
 			var found bool
@@ -105,7 +105,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			hashIn, err := task.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
-			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
+			buildinfo, err := buildInfoStore.GetBuildInfo(hashIn.String())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buildinfo).NotTo(BeNil())
 			Expect(buildinfo.Target.Filesystem.Hash).NotTo(BeEmpty())
@@ -125,7 +125,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			hashIn, err := task.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
-			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
+			buildinfo, err := buildInfoStore.GetBuildInfo(hashIn.String())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buildinfo).NotTo(BeNil())
 			Expect(buildinfo.Target.Filesystem.Hash).To(BeEmpty())

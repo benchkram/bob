@@ -5,6 +5,8 @@ build:
   build:
     cmd: go build -tags dev -ldflags="-X 'main.Version=${VERSION}'" -o ./run
     target: run
+    dependson:
+      - proto
 
   gomodtidy:
     cmd: go mod tidy
@@ -15,6 +17,13 @@ build:
   test:
     cmd: go test ./...
 
+  proto:
+    input: buildinfo.proto
+    cmd: |
+      mkdir -p bobtask/buildinfo/protos
+      protoc --go_out=. buildinfo.proto
+    target: bobtask/buildinfo/protos
+
 dependencies:
   - nix
   - git
@@ -22,4 +31,6 @@ dependencies:
   - golangci-lint
   - docker
   - gcc
+  - protobuf3_11
+  - protoc-gen-go
 

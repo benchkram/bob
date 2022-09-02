@@ -1,0 +1,81 @@
+syntax = "proto3";
+package bob;
+option go_package = "bobtask/buildinfo/protos";
+
+message BuildInfo {
+  Targets Target = 1;
+  Meta Meta = 2;
+}
+
+message Meta {
+  string Task = 1;
+  string InputHash = 2;
+}
+
+message Targets {
+  BuildInfoFiles Filesystem  = 1;
+  map<string, BuildInfoDocker> Docker = 2;
+}
+
+message BuildInfoFiles {
+  string Hash = 1;
+  map<string, BuildInfoFile> targets = 2;
+
+}
+
+message BuildInfoFile {
+  int64 Size = 1;
+}
+
+message BuildInfoDocker {
+  string Hash = 1;
+}
+
+
+
+// type Targets struct {
+// 	Filesystem BuildInfoFiles             `yaml:"file"`
+// 	Docker     map[string]BuildInfoDocker `yaml:"docker"`
+// }
+
+// func NewTargets() *Targets {
+// 	return &Targets{
+// 		Filesystem: MakeBuildInfoFiles(),
+// 		Docker:     make(map[string]BuildInfoDocker),
+// 	}
+// }
+
+// func MakeTargets() Targets {
+// 	return *NewTargets()
+// }
+
+// type BuildInfoFiles struct {
+// 	// Hash contains the hash of all files
+// 	Hash string `yaml:"hash"`
+// 	// Files contains modtime & size of each file
+// 	Files map[string]BuildInfoFile `yaml:"file"`
+// }
+
+// func NewBuildInfoFiles() *BuildInfoFiles {
+// 	return &BuildInfoFiles{
+// 		Files: make(map[string]BuildInfoFile),
+// 	}
+// }
+// func MakeBuildInfoFiles() BuildInfoFiles {
+// 	return *NewBuildInfoFiles()
+// }
+
+// type BuildInfoFile struct {
+// 	Modified time.Time `yaml:"modified"`
+// 	Size     int64     `yaml:"size"`
+// }
+
+// type BuildInfoDocker struct {
+// 	Hash string `yaml:"hash"`
+// }
+
+// // Creator information
+// type Meta struct {
+// 	Task      string `yaml:"task"`
+// 	InputHash string `yaml:"input_hash"`
+// }

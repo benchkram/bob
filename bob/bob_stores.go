@@ -53,7 +53,7 @@ func BuildinfoStore(dir string) (s buildinfostore.Store, err error) {
 	err = os.MkdirAll(storeDir, 0775)
 	errz.Fatal(err)
 
-	return buildinfostore.New(storeDir), nil
+	return buildinfostore.NewProtoStore(storeDir), nil
 }
 
 func MustDefaultBuildinfoStore() buildinfostore.Store {

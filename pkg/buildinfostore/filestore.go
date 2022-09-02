@@ -21,17 +21,17 @@ type s struct {
 
 // New creates a filestore. The caller is responsible to pass a
 // existing directory.
-func New(dir string, opts ...Option) Store {
+func New(dir string) Store {
 	s := &s{
 		dir: dir,
 	}
 
-	for _, opt := range opts {
-		if opt == nil {
-			continue
-		}
-		opt(s)
-	}
+	// for _, opt := range opts {
+	// 	if opt == nil {
+	// 		continue
+	// 	}
+	// 	opt(s)
+	// }
 
 	return s
 }
@@ -59,8 +59,8 @@ func (s *s) GetBuildInfo(id string) (info *buildinfo.I, err error) {
 	if err != nil {
 		return nil, ErrBuildInfoDoesNotExist
 	}
-	errz.Fatal(err)
 	defer f.Close()
+
 	b, err := ioutil.ReadAll(f)
 	errz.Fatal(err)
 
