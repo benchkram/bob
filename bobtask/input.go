@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filepathutil"
 )
@@ -69,10 +68,8 @@ func (t *Task) filteredInputs() ([]string, error) {
 
 	// Also ignore file & dir targets stored in the same directory
 	if t.target != nil {
-		boblog.Log.V(5).Info(fmt.Sprintf("Removing my own [ask: %s] targets from input list", t.Name()))
 		for _, path := range t.target.FilesystemEntriesRawPlain() {
 			if file.Exists(path) {
-				boblog.Log.V(1).Info(path)
 				info, err := os.Stat(path)
 				if err != nil {
 					return nil, fmt.Errorf("failed to stat %s: %w", path, err)

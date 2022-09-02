@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/benchkram/bob/bobtask/target"
-	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 )
 
@@ -27,7 +26,6 @@ func (t *Task) Target() (empty target.Target, _ error) {
 	buildInfo, err := t.ReadBuildInfo()
 	if err != nil {
 		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
-			boblog.Log.V(5).Info(fmt.Sprintf("%s: ErrBuildInfoDoesNotExist", t.Name()))
 			return t.target, t.target.Resolve()
 		}
 		return empty, err

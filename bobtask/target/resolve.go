@@ -9,16 +9,19 @@ import (
 	"github.com/benchkram/bob/pkg/boblog"
 )
 
+var calls int
+
 // resolve filesystem entries based on filesystemEntriesRaw.
 // Becomes a noop after the first call.
 func (t *T) Resolve() error {
+	calls++
+	boblog.Log.V(2).Info(fmt.Sprintf("Calling Resolve the %d time", calls))
+
 	resolved := []string{}
 
-	boblog.Log.V(2).Info(fmt.Sprintf("resolving 111"))
 	if t.filesystemEntries != nil {
 		return nil
 	}
-	boblog.Log.V(2).Info(fmt.Sprintf("resolving 222"))
 
 	for _, path := range t.FilesystemEntriesRaw() {
 		boblog.Log.V(2).Info(fmt.Sprintf("resolving %s", path))
@@ -30,9 +33,7 @@ func (t *T) Resolve() error {
 			return err
 		}
 
-		boblog.Log.V(2).Info(fmt.Sprintf("resolving 3333"))
 		if fileInfo.IsDir() {
-			boblog.Log.V(2).Info(fmt.Sprintf("resolving 4444"))
 			if err := filepath.WalkDir(path, func(p string, fi fs.DirEntry, err error) error {
 				if err != nil {
 					return err
@@ -53,8 +54,6 @@ func (t *T) Resolve() error {
 	}
 
 	t.filesystemEntries = &resolved
-
-	//litter.Dump()
 
 	return nil
 }

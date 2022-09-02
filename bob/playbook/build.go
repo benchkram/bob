@@ -32,7 +32,6 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	for i := 0; i < parallelJobs; i++ {
 		go func(workerID int) {
-			boblog.Log.V(5).Info(fmt.Sprintf("Spawning worker %d", workerID))
 			for t := range queue {
 				boblog.Log.V(5).Info(fmt.Sprintf("RUNNING task %s on worker  %d ", t.Name(), workerID))
 				err := p.build(ctx, t)
