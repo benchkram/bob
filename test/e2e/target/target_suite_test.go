@@ -21,7 +21,7 @@ var (
 
 	cleanup func() error
 
-	buildinfoStore buildinfostore.Store
+	buildInfoStore buildinfostore.Store
 
 	b *bob.B
 )
@@ -35,14 +35,14 @@ var _ = BeforeSuite(func() {
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	buildinfoStore = buildinfostore.New(filepath.Join(storageDir, global.BobCacheBuildinfoDir))
+	buildInfoStore = buildinfostore.NewProtoStore(filepath.Join(storageDir, global.BobCacheBuildinfoDir))
 
 	nixBuilder, err := NixBuilder()
 	Expect(err).NotTo(HaveOccurred())
 
 	b, err = bob.BobWithBaseStoreDir(
 		storageDir,
-		bob.WithBuildinfoStore(buildinfoStore),
+		bob.WithBuildinfoStore(buildInfoStore),
 		bob.WithDir(dir),
 		bob.WithNixBuilder(nixBuilder),
 	)

@@ -1,0 +1,12 @@
+syntax = "proto3";
+package bob;
+option go_package = "bobtask/buildinfo/protos";
+
+message BuildInfo {
+  Creator info = 1;
+  map<string, string> targets = 2;
+}
+
+message Creator {
+  string TaskName = 1;
+}

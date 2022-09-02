@@ -1,6 +1,7 @@
 package buildinfo
 
 import (
+	"github.com/benchkram/bob/bobtask/buildinfo/protos"
 	"github.com/benchkram/bob/bobtask/hash"
 )
 
@@ -24,8 +25,15 @@ func New() *I {
 		Targets: make(Targets),
 	}
 }
-func Make() I {
-	return I{
-		Targets: make(Targets),
+
+func (i *I) ToProto() *protos.BuildInfo {
+	targets := make(map[string]string)
+
+	for k, v := range i.Targets {
+		targets[string(k)] = v
+	}
+	return &protos.BuildInfo{
+		Info:    &protos.Creator{TaskName: i.Info.Taskname},
+		Targets: targets,
 	}
 }
