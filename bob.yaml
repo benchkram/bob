@@ -5,8 +5,8 @@ build:
   build:
     cmd: go build -tags dev -ldflags="-X 'main.Version=${VERSION}'" -o ./run
     target: run
-      # dependson:
-    #  - proto
+    dependson:
+      - proto
 
   gomodtidy:
     cmd: go mod tidy
@@ -17,8 +17,8 @@ build:
   test:
     cmd: go test ./...
 
-    #proto:
-    #cmd: protoc --go_out=. buildinfo.proto
+  proto:
+    cmd: protoc --go_out=. buildinfo.proto
 
 dependencies:
   - nix
