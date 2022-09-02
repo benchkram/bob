@@ -21,20 +21,20 @@ package target
 // 	return true
 // }
 
-func (t *T) existsDocker() bool {
-	if len(t.dockerImages) == 0 {
-		return true
-	}
+// func (t *T) existsDocker() bool {
+// 	if len(t.dockerImages) == 0 {
+// 		return true
+// 	}
 
-	for _, f := range t.dockerImages {
-		exists, err := t.dockerRegistryClient.ImageExists(f)
-		if err != nil {
-			return false
-		}
-		if !exists {
-			return false
-		}
-	}
+// 	for _, f := range t.dockerImages {
+// 		exists, err := t.dockerRegistryClient.ImageExists(f)
+// 		if err != nil {
+// 			return false
+// 		}
+// 		if !exists {
+// 			return false
+// 		}
+// 	}
 
-	return true
-}
+// 	return true
+// }

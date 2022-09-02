@@ -45,7 +45,6 @@ func (t *T) preConditionsFilesystem() bool {
 		return false
 	}
 
-	_ = t.Resolve()
 	// This usually indicates a file was added/removed manually
 	// from a target directory.
 	if len(t.expected.Filesystem.Files) != len(*t.filesystemEntries) {

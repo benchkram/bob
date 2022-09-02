@@ -37,7 +37,7 @@ type T struct {
 
 	// current is the currenlty created buildInfo during the run.
 	// current avoids recomputations.
-	current *buildinfo.Targets
+	// current *buildinfo.Targets
 
 	// dockerRegistryClient utility functions to handle requests with local docker registry
 	dockerRegistryClient dockermobyutil.RegistryClient

@@ -53,7 +53,7 @@ func (t *Task) parseTargets() error {
 	case map[string]interface{}:
 		targets, targetType, err := parseTargetMap(td)
 		if err != nil {
-			err = usererror.Wrapm(err, fmt.Sprintf("[task:%s]", t.name))
+			return usererror.Wrapm(err, fmt.Sprintf("[task:%s]", t.name))
 		}
 
 		switch targetType {
