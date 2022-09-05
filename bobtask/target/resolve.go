@@ -40,9 +40,11 @@ func (t *T) Resolve() error {
 				}
 
 				// Skip dirs
-				if !fi.IsDir() {
-					resolved = append(resolved, p)
+				if fi.IsDir() {
+					return nil
 				}
+
+				resolved = append(resolved, p)
 
 				return nil
 			}); err != nil {
