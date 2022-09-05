@@ -99,3 +99,9 @@ func (s *s) Done() error {
 
 	return s.err
 }
+
+// ArtifactExists TODO: naive implementation.. implement one without downloading the artifact
+func (s *s) ArtifactExists(ctx context.Context, id string) bool {
+	_, err := s.client.GetArtifact(ctx, s.project, id)
+	return err == nil
+}

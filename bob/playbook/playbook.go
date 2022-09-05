@@ -13,7 +13,6 @@ import (
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boberror"
-	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
@@ -99,202 +98,12 @@ func (rc *RebuildCause) String() string {
 }
 
 const (
-	TaskInputChanged  RebuildCause = "input-changed"
-	TaskForcedRebuild RebuildCause = "forced"
-	DependencyChanged RebuildCause = "dependency-changed"
-	TargetInvalid     RebuildCause = "target-invalid"
+	TaskInputChanged      RebuildCause = "input-changed"
+	TaskForcedRebuild     RebuildCause = "forced"
+	DependencyChanged     RebuildCause = "dependency-changed"
+	TargetInvalid         RebuildCause = "target-invalid"
+	TargetNotInLocalStore RebuildCause = "target-not-in-localstore"
 )
-
-// TaskNeedsRebuild check if a tasks need a rebuild by looking at it's hash value
-// and it's child tasks.
-func (p *Playbook) TaskNeedsRebuild(taskname string, hashIn hash.In) (rebuildRequired bool, cause RebuildCause, err error) {
-	ts, ok := p.Tasks[taskname]
-	if !ok {
-		return false, "", usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
-	}
-	task := ts.Task
-	coloredName := task.ColoredName()
-
-	// returns true if rebuild strategy set to `always`
-	if task.Rebuild() == bobtask.RebuildAlways {
-		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tREBUILDING\t(rebuild set to always)", p.namePad, coloredName))
-		return true, TaskForcedRebuild, nil
-	}
-
-	rebuildRequired, err = task.NeedsRebuild(&bobtask.RebuildOptions{HashIn: &hashIn})
-	errz.Fatal(err)
-	if rebuildRequired {
-		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
-		return true, TaskInputChanged, nil
-	}
-
-	var Done = fmt.Errorf("done")
-	// Check if task needs a rebuild due to its dependencies changing
-	err = p.Tasks.walk(task.Name(), func(tn string, t *Status, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// TODO: In case the task does not exist check if a artifact can be used?
-		//       Part of no-permission-workflow.
-
-		// Ignore the task itself
-		if task.Name() == tn {
-			return nil
-		}
-
-		// Require a rebuild if the dependend task did require a rebuild
-		if t.State() != StateNoRebuildRequired {
-			boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(dependecy changed)", p.namePad, coloredName))
-			rebuildRequired = true
-			// Bail out early
-			return Done
-		}
-
-		return nil
-	})
-
-	if errors.Is(err, Done) {
-		return true, DependencyChanged, nil
-	}
-
-	if !rebuildRequired {
-		// check rebuild due to invalidated targets
-		target, err := task.Target()
-		if err != nil {
-			return true, "", err
-		}
-		if target != nil {
-			// In case of a invalid traget a rebuild is required
-
-			// TODO: simplify verify by check size + modification time of target.
-			rebuildRequired = !target.Verify()
-
-			// Try to load a target from the store when a rebuild is required.
-			// If not assure the artifact exists in the store.
-			if rebuildRequired {
-				boblog.Log.V(2).Info(fmt.Sprintf("[task:%s] trying to get target from store", taskname))
-				ok, err := task.ArtifactUnpack(hashIn)
-				boblog.Log.Error(err, "Unable to get target from store")
-
-				if ok {
-					rebuildRequired = false
-				} else {
-					boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] failed to get target from store", taskname))
-				}
-			} else {
-				// Hint: Once there was a time when we created the target in the store
-				// in case no rebuild was required and the target doesn't exist.
-				// Though this should only be done after the target was really build..
-				// If loaded from a remote.. it anyway is synced through the local store.
-				if !task.ArtifactExists(hashIn) {
-					boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(target not in local store)", p.namePad, coloredName))
-					return true, TargetInvalid, err
-				}
-			}
-
-			if rebuildRequired {
-				boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(invalid targets)", p.namePad, coloredName))
-			}
-		}
-	}
-
-	return rebuildRequired, TargetInvalid, err
-}
-
-func (p *Playbook) Play() (err error) {
-	return p.play()
-}
-
-func (p *Playbook) play() error {
-
-	if p.done {
-		return ErrDone
-	}
-
-	p.playMutex.Lock()
-	defer p.playMutex.Unlock()
-
-	if p.start.IsZero() {
-		p.start = time.Now()
-	}
-
-	// Walk the task chain and determine the next build task. Send it to the task channel.
-	// Returns `taskQueued` when a task has been send to the taskChannel.
-	// Returns `taskFailed` when a task has failed.
-	// Once it returns `nil` the playbook is done with it's work.
-	var taskQueued = fmt.Errorf("task queued")
-	var taskFailed = fmt.Errorf("task failed")
-	err := p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
-		if err != nil {
-			return err
-		}
-
-		//boblog.Log.V(3).Info(fmt.Sprintf("%-*s\t walking", p.namePad, taskname))
-
-		switch task.State() {
-		case StatePending:
-			// Check if all dependent tasks are completed
-			for _, dependentTaskName := range task.Task.DependsOn {
-				t, ok := p.Tasks[dependentTaskName]
-				if !ok {
-					//fmt.Printf("Task %s does not exist", dependentTaskName)
-					return usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
-				}
-
-				state := t.State()
-				if state != StateCompleted && state != StateNoRebuildRequired {
-					// A dependent task is not completed.
-					// So this task is not yet ready to run.
-					return nil
-				}
-			}
-		case StateFailed:
-			return taskFailed
-		case StateCanceled:
-			return nil
-		case StateNoRebuildRequired:
-			return nil
-		case StateCompleted:
-			return nil
-		case StateRunning:
-			return nil
-		default:
-		}
-
-		// fmt.Printf("sending task %s to channel\n", task.Task.Name())
-		// setting the task start time before passing it to channel
-		task.Start = time.Now()
-		// TODO: for async assure to handle send to a closed channel.
-		_ = p.setTaskState(task.Name(), StateRunning, nil)
-		p.taskChannel <- task.Task
-		return taskQueued
-	})
-
-	// taskQueued => return nil (happy path)
-	// taskFailed => return PlaybookFailed (ErrFailed)
-	// default    => return err
-	if err != nil {
-		if errors.Is(err, taskQueued) {
-			return nil
-		}
-		if errors.Is(err, taskFailed) {
-			return ErrFailed
-		}
-		return err
-	}
-
-	// Avoid finishing the playbook before all task are done running
-	if p.numRunningTasks() > 0 {
-		return nil
-	}
-
-	// no work done, usually happens when
-	// no task needs a rebuild.
-	p.Done()
-
-	return nil
-}
 
 func (p *Playbook) numRunningTasks() int {
 	var parallel int
@@ -388,7 +197,7 @@ func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
 
-	buildInfo, err := task.ReadBuildinfo()
+	buildInfo, err := task.ReadBuildInfo()
 	if err != nil {
 		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
 			// assure buildinfo is initialized correctly
@@ -397,75 +206,31 @@ func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 			errz.Fatal(err)
 		}
 	}
-	buildInfo.Info.Taskname = task.Name()
+	buildInfo.Meta.Task = task.Name()
+	buildInfo.Meta.InputHash = hashIn.String()
 
+	// Compute buildinfo for the target
 	target, err := task.Task.Target()
 	errz.Fatal(err)
-
 	if target != nil {
-		targetHash, err := target.Hash()
-		if err != nil {
-			return err
-		}
-
-		buildInfo.Target.Checksum = targetHash
-		buildInfo.Target.Modified = time.Time{} // TODO:
-		buildInfo.Target.Size = 0               // TODO:
-
-		// // gather target hashes of dependent tasks
-		// err = p.Tasks.walk(taskname, func(tn string, task *Status, err error) error {
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	if taskname == tn {
-		// 		return nil
-		// 	}
-
-		// 	target, err := task.Target()
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	if target == nil {
-		// 		return nil
-		// 	}
-
-		// 	switch task.State() {
-		// 	case StateCompleted:
-		// 		fallthrough
-		// 	case StateNoRebuildRequired:
-		// 		h, err := target.Hash()
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 		hashIn, err := task.HashIn()
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 		buildInfo.Targets[hashIn] = h
-		// 	case StateRunning:
-		// 		return nil
-		// 	default:
-		// 		boblog.Log.V(1).Info(string(task.state))
-		// 		return ErrUnexpectedTaskState
-		// 	}
-
-		// 	return nil
-		// })
-		// errz.Fatal(err)
+		bi, err := target.BuildInfo()
+		errz.Fatal(err)
+		buildInfo.Target = *bi
 	}
 
+	// Store buildinfo
 	err = p.storeHash(taskname, buildInfo)
 	errz.Fatal(err)
 
-	// TODO: use target hash?
+	// Store targets in the artifact store
 	if p.enableCaching {
 		err = p.pack(taskname, hashIn)
 		errz.Fatal(err)
 	}
 
+	// update task state and trigger another playbook run
 	err = p.setTaskState(taskname, StateCompleted, nil)
 	errz.Fatal(err)
-
 	err = p.play()
 	if err != nil {
 		if !errors.Is(err, ErrDone) {

@@ -81,8 +81,10 @@ func artifactInspect(archiveReader archiver.Reader) (_ *artifactInfo, err error)
 			return nil, ErrInvalidTarHeaderType
 		}
 
-		if strings.HasPrefix(header.Name, __targets) {
-			info.targets = append(info.targets, header.Name)
+		if strings.HasPrefix(header.Name, __targetsFilesystem) {
+			info.targetsFilesystem = append(info.targetsFilesystem, header.Name)
+		} else if strings.HasPrefix(header.Name, __targetsDocker) {
+			info.targetsDocker = append(info.targetsDocker, header.Name)
 		} else if strings.HasPrefix(header.Name, __metadata) {
 			bin, err := ioutil.ReadAll(archiveFile)
 			errz.Fatal(err)

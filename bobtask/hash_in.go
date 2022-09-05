@@ -18,14 +18,22 @@ import (
 	"github.com/benchkram/bob/pkg/filehash"
 )
 
-// HashIn computes a hash containing inputs, environment and the task description.
-// forceRecomputation will reload the inputs and sync with the file system before creating the hash.
+// HashInAlways computes the input hash without using a cached value
+func (t *Task) HashInAlways() (taskHash hash.In, err error) {
+	return t.computeInputHash()
+}
+
+// HashIn computes the input hash
 func (t *Task) HashIn() (taskHash hash.In, err error) {
 	if t.hashIn != nil {
 		boblog.Log.V(4).Info(fmt.Sprintf("Reusing hash for task %s, using %d input files ", t.Name(), len(t.inputs)))
 		return *t.hashIn, nil
 	}
+	return t.computeInputHash()
+}
 
+// computeInputHash computes a hash containing inputs, environment and the task description.
+func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	h := filehash.New()
 
 	// Hash input files

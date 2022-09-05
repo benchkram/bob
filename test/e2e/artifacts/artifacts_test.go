@@ -42,6 +42,8 @@ var _ = Describe("Test artifact and target invalidation", func() {
 			err := artifactRemove(artifactID)
 			Expect(err).NotTo(HaveOccurred())
 
+			//time.Sleep(1 * time.Minute)
+
 			state, err := buildTask(b, "build")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state.State()).To(Equal(playbook.StateCompleted))

@@ -20,6 +20,8 @@ type Store interface {
 
 	Clean(context.Context) error
 
+	ArtifactExists(ctx context.Context, id string) bool
+
 	Done() error
 }
 

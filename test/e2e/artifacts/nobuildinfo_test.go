@@ -36,7 +36,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 		})
 
 		It("clean artifacts & buildinfo", func() {
-			err := b.CleanLocalStore()
+			err := b.Clean()
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -125,7 +125,7 @@ var _ = Describe("Test artifact and target lifecycle for docker images without e
 		})
 
 		It("clean artifacts & buildinfo", func() {
-			err := b.CleanLocalStore()
+			err := b.Clean()
 			Expect(err).NotTo(HaveOccurred())
 		})
 

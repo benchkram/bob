@@ -33,7 +33,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
-			hashIn, err := task.HashIn()
+			hashIn, err := task.HashInAlways()
 			Expect(err).NotTo(HaveOccurred())
 
 			hashInBeforeBuild = hashIn.String()
@@ -57,7 +57,7 @@ var _ = Describe("Test bob's file target handling", func() {
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
-			hashIn, err := task.HashIn()
+			hashIn, err := task.HashInAlways()
 			Expect(err).NotTo(HaveOccurred())
 
 			hashInAfterBuild = hashIn.String()
@@ -70,12 +70,12 @@ var _ = Describe("Test bob's file target handling", func() {
 		// var hashes hash.Hashes
 		var all *buildinfo.I
 		It("hashes of task `all` must exist and be valid", func() {
-			buildinfos, err := buildinfoStore.GetBuildInfos()
+			buildinfos, err := buildInfoStore.GetBuildInfos()
 			Expect(err).NotTo(HaveOccurred())
 
 			var found bool
 			for _, bi := range buildinfos {
-				if bi.Info.Taskname == "all" {
+				if bi.Meta.Task == "all" {
 					all = bi
 					found = true
 					break
@@ -86,7 +86,7 @@ var _ = Describe("Test bob's file target handling", func() {
 		})
 
 		It("target checksum must be non empty", func() {
-			Expect(all.Target.Checksum).NotTo(BeEmpty())
+			Expect(all.Target.Filesystem.Hash).NotTo(BeEmpty())
 		})
 
 		// ----- Check creation of hashes on child tasks -----
@@ -105,10 +105,10 @@ var _ = Describe("Test bob's file target handling", func() {
 			hashIn, err := task.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
-			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
+			buildinfo, err := buildInfoStore.GetBuildInfo(hashIn.String())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buildinfo).NotTo(BeNil())
-			Expect(buildinfo.Target.Checksum).NotTo(BeEmpty())
+			Expect(buildinfo.Target.Filesystem.Hash).NotTo(BeEmpty())
 		})
 
 		It("target hash of task `/second-level/third-level/print` must NOT exist", func() {
@@ -125,10 +125,10 @@ var _ = Describe("Test bob's file target handling", func() {
 			hashIn, err := task.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
-			buildinfo, err := buildinfoStore.GetBuildInfo(hashIn.String())
+			buildinfo, err := buildInfoStore.GetBuildInfo(hashIn.String())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buildinfo).NotTo(BeNil())
-			Expect(buildinfo.Target.Checksum).To(BeEmpty())
+			Expect(buildinfo.Target.Filesystem.Hash).To(BeEmpty())
 		})
 	})
 })

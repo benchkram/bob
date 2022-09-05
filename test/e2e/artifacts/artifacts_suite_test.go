@@ -8,6 +8,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/store"
@@ -62,6 +63,7 @@ func reset() error {
 }
 
 var _ = BeforeSuite(func() {
+	boblog.SetLogLevel(10)
 	var err error
 	var storageDir string
 	dir, storageDir, cleanup, err = setup.TestDirs("artifacts")
@@ -105,7 +107,7 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 })
 
-func TestAdd(t *testing.T) {
+func TestArtifact(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "artifacts suite")
 }
