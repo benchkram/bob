@@ -19,10 +19,6 @@ import (
 func (t *T) BuildInfo() (bi *buildinfo.Targets, err error) {
 	defer errz.Recover(&err)
 
-	// if t.current != nil {
-	// 	return t.current, nil
-	// }
-
 	bi = buildinfo.NewTargets()
 
 	// Filesystem
@@ -38,8 +34,6 @@ func (t *T) BuildInfo() (bi *buildinfo.Targets, err error) {
 		bi.Docker[image] = buildinfo.BuildInfoDocker{Hash: hash}
 	}
 
-	//t.current = bi
-
 	return bi, nil
 }
 
@@ -52,7 +46,7 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 		path = filepath.Join(t.dir, path)
 
 		if !file.Exists(path) {
-			return buildinfo.BuildInfoFiles{}, usererror.Wrapm(fmt.Errorf("target does not exist %q", path), "failed to hash target")
+			return buildinfo.BuildInfoFiles{}, usererror.Wrapm(ErrTargetDoesNotExist, fmt.Sprintf("[path: %q]", path))
 		}
 		targetInfo, err := os.Lstat(path)
 		if err != nil {
@@ -77,7 +71,7 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 				if err != nil {
 					return fmt.Errorf("failed to get file info %q: %w", p, err)
 				}
-				bi.Files[p] = buildinfo.BuildInfoFile{Modified: info.ModTime(), Size: info.Size()}
+				bi.Files[p] = buildinfo.BuildInfoFile{Size: info.Size()}
 
 				return nil
 			}); err != nil {
@@ -89,7 +83,7 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 			if err != nil {
 				return buildinfo.BuildInfoFiles{}, fmt.Errorf("failed to hash target %q: %w", path, err)
 			}
-			bi.Files[path] = buildinfo.BuildInfoFile{Modified: targetInfo.ModTime(), Size: targetInfo.Size()}
+			bi.Files[path] = buildinfo.BuildInfoFile{Size: targetInfo.Size()}
 		}
 	}
 

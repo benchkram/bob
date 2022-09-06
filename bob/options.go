@@ -70,8 +70,8 @@ func WithEnvVariables(env []string) Option {
 	}
 }
 
-func WithJobs(jobs int) Option {
+func WithMaxParallel(maxParallel int) Option {
 	return func(b *B) {
-		b.jobs = jobs
+		b.maxParallel = maxParallel
 	}
 }

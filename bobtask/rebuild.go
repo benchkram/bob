@@ -12,8 +12,9 @@ type RebuildOptions struct {
 	HashIn *hash.In
 }
 
-// NeedsRebuild returns true if the `In` hash does not exist in the buildinfo storage
-func (t *Task) NeedsRebuild() (_ bool, err error) {
+// didTaskChange returns true if the `In` hash does not exist in the buildinfo storage.
+// This indicates that there has not been a previous build for this combination of inputs.
+func (t *Task) DidTaskChange() (_ bool, err error) {
 	defer errz.Recover(&err)
 
 	hashIn, err := t.HashIn()

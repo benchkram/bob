@@ -12,6 +12,7 @@ import (
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -60,8 +61,8 @@ type Playbook struct {
 	// can only be done sequentially.
 	playMutex sync.Mutex
 
-	// jobs is the maximum number of parallel jobs
-	jobs int
+	// maxParallel is the maximum number of parallel executed tasks
+	maxParallel int
 }
 
 func New(root string, opts ...Option) *Playbook {
@@ -72,7 +73,7 @@ func New(root string, opts ...Option) *Playbook {
 		enableCaching: true,
 		root:          root,
 
-		jobs: runtime.NumCPU(),
+		maxParallel: runtime.NumCPU(),
 
 		predictedNumOfTasks: 100000,
 	}
@@ -166,7 +167,7 @@ func (p *Playbook) pack(taskname string, hash hash.In) error {
 	return task.Task.ArtifactPack(hash)
 }
 
-func (p *Playbook) storeHash(taskname string, buildinfo *buildinfo.I) error {
+func (p *Playbook) storeBuildInfo(taskname string, buildinfo *buildinfo.I) error {
 	task, ok := p.Tasks[taskname]
 	if !ok {
 		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
@@ -189,7 +190,7 @@ func (p *Playbook) TaskStatus(taskname string) (ts *Status, _ error) {
 }
 
 // TaskCompleted sets a task to completed
-func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
+func (p *Playbook) TaskCompleted(taskname string) (err error) {
 	defer errz.Recover(&err)
 
 	task, ok := p.Tasks[taskname]
@@ -197,33 +198,17 @@ func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
 
-	buildInfo, err := task.ReadBuildInfo()
-	if err != nil {
-		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
-			// assure buildinfo is initialized correctly
-			buildInfo = buildinfo.New()
-		} else {
-			errz.Fatal(err)
-		}
-	}
-	buildInfo.Meta.Task = task.Name()
-	buildInfo.Meta.InputHash = hashIn.String()
-
-	// Compute buildinfo for the target
-	target, err := task.Task.Target()
+	buildInfo, err := p.computeBuildinfo(taskname)
 	errz.Fatal(err)
-	if target != nil {
-		bi, err := target.BuildInfo()
-		errz.Fatal(err)
-		buildInfo.Target = *bi
-	}
 
 	// Store buildinfo
-	err = p.storeHash(taskname, buildInfo)
+	err = p.storeBuildInfo(taskname, buildInfo)
 	errz.Fatal(err)
 
 	// Store targets in the artifact store
 	if p.enableCaching {
+		hashIn, err := task.HashIn()
+		errz.Fatal(err)
 		err = p.pack(taskname, hashIn)
 		errz.Fatal(err)
 	}
@@ -239,6 +224,51 @@ func (p *Playbook) TaskCompleted(taskname string, hashIn hash.In) (err error) {
 	}
 
 	return nil
+}
+
+// computeBuildinfo for a task.
+// Should only be called after processing is done.
+func (p *Playbook) computeBuildinfo(taskname string) (_ *buildinfo.I, err error) {
+	defer errz.Recover(&err)
+
+	task, ok := p.Tasks[taskname]
+	if !ok {
+		return nil, usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
+	}
+
+	hashIn, err := task.HashIn()
+	errz.Fatal(err)
+
+	buildInfo, err := task.ReadBuildInfo()
+	if err != nil {
+		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
+			// assure buildinfo is initialized correctly
+			buildInfo = buildinfo.New()
+		} else {
+			errz.Fatal(err)
+		}
+	}
+	buildInfo.Meta.Task = task.Name()
+	buildInfo.Meta.InputHash = hashIn.String()
+
+	// Compute buildinfo for the target
+	trgt, err := task.Task.Target()
+	errz.Fatal(err)
+	if trgt != nil {
+		bi, err := trgt.BuildInfo()
+		if err != nil {
+			if errors.Is(err, target.ErrTargetDoesNotExist) {
+				return nil, usererror.Wrapm(err,
+					fmt.Sprintf("Target does not exist for task [%s].\nDid you define the wrong target?\nDid you forget to create the target at all? \n\n", taskname))
+			} else {
+				errz.Fatal(err)
+			}
+		}
+
+		buildInfo.Target = *bi
+	}
+
+	return buildInfo, nil
 }
 
 // TaskNoRebuildRequired sets a task's state to indicate that no rebuild is required

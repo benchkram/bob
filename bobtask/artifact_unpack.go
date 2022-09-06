@@ -21,9 +21,6 @@ import (
 func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 	defer errz.Recover(&err)
 
-	//	meta, err := t.GetArtifactMetadata(artifactName.String())
-	//	errz.Fatal(err)
-
 	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
 	if err != nil {
 		_, ok := err.(*fs.PathError)

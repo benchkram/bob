@@ -35,7 +35,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 		taskName,
 		playbook.WithCachingEnabled(b.enableCaching),
 		playbook.WithPredictedNumOfTasks(len(ag.BTasks)),
-		playbook.WithJobs(b.jobs),
+		playbook.WithMaxParallel(b.maxParallel),
 	)
 	errz.Fatal(err)
 

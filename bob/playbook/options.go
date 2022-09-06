@@ -14,8 +14,8 @@ func WithPredictedNumOfTasks(tasks int) Option {
 	}
 }
 
-func WithJobs(jobs int) Option {
+func WithMaxParallel(maxParallel int) Option {
 	return func(p *Playbook) {
-		p.jobs = jobs
+		p.maxParallel = maxParallel
 	}
 }

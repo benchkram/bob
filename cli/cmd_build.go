@@ -38,9 +38,9 @@ var buildCmd = &cobra.Command{
 		allowInsecure, err := cmd.Flags().GetBool("insecure")
 		errz.Fatal(err)
 
-		jobs, err := cmd.Flags().GetInt("jobs")
+		maxParallel, err := cmd.Flags().GetInt("jobs")
 		errz.Fatal(err)
-		if jobs < 1 {
+		if maxParallel < 1 {
 			boblog.Log.Error(err, "jobs must be greater than 0")
 			os.Exit(1)
 		}
@@ -50,7 +50,7 @@ var buildCmd = &cobra.Command{
 			taskname = args[0]
 		}
 
-		runBuild(dummy, taskname, noCache, allowInsecure, flagEnvVars, jobs)
+		runBuild(dummy, taskname, noCache, allowInsecure, flagEnvVars, maxParallel)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getBuildTasks()
@@ -71,7 +71,7 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(dummy bool, taskname string, noCache, allowInsecure bool, flagEnvVars []string, jobs int) {
+func runBuild(dummy bool, taskname string, noCache, allowInsecure bool, flagEnvVars []string, maxParallel int) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
@@ -90,7 +90,7 @@ func runBuild(dummy bool, taskname string, noCache, allowInsecure bool, flagEnvV
 		bob.WithCachingEnabled(!noCache),
 		bob.WithInsecure(allowInsecure),
 		bob.WithEnvVariables(parseEnvVarsFlag(flagEnvVars)),
-		bob.WithJobs(jobs),
+		bob.WithMaxParallel(maxParallel),
 	)
 	if err != nil {
 		exitCode = 1

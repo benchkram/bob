@@ -59,8 +59,8 @@ type B struct {
 	// env is a list of strings representing the environment in the form "key=value"
 	env []string
 
-	// jobs is the maximum number of parallel executed tasks
-	jobs int
+	// maxParallel is the maximum number of parallel executed tasks
+	maxParallel int
 }
 
 func newBob(opts ...Option) *B {
@@ -71,7 +71,7 @@ func newBob(opts ...Option) *B {
 		dir:           wd,
 		enableCaching: true,
 		allowInsecure: false,
-		jobs:          runtime.NumCPU(),
+		maxParallel:   runtime.NumCPU(),
 	}
 
 	for _, opt := range opts {
