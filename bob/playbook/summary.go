@@ -6,13 +6,11 @@ import (
 
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 )
 
 // summary prints the tasks processing details as a summary of the playbook.
-func (p *Playbook) summary(processedTasks []*bobtask.Task) (err error) {
-	defer errz.Recover(&err)
+func (p *Playbook) summary(processedTasks []*bobtask.Task) {
 
 	boblog.Log.V(1).Info("")
 	boblog.Log.V(1).Info(aurora.Bold("● ● ● ●").BrightGreen().String())
@@ -37,7 +35,6 @@ func (p *Playbook) summary(processedTasks []*bobtask.Task) (err error) {
 		boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, status.Summary(), execTime))
 	}
 	boblog.Log.V(1).Info("")
-	return nil
 }
 
 func displayDuration(d time.Duration) string {

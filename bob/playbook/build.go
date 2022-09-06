@@ -96,7 +96,9 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		)
 	}
 
-	return p.summary(processedTasks)
+	p.summary(processedTasks)
+
+	return err
 }
 
 // didWriteBuildOutput assures that a new line is added
