@@ -23,7 +23,7 @@
       # Provide some binary packages for selected system types.
       packages = forAllSystems (system:
         let
-            pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = nixpkgs.legacyPackages.${system};
         in
         {
           bob = pkgs.buildGoModule {
@@ -48,9 +48,9 @@
             # remeber to bump this hash when your dependencies change.
             #vendorSha256 = pkgs.lib.fakeSha256;
 
-/*            error: hash mismatch in fixed-output derivation '/nix/store/cvpva6ww5h4vy29b3zjrw9fymkfgi9kk-bob0.5.3-go-modules.drv':
-                     specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-                        got:    sha256-BzlZiAXA8wQ7RU6N1knPYH/BDX1Ae+2+4pVJ41ecK7A=*/
+            # error: hash mismatch in fixed-output derivation '/nix/store/cvpva6ww5h4vy29b3zjrw9fymkfgi9kk-bob0.5.3-go-modules.drv':
+            #       specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+            #       got:    sha256-BzlZiAXA8wQ7RU6N1knPYH/BDX1Ae+2+4pVJ41ecK7A=*/
 
             # If on `nix build` you get above error, just replace the value vendorSha256 with value from `got`
             vendorSha256 = "sha256-BzlZiAXA8wQ7RU6N1knPYH/BDX1Ae+2+4pVJ41ecK7A=";
