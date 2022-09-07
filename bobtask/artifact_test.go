@@ -6,24 +6,28 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/store/filestore"
 	"github.com/benchkram/errz"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPackAndUnpackArtifacts(t *testing.T) {
-
+func TestArtifactCreateAndExtract(t *testing.T) {
 	testdir, err := ioutil.TempDir("", "test-pack-and-unpack-artifact")
 	assert.Nil(t, err)
 	storage, err := ioutil.TempDir("", "test-pack-and-unpack-artifact-store")
 	assert.Nil(t, err)
+	buildinfoStorage, err := ioutil.TempDir("", "test-pack-and-unpack-buildinfo-store")
+	assert.Nil(t, err)
 	defer func() {
 		os.RemoveAll(testdir)
 		os.RemoveAll(storage)
+		os.RemoveAll(buildinfoStorage)
 	}()
 
 	artifactStore := filestore.New(storage)
+	buildinfoStore := buildinfostore.NewProtoStore(buildinfoStorage)
 
 	assert.Nil(t, os.MkdirAll(filepath.Join(testdir, ".bbuild"), 0774))
 	assert.Nil(t, os.MkdirAll(filepath.Join(testdir, ".bbuild/dirone"), 0774))
@@ -36,20 +40,21 @@ func TestPackAndUnpackArtifacts(t *testing.T) {
 	tsk := Make()
 	tsk.dir = testdir
 	tsk.local = artifactStore
+	tsk.buildInfoStore = buildinfoStore
 	tsk.name = "mytaskname"
 
 	tsk.TargetDirty = ".bbuild/dirone/"
 	err = tsk.parseTargets()
 	assert.Nil(t, err)
 
-	err = tsk.ArtifactPack("aaa")
+	err = tsk.ArtifactCreate("aaa")
 	errz.Log(err)
 	assert.Nil(t, err)
 
 	err = os.RemoveAll(filepath.Join(testdir, ".build/dirone"))
 	assert.Nil(t, err)
 
-	success, err := tsk.ArtifactUnpack("aaa")
+	success, err := tsk.ArtifactExtract("aaa")
 	assert.Nil(t, err)
 	assert.True(t, success)
 
