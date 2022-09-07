@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
-	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -29,9 +27,6 @@ var buildCmd = &cobra.Command{
 		UnknownFlags: true,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		dummy, err := strconv.ParseBool(cmd.Flag("dummy").Value.String())
-		errz.Fatal(err)
-
 		noCache, err := cmd.Flags().GetBool("no-cache")
 		errz.Fatal(err)
 
@@ -50,7 +45,7 @@ var buildCmd = &cobra.Command{
 			taskname = args[0]
 		}
 
-		runBuild(dummy, taskname, noCache, allowInsecure, flagEnvVars, maxParallel)
+		runBuild(taskname, noCache, allowInsecure, flagEnvVars, maxParallel)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getBuildTasks()
@@ -71,20 +66,12 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(dummy bool, taskname string, noCache, allowInsecure bool, flagEnvVars []string, maxParallel int) {
+func runBuild(taskname string, noCache, allowInsecure bool, flagEnvVars []string, maxParallel int) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
 	}()
 	defer errz.Recover()
-
-	if dummy {
-		wd, err := os.Getwd()
-		errz.Fatal(err)
-		err = bobfile.CreateDummyBobfile(wd, false)
-		errz.Fatal(err)
-		return
-	}
 
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),

@@ -17,16 +17,11 @@ type ArtifactMetadata struct {
 
 	// CreatedAt timestamp the artifact was created
 	CreatedAt time.Time `yaml:"created_at,omitempty"`
-
-	// TargetType sets the type of target, path/docker,
-	// default sets to `path`
-	//TargetType targettype.T `yaml:"target_type,omitempty"`
 }
 
 func NewArtifactMetadata() *ArtifactMetadata {
 	am := &ArtifactMetadata{
 		CreatedAt: time.Now(),
-		//	TargetType: targettype.Path,
 	}
 	return am
 }

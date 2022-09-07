@@ -9,8 +9,8 @@ import (
 	"github.com/benchkram/bob/pkg/filehash"
 )
 
-// Hint: comparing the modification time is tricky as a unpack
-// form a tar archive changes the modification time of a file.
+// Hint: comparing the modification time is tricky as a artifact extraction
+// from a tar archive changes the modification time of a file.
 
 // VerifyShallow compare targets against a existing
 // buildinfo. It will only check if the size of any of the files changed.

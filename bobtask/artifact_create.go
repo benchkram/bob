@@ -34,8 +34,8 @@ func newArchive() archiveIO             { return archiver.NewTarGz() } // TODO: 
 func newArchiveWriter() archiver.Writer { return newArchive() }
 func newArchiveReader() archiver.Reader { return newArchive() }
 
-// ArtifactPack creates an archive for a target
-func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
+// ArtifactCreate create an archive for one or multiple targets
+func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 	defer errz.Recover(&err)
 
 	if t.target == nil {
@@ -173,36 +173,6 @@ func (t *Task) ArtifactPack(artifactName hash.In) (err error) {
 
 	return nil
 }
-
-// func (t *Task) pathTargets() ([]string, error) {
-// 	targets := []string{}
-// 	for _, path := range t.target.PathsPlain() {
-// 		stat, err := os.Stat(filepath.Join(t.dir, path))
-// 		if err != nil {
-// 			return targets, err
-// 		}
-
-// 		if stat.IsDir() {
-// 			// TODO: Read all files from dir.
-// 			root := filepath.Join(t.dir, path)
-// 			_ = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-// 				if err != nil {
-// 					return err
-// 				}
-// 				if d.IsDir() {
-// 					return nil
-// 				}
-
-// 				targets = append(targets, path)
-// 				return nil
-// 			})
-// 		} else {
-// 			targets = append(targets, filepath.Join(t.dir, path))
-// 		}
-
-// 	}
-// 	return targets, nil
-// }
 
 // saveDockerImageTargets calls `docker save` and returns a path to the tar archive.
 func (t *Task) saveDockerImageTargets(in []string) ([]string, error) {

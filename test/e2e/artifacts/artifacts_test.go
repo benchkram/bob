@@ -141,7 +141,7 @@ var _ = Describe("Test artifact and docker-target invalidation", func() {
 		})
 
 		// 6)
-		It("should not rebuild but unpack from local artifact", func() {
+		It("should not rebuild but extract from local artifact", func() {
 			state, err := buildTask(b, bob.BuildTargetDockerImageName)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))

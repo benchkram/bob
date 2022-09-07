@@ -28,7 +28,7 @@ BuildRequired(InputChanged)?
 BuildRequired(TargetInvalid)
   Yes
     Clean Targets
-    UnpackArtifact
+    Extract Artifact
   No
          
     Clean Targets

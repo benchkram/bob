@@ -16,9 +16,9 @@ import (
 	"github.com/benchkram/errz"
 )
 
-// ArtifactUnpack unpacks a artifact from the localstore if it exists.
-// Return true on a succesful unpack operation.
-func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
+// ArtifactExtract extract a artifact from the localstore if it exists.
+// Return true on a succesful extract operation.
+func (t *Task) ArtifactExtract(artifactName hash.In) (success bool, err error) {
 	defer errz.Recover(&err)
 
 	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
@@ -31,7 +31,7 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 	}
 	defer artifact.Close()
 
-	// Assure tasks is cleaned up before unpacking
+	// Assure tasks is cleaned up before extracting
 	err = t.Clean()
 	errz.Fatal(err)
 
@@ -111,7 +111,7 @@ func (t *Task) ArtifactUnpack(artifactName hash.In) (success bool, err error) {
 			err = t.dockerRegistryClient.ImageLoad(dst)
 			errz.Fatal(err)
 
-			// delete the unpacked docker image archive
+			// delete the extracted docker image archive
 			// after `docker load`
 			defer func() { _ = os.Remove(dst) }()
 		}

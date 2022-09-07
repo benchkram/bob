@@ -1,10 +1,22 @@
 package buildinfo
 
 import (
-	"time"
-
 	"github.com/benchkram/bob/bobtask/buildinfo/protos"
 )
+
+type I struct {
+	// Meta holds data about the creator/origin of this object.
+	Meta Meta
+
+	// Target aggregates buildinfos of multiple files or docker images
+	Target Targets
+}
+
+func New() *I {
+	return &I{
+		Target: MakeTargets(),
+	}
+}
 
 type Targets struct {
 	Filesystem BuildInfoFiles             `yaml:"file"`
@@ -39,8 +51,8 @@ func MakeBuildInfoFiles() BuildInfoFiles {
 }
 
 type BuildInfoFile struct {
-	Modified time.Time `yaml:"modified"`
-	Size     int64     `yaml:"size"`
+	// Size of a file
+	Size int64 `yaml:"size"`
 }
 
 type BuildInfoDocker struct {
@@ -49,27 +61,12 @@ type BuildInfoDocker struct {
 
 // Creator information
 type Meta struct {
-	Task      string `yaml:"task"`
+	// Task usually the taskname
+	Task string `yaml:"task"`
+
+	// InputHash used for target creation
 	InputHash string `yaml:"input_hash"`
 }
-
-type I struct {
-	// Target aggregates buildinfos of multiple files or docker images
-	Target Targets
-
-	// Meta holds data about the creator of this object.
-	Meta Meta
-}
-
-func New() *I {
-	return &I{
-		Target: MakeTargets(),
-	}
-}
-
-// func Make() I {
-// 	return I{}
-// }
 
 func (i *I) ToProto(inputHash string) *protos.BuildInfo {
 

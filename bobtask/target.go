@@ -37,8 +37,9 @@ func (t *Task) Target() (empty target.Target, _ error) {
 		return empty, err
 	}
 
-	// This indicates the previous build did not contain any targets.
-	// TODO: Is this necessary? Document why this is necessary.
+	// This indicates the previous build did not contain any targets and therfore it
+	// can't  be  comparted againast.
+	// FIXME: Is this necessary? Seems like it rather happens during development.
 	if len(buildInfo.Target.Filesystem.Files) == 0 && len(buildInfo.Target.Docker) == 0 {
 		return t.target, t.target.Resolve()
 	}

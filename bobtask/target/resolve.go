@@ -11,7 +11,7 @@ import (
 
 var calls int
 
-// resolve filesystem entries based on filesystemEntriesRaw.
+// Resolve filesystem entries based on filesystemEntriesRaw.
 // Becomes a noop after the first call.
 func (t *T) Resolve() error {
 	calls++

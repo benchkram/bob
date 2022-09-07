@@ -58,24 +58,24 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		case TaskInputChanged:
 			hashIn, err := task.HashIn()
 			errz.Fatal(err)
-			success, err := task.ArtifactUnpack(hashIn)
+			success, err := task.ArtifactExtract(hashIn)
 			errz.Fatal(err)
 			if success {
 				rebuildRequired = false
 
 				// In case a artifact was synced from the remote store no buildinfo exists...
 				// To avaoid subsequent artifact extraction the Buildinfo is created after
-				// unpacking the artifact.
+				// extracting the artifact.
 				buildInfo, err := p.computeBuildinfo(task.Name())
 				errz.Fatal(err)
 				err = p.storeBuildInfo(task.Name(), buildInfo)
 				errz.Fatal(err)
 			}
 		case TargetInvalid:
-			boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s, unpacking artifact", p.namePad, coloredName, rebuildCause))
+			boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s, extracting artifact", p.namePad, coloredName, rebuildCause))
 			hashIn, err := task.HashIn()
 			errz.Fatal(err)
-			success, err := task.ArtifactUnpack(hashIn)
+			success, err := task.ArtifactExtract(hashIn)
 			errz.Fatal(err)
 			if success {
 				rebuildRequired = false
@@ -108,36 +108,14 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	}
 	errz.Fatal(err)
 
-	// TODO: think about if this is correctlty placed.
-	// Could also be done after the task completed correctly?
-	// Ass target verification is no don einside TaskCompleted()
+	// FIXME: Is this placed correctly?
+	// Could also be done after the task completion is
+	// done (artifact validation & packaging).
+	//
+	// What does it do? It prevents the task from beeing
+	// flagged as failed in a defered function call.
 	taskSuccessFul = true
 
-	// err = task.VerifyAfter()
-	// errz.Fatal(err)
-
-	// target, err := task.Target()
-	// if err != nil {
-	// 	errz.Fatal(err)
-	// }
-
-	// Check targets are created correctly.
-	// On success the target hash is computed
-	// inside TaskCompleted().
-	// if target != nil {
-	// 	if !target.Exists() {
-	// 		boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s\t(invalid targets)", p.namePad, coloredName, StateFailed))
-	// 		err = p.TaskFailed(task.Name(), fmt.Errorf("targets not created"))
-	// 		if err != nil {
-	// 			if errors.Is(err, ErrFailed) {
-	// 				return err
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// TODO: check if the error handling works as intended, in case of a not created target inside `cmd:`
-	// the user should get a correct error message that the cmd does not create the target as expected.
 	err = p.TaskCompleted(task.Name())
 	if err != nil {
 		if err != nil {

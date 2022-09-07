@@ -39,7 +39,7 @@ func (t *T) BuildInfo() (bi *buildinfo.Targets, err error) {
 
 func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error) {
 
-	bi = buildinfo.MakeBuildInfoFiles()
+	bi = *buildinfo.NewBuildInfoFiles()
 
 	h := filehash.New()
 	for _, path := range paths {

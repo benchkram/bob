@@ -55,6 +55,8 @@ type Playbook struct {
 	// Default: true.
 	enableCaching bool
 
+	// predictedNumOfTasks is used to pick
+	// an appropriate channel size for the task queue.
 	predictedNumOfTasks int
 
 	// playMutex assures recomputation
@@ -86,7 +88,8 @@ func New(root string, opts ...Option) *Playbook {
 	}
 
 	// Try to make the task channel the same size as the number of tasks.
-	// In the unlikely case all task would be ready to be executed at the same time.
+	// (Matthias) There was a reason why this was neccessary, probably it's related
+	// to beeing able to shutdown the playbook correctly? Unsure!
 	p.taskChannel = make(chan *bobtask.Task, p.predictedNumOfTasks)
 
 	return p
@@ -159,12 +162,12 @@ func (p *Playbook) setTaskState(taskname string, state State, taskError error) e
 	return nil
 }
 
-func (p *Playbook) pack(taskname string, hash hash.In) error {
+func (p *Playbook) artifactCreate(taskname string, hash hash.In) error {
 	task, ok := p.Tasks[taskname]
 	if !ok {
 		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
-	return task.Task.ArtifactPack(hash)
+	return task.Task.ArtifactCreate(hash)
 }
 
 func (p *Playbook) storeBuildInfo(taskname string, buildinfo *buildinfo.I) error {
@@ -209,7 +212,7 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 	if p.enableCaching {
 		hashIn, err := task.HashIn()
 		errz.Fatal(err)
-		err = p.pack(taskname, hashIn)
+		err = p.artifactCreate(taskname, hashIn)
 		errz.Fatal(err)
 	}
 

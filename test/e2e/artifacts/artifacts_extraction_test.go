@@ -125,7 +125,6 @@ var _ = Describe("Test artifact creation and extraction from docker targets", fu
 			Expect(err).NotTo(HaveOccurred())
 			_, err = bobtask.ArtifactInspectFromReader(artifact)
 			Expect(err).NotTo(HaveOccurred())
-			//Expect(description.Metadata().TargetType).To(Equal(target.Docker))
 		})
 
 		It("should remove test image from docker registry", func() {
