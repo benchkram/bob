@@ -71,7 +71,7 @@ func (p *Playbook) play() error {
 
 		// fmt.Printf("sending task %s to channel\n", task.Task.Name())
 		// setting the task start time before passing it to channel
-		task.Start = time.Now()
+		task.SetStart(time.Now())
 		// TODO: for async assure to handle send to a closed channel.
 		_ = p.setTaskState(task.Name(), StateRunning, nil)
 		p.taskChannel <- task.Task

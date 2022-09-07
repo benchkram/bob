@@ -36,7 +36,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 					processingErrors = append(processingErrors, fmt.Errorf("[task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 
-					// Any error occured during a build put the
+					// Any error occured during a build puts the
 					// playbook in a done state. This prevents
 					// further tasks be queued for execution.
 
@@ -58,7 +58,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 			// initiate another playbook run
 			// as there might be workers without assigned tasks left.
-			err = p.Play()
+			err := p.Play()
 			if err != nil {
 				if !errors.Is(err, ErrDone) {
 					processingErrorsMutex.Lock()

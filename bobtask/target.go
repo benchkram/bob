@@ -7,11 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/benchkram/bob/bobtask/target"
-	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 )
-
-var calls int
 
 // Target takes care of populating the targets members correctly.
 // It returns a nil in case of a non existing target and a nil error.
@@ -19,9 +16,6 @@ func (t *Task) Target() (empty target.Target, _ error) {
 	if t.target == nil {
 		return empty, nil
 	}
-
-	calls++
-	boblog.Log.V(2).Info(fmt.Sprintf("Calling Target the %d time", calls))
 
 	// ReadBuildInfo is dependent on the inputHash of the task.
 	// For this reason we cannot read build info on target creation,

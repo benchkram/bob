@@ -12,12 +12,9 @@ import (
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/bobtask/hash"
-	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/boberror"
-	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
-	"github.com/logrusorgru/aurora"
 )
 
 // The playbook defines the order in which tasks are allowed to run.
@@ -146,39 +143,6 @@ func (p *Playbook) ErrorChannel() <-chan error {
 	return p.errorChannel
 }
 
-func (p *Playbook) setTaskState(taskname string, state State, taskError error) error {
-	task, ok := p.Tasks[taskname]
-	if !ok {
-		return boberror.ErrTaskDoesNotExistF(taskname)
-	}
-
-	task.SetState(state, taskError)
-	switch state {
-	case StateCompleted, StateCanceled, StateNoRebuildRequired:
-		task.End = time.Now()
-	}
-
-	//p.Tasks[taskname] = task
-	return nil
-}
-
-func (p *Playbook) artifactCreate(taskname string, hash hash.In) error {
-	task, ok := p.Tasks[taskname]
-	if !ok {
-		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
-	}
-	return task.Task.ArtifactCreate(hash)
-}
-
-func (p *Playbook) storeBuildInfo(taskname string, buildinfo *buildinfo.I) error {
-	task, ok := p.Tasks[taskname]
-	if !ok {
-		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
-	}
-
-	return task.Task.WriteBuildinfo(buildinfo)
-}
-
 func (p *Playbook) ExecutionTime() time.Duration {
 	return p.end.Sub(p.start)
 }
@@ -227,51 +191,6 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 	}
 
 	return nil
-}
-
-// computeBuildinfo for a task.
-// Should only be called after processing is done.
-func (p *Playbook) computeBuildinfo(taskname string) (_ *buildinfo.I, err error) {
-	defer errz.Recover(&err)
-
-	task, ok := p.Tasks[taskname]
-	if !ok {
-		return nil, usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
-	}
-
-	hashIn, err := task.HashIn()
-	errz.Fatal(err)
-
-	buildInfo, err := task.ReadBuildInfo()
-	if err != nil {
-		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
-			// assure buildinfo is initialized correctly
-			buildInfo = buildinfo.New()
-		} else {
-			errz.Fatal(err)
-		}
-	}
-	buildInfo.Meta.Task = task.Name()
-	buildInfo.Meta.InputHash = hashIn.String()
-
-	// Compute buildinfo for the target
-	trgt, err := task.Task.Target()
-	errz.Fatal(err)
-	if trgt != nil {
-		bi, err := trgt.BuildInfo()
-		if err != nil {
-			if errors.Is(err, target.ErrTargetDoesNotExist) {
-				return nil, usererror.Wrapm(err,
-					fmt.Sprintf("Target does not exist for task [%s].\nDid you define the wrong target?\nDid you forget to create the target at all? \n\n", taskname))
-			} else {
-				errz.Fatal(err)
-			}
-		}
-
-		buildInfo.Target = *bi
-	}
-
-	return buildInfo, nil
 }
 
 // TaskNoRebuildRequired sets a task's state to indicate that no rebuild is required
@@ -354,49 +273,34 @@ func (p *Playbook) String() string {
 	return description.String()
 }
 
-type State string
-
-// Summary state indicators.
-// The nbsp are intended to align on the cli.
-func (s *State) Summary() string {
-	switch *s {
-	case StatePending:
-		return "⌛       "
-	case StateCompleted:
-		return aurora.Green("✔").Bold().String() + "       "
-	case StateNoRebuildRequired:
-		return aurora.Green("cached").String() + "  "
-	case StateFailed:
-		return aurora.Red("failed").String() + "  "
-	case StateCanceled:
-		return aurora.Faint("canceled").String()
-	default:
-		return ""
+func (p *Playbook) setTaskState(taskname string, state State, taskError error) error {
+	task, ok := p.Tasks[taskname]
+	if !ok {
+		return boberror.ErrTaskDoesNotExistF(taskname)
 	}
+
+	task.SetState(state, taskError)
+	switch state {
+	case StateCompleted, StateCanceled, StateNoRebuildRequired:
+		task.SetEnd(time.Now())
+	}
+
+	return nil
 }
 
-func (s *State) Short() string {
-	switch *s {
-	case StatePending:
-		return "pending"
-	case StateCompleted:
-		return "done"
-	case StateNoRebuildRequired:
-		return "cached"
-	case StateFailed:
-		return "failed"
-	case StateCanceled:
-		return "canceled"
-	default:
-		return ""
+func (p *Playbook) artifactCreate(taskname string, hash hash.In) error {
+	task, ok := p.Tasks[taskname]
+	if !ok {
+		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
 	}
+	return task.Task.ArtifactCreate(hash)
 }
 
-const (
-	StatePending           State = "PENDING"
-	StateCompleted         State = "COMPLETED"
-	StateNoRebuildRequired State = "CACHED"
-	StateFailed            State = "FAILED"
-	StateRunning           State = "RUNNING"
-	StateCanceled          State = "CANCELED"
-)
+func (p *Playbook) storeBuildInfo(taskname string, buildinfo *buildinfo.I) error {
+	task, ok := p.Tasks[taskname]
+	if !ok {
+		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
+	}
+
+	return task.Task.WriteBuildinfo(buildinfo)
+}
