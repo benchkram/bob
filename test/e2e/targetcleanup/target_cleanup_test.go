@@ -15,7 +15,6 @@ var _ = Describe("Testing correct removal of directory targets", func() {
 		var b *bob.B
 		It("should setup test environment", func() {
 			useBobfile("with_dir_target")
-			defer releaseBobfile("with_dir_target")
 
 			bob, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
@@ -33,7 +32,6 @@ var _ = Describe("Testing correct removal of directory targets", func() {
 		})
 
 		It("should invalidate the target by adding an empty file", func() {
-			// create an empty file inside sub-dir
 			emptyFile, err := os.Create("./sub-dir/empty-file")
 			Expect(err).NotTo(HaveOccurred())
 			err = emptyFile.Close()
@@ -47,7 +45,6 @@ var _ = Describe("Testing correct removal of directory targets", func() {
 		})
 
 		It("should rebuild the task and expect the targets beeing loaded from the cache", func() {
-			// re-build
 			err := b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -57,6 +54,10 @@ var _ = Describe("Testing correct removal of directory targets", func() {
 			Expect(dirContents).To(HaveLen(1))
 			Expect(dirContents).To(ContainElement("non-empty-file"))
 			Expect(dirContents).NotTo(ContainElement("empty-file"))
+		})
+
+		It("should cleanup test stubs", func() {
+			releaseBobfile("with_dir_target")
 		})
 
 	})
