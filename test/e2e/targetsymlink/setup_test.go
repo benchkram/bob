@@ -19,6 +19,8 @@ func BobSetup(env ...string) (_ *bob.B, err error) {
 		bob.WithCachingEnabled(true),
 		bob.WithNixBuilder(nixBuilder),
 		bob.WithEnvVariables(env),
+		bob.WithFilestore(artifactStore),
+		bob.WithBuildinfoStore(buildInfoStore),
 	)
 }
 

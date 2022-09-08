@@ -2,7 +2,6 @@ package targetsymlinktest
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +10,9 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/pkg/store"
+	"github.com/benchkram/bob/test/setup"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,6 +21,11 @@ import (
 var (
 	dir     string
 	version string
+
+	artifactStore  store.Store
+	buildInfoStore buildinfostore.Store
+
+	cleanup func() error
 
 	ctx context.Context
 )
@@ -42,9 +49,15 @@ var _ = BeforeSuite(func() {
 		nameToBobfile[strings.ReplaceAll(name, "/", "_")] = bf
 	}
 
-	testDir, err := ioutil.TempDir("", "bob-test-target-symlink-*")
+	var err error
+	var storageDir string
+	dir, storageDir, cleanup, err = setup.TestDirs("target-symlinks")
 	Expect(err).NotTo(HaveOccurred())
-	dir = testDir
+
+	artifactStore, err = bob.Filestore(storageDir)
+	Expect(err).NotTo(HaveOccurred())
+	buildInfoStore, err = bob.BuildinfoStore(storageDir)
+	Expect(err).NotTo(HaveOccurred())
 
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
@@ -66,6 +79,9 @@ var _ = AfterSuite(func() {
 	}
 
 	bob.Version = version
+
+	err = cleanup()
+	Expect(err).NotTo(HaveOccurred())
 })
 
 func TestBuild(t *testing.T) {
