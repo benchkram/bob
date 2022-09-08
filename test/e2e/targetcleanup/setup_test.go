@@ -8,7 +8,7 @@ import (
 	"github.com/benchkram/errz"
 )
 
-func BobSetup(env ...string) (_ *bob.B, err error) {
+func BobSetup(cacheEnabled bool, env ...string) (_ *bob.B, err error) {
 	defer errz.Recover(&err)
 
 	nixBuilder, err := NixBuilder()
@@ -16,9 +16,11 @@ func BobSetup(env ...string) (_ *bob.B, err error) {
 
 	return bob.Bob(
 		bob.WithDir(dir),
-		bob.WithCachingEnabled(false),
+		bob.WithCachingEnabled(cacheEnabled),
 		bob.WithNixBuilder(nixBuilder),
 		bob.WithEnvVariables(env),
+		bob.WithFilestore(artifactStore),
+		bob.WithBuildinfoStore(buildInfoStore),
 	)
 }
 
