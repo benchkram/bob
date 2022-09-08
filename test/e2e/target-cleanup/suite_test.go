@@ -85,7 +85,7 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 })
 
-func TestBuild(t *testing.T) {
+func TestTargetCleanup(t *testing.T) {
 	_, err := exec.LookPath("nix")
 	if err != nil {
 		// Allow to skip tests only locally.
@@ -96,5 +96,5 @@ func TestBuild(t *testing.T) {
 		}
 	}
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "nix suite")
+	RunSpecs(t, "target cleanup suite")
 }
