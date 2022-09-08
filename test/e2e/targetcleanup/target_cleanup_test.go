@@ -32,7 +32,7 @@ var _ = Describe("Testing correct removal of directory targets", func() {
 			Expect(dirContents).To(ContainElement("non-empty-file"))
 		})
 
-		It("should invalidate the target", func() {
+		It("should invalidate the target by adding an empty file", func() {
 			// create an empty file inside sub-dir
 			emptyFile, err := os.Create("./sub-dir/empty-file")
 			Expect(err).NotTo(HaveOccurred())
