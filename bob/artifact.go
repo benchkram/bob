@@ -19,8 +19,8 @@ type artifactMetadataAnnotated struct {
 	targettypes []targettype.T
 }
 
-func newArtifactMetadataAnnotated(m *bobtask.ArtifactMetadata, t []targettype.T) *artifactMetadataAnnotated {
-	return &artifactMetadataAnnotated{m, t}
+func newArtifactMetadataAnnotated(m *bobtask.ArtifactMetadata, tts []targettype.T) *artifactMetadataAnnotated {
+	return &artifactMetadataAnnotated{m, tts}
 }
 
 // ArtifactList list artifacts belonging to each tasks.
