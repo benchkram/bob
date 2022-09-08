@@ -1,15 +1,29 @@
 package target
 
+import "github.com/benchkram/bob/bobtask/buildinfo"
+
 type Option func(t *T)
 
-func WithType(typee Type) Option {
+func WithDir(dir string) Option {
 	return func(t *T) {
-		t.TypeSerialize = typee
+		t.dir = dir
 	}
 }
 
-func WithTargetPaths(targetPaths []string) Option {
+func WithFilesystemEntries(entries []string) Option {
 	return func(t *T) {
-		t.PathsSerialize = targetPaths
+		t.filesystemEntriesRaw = entries
+	}
+}
+
+func WithDockerImages(images []string) Option {
+	return func(t *T) {
+		t.dockerImages = images
+	}
+}
+
+func WithExpected(bi *buildinfo.Targets) Option {
+	return func(t *T) {
+		t.expected = bi
 	}
 }

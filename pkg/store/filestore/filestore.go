@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/errz"
 )
@@ -82,4 +83,8 @@ func (s *s) List(_ context.Context) (items []string, err error) {
 // Done does nothing
 func (s *s) Done() error {
 	return nil
+}
+
+func (s *s) ArtifactExists(ctx context.Context, id string) bool {
+	return file.Exists(filepath.Join(s.dir, id))
 }

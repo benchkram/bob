@@ -31,16 +31,16 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	errz.Fatal(err)
 	fmt.Println("Succeeded building nix dependencies")
 
+	// Hint: Hash computation (playbook execution) can only start after
+	// nix dependecies are resolved.
+	// Nix dependencies are consideren in the input hash of a task.
+
 	playbook, err := ag.Playbook(
 		taskName,
 		playbook.WithCachingEnabled(b.enableCaching),
+		playbook.WithPredictedNumOfTasks(len(ag.BTasks)),
+		playbook.WithMaxParallel(b.maxParallel),
 	)
-	errz.Fatal(err)
-
-	// HINT: It's not easily possible to parallelize hash computation
-	// with building nix dependecies.. as the storePaths computed by
-	// BuildNixDependenciesInPipeline are considered in the task input hash.
-	err = playbook.PreComputeInputHashes()
 	errz.Fatal(err)
 
 	remote := ag.Remotestore()
