@@ -330,8 +330,10 @@ checksum_download_url="$(checksums_url "${version}")"
 http_download "${tmpdir}/checksums.txt" "${checksum_download_url}"
 hash_sha256_verify "${tmpdir}/$bin_name" "${tmpdir}/checksums.txt"
 
+mv "${tmpdir}/$bin_name" "${tmpdir}/${name}"
+
 test ! -d "${bin_dir}" && install -d "${bin_dir}"
-install "${tmpdir}/${bin_name}" "${bin_dir}/bob"
+install "${tmpdir}/${name}" "${bin_dir}"
 
 rm -rf "${tmpdir}"
 
