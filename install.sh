@@ -38,15 +38,15 @@ log_priority() {
 }
 log_tag() {
   case $1 in
-    0) echo "emerg" ;;
-    1) echo "alert" ;;
-    2) echo "crit" ;;
-    3) echo "err" ;;
-    4) echo "warning" ;;
-    5) echo "notice" ;;
-    6) echo "info" ;;
-    7) echo "debug" ;;
-    *) echo "$1" ;;
+  0) echo "emerg" ;;
+  1) echo "alert" ;;
+  2) echo "crit" ;;
+  3) echo "err" ;;
+  4) echo "warning" ;;
+  5) echo "notice" ;;
+  6) echo "info" ;;
+  7) echo "debug" ;;
+  *) echo "$1" ;;
   esac
 }
 log_debug() {
@@ -68,40 +68,40 @@ log_crit() {
 uname_os() {
   os=$(uname -s | tr '[:upper:]' '[:lower:]')
   case "$os" in
-    cygwin_nt*) os="windows" ;;
-    mingw*) os="windows" ;;
-    msys_nt*) os="windows" ;;
+  cygwin_nt*) os="windows" ;;
+  mingw*) os="windows" ;;
+  msys_nt*) os="windows" ;;
   esac
   echo "$os"
 }
 uname_arch() {
   arch=$(uname -m)
   case $arch in
-    x86_64) arch="amd64" ;;
-    x86) arch="386" ;;
-    i686) arch="386" ;;
-    i386) arch="386" ;;
-    aarch64) arch="arm64" ;;
-    armv5*) arch="armv5" ;;
-    armv6*) arch="armv6" ;;
-    armv7*) arch="armv7" ;;
+  x86_64) arch="amd64" ;;
+  x86) arch="386" ;;
+  i686) arch="386" ;;
+  i386) arch="386" ;;
+  aarch64) arch="arm64" ;;
+  armv5*) arch="armv5" ;;
+  armv6*) arch="armv6" ;;
+  armv7*) arch="armv7" ;;
   esac
   echo ${arch}
 }
 uname_os_check() {
   os=$(uname_os)
   case "$os" in
-    darwin) return 0 ;;
-    dragonfly) return 0 ;;
-    freebsd) return 0 ;;
-    linux) return 0 ;;
-    android) return 0 ;;
-    nacl) return 0 ;;
-    netbsd) return 0 ;;
-    openbsd) return 0 ;;
-    plan9) return 0 ;;
-    solaris) return 0 ;;
-    windows) return 0 ;;
+  darwin) return 0 ;;
+  dragonfly) return 0 ;;
+  freebsd) return 0 ;;
+  linux) return 0 ;;
+  android) return 0 ;;
+  nacl) return 0 ;;
+  netbsd) return 0 ;;
+  openbsd) return 0 ;;
+  plan9) return 0 ;;
+  solaris) return 0 ;;
+  windows) return 0 ;;
   esac
   log_crit "uname_os_check '$(uname -s)' got converted to '$os' which is not a GOOS value. Please file bug at https://github.com/client9/shlib"
   return 1
@@ -109,20 +109,20 @@ uname_os_check() {
 uname_arch_check() {
   arch=$(uname_arch)
   case "$arch" in
-    386) return 0 ;;
-    amd64) return 0 ;;
-    arm64) return 0 ;;
-    armv5) return 0 ;;
-    armv6) return 0 ;;
-    armv7) return 0 ;;
-    ppc64) return 0 ;;
-    ppc64le) return 0 ;;
-    mips) return 0 ;;
-    mipsle) return 0 ;;
-    mips64) return 0 ;;
-    mips64le) return 0 ;;
-    s390x) return 0 ;;
-    amd64p32) return 0 ;;
+  386) return 0 ;;
+  amd64) return 0 ;;
+  arm64) return 0 ;;
+  armv5) return 0 ;;
+  armv6) return 0 ;;
+  armv7) return 0 ;;
+  ppc64) return 0 ;;
+  ppc64le) return 0 ;;
+  mips) return 0 ;;
+  mipsle) return 0 ;;
+  mips64) return 0 ;;
+  mips64le) return 0 ;;
+  s390x) return 0 ;;
+  amd64p32) return 0 ;;
   esac
   log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value.  Please file bug report at https://github.com/client9/shlib"
   return 1
@@ -130,13 +130,13 @@ uname_arch_check() {
 untar() {
   tarball=$1
   case "${tarball}" in
-    *.tar.gz | *.tgz) tar --no-same-owner -xzf "${tarball}" ;;
-    *.tar) tar --no-same-owner -xf "${tarball}" ;;
-    *.zip) unzip "${tarball}" ;;
-    *)
-      log_err "untar unknown archive format for ${tarball}"
-      return 1
-      ;;
+  *.tar.gz | *.tgz) tar --no-same-owner -xzf "${tarball}" ;;
+  *.tar) tar --no-same-owner -xf "${tarball}" ;;
+  *.zip) unzip "${tarball}" ;;
+  *)
+    log_err "untar unknown archive format for ${tarball}"
+    return 1
+    ;;
   esac
 }
 http_download_curl() {
@@ -238,7 +238,6 @@ End of functions from https://github.com/client9/shlib
 ------------------------------------------------------------------------
 EOF
 
-
 # Get OS
 uname_os() {
   os=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -286,11 +285,11 @@ binary_name() {
 # Get binaries checksums URL
 # ex. https://github.com/benchkram/bob/releases/download/0.5.3/checksums.txt
 checksums_url() {
-    version=$1
-    os="$(uname_os)"
-    arch="$(uname_arch)"
-    url="${base}/${name}/releases/download/${version}/checksums.txt"
-    echo "$url"
+  version=$1
+  os="$(uname_os)"
+  arch="$(uname_arch)"
+  url="${base}/${name}/releases/download/${version}/checksums.txt"
+  echo "$url"
 }
 
 # Validate supported OS
@@ -303,7 +302,7 @@ validate_os() {
 }
 
 guidelines_autocompletion() {
-    echo "
+  echo "
 To add auto-completion:
 
   BASH:
@@ -321,6 +320,7 @@ tmpdir=$(mktemp -d)
 log_debug "downloading files into ${tmpdir}"
 
 version="$(github_release "${owner}/${name}" "${BOB_VERSION}")"
+bin_dir="${BIN_DIR:-./bin}"
 bin_name="$(binary_name "$version")"
 
 download_url="$(download_url "${version}")"
@@ -328,11 +328,10 @@ http_download "${tmpdir}/$bin_name" "${download_url}"
 
 checksum_download_url="$(checksums_url "${version}")"
 http_download "${tmpdir}/checksums.txt" "${checksum_download_url}"
-
 hash_sha256_verify "${tmpdir}/$bin_name" "${tmpdir}/checksums.txt"
 
-chmod +x "${tmpdir}/$bin_name"
-cp "${tmpdir}/$bin_name" "/usr/local/bin/${name}"
+test ! -d "${bin_dir}" && install -d "${bin_dir}"
+install "${tmpdir}/${bin_name}" "${bin_dir}/bob"
 
 rm -rf "${tmpdir}"
 
