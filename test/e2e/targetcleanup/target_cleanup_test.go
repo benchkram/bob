@@ -16,21 +16,24 @@ var _ = Describe("Testing cleaning up dir targets", func() {
 			b, err := BobSetup()
 			Expect(err).NotTo(HaveOccurred())
 
+			// TODO: As the cache from the user system is used this might
+			// not have a consistent behaviour.
+			// Please setup the test to use a distinct buildinfo & artifact store.
 			err = b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 
-			dirContents, err := contentsOfDir("sub-dir")
+			dirContents, err := readDir("sub-dir")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dirContents).To(HaveLen(1))
 			Expect(dirContents).To(ContainElement("non-empty-file"))
 
-			// we create an empty file inside sub-dir
+			// create an empty file inside sub-dir
 			emptyFile, err := os.Create("./sub-dir/empty-file")
 			Expect(err).NotTo(HaveOccurred())
 			err = emptyFile.Close()
 			Expect(err).NotTo(HaveOccurred())
 
-			dirContents, err = contentsOfDir("sub-dir")
+			dirContents, err = readDir("sub-dir")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dirContents).To(HaveLen(2))
 			Expect(dirContents).To(ContainElement("non-empty-file"))
@@ -41,10 +44,11 @@ var _ = Describe("Testing cleaning up dir targets", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// the empty file should not be there anymore
-			dirContents, err = contentsOfDir("sub-dir")
+			dirContents, err = readDir("sub-dir")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dirContents).To(HaveLen(1))
 			Expect(dirContents).To(ContainElement("non-empty-file"))
+			Expect(dirContents).NotTo(ContainElement("empty-file"))
 		})
 	})
 })
