@@ -26,3 +26,13 @@ func Copy(src, dst string) error {
 
 	return nil
 }
+
+// IsSymlink checks if the file is symbolic link
+// If there is an error, it will be of type *os.PathError.
+func IsSymlink(name string) (is bool, err error) {
+	fileInfo, err := os.Lstat(name)
+	if err != nil {
+		return false, err
+	}
+	return fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink, nil
+}
