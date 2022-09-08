@@ -94,14 +94,14 @@ func releaseBobfile(name string) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-// readDir resturns the dir entires as string array
+// readDir returns the dir entries as string array
 func readDir(dir string) ([]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return []string{}, err
 	}
 
-	contents := []string{}
+	var contents []string
 	for _, e := range entries {
 		contents = append(contents, e.Name())
 	}
