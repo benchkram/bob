@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Explanation https://gist.github.com/mohanpedala/1e2ff5661761d3abd0385e8223e16425
+
 set -e
 
 owner="benchkram"
@@ -319,7 +320,7 @@ tmpdir=$(mktemp -d)
 
 log_debug "downloading files into ${tmpdir}"
 
-version="$(github_release "${owner}/${name}" "$1")"
+version="$(github_release "${owner}/${name}" "${BOB_VERSION}")"
 bin_name="$(binary_name "$version")"
 
 download_url="$(download_url "${version}")"
