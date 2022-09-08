@@ -1,7 +1,6 @@
 package targetsymlinktest
 
 import (
-	"bytes"
 	"context"
 	"io/ioutil"
 	"os"
@@ -95,17 +94,16 @@ func releaseBobfile(name string) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-// contentsOfDir is doing ls command inside dir and returns the contents
+// contentsOfDir returns the dir entries as string array
 func contentsOfDir(dir string) ([]string, error) {
-	lsCmd := exec.Command("ls", dir)
-
-	var lsOutput bytes.Buffer
-	lsCmd.Stdout = &lsOutput
-
-	err := lsCmd.Run()
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return []string{}, err
 	}
 
-	return strings.Split(strings.TrimSpace(lsOutput.String()), "\n"), nil
+	var contents []string
+	for _, e := range entries {
+		contents = append(contents, e.Name())
+	}
+	return contents, nil
 }

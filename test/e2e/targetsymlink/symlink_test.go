@@ -1,9 +1,9 @@
 package targetsymlinktest
 
 import (
-	"bytes"
-	"os/exec"
+	"os"
 
+	"github.com/benchkram/bob/pkg/file"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -39,15 +39,13 @@ var _ = Describe("Testing targets with symlink", func() {
 			Expect(dirContents).To(ContainElement("shortcut"))
 			Expect(dirContents).To(ContainElement("bob.yaml"))
 
-			lsCommand := exec.Command("ls", "-l")
-			var output bytes.Buffer
-			lsCommand.Stdout = &output
-
-			err = lsCommand.Run()
+			isSimlink, err := file.IsSymlink("./shortcut")
 			Expect(err).NotTo(HaveOccurred())
+			Expect(isSimlink).To(BeTrue())
 
-			// the symlink is preserved
-			Expect(output.String()).To(ContainSubstring("shortcut -> hello"))
+			src, err := os.Readlink("./shortcut")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(src).To(Equal("hello"))
 		})
 	})
 })
