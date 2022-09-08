@@ -149,6 +149,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	for key, task := range bobfile.BTasks {
 		task.SetDir(bobfile.dir)
 		task.SetName(key)
+		task.InputAdditionalIgnores = []string{}
 
 		task.InputDirty = fmt.Sprintf("%s\n%s", task.InputDirty, defaultIgnores)
 
@@ -355,22 +356,6 @@ func (b *Bobfile) BobfileSave(dir, name string) (err error) {
 
 func (b *Bobfile) Dir() string {
 	return b.dir
-}
-
-func CreateDummyBobfile(dir string, overwrite bool) (err error) {
-	// Prevent accidental bobfile override
-	if file.Exists(global.BobFileName) && !overwrite {
-		return ErrBobfileExists
-	}
-
-	bobfile := NewBobfile()
-
-	bobfile.BTasks[global.DefaultBuildTask] = bobtask.Task{
-		InputDirty:  "./main.go",
-		CmdDirty:    "go build -o run",
-		TargetDirty: "run",
-	}
-	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
 // Vars returns the bobfile variables in the form "key=value"

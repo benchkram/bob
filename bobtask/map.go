@@ -46,23 +46,29 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 	return nil
 }
 
+func (tm Map) FilterInputs() (err error) {
+	defer errz.Recover(&err)
+
+	for key, task := range tm {
+		inputs, err := task.filteredInputs()
+		errz.Fatal(err)
+		task.inputs = inputs
+
+		tm[key] = task
+	}
+
+	return nil
+}
+
 // Sanitize task map and write filtered & sanitized
-// propertys from dirty members to plain (e.g. dirtyInputs -> filter&sanitize -> inputs)
+// properties from dirty members to plain (e.g. dirtyInputs -> filter&sanitize -> inputs)
 func (tm Map) Sanitize() (err error) {
 	defer errz.Recover(&err)
 
 	for key, task := range tm {
 
-		sanitizedExports, err := task.sanitizeExports(task.Exports)
-		errz.Fatal(err)
-		task.Exports = sanitizedExports
-
 		err = task.parseTargets()
 		errz.Fatal(err)
-
-		inputs, err := task.filteredInputs()
-		errz.Fatal(err)
-		task.inputs = inputs
 
 		task.cmds = multilinecmd.Split(task.CmdDirty)
 		task.rebuild = task.sanitizeRebuild(task.RebuildDirty)
@@ -133,4 +139,58 @@ func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependen
 	}
 
 	return nixDependencies, nil
+}
+
+// IgnoreChildTargets fills the `InputAdditionalIgnores` field of each task
+// with the targets of each tasks children.
+func (tm Map) IgnoreChildTargets() (err error) {
+	defer errz.Recover(&err)
+	for name, umbrellaTask := range tm {
+
+		err := tm.Walk(name, "", func(tn string, task Task, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if task.target != nil {
+				for _, p := range task.target.FilesystemEntriesRaw() {
+					if umbrellaTask.Dir() == task.Dir() {
+						// everything good.. use them as they are
+						umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, p)
+					} else {
+
+						//    List of cases to be covered.
+						//
+						//     umbrellaDIR                 currentTargetDIR      currentTargetPATH
+						//
+						//     .                           second-level          second-level/target
+						//     .                           .                     aaa/bbb/target
+						//     .                           second-level          aaa/second-level/target
+						//
+						//     second-level                second-level          second-level/target
+						//     second-level                third-level           second-level/third-level/target
+						//     second-level                third-level           second-level/third-level/aaa/bbb/target
+						//     second-level                third-level           second-level/
+						//
+						//     second-level/third-level    third-level           second-level/third-level/target
+						//
+						//     third-level    fouth-level           second-level/third-level/fourth-level/target
+
+						relP, err := filepath.Rel(umbrellaTask.Dir(), p)
+						if err != nil {
+							return err
+						}
+						umbrellaTask.InputAdditionalIgnores = append(umbrellaTask.InputAdditionalIgnores, relP)
+					}
+				}
+			}
+
+			return nil
+		})
+		errz.Fatal(err)
+
+		tm[name] = umbrellaTask
+	}
+
+	return nil
 }

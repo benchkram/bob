@@ -7,3 +7,15 @@ func WithCachingEnabled(enable bool) Option {
 		p.enableCaching = enable
 	}
 }
+
+func WithPredictedNumOfTasks(tasks int) Option {
+	return func(p *Playbook) {
+		p.predictedNumOfTasks = tasks
+	}
+}
+
+func WithMaxParallel(maxParallel int) Option {
+	return func(p *Playbook) {
+		p.maxParallel = maxParallel
+	}
+}

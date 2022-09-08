@@ -10,22 +10,24 @@ import (
 // Status holds the state of a task
 // inside a playbook.
 type Status struct {
-	bobtask.Task
+	*bobtask.Task
 
 	stateMu sync.RWMutex
 	state   State
 
-	Start time.Time
-	End   time.Time
+	startMu sync.RWMutex
+	start   time.Time
+	endMu   sync.RWMutex
+	end     time.Time
 
 	Error error
 }
 
-func NewStatus(task bobtask.Task) *Status {
+func NewStatus(task *bobtask.Task) *Status {
 	return &Status{
 		Task:  task,
 		state: StatePending,
-		Start: time.Now(),
+		start: time.Now(),
 	}
 }
 
@@ -43,5 +45,36 @@ func (ts *Status) SetState(s State, err error) {
 }
 
 func (ts *Status) ExecutionTime() time.Duration {
-	return ts.End.Sub(ts.Start)
+	ts.startMu.RLock()
+	ts.endMu.RLock()
+	defer func() {
+		ts.startMu.RUnlock()
+		ts.endMu.RUnlock()
+	}()
+
+	return ts.end.Sub(ts.start)
+}
+
+func (ts *Status) Start() time.Time {
+	ts.startMu.RLock()
+	defer ts.startMu.RUnlock()
+	return ts.start
+}
+
+func (ts *Status) SetStart(start time.Time) {
+	ts.startMu.Lock()
+	defer ts.startMu.Unlock()
+	ts.start = start
+}
+
+func (ts *Status) End() time.Time {
+	ts.endMu.RLock()
+	defer ts.endMu.RUnlock()
+	return ts.end
+}
+
+func (ts *Status) SetEnd(end time.Time) {
+	ts.endMu.Lock()
+	defer ts.endMu.Unlock()
+	ts.end = end
 }

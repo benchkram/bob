@@ -8,13 +8,16 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filepathutil"
 )
 
 func (t *Task) Inputs() []string {
 	return t.inputs
+}
+
+func (t *Task) SetInputs(inputs []string) {
+	t.inputs = inputs
 }
 
 // filteredInputs returns inputs filtered by ignores and file targets.
@@ -63,28 +66,46 @@ func (t *Task) filteredInputs() ([]string, error) {
 		inputs = append(inputs, list...)
 	}
 
-	// also ignore file & dir targets stored in the same directory
+	// Also ignore file & dir targets stored in the same directory
 	if t.target != nil {
-		if t.target.Type == target.Path {
-			for _, path := range t.target.Paths {
-				if file.Exists(path) {
-					info, err := os.Stat(path)
-					if err != nil {
-						return nil, fmt.Errorf("failed to stat %s: %w", path, err)
-					}
-
-					if info.IsDir() {
-						list, err := filepathutil.ListRecursive(path)
-						if err != nil {
-							return nil, fmt.Errorf("failed to list input: %w", err)
-						}
-						ignores = append(ignores, list...)
-						continue
-					}
+		for _, path := range t.target.FilesystemEntriesRawPlain() {
+			if file.Exists(path) {
+				info, err := os.Stat(path)
+				if err != nil {
+					return nil, fmt.Errorf("failed to stat %s: %w", path, err)
 				}
-				ignores = append(ignores, t.target.Paths...)
+				if info.IsDir() {
+					list, err := filepathutil.ListRecursive(path)
+					if err != nil {
+						return nil, fmt.Errorf("failed to list input: %w", err)
+					}
+					ignores = append(ignores, list...)
+					continue
+				}
+				ignores = append(ignores, t.target.FilesystemEntriesRawPlain()...)
 			}
 		}
+	}
+
+	// Also ignore additional ignores found during aggregation.
+	// Usually the targets of child tasks.
+	for _, path := range t.InputAdditionalIgnores {
+		if file.Exists(path) {
+			info, err := os.Stat(path)
+			if err != nil {
+				return nil, fmt.Errorf("failed to stat %s: %w", path, err)
+			}
+
+			if info.IsDir() {
+				list, err := filepathutil.ListRecursive(path)
+				if err != nil {
+					return nil, fmt.Errorf("failed to list input: %w", err)
+				}
+				ignores = append(ignores, list...)
+				continue
+			}
+		}
+		ignores = append(ignores, path)
 	}
 
 	inputs = unique(inputs)
@@ -143,11 +164,12 @@ func unique(ss []string) []string {
 // Split splits a single-line "input" to a slice of inputs.
 //
 // It currently supports the following syntaxes:
-//  Input: |-
-//    main1.go
-//    someotherfile
-//  Output:
-//    [ "./main1.go", "!someotherfile" ]
+//
+//	Input: |-
+//	  main1.go
+//	  someotherfile
+//	Output:
+//	  [ "./main1.go", "!someotherfile" ]
 func split(inputDirty string) []string {
 
 	// Replace leading and trailing spaces for clarity.
