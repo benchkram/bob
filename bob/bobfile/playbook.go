@@ -6,6 +6,7 @@ import (
 )
 
 func (b *Bobfile) Playbook(taskName string, opts ...playbook.Option) (*playbook.Playbook, error) {
+
 	pb := playbook.New(
 		taskName,
 		opts...,

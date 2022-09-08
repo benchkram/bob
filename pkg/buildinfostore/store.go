@@ -16,5 +16,7 @@ type Store interface {
 	GetBuildInfo(id string) (*buildinfo.I, error)
 	GetBuildInfos() ([]*buildinfo.I, error)
 
+	BuildInfoExists(id string) bool
+
 	Clean() error
 }

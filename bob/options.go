@@ -69,3 +69,9 @@ func WithEnvVariables(env []string) Option {
 		b.env = env
 	}
 }
+
+func WithMaxParallel(maxParallel int) Option {
+	return func(b *B) {
+		b.maxParallel = maxParallel
+	}
+}

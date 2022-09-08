@@ -54,8 +54,8 @@ go install
 For shell autocompletion (bash and zsh supported) add `source <(bob completion)` to your `.bashrc`/`.zshrc`.
 
 # How it works
-Bobs generates its internal build graph from tasks described in a `bob.yaml` file (usually refered to as "Bobfile").
-Each build step is executed in a sandbox shell only using the given dependecies required from the nix package manager.
+Bob generates its internal build graph from tasks described in a `bob.yaml` file (usually refered to as "Bobfile").
+Each build step is executed in a sandbox shell only using the given dependencies required from the nix package manager.
 
 The basic components of a build task are:
 

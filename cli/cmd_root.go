@@ -52,6 +52,7 @@ func init() {
 	buildCmd.Flags().Bool("dummy", false, "Create a dummy bobfile")
 	buildCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
 	buildCmd.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing a remote artifact store")
+	buildCmd.Flags().IntP("jobs", "j", runtime.NumCPU(), "Maximum number of parallel started jobs")
 	buildCmd.Flags().StringSliceVar(&flagEnvVars, "env", []string{}, "Set environment variables to build task")
 	buildCmd.AddCommand(buildListCmd)
 	rootCmd.AddCommand(buildCmd)
