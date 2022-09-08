@@ -1,7 +1,6 @@
 package targetsymlinktest
 
 import (
-	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,22 +18,26 @@ import (
 )
 
 var (
-	dir     string
-	version string
+	// dir is the basic test directory
+	// in which the test is executed.
+	dir string
 
-	artifactStore  store.Store
+	// artifactStore temporary store to
+	// avoid interfeering with the users cache.
+	artifactStore store.Store
+	// buildInfoStore temporary store
+	// to avoid interfeering with the users cache.
 	buildInfoStore buildinfostore.Store
 
+	// cleanup is called at the end to remove all test files from the system.
 	cleanup func() error
 
-	ctx context.Context
+	// tmpFiles tracks temporarily created files
+	// to be cleaned up at the end.
+	tmpFiles []string
 )
 
 var _ = BeforeSuite(func() {
-	ctx = context.Background()
-
-	version = bob.Version
-	bob.Version = "1.0.0"
 
 	// Initialize mock bob files from local directory
 	bobFiles := []string{
@@ -78,8 +81,6 @@ var _ = AfterSuite(func() {
 		Expect(err).NotTo(HaveOccurred())
 	}
 
-	bob.Version = version
-
 	err = cleanup()
 	Expect(err).NotTo(HaveOccurred())
 })
@@ -96,30 +97,4 @@ func TestBuild(t *testing.T) {
 	}
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "nix suite")
-}
-
-// useBobfile sets the right bobfile to be used for test
-func useBobfile(name string) {
-	err := os.Rename(name+".yaml", "bob.yaml")
-	Expect(err).NotTo(HaveOccurred())
-}
-
-// releaseBobfile will revert changes done in useBobfile
-func releaseBobfile(name string) {
-	err := os.Rename("bob.yaml", name+".yaml")
-	Expect(err).NotTo(HaveOccurred())
-}
-
-// contentsOfDir returns the dir entries as string array
-func contentsOfDir(dir string) ([]string, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return []string{}, err
-	}
-
-	var contents []string
-	for _, e := range entries {
-		contents = append(contents, e.Name())
-	}
-	return contents, nil
 }
