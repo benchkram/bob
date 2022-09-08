@@ -8,19 +8,29 @@ import (
 	"github.com/benchkram/errz"
 )
 
-func BobSetup(cacheEnabled bool, env ...string) (_ *bob.B, err error) {
+func BobSetup() (_ *bob.B, err error) {
+	return bobSetup()
+}
+
+func BobSetupNoCache() (_ *bob.B, err error) {
+	return bobSetup(bob.WithCachingEnabled(false))
+}
+
+func bobSetup(opts ...bob.Option) (_ *bob.B, err error) {
 	defer errz.Recover(&err)
 
 	nixBuilder, err := NixBuilder()
 	errz.Fatal(err)
 
-	return bob.Bob(
+	static := []bob.Option{
 		bob.WithDir(dir),
-		bob.WithCachingEnabled(cacheEnabled),
 		bob.WithNixBuilder(nixBuilder),
-		bob.WithEnvVariables(env),
 		bob.WithFilestore(artifactStore),
 		bob.WithBuildinfoStore(buildInfoStore),
+	}
+	static = append(static, opts...)
+	return bob.Bob(
+		static...,
 	)
 }
 
