@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"errors"
-
-	"github.com/benchkram/bob/bobtask/export"
 )
 
 type optimisationOptions struct {
@@ -54,17 +52,6 @@ func (t *Task) sanitizeInputs(inputs []string, opts optimisationOptions) ([]stri
 	}
 
 	return sanitized, nil
-}
-
-func (t *Task) sanitizeExports(exports export.Map) (export.Map, error) {
-	sanitizedExports := make(export.Map)
-	for name, export := range exports {
-		if strings.Contains(string(export), "..") {
-			return nil, fmt.Errorf("'..' not allowed in file path %q", string(export))
-		}
-		sanitizedExports[name] = export
-	}
-	return sanitizedExports, nil
 }
 
 type absolutePathOrError struct {
