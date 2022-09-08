@@ -301,6 +301,18 @@ validate_os() {
   fi
 }
 
+guidelines_autocompletion() {
+    echo "
+To add auto-completion:
+
+  BASH:
+    * Add source <(bob completion) to your .bashrc
+
+  ZSH:
+    * Add source <(bob completion -z) to your .zshrc
+"
+}
+
 validate_os
 
 tmpdir=$(mktemp -d)
@@ -323,4 +335,6 @@ cp "${tmpdir}/$bin_name" "/usr/local/bin/${name}"
 
 rm -rf "${tmpdir}"
 
-log_info "Done"
+log_info "All done!"
+
+guidelines_autocompletion
