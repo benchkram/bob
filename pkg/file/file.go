@@ -3,8 +3,6 @@ package file
 import (
 	"io/ioutil"
 	"os"
-
-	"github.com/benchkram/errz"
 )
 
 // Exists return true when a file exists, false otherwise.
@@ -32,10 +30,9 @@ func Copy(src, dst string) error {
 // IsSymlink checks if the file is symbolic link
 // If there is an error, it will be of type *os.PathError.
 func IsSymlink(name string) (is bool, err error) {
-	defer errz.Recover(&err)
-
 	fileInfo, err := os.Lstat(name)
-	errz.Fatal(err)
-
+	if err != nil {
+		return false, err
+	}
 	return fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink, nil
 }
