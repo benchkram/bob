@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"time"
+
+	"github.com/benchkram/bob/bobtask/targettype"
 )
 
 type ArtifactInfo interface {
 	Metadata() *ArtifactMetadata
 	String() string
+	Types() []targettype.T
 }
 
 // artifactInfo is a helper to debug artifacts
@@ -33,6 +36,18 @@ func newArtifactInfo() *artifactInfo {
 
 func (ai *artifactInfo) Metadata() *ArtifactMetadata {
 	return ai.metadata
+}
+
+func (ai *artifactInfo) Types() []targettype.T {
+	ts := []targettype.T{}
+
+	if len(ai.targetsFilesystem) > 0 {
+		ts = append(ts, targettype.Path)
+	}
+	if len(ai.targetsDocker) > 0 {
+		ts = append(ts, targettype.Docker)
+	}
+	return ts
 }
 
 func (ai *artifactInfo) String() string {
