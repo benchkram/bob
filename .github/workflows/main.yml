@@ -19,6 +19,9 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
+      - name: Check flake
+        run: nix build
+
       - name: Install Go
         uses: actions/setup-go@v3
         with:

@@ -8,7 +8,6 @@
       # to work with older version of flakes
       lastModifiedDate = self.lastModifiedDate or self.lastModified or "19700101";
 
-      version = "0.5.3";
       # System types to support.
       supportedSystems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
 
@@ -24,11 +23,12 @@
       packages = forAllSystems (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          version = "0.5.3";
         in
         {
           bob = pkgs.buildGoModule {
             pname = "bob";
-            name = "bob${version}";
+            inherit version;
 
             # In 'nix develop', we don't need a copy of the source tree
             # in the Nix store.
