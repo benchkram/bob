@@ -3,6 +3,7 @@ package bobtask
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -25,7 +26,7 @@ func (t *Task) VerifyAfter() error {
 func (t *Task) verifyBefore() (err error) {
 	if t.target != nil {
 		for _, path := range t.target.FilesystemEntriesRawPlain() {
-			if verifyTargetPath(path) {
+			if !isValidFilesystemTarget(path) {
 				return usererror.Wrap(fmt.Errorf("invalid target `%s` for task `%s`", path, t.name))
 			}
 		}
@@ -34,22 +35,22 @@ func (t *Task) verifyBefore() (err error) {
 	return nil
 }
 
-// verifyTargetPath reports whether the final component of path is "." or ".."
-func verifyTargetPath(path string) bool {
+// isValidFilesystemTarget reports whether the final component of path is "." or ".."
+func isValidFilesystemTarget(path string) bool {
 	// check for end with one dot
 	if path == "." {
-		return true
+		return false
 	}
+
+	if strings.Contains(path, "..") {
+		return false
+	}
+
 	if len(path) >= 2 && path[len(path)-1] == '.' && os.IsPathSeparator(path[len(path)-2]) {
-		return true
+		return false
 	}
 
-	// check for end with two dots
-	if len(path) >= 2 && path[len(path)-1] == '.' && path[len(path)-2] == '.' {
-		return true
-	}
-
-	return false
+	return true
 }
 
 func (t *Task) verifyAfter() (err error) {
