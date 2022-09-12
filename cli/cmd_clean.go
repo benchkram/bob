@@ -28,3 +28,28 @@ func runClean() {
 	fmt.Println("build info cleaned")
 	fmt.Println("artifacts cleaned")
 }
+
+var cleanTargetsCmd = &cobra.Command{
+	Use:   "targets",
+	Short: "Clean targets",
+	//Args:  cobra.ExactArgs(1),
+	Long: ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		runCleanTargets()
+	},
+}
+
+func runCleanTargets() {
+	b, err := bob.Bob()
+	boblog.Log.Error(err, "Unable to initialise bob")
+
+	ag, err := b.Aggregate()
+	boblog.Log.Error(err, "Unable to aggregate bob file")
+
+	for _, t := range ag.BTasks {
+		err := t.Clean()
+		if err != nil {
+			boblog.Log.Error(err, "Unable to clean target")
+		}
+	}
+}
