@@ -34,6 +34,9 @@ func (t *Task) Clean(verbose ...bool) error {
 			if p == "/" {
 				return fmt.Errorf("root cleanup is not allowed")
 			}
+			if p == "." || p == t.dir {
+				return fmt.Errorf("cleanup of task dir is not allowed")
+			}
 
 			if vb {
 				fmt.Printf("  %s ", p)
