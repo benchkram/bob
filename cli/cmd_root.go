@@ -26,7 +26,6 @@ func init() {
 	rootCmd.Flags().Bool("version", false, "Show the CLI's version")
 
 	rootCmd.AddCommand(verifyCmd)
-	rootCmd.AddCommand(cleanCmd)
 	rootCmd.AddCommand(installCmd)
 
 	// clone
@@ -73,6 +72,11 @@ func init() {
 	AuthCmd.AddCommand(AuthContextSwitchCmd)
 	AuthCmd.AddCommand(AuthContextListCmd)
 	rootCmd.AddCommand(AuthCmd)
+
+	// cleanCmd
+	cleanCmd.AddCommand(cleanTargetsCmd)
+	cleanCmd.AddCommand(cleanSystemCmd)
+	rootCmd.AddCommand(cleanCmd)
 }
 
 var rootCmd = &cobra.Command{
