@@ -2,9 +2,6 @@ package bobtask
 
 import (
 	"errors"
-	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/buildinfostore"
@@ -44,31 +41,4 @@ func (t *Task) Target() (empty target.Target, _ error) {
 
 func (t *Task) TargetExists() bool {
 	return t.target != nil
-}
-
-// Clean the targets defined by this task.
-// This assures that we can be sure a target was correctly created
-// and has not been there before the task ran.
-func (t *Task) Clean() error {
-	if t.target != nil {
-		for _, f := range t.target.FilesystemEntriesRawPlain() {
-			if t.dir == "" {
-				return fmt.Errorf("task dir not set")
-			}
-			p := filepath.Join(t.dir, f)
-			if p == "/" {
-				return fmt.Errorf("root cleanup is not allowed")
-			}
-
-			//fmt.Printf("Cleaning %s ", p)
-			err := os.RemoveAll(p)
-			if err != nil {
-				//fmt.Printf("%s\n", aurora.Red("failed"))
-				return err
-			}
-			//fmt.Printf("%s\n", aurora.Green("done"))
-		}
-	}
-
-	return nil
 }
