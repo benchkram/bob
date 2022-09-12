@@ -35,7 +35,7 @@ func (t *Task) verifyBefore() (err error) {
 	return nil
 }
 
-// isValidFilesystemTarget reports whether the final component of path is "." or ".."
+// isValidFilesystemTarget checks if target is a valid path
 func isValidFilesystemTarget(path string) bool {
 	// check for end with one dot
 	if path == "." {
