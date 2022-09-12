@@ -47,7 +47,7 @@ func runCleanTargets() {
 	boblog.Log.Error(err, "Unable to aggregate bob file")
 
 	for _, t := range ag.BTasks {
-		err := t.Clean()
+		err := t.Clean(true)
 		if err != nil {
 			boblog.Log.Error(err, "Unable to clean target")
 		}

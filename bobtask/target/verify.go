@@ -32,7 +32,6 @@ func (t *T) Verify() bool {
 
 func (t *T) preConditionsFilesystem() bool {
 	if len(*t.filesystemEntries) == 0 && len(t.filesystemEntriesRaw) == 0 {
-		boblog.Log.V(2).Info("BBBBBBB")
 		return true
 	}
 
@@ -41,14 +40,12 @@ func (t *T) preConditionsFilesystem() bool {
 	// exist a valid target from a previous build.
 	// Loading from the cash must be handled by the calling function.
 	if t.expected == nil {
-		boblog.Log.V(2).Info("CCCCCCCCC")
 		return false
 	}
 
 	// This usually indicates a file was added/removed manually
 	// from a target directory.
 	if len(t.expected.Filesystem.Files) != len(*t.filesystemEntries) {
-		boblog.Log.V(2).Info(fmt.Sprintf("DDDDDDDD [%d/%d]", len(t.expected.Filesystem.Files), len(*t.filesystemEntries)))
 		return false
 	}
 
@@ -86,13 +83,10 @@ func (t *T) verifyFilesystemShallow() bool {
 
 func (t *T) verifyFilesystem() bool {
 
-	boblog.Log.V(2).Info("11111111111")
-
 	if !t.preConditionsFilesystem() {
 		return false
 	}
 
-	boblog.Log.V(2).Info("222222222222")
 	h := filehash.New()
 
 	for _, path := range *t.filesystemEntries {
@@ -104,60 +98,25 @@ func (t *T) verifyFilesystem() bool {
 
 		expectedFileInfo, ok := t.expected.Filesystem.Files[path]
 		if !ok {
-			boblog.Log.V(2).Info("33333333333")
 
 			return false
 		}
 
 		// Compare size of the target
 		if fileInfo.Size() != expectedFileInfo.Size {
-			boblog.Log.V(2).Info("777777")
 			return false
 		}
 
 		err = h.AddFile(path)
 		if err != nil {
-			boblog.Log.V(2).Info("55555")
 			return false
 		}
 	}
 
-	boblog.Log.V(2).Info("6666666")
-
-	if t.expected == nil {
-		boblog.Log.V(2).Info("nilnilnil")
-	}
-
 	ret := hex.EncodeToString(h.Sum()) == t.expected.Filesystem.Hash
-
-	boblog.Log.V(2).Info("7777")
 
 	return ret
 }
-
-// func (t *T) verifyFile(groundTruth string) bool {
-// 	if len(t.PathsSerialize) == 0 {
-// 		return true
-// 	}
-
-// 	if t.expectedHash == "" {
-// 		return true
-// 	}
-
-// 	// check plain existence
-// 	if !t.existsFile() {
-// 		return false
-// 	}
-
-// 	// check integrity by comparing hash
-// 	hash, err := t.Hash()
-// 	if err != nil {
-// 		boblog.Log.Error(err, "Unable to create target hash")
-// 		return false
-// 	}
-
-// 	return hash == groundTruth
-// }
 
 func (t *T) verifyDocker() bool {
 	if len(t.dockerImages) == 0 {
