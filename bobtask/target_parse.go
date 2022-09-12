@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/bobtask/targettype"
@@ -113,15 +112,7 @@ func parseTargetPath(p string) ([]string, error) {
 	targetStr := fmt.Sprintf("%v", p)
 	targetDirty := split(targetStr)
 
-	for _, targetPath := range unique(targetDirty) {
-		if strings.Contains(targetPath, "../") {
-			return targets, fmt.Errorf("'../' not allowed in file path %q", targetPath)
-		}
-
-		targets = append(targets, targetPath)
-	}
-
-	return targets, nil
+	return unique(targetDirty), nil
 }
 
 func parseTargetImage(p string) []string {

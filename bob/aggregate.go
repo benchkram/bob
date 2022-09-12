@@ -211,13 +211,16 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
+	err = aggregate.Verify()
+	errz.Fatal(err)
+
 	err = aggregate.BTasks.IgnoreChildTargets()
 	errz.Fatal(err)
 
 	err = aggregate.BTasks.FilterInputs()
 	errz.Fatal(err)
 
-	return aggregate, aggregate.Verify()
+	return aggregate, nil
 }
 
 func addTaskPrefix(prefix, taskname string) string {
