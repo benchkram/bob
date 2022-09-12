@@ -75,6 +75,7 @@ func init() {
 
 	// cleanCmd
 	cleanCmd.AddCommand(cleanTargetsCmd)
+	cleanCmd.AddCommand(cleanSystemCmd)
 	rootCmd.AddCommand(cleanCmd)
 }
 

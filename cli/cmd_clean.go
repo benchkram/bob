@@ -14,11 +14,21 @@ var cleanCmd = &cobra.Command{
 	//Args:  cobra.ExactArgs(1),
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		runClean()
+		_ = cmd.Help()
 	},
 }
 
-func runClean() {
+var cleanSystemCmd = &cobra.Command{
+	Use:   "system",
+	Short: "Clean targets",
+	//Args:  cobra.ExactArgs(1),
+	Long: ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		runCleanSystem()
+	},
+}
+
+func runCleanSystem() {
 	b, err := bob.Bob()
 	boblog.Log.Error(err, "Unable to initialise bob")
 
