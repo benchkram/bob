@@ -2,7 +2,7 @@ package bobtask
 
 import (
 	"fmt"
-	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/usererror"
@@ -35,19 +35,25 @@ func (t *Task) verifyBefore() (err error) {
 	return nil
 }
 
-// isValidFilesystemTarget checks if target is a valid path
-// paths which resolve to `.` or containing `..` are considered invalid
+// isValidFilesystemTarget checks if target is a valid path inside
+// the given bob.yaml context.
+// Paths resolving to `.` or starting with `/` are considered invalid
 func isValidFilesystemTarget(path string) bool {
-	// check for end with one dot
-	if path == "." {
+
+	cleaned := filepath.Clean(path)
+
+	// the current directory can't be a target.
+	if cleaned == "." {
 		return false
 	}
 
-	if strings.Contains(path, "..") {
+	// do not leave the context of a directory containing the bob.yaml file.
+	if strings.HasPrefix(cleaned, "..") {
 		return false
 	}
 
-	if len(path) >= 2 && path[len(path)-1] == '.' && os.IsPathSeparator(path[len(path)-2]) {
+	// root is not allowed as a target.
+	if strings.HasPrefix(cleaned, "/") {
 		return false
 	}
 
