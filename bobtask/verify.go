@@ -36,6 +36,7 @@ func (t *Task) verifyBefore() (err error) {
 }
 
 // isValidFilesystemTarget checks if target is a valid path
+// paths which resolve to `.` or containing `..` are considered invalid
 func isValidFilesystemTarget(path string) bool {
 	// check for end with one dot
 	if path == "." {
