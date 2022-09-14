@@ -152,6 +152,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	for i, task := range aggregate.BTasks {
 		task.WithLocalstore(b.local)
 		task.WithBuildinfoStore(b.buildInfoStore)
+		task.WithDockerRegistryClient(b.dockerRegistryClient)
 
 		// a task must always-rebuild when caching is disabled
 		if !b.enableCaching {

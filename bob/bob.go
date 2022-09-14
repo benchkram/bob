@@ -7,6 +7,7 @@ import (
 
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/auth"
+	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -61,6 +62,9 @@ type B struct {
 
 	// maxParallel is the maximum number of parallel executed tasks
 	maxParallel int
+
+	// dockerRegistryClient is used to access the local docker registry
+	dockerRegistryClient dockermobyutil.RegistryClient
 }
 
 func newBob(opts ...Option) *B {
@@ -72,6 +76,8 @@ func newBob(opts ...Option) *B {
 		enableCaching: true,
 		allowInsecure: false,
 		maxParallel:   runtime.NumCPU(),
+
+		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
 	}
 
 	for _, opt := range opts {

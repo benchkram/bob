@@ -160,7 +160,6 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		task.SetRebuildStrategy(bobtask.RebuildOnChange)
 
 		// initialize docker registry for task
-		task.SetDockerRegistryClient()
 		task.SetDependencies(initializeDependencies(dir, task.DependenciesDirty, bobfile))
 
 		bobfile.BTasks[key] = task
