@@ -1,0 +1,10 @@
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
+
+build:
+  # This should  fail as tasks containing a "/" separator 
+  # should be considered to decorate a child task.
+  second/build:
+    dependsOn: [ before ]
+
+  
+

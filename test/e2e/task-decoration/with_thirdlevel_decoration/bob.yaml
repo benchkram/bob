@@ -1,0 +1,15 @@
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
+
+import:
+  - second
+build:
+  second/build:
+    dependsOn: [ before ]
+  second/third/build:
+    dependsOn: [ second/hello ]
+  before:
+    cmd: |-
+      touch textfile_before
+      echo "Before!" > textfile_before
+    target: textfile_before
+    
