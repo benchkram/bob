@@ -3,8 +3,7 @@ nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fff
 import:
   - second
 build:
-  # This line the task named `before` tas a dependency of the task named `build`
-  # defined in second/bob.yaml.
+  # The `build` from second gets decorated with before
   second/build:
     dependsOn: [ before ]
   before:
