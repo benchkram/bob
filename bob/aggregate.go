@@ -103,7 +103,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)
 
 	// Passing "." instead of the absPath so the
-	// tasks can be initialized with the relativve path.
+	// tasks can be initialized with the relative path.
 	// The absolut path is only stored in `aggregate.Project`.
 	aggregate, err = bobfile.BobfileRead(".")
 	errz.Fatal(err)
