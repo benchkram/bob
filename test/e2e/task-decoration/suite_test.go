@@ -23,10 +23,10 @@ var (
 	dir string
 
 	// artifactStore temporary store to
-	// avoid interfeering with the users cache.
+	// avoid interfering with the users cache.
 	artifactStore store.Store
 	// buildInfoStore temporary store
-	// to avoid interfeering with the users cache.
+	// to avoid interfering with the users cache.
 	buildInfoStore buildinfostore.Store
 
 	// cleanup is called at the end to remove all test files from the system.
