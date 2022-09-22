@@ -80,10 +80,6 @@ func (t *Task) SetProject(proj string) {
 	t.project = proj
 }
 
-func (t *Task) SetDockerRegistryClient() {
-	t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
-}
-
 // Set the rebuild strategy for the task
 // defaults to `on-change`.
 func (t *Task) SetRebuildStrategy(rebuild RebuildType) {
@@ -102,6 +98,12 @@ func (t *Task) WithRemotestore(s store.Store) *Task {
 
 func (t *Task) WithBuildinfoStore(s buildinfostore.Store) *Task {
 	t.buildInfoStore = s
+
+	return t
+}
+
+func (t *Task) WithDockerRegistryClient(c dockermobyutil.RegistryClient) *Task {
+	t.dockerRegistryClient = c
 	return t
 }
 
