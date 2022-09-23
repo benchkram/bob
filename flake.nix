@@ -8,6 +8,9 @@
       # to work with older version of flakes
       lastModifiedDate = self.lastModifiedDate or self.lastModified or "19700101";
 
+      # Generate a user-friendly version number.
+      version = builtins.substring 0 8 lastModifiedDate;
+
       # System types to support.
       supportedSystems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
 
@@ -23,7 +26,6 @@
       packages = forAllSystems (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          version = "0.5.3";
         in
         {
           bob = pkgs.buildGoModule {
