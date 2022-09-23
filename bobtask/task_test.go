@@ -3,6 +3,7 @@ package bobtask
 import (
 	"testing"
 
+	"github.com/benchkram/bob/pkg/reflectutil"
 	"gopkg.in/yaml.v3"
 
 	"github.com/stretchr/testify/assert"
@@ -62,4 +63,19 @@ func TestTask_UnmarshalYAMLWithBothDependsOn(t *testing.T) {
 	var task Task
 	err := yaml.Unmarshal([]byte(withBoth), &task)
 	assert.EqualError(t, err, "both `dependson` and `dependsOn` nodes detected near line 2")
+}
+
+// This test was added to make sure that IsValidDecoration from Task
+// is validating all exported fields.
+//
+// When this test fails you should add the new/remove field to IsValidDecoration
+// and then update the test with correct expected number
+func TestTask_NumberOfPublicFields(t *testing.T) {
+	var task Task
+	expected := 7
+	got := reflectutil.CountExportedFields(task)
+
+	if got != expected {
+		t.Errorf("Expected %d, got %d", expected, got)
+	}
 }

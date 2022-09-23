@@ -35,14 +35,25 @@ var (
 	// tmpFiles tracks temporarily created files
 	// to be cleaned up at the end.
 	tmpFiles []string
+
+	secondLevelDir = "second"
+	thirdLevelDir  = "third"
 )
 
 var _ = BeforeSuite(func() {
 
 	// Initialize mock bob files from local directory
 	bobFiles := []string{
-		// TODO: add files for test setup
+		"with_decoration",
+		filepath.Join("with_decoration", secondLevelDir),
+		"with_thirdlevel_decoration",
+		filepath.Join("with_thirdlevel_decoration", secondLevelDir),
+		filepath.Join("with_thirdlevel_decoration", secondLevelDir, thirdLevelDir),
+		"with_missed_decoration",
+		"with_invalid_decoration",
+		filepath.Join("with_invalid_decoration", secondLevelDir),
 	}
+
 	nameToBobfile := make(map[string]*bobfile.Bobfile)
 	for _, name := range bobFiles {
 		abs, err := filepath.Abs("./" + name)
@@ -60,6 +71,12 @@ var _ = BeforeSuite(func() {
 	artifactStore, err = bob.Filestore(storageDir)
 	Expect(err).NotTo(HaveOccurred())
 	buildInfoStore, err = bob.BuildinfoStore(storageDir)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = os.Mkdir(filepath.Join(dir, secondLevelDir), 0700)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = os.Mkdir(filepath.Join(dir, secondLevelDir, thirdLevelDir), 0700)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = os.Chdir(dir)

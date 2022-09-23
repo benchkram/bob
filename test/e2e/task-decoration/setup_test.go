@@ -3,18 +3,16 @@ package taskdecorationtest
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
+	. "github.com/onsi/gomega"
 )
 
 func BobSetup() (_ *bob.B, err error) {
 	return bobSetup()
-}
-
-func BobSetupNoCache() (_ *bob.B, err error) {
-	return bobSetup(bob.WithCachingEnabled(false))
 }
 
 func bobSetup(opts ...bob.Option) (_ *bob.B, err error) {
@@ -54,25 +52,41 @@ func NixBuilder() (*bob.NixBuilder, error) {
 }
 
 // useBobfile sets the right bobfile to be used for test
-func useBobfile(name string) error {
-	return os.Rename(name+".yaml", "bob.yaml")
+func useBobfile(name string) {
+	err := os.Rename(name+".yaml", "bob.yaml")
+	Expect(err).ToNot(HaveOccurred())
 }
 
 // releaseBobfile will revert changes done in useBobfile
-func releaseBobfile(name string) error {
-	return os.Rename("bob.yaml", name+".yaml")
+func releaseBobfile(name string) {
+	err := os.Rename("bob.yaml", name+".yaml")
+	Expect(err).ToNot(HaveOccurred())
 }
 
-// readDir returns the dir entries as string array
-func readDir(dir string) ([]string, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return []string{}, err
-	}
+func useSecondLevelBobfile(name string) {
+	err := os.Rename(name+"_"+secondLevelDir+".yaml", filepath.Join(dir, secondLevelDir, "bob.yaml"))
+	Expect(err).ToNot(HaveOccurred())
+}
 
-	var contents []string
-	for _, e := range entries {
-		contents = append(contents, e.Name())
-	}
-	return contents, nil
+// releaseBobfile will revert changes done in useSecondLevelBobfile
+func releaseSecondLevelBobfile(name string) {
+	err := os.Rename(
+		filepath.Join(dir, secondLevelDir, "bob.yaml"),
+		name+"_"+secondLevelDir+".yaml")
+	Expect(err).ToNot(HaveOccurred())
+}
+
+func useThirdLevelBobfile(name string) {
+	err := os.Rename(
+		name+"_"+secondLevelDir+"_"+thirdLevelDir+".yaml",
+		filepath.Join(dir, secondLevelDir, thirdLevelDir, "bob.yaml"))
+	Expect(err).ToNot(HaveOccurred())
+}
+
+// releaseBobfile will revert changes done in useThirdLevelBobfile
+func releaseThirdLevelBobfile(name string) {
+	err := os.Rename(
+		filepath.Join(dir, secondLevelDir, thirdLevelDir, "bob.yaml"),
+		name+"_"+secondLevelDir+"_"+thirdLevelDir+".yaml")
+	Expect(err).ToNot(HaveOccurred())
 }

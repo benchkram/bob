@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filepathutil"
 )
@@ -19,6 +20,13 @@ func (t *Task) Inputs() []string {
 func (t *Task) SetInputs(inputs []string) {
 	t.inputs = inputs
 }
+
+var (
+	defaultIgnores = fmt.Sprintf("!%s\n!%s",
+		global.BobWorkspaceFile,
+		filepath.Join(global.BobCacheDir, "*"),
+	)
+)
 
 // filteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
@@ -41,6 +49,8 @@ func (t *Task) filteredInputs() ([]string, error) {
 			log.Printf("failed to change current working directory back to %s: %v\n", owd, err)
 		}
 	}()
+
+	t.InputDirty = fmt.Sprintf("%s\n%s", t.InputDirty, defaultIgnores)
 
 	// Determine inputs and files to be ignored
 	var inputs []string

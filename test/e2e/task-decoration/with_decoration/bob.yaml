@@ -4,6 +4,7 @@ import:
   - second
 build:
   # The `build` from second gets decorated with before
+  # This mean that `second/build` will depend on before and second/hello
   second/build:
     dependsOn: [ before ]
   before:

@@ -1,6 +1,9 @@
 package bobtask
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/logrusorgru/aurora"
 
@@ -134,4 +137,34 @@ func (t *Task) addToSkippedInputs(f string) {
 // prints nothing if there is not skipped input.
 func (t *Task) LogSkippedInput() []string {
 	return t.skippedInputs
+}
+
+// IsDecoration check if the task is a decorated task
+func (t *Task) IsDecoration() bool {
+	return strings.ContainsRune(t.name, filepath.Separator)
+}
+
+// IsValidDecoration checks if the task is a valid decoration
+// A valid decoration means that the task contains only the `dependsOn` node
+// Make sure to update this validator every time a new exported field is added to the Task
+func (t *Task) IsValidDecoration() bool {
+	if t.InputDirty != "" {
+		return false
+	}
+	if len(t.InputAdditionalIgnores) > 0 {
+		return false
+	}
+	if t.CmdDirty != "" {
+		return false
+	}
+	if t.RebuildDirty != "" {
+		return false
+	}
+	if len(t.DependenciesDirty) > 0 {
+		return false
+	}
+	if t.TargetDirty != nil {
+		return false
+	}
+	return true
 }

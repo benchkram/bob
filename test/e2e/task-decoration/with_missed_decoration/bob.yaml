@@ -5,6 +5,7 @@ build:
   # should be considered to decorate a child task.
   second/build:
     dependsOn: [ before ]
-
+  before:
+    cmd: echo "before"
   
 

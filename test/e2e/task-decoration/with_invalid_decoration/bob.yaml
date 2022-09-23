@@ -6,7 +6,8 @@ build:
   second/build:
     cmd: echo "Hello"
     dependsOn: [ before ]
-
+  before:
+    cmd: echo "before"
   
 
  
