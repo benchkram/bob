@@ -8,7 +8,8 @@ import (
 
 // get inspiration from https://github.com/tus/tusd/blob/48ffebec56fcf3221461b3f8cbe000e5367e2d48/pkg/handler/datastore.go#L50
 
-var ErrBuildInfoDoesNotExist = fmt.Errorf("Build info does not exist")
+var ErrBuildInfoDoesNotExist = fmt.Errorf("build info does not exist")
+var ErrBuildInfoInvalid = fmt.Errorf("build info is invalid")
 
 type Store interface {
 	NewBuildInfo(id string, _ *buildinfo.I) error
