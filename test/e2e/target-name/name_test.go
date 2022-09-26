@@ -17,7 +17,7 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(Equal("duplicate target `hello` found"))
+			Expect(err.Error()).To(Equal("duplicate target `hello` found on tasks [another build]"))
 		})
 	})
 
@@ -32,7 +32,7 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(Equal("duplicate target `hello` found"))
+			Expect(err.Error()).To(Equal("duplicate target `hello` found on tasks [another build]"))
 		})
 	})
 
@@ -63,7 +63,7 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(Equal("duplicate target `my-image:latest` found"))
+			Expect(err.Error()).To(Equal("duplicate target `my-image:latest` found on tasks [another build]"))
 		})
 	})
 
@@ -81,7 +81,7 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(Equal("duplicate target `my-image:latest` found"))
+			Expect(err.Error()).To(Equal("duplicate target `my-image:latest` found on tasks [build second/build]"))
 		})
 	})
 })

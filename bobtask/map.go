@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/benchkram/errz"
 
@@ -190,6 +191,33 @@ func (tm Map) IgnoreChildTargets() (err error) {
 		errz.Fatal(err)
 
 		tm[name] = umbrellaTask
+	}
+
+	return nil
+}
+
+// VerifyDuplicateTargets checks if build tasks contain duplicate target names
+func (tm Map) VerifyDuplicateTargets() error {
+	targetToTasks := make(map[string][]string)
+
+	for taskName, v := range tm {
+		target, _ := v.Target()
+		if target == nil {
+			continue
+		}
+		for _, t := range target.DockerImages() {
+			targetToTasks[t] = append(targetToTasks[t], taskName)
+		}
+		for _, t := range target.FilesystemEntriesRaw() {
+			targetToTasks[t] = append(targetToTasks[t], taskName)
+		}
+	}
+
+	for k, v := range targetToTasks {
+		sort.Strings(v)
+		if len(targetToTasks[k]) > 1 {
+			return usererror.Wrap(fmt.Errorf("duplicate target `%s` found on tasks [%s]", k, strings.Join(v, " ")))
+		}
 	}
 
 	return nil

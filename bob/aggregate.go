@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/envutil"
-	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 	"github.com/hashicorp/go-version"
 	"github.com/logrusorgru/aurora"
@@ -221,27 +220,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 	err = aggregate.BTasks.FilterInputs()
 	errz.Fatal(err)
-
-	// todo work in progress
-	var duplicateTargets []string
-	for _, v := range aggregate.BTasks {
-		target, _ := v.Target()
-		if target == nil {
-			continue
-		}
-		for _, di := range target.DockerImages() {
-			if sliceutil.Contains(duplicateTargets, di) {
-				return nil, usererror.Wrap(fmt.Errorf("duplicate target `%s` found", di))
-			}
-			duplicateTargets = append(duplicateTargets, di)
-		}
-		for _, p := range target.FilesystemEntriesRaw() {
-			if sliceutil.Contains(duplicateTargets, p) {
-				return nil, usererror.Wrap(fmt.Errorf("duplicate target `%s` found", p))
-			}
-			duplicateTargets = append(duplicateTargets, p)
-		}
-	}
 
 	return aggregate, nil
 }
