@@ -247,7 +247,7 @@ func collectDecorations(ag *bobfile.Bobfile) (_ map[string][]string, err error) 
 			continue
 		}
 		if !task.IsValidDecoration() {
-			errz.Fatal(errors.New("decorations can contain only dependsOn node"))
+			errz.Fatal(usererror.Wrap(errors.New("decorations can contain only dependsOn node")))
 		}
 		decorations[k] = task.DependsOn
 	}
