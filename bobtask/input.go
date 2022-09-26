@@ -50,12 +50,12 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}()
 
-	t.InputDirty = fmt.Sprintf("%s\n%s", t.InputDirty, defaultIgnores)
+	inputDirty := fmt.Sprintf("%s\n%s", t.InputDirty, defaultIgnores)
 
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
-	for _, input := range unique(split(t.InputDirty)) {
+	for _, input := range unique(split(inputDirty)) {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
