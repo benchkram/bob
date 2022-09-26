@@ -67,7 +67,7 @@ var _ = Describe("Testing decoration of imported tasks", func() {
 
 			_, err = b.Aggregate()
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(Equal("task `second/build` does not exist"))
+			Expect(err.Error()).To(Equal("you are modifying an imported task `second/build` that does not exist"))
 		})
 	})
 

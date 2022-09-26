@@ -67,7 +67,7 @@ func (b *B) addBuildTasksToAggregate(a *bobfile.Bobfile, bobs []*bobfile.Bobfile
 	// validate if child task exists for decoration
 	for k := range decorations {
 		if _, ok := allTasks[k]; !ok {
-			return a, usererror.Wrap(fmt.Errorf("you are modifing an imported task `%s` that does not exist", k))
+			return a, usererror.Wrap(fmt.Errorf("you are modifying an imported task `%s` that does not exist", k))
 		}
 	}
 
