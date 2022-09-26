@@ -100,10 +100,6 @@ func FromProto(p *protos.BuildInfo) *I {
 		return nil
 	}
 
-	if p.Target == nil {
-		return nil
-	}
-
 	bi := New()
 
 	if p.Meta != nil {
