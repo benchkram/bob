@@ -226,6 +226,9 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	var duplicateTargets []string
 	for _, v := range aggregate.BTasks {
 		target, _ := v.Target()
+		if target == nil {
+			continue
+		}
 		for _, di := range target.DockerImages() {
 			if sliceutil.Contains(duplicateTargets, di) {
 				return nil, usererror.Wrap(fmt.Errorf("duplicate target `%s` found", di))
