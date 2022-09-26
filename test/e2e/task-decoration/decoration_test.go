@@ -84,7 +84,7 @@ var _ = Describe("Testing decoration of imported tasks", func() {
 
 			_, err = b.Aggregate()
 			Expect(err).Should(HaveOccurred())
-			Expect(err.Error()).To(Equal("decorations can contain only dependsOn node"))
+			Expect(err.Error()).To(Equal("task `second/build` modifies an imported task. It can only contain a `dependsOn` property"))
 		})
 	})
 })
