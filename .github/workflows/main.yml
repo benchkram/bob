@@ -44,3 +44,6 @@ jobs:
 
       - name: Run tests
         run: bob build test
+
+      - name: Check flake
+        run: nix build

@@ -8,7 +8,9 @@
       # to work with older version of flakes
       lastModifiedDate = self.lastModifiedDate or self.lastModified or "19700101";
 
-      version = "0.5.3";
+      # Generate a user-friendly version number.
+      version = builtins.substring 0 8 lastModifiedDate;
+
       # System types to support.
       supportedSystems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
 
@@ -28,7 +30,7 @@
         {
           bob = pkgs.buildGoModule {
             pname = "bob";
-            name = "bob${version}";
+            inherit version;
 
             # In 'nix develop', we don't need a copy of the source tree
             # in the Nix store.
@@ -53,7 +55,7 @@
             #       got:    sha256-BzlZiAXA8wQ7RU6N1knPYH/BDX1Ae+2+4pVJ41ecK7A=*/
             #
             # If on `nix build` you get above error, just replace the value vendorSha256 with value from `got`
-            vendorSha256 = "sha256-BzlZiAXA8wQ7RU6N1knPYH/BDX1Ae+2+4pVJ41ecK7A=";
+            vendorSha256 = "sha256-jakmXkDHjcA1BOIorrP2ZukcJhosbkJoC+Y/+wAPBCc=";
 
             excludedPackages = [ "example/server-db" "test/e2e" "tui-example" ];
 
