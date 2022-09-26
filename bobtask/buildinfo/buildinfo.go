@@ -102,16 +102,22 @@ func FromProto(p *protos.BuildInfo) *I {
 
 	bi := New()
 
-	bi.Meta.Task = p.Meta.Task
-	bi.Meta.InputHash = p.Meta.InputHash
-
-	bi.Target.Filesystem.Hash = p.Target.Filesystem.Hash
-	for k, v := range p.Target.Filesystem.Targets {
-		bi.Target.Filesystem.Files[k] = BuildInfoFile{Size: v.Size}
+	if p.Meta != nil {
+		bi.Meta.Task = p.Meta.Task
+		bi.Meta.InputHash = p.Meta.InputHash
 	}
 
-	for k, v := range p.Target.Docker {
-		bi.Target.Docker[k] = BuildInfoDocker{Hash: v.Hash}
+	if p.Target != nil {
+		if p.Target.Filesystem != nil {
+			bi.Target.Filesystem.Hash = p.Target.Filesystem.Hash
+			for k, v := range p.Target.Filesystem.Targets {
+				bi.Target.Filesystem.Files[k] = BuildInfoFile{Size: v.Size}
+			}
+		}
+
+		for k, v := range p.Target.Docker {
+			bi.Target.Docker[k] = BuildInfoDocker{Hash: v.Hash}
+		}
 	}
 
 	return bi
