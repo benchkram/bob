@@ -2,8 +2,10 @@ package bobtask
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 )
 
@@ -21,8 +23,12 @@ func (t *Task) Target() (empty target.Target, _ error) {
 	// passed to the worker.
 
 	buildInfo, err := t.ReadBuildInfo()
-	if err != nil || buildInfo == nil {
+	if err != nil {
 		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
+			return t.target, t.target.Resolve()
+		}
+		if errors.Is(err, buildinfostore.ErrBuildInfoInvalid) {
+			boblog.Log.V(5).Info(fmt.Sprintf("Invalid buildinfo found for [taskname:%s], ignoring", t.name))
 			return t.target, t.target.Resolve()
 		}
 		return empty, err
