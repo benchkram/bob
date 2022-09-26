@@ -1,0 +1,18 @@
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
+
+import:
+  - second
+build:
+  # The `build` from second gets decorated with before
+  # This mean that `second/build` will depend on before and second/hello
+  second/build:
+    dependsOn: [ before ]
+  before:
+    cmd: |-
+      touch textfile_before
+      echo "Before!" > textfile_before
+    target: textfile_before
+
+
+  
+

@@ -7,19 +7,18 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/benchkram/bob/pkg/envutil"
-	"github.com/benchkram/errz"
-	"github.com/hashicorp/go-version"
-	"github.com/logrusorgru/aurora"
-
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
+	"github.com/hashicorp/go-version"
+	"github.com/logrusorgru/aurora"
 )
 
 var (
@@ -88,7 +87,8 @@ func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, e
 	aggregate.SetBobfiles(bobs)
 
 	// Merge tasks into one Bobfile
-	aggregate = b.addBuildTasksToAggregate(aggregate, bobs)
+	aggregate, err = b.addBuildTasksToAggregate(aggregate, bobs, nil)
+	errz.Fatal(err)
 
 	if addRunTasks {
 		aggregate = b.addRunTasksToAggregate(aggregate, bobs)
@@ -103,8 +103,8 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)
 
 	// Passing "." instead of the absPath so the
-	// tasks can be initialized with the relativve path.
-	// The absolut path is only stored in `aggregate.Project`.
+	// tasks can be initialized with the relative path.
+	// The absolute path is only stored in `aggregate.Project`.
 	aggregate, err = bobfile.BobfileRead(".")
 	errz.Fatal(err)
 
@@ -115,6 +115,10 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	if aggregate == nil {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
+
+	// FIXME: Implement more generaly to work on all levels.
+	decorations, err := collectDecorations(aggregate)
+	errz.Fatal(err)
 
 	bobs, err := readImports(aggregate, false)
 	errz.Fatal(err)
@@ -143,7 +147,8 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	aggregate.SetBobfiles(bobs)
 
 	// Merge tasks into one Bobfile
-	aggregate = b.addBuildTasksToAggregate(aggregate, bobs)
+	aggregate, err = b.addBuildTasksToAggregate(aggregate, bobs, decorations)
+	errz.Fatal(err)
 
 	// Merge runs into one Bobfile
 	aggregate = b.addRunTasksToAggregate(aggregate, bobs)
@@ -226,6 +231,25 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 func addTaskPrefix(prefix, taskname string) string {
 	taskname = filepath.Join(prefix, taskname)
-	taskname = strings.TrimPrefix(taskname, "/")
+	taskname = strings.TrimPrefix(taskname, string(bobtask.TaskPathSeparator))
 	return taskname
+}
+
+// collectDecorations returns a mapping of taskname to child tasks
+// for valid decorations.
+// An err is returned if attempting to collect an invalid decoration
+func collectDecorations(ag *bobfile.Bobfile) (_ map[string][]string, err error) {
+	defer errz.Recover(&err)
+
+	decorations := make(map[string][]string)
+	for k, task := range ag.BTasks {
+		if !task.IsDecoration() {
+			continue
+		}
+		if !task.IsValidDecoration() {
+			errz.Fatal(usererror.Wrap(fmt.Errorf("task `%s` modifies an imported task. It can only contain a `dependsOn` property", k)))
+		}
+		decorations[k] = task.DependsOn
+	}
+	return decorations, nil
 }

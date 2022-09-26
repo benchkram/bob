@@ -30,10 +30,8 @@ func syncProjectName(a *bobfile.Bobfile, bobs []*bobfile.Bobfile) (*bobfile.Bobf
 	return a, bobs
 }
 
-func (b *B) addBuildTasksToAggregate(
-	a *bobfile.Bobfile,
-	bobs []*bobfile.Bobfile,
-) *bobfile.Bobfile {
+func (b *B) addBuildTasksToAggregate(a *bobfile.Bobfile, bobs []*bobfile.Bobfile, decorations map[string][]string) (*bobfile.Bobfile, error) {
+	allTasks := make(map[string]bool)
 
 	for _, bobfile := range bobs {
 		// Skip the aggregate
@@ -48,11 +46,15 @@ func (b *B) addBuildTasksToAggregate(
 			prefix := strings.TrimPrefix(dir, b.dir)
 			taskname := addTaskPrefix(prefix, taskname)
 
+			allTasks[taskname] = true
 			// Alter the taskname.
 			task.SetName(taskname)
 
 			// Rewrite dependent tasks to global scope.
-			dependsOn := []string{}
+			var dependsOn []string
+			if dependsFromDecoration, ok := decorations[taskname]; ok {
+				dependsOn = append(dependsOn, dependsFromDecoration...)
+			}
 			for _, dependentTask := range task.DependsOn {
 				dependsOn = append(dependsOn, addTaskPrefix(prefix, dependentTask))
 			}
@@ -62,7 +64,14 @@ func (b *B) addBuildTasksToAggregate(
 		}
 	}
 
-	return a
+	// validate if child task exists for decoration
+	for k := range decorations {
+		if _, ok := allTasks[k]; !ok {
+			return a, usererror.Wrap(fmt.Errorf("you are modifying an imported task `%s` that does not exist", k))
+		}
+	}
+
+	return a, nil
 }
 
 func (b *B) addRunTasksToAggregate(

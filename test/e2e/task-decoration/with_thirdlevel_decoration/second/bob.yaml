@@ -1,0 +1,23 @@
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
+
+import:
+  - third
+
+build:
+  build:
+    cmd: |-
+      touch textfile_build2
+      echo "Build!" > textfile_build2
+    target: textfile_build2
+    dependsOn: [ create ]
+  hello:
+    cmd: |-
+      touch textfile_hello2
+      echo "Hello!" > textfile_hello2
+    target: textfile_hello2
+  create:
+    cmd: echo "create!"
+
+
+  
+

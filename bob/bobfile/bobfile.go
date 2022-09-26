@@ -31,13 +31,6 @@ import (
 )
 
 var (
-	defaultIgnores = fmt.Sprintf("!%s\n!%s",
-		global.BobWorkspaceFile,
-		filepath.Join(global.BobCacheDir, "*"),
-	)
-)
-
-var (
 	ErrNotImplemented         = fmt.Errorf("Not implemented")
 	ErrBobfileNotFound        = fmt.Errorf("Could not find a bob.yaml")
 	ErrHashesFileDoesNotExist = fmt.Errorf("Hashes file does not exist")
@@ -150,8 +143,6 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		task.SetDir(bobfile.dir)
 		task.SetName(key)
 		task.InputAdditionalIgnores = []string{}
-
-		task.InputDirty = fmt.Sprintf("%s\n%s", task.InputDirty, defaultIgnores)
 
 		// Make sure a task is correctly initialised.
 		// TODO: All unitialised must be initialised or get default values.

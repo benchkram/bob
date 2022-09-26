@@ -35,7 +35,7 @@ dependson:
       - database
 `
 
-func TestTask_UnmarshalYAMLDependsOn(t *testing.T) {
+func TestTaskUnmarshalYAMLDependsOn(t *testing.T) {
 	type test struct {
 		input string
 		msg   string
@@ -56,7 +56,7 @@ func TestTask_UnmarshalYAMLDependsOn(t *testing.T) {
 	}
 }
 
-func TestTask_UnmarshalYAMLWithBothDependsOn(t *testing.T) {
+func TestTaskUnmarshalYAMLWithBothDependsOn(t *testing.T) {
 	t.Log("When both values exists for a task should fail with error")
 
 	var task Task

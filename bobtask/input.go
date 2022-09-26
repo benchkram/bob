@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filepathutil"
 )
@@ -19,6 +20,13 @@ func (t *Task) Inputs() []string {
 func (t *Task) SetInputs(inputs []string) {
 	t.inputs = inputs
 }
+
+var (
+	defaultIgnores = fmt.Sprintf("!%s\n!%s",
+		global.BobWorkspaceFile,
+		filepath.Join(global.BobCacheDir, "*"),
+	)
+)
 
 // filteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
@@ -42,10 +50,12 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}()
 
+	inputDirty := fmt.Sprintf("%s\n%s", t.InputDirty, defaultIgnores)
+
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
-	for _, input := range unique(split(t.InputDirty)) {
+	for _, input := range unique(split(inputDirty)) {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")

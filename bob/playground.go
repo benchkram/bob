@@ -252,7 +252,7 @@ func CreatePlayground(opts PlaygroundOptions) error {
 }
 
 func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (err error) {
-	// Prevent accidential bobfile override
+	// Prevent accidental bobfile override
 	if file.Exists(global.BobFileName) && !overwrite {
 		return bobfile.ErrBobfileExists
 	}
@@ -262,7 +262,7 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 	bobfile.Project = projectName
 
 	bobfile.Imports = []string{
-		"second-level",
+		SecondLevelDir,
 	}
 
 	bobfile.Variables["helloworld"] = "Hello World!"
@@ -370,6 +370,10 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 			"touch .bbuild/dirone/dirtwo/filetwo",
 		}, "\n"),
 		TargetDirty: ".bbuild/dirone/",
+	}
+
+	bobfile.BTasks[SecondLevelDir+"/build2"] = bobtask.Task{
+		DependsOn: []string{"print"},
 	}
 
 	m := make(map[string]interface{})
