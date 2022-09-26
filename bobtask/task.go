@@ -1,7 +1,6 @@
 package bobtask
 
 import (
-	"path/filepath"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/nix"
@@ -21,6 +20,7 @@ const (
 	RebuildOnChange RebuildType = "on-change"
 )
 
+//  Hint: When adding a new *Dirty field assure to update IsValidDecoration().
 type Task struct {
 	// Inputs are directorys or files
 	// the task monitors for a rebuild.
@@ -29,7 +29,7 @@ type Task struct {
 	InputDirty string `yaml:"input"`
 	// InputAdditionalIgnores is a list of ignores
 	// usually the child targets.
-	InputAdditionalIgnores []string
+	InputAdditionalIgnores []string `yaml:"input_additional_ignores,omitempty"`
 	// inputs is filtered by ignored & sanitized
 	inputs []string
 
@@ -141,12 +141,15 @@ func (t *Task) LogSkippedInput() []string {
 
 // IsDecoration check if the task is a decorated task
 func (t *Task) IsDecoration() bool {
-	return strings.ContainsRune(t.name, filepath.Separator)
+	return strings.ContainsRune(t.name, TaskPathSeparator)
 }
 
-// IsValidDecoration checks if the task is a valid decoration
-// A valid decoration means that the task contains only the `dependsOn` node
-// Make sure to update this validator every time a new exported field is added to the Task
+// IsValidDecoration checks if the task is a valid decoration.
+// tasks containing a `dependsOn` node only are considered as
+// valid decoration.
+//
+// Make sure to update IsValidDecoration() very time a new
+// *Dirty field is added to the task.
 func (t *Task) IsValidDecoration() bool {
 	if t.InputDirty != "" {
 		return false

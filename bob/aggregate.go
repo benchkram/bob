@@ -116,6 +116,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
+	// FIXME: Implement more generaly to work on all levels.
 	decorations, err := collectDecorations(aggregate)
 	errz.Fatal(err)
 
@@ -230,12 +231,13 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 
 func addTaskPrefix(prefix, taskname string) string {
 	taskname = filepath.Join(prefix, taskname)
-	taskname = strings.TrimPrefix(taskname, "/")
+	taskname = strings.TrimPrefix(taskname, string(bobtask.TaskPathSeparator))
 	return taskname
 }
 
-// collectDecorations collects all decorated tasks with their dependsOn
-// an err is returned if attempting to collect an invalid decoration
+// collectDecorations returns a mapping of taskname to child tasks
+// for valid decorations.
+// An err is returned if attempting to collect an invalid decoration
 func collectDecorations(ag *bobfile.Bobfile) (_ map[string][]string, err error) {
 	defer errz.Recover(&err)
 
