@@ -21,7 +21,7 @@ func (t *Task) Target() (empty target.Target, _ error) {
 	// passed to the worker.
 
 	buildInfo, err := t.ReadBuildInfo()
-	if err != nil {
+	if err != nil || buildInfo == nil {
 		if errors.Is(err, buildinfostore.ErrBuildInfoDoesNotExist) {
 			return t.target, t.target.Resolve()
 		}

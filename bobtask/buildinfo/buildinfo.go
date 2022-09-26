@@ -100,6 +100,14 @@ func FromProto(p *protos.BuildInfo) *I {
 		return nil
 	}
 
+	if p.Meta == nil {
+		return nil
+	}
+
+	if p.Target == nil {
+		return nil
+	}
+
 	bi := New()
 
 	bi.Meta.Task = p.Meta.Task
