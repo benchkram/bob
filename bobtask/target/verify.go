@@ -131,7 +131,7 @@ func (t *T) verifyDocker() bool {
 		return false
 	}
 
-	// This usually indicates a image was added/removed manually
+	// This usually indicates an image was added/removed manually
 	// from a target directory.
 	if len(t.expected.Docker) != len(t.dockerImages) {
 		return false
