@@ -57,6 +57,10 @@ func (ps *ps) GetBuildInfo(id string) (info *buildinfo.I, err error) {
 	err = proto.Unmarshal(b, protoInfo)
 	errz.Fatal(err)
 
+	if !isValid(protoInfo) {
+		return nil, ErrBuildInfoInvalid
+	}
+
 	return buildinfo.FromProto(protoInfo), nil
 }
 
@@ -79,10 +83,18 @@ func (ps *ps) GetBuildInfos() (_ []*buildinfo.I, err error) {
 		err = proto.Unmarshal(data, bi)
 		errz.Fatal(err)
 
+		if !isValid(bi) {
+			return nil, ErrBuildInfoInvalid
+		}
+
 		buildInfos = append(buildInfos, buildinfo.FromProto(bi))
 	}
 
 	return buildInfos, nil
+}
+
+func isValid(bi *protos.BuildInfo) bool {
+	return bi.Meta != nil
 }
 
 func (ps *ps) Clean() (err error) {
