@@ -332,8 +332,8 @@ hash_sha256_verify "${tmpdir}/$bin_name" "${tmpdir}/checksums.txt"
 
 mv "${tmpdir}/$bin_name" "${tmpdir}/${name}"
 
-test ! -d "${bin_dir}" && install -d "${bin_dir}"
-install "${tmpdir}/${name}" "${bin_dir}"
+sudo test ! -d "${bin_dir}" && install -d "${bin_dir}"
+sudo install "${tmpdir}/${name}" "${bin_dir}"
 
 rm -rf "${tmpdir}"
 
