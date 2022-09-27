@@ -320,7 +320,7 @@ tmpdir=$(mktemp -d)
 log_debug "downloading files into ${tmpdir}"
 
 version="$(github_release "${owner}/${name}" "${BOB_VERSION}")"
-bin_dir="${BIN_DIR:-./bin}"
+bin_dir="${BIN_DIR:-./}"
 bin_name="$(binary_name "$version")"
 
 download_url="$(download_url "${version}")"
@@ -339,6 +339,13 @@ rm -rf "${tmpdir}"
 
 echo ""
 echo ""
-echo "Successfully installed bob in $(pwd)/bin"
+
+echo "the bin dir is $bin_dir"
+
+if [ "$bin_dir" = './' ]; then
+  echo "Successfully installed bob in $(pwd)"
+else
+  echo "Successfully installed bob in $(pwd)/$bin_dir"
+fi
 
 guidelines_autocompletion
