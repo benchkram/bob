@@ -84,4 +84,22 @@ var _ = Describe("Testing name of targets", func() {
 			Expect(err.Error()).To(Equal("duplicate target `my-image:latest` found on tasks [build second/build]"))
 		})
 	})
+
+	When("a target with same path exists in a second level bob file", func() {
+		It("should return error on aggregation because targets are identical", func() {
+			useBobfile("with_second_level_same_path")
+			defer releaseBobfile("with_second_level_same_path")
+
+			useSecondLevelBobfile("with_second_level_same_path")
+			defer releaseSecondLevelBobfile("with_second_level_same_path")
+
+			b, err := BobSetup()
+			Expect(err).NotTo(HaveOccurred())
+
+			_, err = b.Aggregate()
+			Expect(err).To(HaveOccurred())
+
+			Expect(err.Error()).To(Equal("duplicate target `second/hello` found on tasks [build second/build]"))
+		})
+	})
 })

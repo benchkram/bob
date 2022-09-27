@@ -1,0 +1,4 @@
+build:
+  build:
+    cmd: touch hello
+    target: hello

@@ -49,6 +49,8 @@ var _ = BeforeSuite(func() {
 		"with_target_image",
 		"with_target_image_second_level",
 		filepath.Join("with_target_image_second_level", secondLevelDir),
+		"with_second_level_same_path",
+		filepath.Join("with_second_level_same_path", secondLevelDir),
 	}
 
 	nameToBobfile := make(map[string]*bobfile.Bobfile)
