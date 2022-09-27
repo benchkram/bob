@@ -340,12 +340,10 @@ rm -rf "${tmpdir}"
 echo ""
 echo ""
 
-echo "the bin dir is $bin_dir"
-
 if [ "$bin_dir" = './' ]; then
-  echo "Successfully installed bob in $(pwd)"
+  echo "Successfully installed bob in $(pwd)/${name}"
 else
-  echo "Successfully installed bob in $(pwd)/$bin_dir"
+  echo "Successfully installed bob in $(pwd)/$bin_dir/${name}"
 fi
 
 guidelines_autocompletion
