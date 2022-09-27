@@ -337,6 +337,8 @@ sudo install "${tmpdir}/${name}" "${bin_dir}"
 
 rm -rf "${tmpdir}"
 
-log_info "Successfully installed bob in $(pwd)/bin"
+echo ""
+echo ""
+echo "Successfully installed bob in $(pwd)/bin"
 
 guidelines_autocompletion
