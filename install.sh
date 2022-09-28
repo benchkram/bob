@@ -332,8 +332,14 @@ hash_sha256_verify "${tmpdir}/$bin_name" "${tmpdir}/checksums.txt"
 
 mv "${tmpdir}/$bin_name" "${tmpdir}/${name}"
 
-sudo test ! -d "${bin_dir}" && install -d "${bin_dir}"
-sudo install "${tmpdir}/${name}" "${bin_dir}"
+if [ -w "${bin_dir}" ]; then
+  test ! -d "${bin_dir}" && install -d "${bin_dir}"
+  install "${tmpdir}/${name}" "${bin_dir}"
+else
+  echo "Will ask for your password in order to install ${tmpdir}/${name} to ${bin_dir}"
+  sudo test ! -d "${bin_dir}" && install -d "${bin_dir}"
+  sudo install "${tmpdir}/${name}" "${bin_dir}"
+fi
 
 rm -rf "${tmpdir}"
 
