@@ -20,7 +20,7 @@ var didWriteBuildOutput bool
 func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	defer errz.Recover(&err)
 
-	// A task id flagged succesful before
+	// A task is flagged successful before
 	var taskSuccessFul bool
 	var taskErr error
 	defer func() {
