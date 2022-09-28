@@ -22,7 +22,6 @@ import (
 
 var ErrDone = fmt.Errorf("playbook is done")
 var ErrFailed = fmt.Errorf("playbook failed")
-var ErrUnexpectedTaskState = fmt.Errorf("task state is unexpected")
 
 type Playbook struct {
 	// taskChannel is closed when the root
