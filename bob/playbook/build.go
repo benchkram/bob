@@ -14,9 +14,9 @@ import (
 // Build the playbook starting at root.
 func (p *Playbook) Build(ctx context.Context) (err error) {
 	processingErrorsMutex := sync.Mutex{}
-	processingErrors := []error{}
+	var processingErrors []error
 
-	processedTasks := []*bobtask.Task{}
+	var processedTasks []*bobtask.Task
 
 	p.pickTaskColors()
 
