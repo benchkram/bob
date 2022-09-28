@@ -52,7 +52,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	errz.Fatal(err)
 	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuildRequired, rebuildCause))
 
-	// task might need a rebuild due to a input change.
+	// task might need a rebuild due to an input change.
 	// Could still be possible to load the targets from the artifact store.
 	// If a task needs a rebuild due to a dependency change => rebuild.
 	if rebuildRequired {
@@ -65,8 +65,8 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 			if success {
 				rebuildRequired = false
 
-				// In case a artifact was synced from the remote store no buildinfo exists...
-				// To avaoid subsequent artifact extraction the Buildinfo is created after
+				// In case an artifact was synced from the remote store no buildinfo exists...
+				// To avoid subsequent artifact extraction the Buildinfo is created after
 				// extracting the artifact.
 				buildInfo, err := p.computeBuildinfo(task.Name())
 				errz.Fatal(err)
