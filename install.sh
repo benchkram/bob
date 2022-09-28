@@ -337,9 +337,11 @@ if [ -w "${bin_dir}" ]; then
   install "${tmpdir}/${name}" "${bin_dir}"
 else
   if [ "$bin_dir" = './' ]; then
-    echo "Will ask for your password in order to install ${name} to $(pwd)/${name}"
+    echo "\n"
+    echo "Kindly asking for your password in order to install ${name} to $(pwd)/${name}"
   else
-    echo "Will ask for your password in order to install ${name} to $(pwd)/$bin_dir/${name}"
+    echo "\n"
+    echo "Kindly asking for your password in order to install ${name} to $(pwd)/$bin_dir/${name}"
   fi
   sudo test ! -d "${bin_dir}" && install -d "${bin_dir}"
   sudo install "${tmpdir}/${name}" "${bin_dir}"
