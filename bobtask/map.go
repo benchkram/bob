@@ -220,7 +220,7 @@ func (tm Map) VerifyDuplicateTargets() error {
 	//
 	// Could be solved by beeing more strict with target definitions.
 	// E.g. a directory must be defined as "dir/" instead of "dir".
-	// This would allow detectin that case without traversing through the
+	// This allows to catch that case without traversing the
 	// actual filesystem.
 
 	for k, v := range targetToTasks {
