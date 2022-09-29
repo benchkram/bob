@@ -161,7 +161,7 @@ func syncFromLocalToRemote(ctx context.Context, local store.Store, remote store.
 			continue
 		}
 
-		// wait for the remote store to finish uploading this artifact. can be moved outside of the for loop but then
+		// wait for the remote store to finish uploading this artifact. can be moved outside the for loop, but then
 		// we don't know which artifacts failed to upload.
 		err = remote.Done()
 		if err != nil {
