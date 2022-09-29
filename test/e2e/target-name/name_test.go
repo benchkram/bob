@@ -1,6 +1,7 @@
 package targetnametest
 
 import (
+	"github.com/benchkram/bob/bobtask"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -17,7 +18,8 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(Equal("duplicate target `hello` found on tasks [another build]"))
+			expected := bobtask.ErrDuplicateTargets([]string{"another", "build"}, "hello").Error()
+			Expect(err.Error()).To(Equal(expected))
 		})
 	})
 
@@ -32,7 +34,8 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(Equal("duplicate target `hello` found on tasks [another build]"))
+			expected := bobtask.ErrDuplicateTargets([]string{"another", "build"}, "hello").Error()
+			Expect(err.Error()).To(Equal(expected))
 		})
 	})
 
@@ -63,7 +66,8 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(Equal("duplicate target `my-image:latest` found on tasks [another build]"))
+			expected := bobtask.ErrDuplicateTargets([]string{"another", "build"}, "my-image:latest").Error()
+			Expect(err.Error()).To(Equal(expected))
 		})
 	})
 
@@ -81,7 +85,8 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(Equal("duplicate target `my-image:latest` found on tasks [build second/build]"))
+			expected := bobtask.ErrDuplicateTargets([]string{"build", "second/build"}, "my-image:latest").Error()
+			Expect(err.Error()).To(Equal(expected))
 		})
 	})
 
@@ -99,7 +104,9 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(Equal("duplicate target `second/hello` found on tasks [build second/build]"))
+			expected := bobtask.ErrDuplicateTargets([]string{"build", "second/build"}, "second/hello").Error()
+			Expect(err.Error()).To(Equal(expected))
+
 		})
 	})
 })
