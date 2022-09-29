@@ -149,10 +149,12 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 func syncFromRemoteToLocal(ctx context.Context, remote store.Store, local store.Store, a hash.In) {
 	err := store.Sync(ctx, remote, local, a.String())
 	if errors.Is(err, store.ErrArtifactAlreadyExists) {
-		boblog.Log.V(1).Info(fmt.Sprintf("artifact already exists locally [artifactId: %s]. skipping...", a.String()))
+		boblog.Log.V(5).Info(fmt.Sprintf("artifact already exists locally [artifactId: %s]. skipping...", a.String()))
+	} else if errors.Is(err, store.ErrArtifactNotFoundinSrc) {
+		boblog.Log.V(5).Info(fmt.Sprintf("failed to sync from remote to local [artifactId: %s]", a.String()))
 	} else if err != nil {
 		boblog.Log.V(1).Error(err, fmt.Sprintf("failed to sync from remote to local [artifactId: %s]", a.String()))
 	}
 
-	boblog.Log.V(1).Info(fmt.Sprintf("synced from remote to local [artifactId: %s]", a.String()))
+	boblog.Log.V(5).Info(fmt.Sprintf("synced from remote to local [artifactId: %s]", a.String()))
 }

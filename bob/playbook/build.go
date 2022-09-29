@@ -154,7 +154,7 @@ func syncFromLocalToRemote(ctx context.Context, local store.Store, remote store.
 	for _, a := range artifactIds {
 		err := store.Sync(ctx, local, remote, a.String())
 		if errors.Is(err, store.ErrArtifactAlreadyExists) {
-			boblog.Log.V(1).Info(fmt.Sprintf("artifact already exists on the remote [artifactId: %s]. skipping...", a.String()))
+			boblog.Log.V(5).Info(fmt.Sprintf("artifact already exists on the remote [artifactId: %s]. skipping...", a.String()))
 			continue
 		} else if err != nil {
 			boblog.Log.V(1).Error(err, fmt.Sprintf("failed to sync from local to remote [artifactId: %s]", a.String()))
@@ -169,6 +169,6 @@ func syncFromLocalToRemote(ctx context.Context, local store.Store, remote store.
 			continue
 		}
 
-		boblog.Log.V(1).Info(fmt.Sprintf("synced from local to remote [artifactId: %s]", a.String()))
+		boblog.Log.V(5).Info(fmt.Sprintf("synced from local to remote [artifactId: %s]", a.String()))
 	}
 }
