@@ -57,7 +57,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	// If a task needs a rebuild due to a dependency change => rebuild.
 	if rebuildRequired {
 		switch rebuildCause {
-		case TaskInputChanged:
+		case InputNotFoundInBuildInfo:
 			hashIn, err := task.HashIn()
 			errz.Fatal(err)
 			success, err := task.ArtifactExtract(hashIn)

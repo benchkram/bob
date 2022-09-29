@@ -34,12 +34,12 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, caus
 	}
 
 	// Did the current task change?
-	// Indicating acache miss in buildinfostore.
+	// Indicating a cache miss in buildinfostore.
 	rebuildRequired, err = task.DidTaskChange()
 	errz.Fatal(err)
 	if rebuildRequired {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
-		return true, TaskInputChanged, nil
+		return true, InputNotFoundInBuildInfo, nil
 	}
 
 	// Check rebuild due to invalidated targets

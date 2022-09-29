@@ -98,11 +98,11 @@ func (rc *RebuildCause) String() string {
 }
 
 const (
-	TaskInputChanged      RebuildCause = "input-changed"
-	TaskForcedRebuild     RebuildCause = "forced"
-	DependencyChanged     RebuildCause = "dependency-changed"
-	TargetInvalid         RebuildCause = "target-invalid"
-	TargetNotInLocalStore RebuildCause = "target-not-in-localstore"
+	InputNotFoundInBuildInfo RebuildCause = "input-not-in-build-info"
+	TaskForcedRebuild        RebuildCause = "forced"
+	DependencyChanged        RebuildCause = "dependency-changed"
+	TargetInvalid            RebuildCause = "target-invalid"
+	TargetNotInLocalStore    RebuildCause = "target-not-in-localstore"
 )
 
 func (p *Playbook) numRunningTasks() int {
