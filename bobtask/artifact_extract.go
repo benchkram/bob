@@ -16,8 +16,8 @@ import (
 	"github.com/benchkram/errz"
 )
 
-// ArtifactExtract extract a artifact from the localstore if it exists.
-// Return true on a succesful extract operation.
+// ArtifactExtract extract an artifact from the localstore if it exists.
+// Return true on a successful extract operation.
 func (t *Task) ArtifactExtract(artifactName hash.In) (success bool, err error) {
 	defer errz.Recover(&err)
 
