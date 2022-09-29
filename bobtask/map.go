@@ -225,14 +225,14 @@ func (tm Map) VerifyDuplicateTargets() error {
 
 	for k, v := range targetToTasks {
 		if len(targetToTasks[k]) > 1 {
-			return usererror.Wrap(ErrDuplicateTargets(v, k))
+			return usererror.Wrap(CreateErrAmbigousTargets(v, k))
 		}
 	}
 
 	return nil
 }
 
-func ErrDuplicateTargets(tasks []string, target string) error {
+func CreateErrAmbigousTargets(tasks []string, target string) error {
 	sort.Strings(tasks)
-	return fmt.Errorf("multiple tasks [%s] pointing to the same target `%s`", strings.Join(tasks, " "), target)
+	return fmt.Errorf("%w,\nmultiple tasks [%s] pointing to the same target `%s`", ErrAmbigousTargets, strings.Join(tasks, " "), target)
 }

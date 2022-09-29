@@ -18,7 +18,7 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			expected := bobtask.ErrDuplicateTargets([]string{"another", "build"}, "hello").Error()
+			expected := bobtask.CreateErrAmbigousTargets([]string{"another", "build"}, "hello").Error()
 			Expect(err.Error()).To(Equal(expected))
 		})
 	})
@@ -34,7 +34,7 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			expected := bobtask.ErrDuplicateTargets([]string{"another", "build"}, "hello").Error()
+			expected := bobtask.CreateErrAmbigousTargets([]string{"another", "build"}, "hello").Error()
 			Expect(err.Error()).To(Equal(expected))
 		})
 	})
@@ -66,7 +66,7 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			expected := bobtask.ErrDuplicateTargets([]string{"another", "build"}, "my-image:latest").Error()
+			expected := bobtask.CreateErrAmbigousTargets([]string{"another", "build"}, "my-image:latest").Error()
 			Expect(err.Error()).To(Equal(expected))
 		})
 	})
@@ -85,7 +85,7 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			expected := bobtask.ErrDuplicateTargets([]string{"build", "second/build"}, "my-image:latest").Error()
+			expected := bobtask.CreateErrAmbigousTargets([]string{"build", "second/build"}, "my-image:latest").Error()
 			Expect(err.Error()).To(Equal(expected))
 		})
 	})
@@ -104,7 +104,7 @@ var _ = Describe("Testing name of targets", func() {
 			_, err = b.Aggregate()
 			Expect(err).To(HaveOccurred())
 
-			expected := bobtask.ErrDuplicateTargets([]string{"build", "second/build"}, "second/hello").Error()
+			expected := bobtask.CreateErrAmbigousTargets([]string{"build", "second/build"}, "second/hello").Error()
 			Expect(err.Error()).To(Equal(expected))
 
 		})
