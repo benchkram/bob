@@ -100,6 +100,8 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	return nil
 }
 
+const maxSkippedInputs = 5
+
 // logSkippedInputs until max is reached
 func logSkippedInputs(count int, taskname string, skippedInputs []string) int {
 	if len(skippedInputs) == 0 {

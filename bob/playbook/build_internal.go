@@ -7,7 +7,9 @@ import (
 	"sync"
 
 	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/errz"
 )
 
@@ -60,6 +62,11 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		case InputNotFoundInBuildInfo:
 			hashIn, err := task.HashIn()
 			errz.Fatal(err)
+
+			if p.enableCaching && p.remoteStore != nil {
+				syncFromRemoteToLocal(ctx, p.remoteStore, p.localStore, hashIn)
+			}
+
 			success, err := task.ArtifactExtract(hashIn)
 			errz.Fatal(err)
 			if success {
@@ -123,10 +130,8 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 
 	err = p.TaskCompleted(task.Name())
 	if err != nil {
-		if err != nil {
-			if errors.Is(err, ErrFailed) {
-				return err
-			}
+		if errors.Is(err, ErrFailed) {
+			return err
 		}
 	}
 	errz.Fatal(err)
@@ -140,4 +145,14 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	return nil
 }
 
-const maxSkippedInputs = 5
+// syncFromRemoteToLocal syncs the artifact from the remote store to the local store.
+func syncFromRemoteToLocal(ctx context.Context, remote store.Store, local store.Store, a hash.In) {
+	err := store.Sync(ctx, remote, local, a.String())
+	if errors.Is(err, store.ErrArtifactAlreadyExists) {
+		boblog.Log.V(1).Info(fmt.Sprintf("artifact already exists locally [artifactId: %s]. skipping...", a.String()))
+	} else if err != nil {
+		boblog.Log.V(1).Error(err, fmt.Sprintf("failed to sync from remote to local [artifactId: %s]", a.String()))
+	}
+
+	boblog.Log.V(1).Info(fmt.Sprintf("synced from remote to local [artifactId: %s]", a.String()))
+}

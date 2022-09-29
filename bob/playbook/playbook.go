@@ -13,6 +13,7 @@ import (
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boberror"
+	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
@@ -61,6 +62,12 @@ type Playbook struct {
 
 	// maxParallel is the maximum number of parallel executed tasks
 	maxParallel int
+
+	// remoteStore is the artifacts remote store
+	remoteStore store.Store
+
+	// remoteStore is the artifacts local store
+	localStore store.Store
 }
 
 func New(root string, opts ...Option) *Playbook {
