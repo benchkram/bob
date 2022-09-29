@@ -316,11 +316,28 @@ To add auto-completion:
 validate_os
 
 tmpdir=$(mktemp -d)
-
 log_debug "downloading files into ${tmpdir}"
 
-version="$(github_release "${owner}/${name}" "${BOB_VERSION}")"
 bin_dir="${BIN_DIR:-./}"
+
+# If bob already exists in bin dir, remove it
+if [ -f "${bin_dir}/${name}" ]; then
+  if ! rm "${bin_dir}/${name}"; then
+    echo "Kindly asking for your password in order to remove $bin_dir/${name}"
+    sudo rm "${bin_dir}/${name}"
+  fi
+fi
+
+# Create the bin dir if it doesn't exists
+if [ ! -d "${bin_dir}" ]; then
+  echo "Create non-existing directory ${bin_dir}"
+  if ! mkdir "${bin_dir}"; then
+    echo "Kindly asking for your password in order to install ${name} to $bin_dir/${name}"
+    sudo mkdir "${bin_dir}"
+  fi
+fi
+
+version="$(github_release "${owner}/${name}" "${BOB_VERSION}")"
 bin_name="$(binary_name "$version")"
 
 download_url="$(download_url "${version}")"
@@ -336,15 +353,10 @@ if [ -w "${bin_dir}" ]; then
   test ! -d "${bin_dir}" && install -d "${bin_dir}"
   install "${tmpdir}/${name}" "${bin_dir}"
 else
-  if [ "$bin_dir" = './' ]; then
-    printf "\n"
-    echo "Kindly asking for your password in order to install ${name} to $(pwd)/${name}"
-  else
-    printf "\n"
+  if ! install "${tmpdir}/${name}" "${bin_dir}"; then
     echo "Kindly asking for your password in order to install ${name} to $bin_dir/${name}"
+    sudo install "${tmpdir}/${name}" "${bin_dir}"
   fi
-  sudo test ! -d "${bin_dir}" && install -d "${bin_dir}"
-  sudo install "${tmpdir}/${name}" "${bin_dir}"
 fi
 
 rm -rf "${tmpdir}"
