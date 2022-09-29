@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/benchkram/errz"
 
@@ -193,4 +194,45 @@ func (tm Map) IgnoreChildTargets() (err error) {
 	}
 
 	return nil
+}
+
+// VerifyDuplicateTargets checks if multiple build tasks point to the same target.
+func (tm Map) VerifyDuplicateTargets() error {
+
+	// mapping [target][]taskname
+	targetToTasks := make(map[string][]string)
+
+	for taskName, v := range tm {
+		target, _ := v.Target()
+		if target == nil {
+			continue
+		}
+		for _, t := range target.DockerImages() {
+			targetToTasks[t] = append(targetToTasks[t], taskName)
+		}
+		for _, t := range target.FilesystemEntriesRaw() {
+			targetToTasks[t] = append(targetToTasks[t], taskName)
+		}
+	}
+
+	// FIXME: A filesystem target can still point to a file inside
+	// a directory target.
+	//
+	// Could be solved by beeing more strict with target definitions.
+	// E.g. a directory must be defined as "dir/" instead of "dir".
+	// This allows to catch that case without traversing the
+	// actual filesystem.
+
+	for k, v := range targetToTasks {
+		if len(targetToTasks[k]) > 1 {
+			return usererror.Wrap(CreateErrAmbigousTargets(v, k))
+		}
+	}
+
+	return nil
+}
+
+func CreateErrAmbigousTargets(tasks []string, target string) error {
+	sort.Strings(tasks)
+	return fmt.Errorf("%w,\nmultiple tasks [%s] pointing to the same target `%s`", ErrAmbigousTargets, strings.Join(tasks, " "), target)
 }

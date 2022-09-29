@@ -269,8 +269,8 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 
 	bobfile.BTasks[global.DefaultBuildTask] = bobtask.Task{
 		InputDirty:   "./main1.go" + "\n" + "go.mod",
-		CmdDirty:     "go build -o run",
-		TargetDirty:  "run",
+		CmdDirty:     "go build -o run-build",
+		TargetDirty:  "run-build",
 		RebuildDirty: string(bobtask.RebuildOnChange),
 	}
 
@@ -287,8 +287,8 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 
 	bobfile.BTasks[BuildAlwaysTargetName] = bobtask.Task{
 		InputDirty:   "./main1.go" + "\n" + "go.mod",
-		CmdDirty:     "go build -o run",
-		TargetDirty:  "run",
+		CmdDirty:     "go build -o run-always",
+		TargetDirty:  "run-always",
 		RebuildDirty: string(bobtask.RebuildAlways),
 	}
 
