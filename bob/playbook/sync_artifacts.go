@@ -18,7 +18,7 @@ func (p *Playbook) downloadArtifact(ctx context.Context, a hash.In) {
 
 func (p *Playbook) pushArtifacts(ctx context.Context, a []hash.In) {
 	if p.enableCaching && p.remoteStore != nil && p.localStore != nil {
-		syncFromLocalToRemote(ctx, p.remoteStore, p.localStore, a)
+		syncFromLocalToRemote(ctx, p.localStore, p.remoteStore, a)
 	}
 }
 
