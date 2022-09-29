@@ -341,7 +341,7 @@ else
     echo "Kindly asking for your password in order to install ${name} to $(pwd)/${name}"
   else
     printf "\n"
-    echo "Kindly asking for your password in order to install ${name} to $(pwd)/$bin_dir/${name}"
+    echo "Kindly asking for your password in order to install ${name} to $bin_dir/${name}"
   fi
   sudo test ! -d "${bin_dir}" && install -d "${bin_dir}"
   sudo install "${tmpdir}/${name}" "${bin_dir}"
@@ -355,7 +355,7 @@ echo ""
 if [ "$bin_dir" = './' ]; then
   echo "Successfully installed bob in $(pwd)/${name}"
 else
-  echo "Successfully installed bob in $(pwd)/$bin_dir/${name}"
+  echo "Successfully installed bob in $bin_dir/${name}"
 fi
 
 guidelines_autocompletion
