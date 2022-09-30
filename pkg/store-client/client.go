@@ -1,6 +1,7 @@
 package storeclient
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/benchkram/errz"
 	"github.com/pkg/errors"
+	"github.com/schollz/progressbar/v3"
 
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -130,5 +132,16 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 		errz.Fatal(fmt.Errorf("invalid response"))
 	}
 
-	return res2.Body, nil
+	bar := progressbar.DefaultBytes(
+		res2.ContentLength,
+		fmt.Sprintf("Download %s", artifactId),
+	)
+
+	f := new(bytes.Buffer)
+	result := io.NopCloser(f)
+
+	_, err = io.Copy(io.MultiWriter(f, bar), res2.Body)
+	errz.Fatal(err)
+
+	return result, nil
 }
