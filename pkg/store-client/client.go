@@ -32,7 +32,7 @@ func (c *c) UploadArtifact(
 
 	bar := progressbar.DefaultBytes(
 		int64(len(bs)),
-		fmt.Sprintf("upload %s", artifactID),
+		fmt.Sprintf("Upload %s", artifactID),
 	)
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
