@@ -318,7 +318,9 @@ validate_os
 tmpdir=$(mktemp -d)
 log_debug "downloading files into ${tmpdir}"
 
-bin_dir="${BIN_DIR:-./}"
+bin_dir="${BIN_DIR:-$(pwd)}"
+
+echo "$bin_dir"
 
 # If bob already exists in bin dir, remove it
 if [ -f "${bin_dir}/${name}" ]; then
