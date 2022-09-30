@@ -26,6 +26,14 @@ func (c *c) UploadArtifact(
 ) (err error) {
 	defer errz.Recover(&err)
 
+	bs, _ := io.ReadAll(src)
+
+	src = bytes.NewReader(bs)
+
+	bar := progressbar.DefaultBytes(
+		int64(len(bs)),
+		fmt.Sprintf("upload %s", artifactID),
+	)
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
 
@@ -45,7 +53,7 @@ func (c *c) UploadArtifact(
 		tr := io.TeeReader(src, pw)
 		buf := make([]byte, 8192)
 		for {
-			_, err0 := tr.Read(buf)
+			n, err0 := tr.Read(buf)
 			if err0 == io.EOF {
 				_ = mpw.Close()
 				_ = w.Close()
@@ -54,6 +62,7 @@ func (c *c) UploadArtifact(
 			if err0 != nil {
 				_ = w.CloseWithError(err)
 			}
+			bar.Add(n)
 		}
 	}()
 
