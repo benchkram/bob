@@ -30,10 +30,6 @@ func (c *c) UploadArtifact(
 
 	// src = bytes.NewReader(bs)
 
-	bar := progressbar.DefaultBytes(
-		-1,
-		fmt.Sprintf("Upload %s", artifactID),
-	)
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
 
@@ -52,6 +48,11 @@ func (c *c) UploadArtifact(
 
 		tr := io.TeeReader(src, pw)
 		buf := make([]byte, 8192)
+
+		bar := progressbar.DefaultBytes(
+			-1,
+			fmt.Sprintf("Upload %s", artifactID),
+		)
 		for {
 			n, err0 := tr.Read(buf)
 			if err0 == io.EOF {
