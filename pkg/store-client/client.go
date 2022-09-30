@@ -26,12 +26,12 @@ func (c *c) UploadArtifact(
 ) (err error) {
 	defer errz.Recover(&err)
 
-	bs, _ := io.ReadAll(src)
+	// bs, _ := io.ReadAll(src)
 
-	src = bytes.NewReader(bs)
+	// src = bytes.NewReader(bs)
 
 	bar := progressbar.DefaultBytes(
-		int64(len(bs)),
+		-1,
 		fmt.Sprintf("Upload %s", artifactID),
 	)
 	r, w := io.Pipe()
