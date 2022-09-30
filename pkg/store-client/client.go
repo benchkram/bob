@@ -26,12 +26,13 @@ func (c *c) UploadArtifact(
 ) (err error) {
 	defer errz.Recover(&err)
 
-	// bs, _ := io.ReadAll(src)
-
-	// src = bytes.NewReader(bs)
-
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
+
+	bar := progressbar.DefaultBytes(
+		-1,
+		fmt.Sprintf("Upload %s", artifactID),
+	)
 
 	go func() {
 		err0 := attachMimeHeader(mpw, "id", artifactID)
@@ -49,10 +50,6 @@ func (c *c) UploadArtifact(
 		tr := io.TeeReader(src, pw)
 		buf := make([]byte, 8192)
 
-		bar := progressbar.DefaultBytes(
-			-1,
-			fmt.Sprintf("Upload %s", artifactID),
-		)
 		for {
 			n, err0 := tr.Read(buf)
 			if err0 == io.EOF {
@@ -70,6 +67,8 @@ func (c *c) UploadArtifact(
 	resp, err := c.clientWithResponses.UploadArtifactWithBodyWithResponse(
 		ctx, projectName, mpw.FormDataContentType(), r)
 	errz.Fatal(err)
+
+	bar.Finish()
 
 	if resp.StatusCode() != http.StatusOK {
 		err = errors.Errorf("request failed [status: %d, msg: %q]", resp.StatusCode(), resp.Body)
