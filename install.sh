@@ -319,14 +319,13 @@ tmpdir=$(mktemp -d)
 log_debug "downloading files into ${tmpdir}"
 
 bin_dir="${BIN_DIR:-$(pwd)}"
-
-echo "$bin_dir"
+install_path=$(realpath -m "$bin_dir"/${name})
 
 # If bob already exists in bin dir, remove it
-if [ -f "${bin_dir}/${name}" ]; then
-  if ! rm "${bin_dir}/${name}"; then
-    echo "Kindly asking for your password in order to remove $bin_dir/${name}"
-    sudo rm "${bin_dir}/${name}"
+if [ -f "${install_path}" ]; then
+  if ! rm "${install_path}"; then
+    echo "Kindly asking for your password in order to remove ${install_path}"
+    sudo rm "${install_path}"
   fi
 fi
 
@@ -334,7 +333,7 @@ fi
 if [ ! -d "${bin_dir}" ]; then
   echo "Create non-existing directory ${bin_dir}"
   if ! mkdir "${bin_dir}"; then
-    echo "Kindly asking for your password in order to install ${name} to $bin_dir/${name}"
+    echo "Kindly asking for your password in order to install ${name} to ${install_path}"
     sudo mkdir "${bin_dir}"
   fi
 fi
@@ -356,7 +355,7 @@ if [ -w "${bin_dir}" ]; then
   install "${tmpdir}/${name}" "${bin_dir}"
 else
   if ! install "${tmpdir}/${name}" "${bin_dir}"; then
-    echo "Kindly asking for your password in order to install ${name} to $bin_dir/${name}"
+    echo "Kindly asking for your password in order to install ${name} to ${install_path}"
     sudo install "${tmpdir}/${name}" "${bin_dir}"
   fi
 fi
@@ -366,10 +365,6 @@ rm -rf "${tmpdir}"
 echo ""
 echo ""
 
-if [ "$bin_dir" = './' ]; then
-  echo "Successfully installed bob in $(pwd)/${name}"
-else
-  echo "Successfully installed bob in $bin_dir/${name}"
-fi
+echo "Successfully installed ${name} in ${install_path}"
 
 guidelines_autocompletion
