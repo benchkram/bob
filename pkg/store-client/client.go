@@ -1,7 +1,6 @@
 package storeclient
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -146,11 +145,7 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 		fmt.Sprintf("Download %s", artifactId),
 	)
 
-	f := new(bytes.Buffer)
-	result := io.NopCloser(f)
+	rb := progressbar.NewReader(res2.Body, bar)
 
-	_, err = io.Copy(io.MultiWriter(f, bar), res2.Body)
-	errz.Fatal(err)
-
-	return result, nil
+	return &rb, nil
 }
