@@ -58,7 +58,6 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		r, err := interp.New(
 			interp.Params("-e"),
 			interp.Dir(t.dir),
-
 			interp.Env(expand.ListEnviron(env...)),
 			interp.StdIO(os.Stdin, pw, pw),
 		)
