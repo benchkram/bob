@@ -58,7 +58,6 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		r, err := interp.New(
 			interp.Params("-e"),
 			interp.Dir(t.dir),
-
 			interp.Env(expand.ListEnviron(env...)),
 			interp.StdIO(os.Stdin, pw, pw),
 		)
@@ -67,6 +66,8 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 
 		err = r.Run(ctx, p)
 		if err != nil {
+			pw.Close()
+			<-done
 			return usererror.Wrapm(err, "shell command execute error")
 		}
 
