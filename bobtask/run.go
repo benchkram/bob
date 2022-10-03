@@ -66,6 +66,8 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 
 		err = r.Run(ctx, p)
 		if err != nil {
+			pw.Close()
+			<-done
 			return usererror.Wrapm(err, "shell command execute error")
 		}
 
