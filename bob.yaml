@@ -31,6 +31,6 @@ dependencies:
   - golangci-lint
   - docker
   - gcc
-  - protobuf3_11
+  - protobuf
   - protoc-gen-go
 
