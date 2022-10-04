@@ -38,20 +38,28 @@ func IsInstalled() bool {
 func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePathMap, err error) {
 	defer errz.Recover(&err)
 
+	var unsatisfiedDeps []Dependency
 	pkgToStorePath := make(DependenciesToStorePathMap)
 
 	for _, v := range deps {
-		var key string
-
 		if cache != nil {
-			key, err = GenerateKey(v)
+			key, err := GenerateKey(v)
 			errz.Fatal(err)
+
 			if storePath, ok := cache.Get(key); ok {
 				pkgToStorePath[v] = StorePath(storePath)
 				continue
 			}
+			unsatisfiedDeps = append(unsatisfiedDeps, v)
 		}
+	}
 
+	if len(unsatisfiedDeps) > 0 {
+		fmt.Println("Building nix dependencies...")
+		defer fmt.Println("Succeeded building nix dependencies")
+	}
+
+	for _, v := range unsatisfiedDeps {
 		if strings.HasSuffix(v.Name, ".nix") {
 			storePath, err := buildFile(v.Name, v.Nixpkgs)
 			if err != nil {
@@ -67,10 +75,12 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 		}
 
 		if cache != nil {
+			key, err := GenerateKey(v)
+			errz.Fatal(err)
+
 			err = cache.Save(key, string(pkgToStorePath[v]))
 			errz.Fatal(err)
 		}
-
 	}
 	return pkgToStorePath, nil
 }
