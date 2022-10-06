@@ -94,7 +94,9 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	p.summary(processedTasks)
 
 	// sync any newly generated artifacts with the remote store
-	p.pushArtifacts(ctx, p.inputHashes(true))
+	for taskName, hashes := range p.inputHashes(true) {
+		p.pushArtifacts(ctx, hashes, taskName)
+	}
 
 	if len(processingErrors) > 0 {
 		// Pass only the very first processing error.
@@ -130,8 +132,9 @@ func logSkippedInputs(count int, taskname string, skippedInputs []string) int {
 
 // inputHashes returns and array of input hashes of the playbook,
 // optionally filters tasks without targets.
-func (p *Playbook) inputHashes(filterTarget bool) []hash.In {
-	var artifactIds []hash.In
+func (p *Playbook) inputHashes(filterTarget bool) map[string][]hash.In {
+	artifactIds := make(map[string][]hash.In)
+
 	for _, t := range p.Tasks {
 		if filterTarget && !t.TargetExists() {
 			continue
@@ -142,7 +145,7 @@ func (p *Playbook) inputHashes(filterTarget bool) []hash.In {
 			continue
 		}
 
-		artifactIds = append(artifactIds, h)
+		artifactIds[t.Name()] = append(artifactIds[t.Name()], h)
 	}
 	return artifactIds
 }

@@ -62,7 +62,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 			errz.Fatal(err)
 
 			// download artifact if it exists on the remote
-			p.downloadArtifact(ctx, hashIn)
+			p.downloadArtifact(ctx, hashIn, task.Name())
 
 			success, err := task.ArtifactExtract(hashIn)
 			errz.Fatal(err)
