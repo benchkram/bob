@@ -22,6 +22,7 @@ func (c *c) UploadArtifact(
 	projectName string,
 	artifactID string,
 	src io.Reader,
+	size int64,
 ) (err error) {
 	defer errz.Recover(&err)
 
@@ -29,7 +30,7 @@ func (c *c) UploadArtifact(
 	mpw := multipart.NewWriter(w)
 
 	bar := progressbar.DefaultBytes(
-		-1,
+		size,
 		fmt.Sprintf("Upload %s", artifactID),
 	)
 
@@ -115,7 +116,7 @@ func (c *c) ListArtifacts(ctx context.Context, project string) (ids []string, er
 	return *res.JSON200, nil
 }
 
-func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string) (rc io.ReadCloser, err error) {
+func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string) (rc io.ReadCloser, size int64, err error) {
 	defer errz.Recover(&err)
 
 	res, err := c.clientWithResponses.GetProjectArtifactWithResponse(
@@ -147,5 +148,5 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 
 	rb := progressbar.NewReader(res2.Body, bar)
 
-	return &rb, nil
+	return &rb, res2.ContentLength, nil
 }

@@ -47,7 +47,7 @@ func New(username, project string, opts ...Option) store.Store {
 
 // NewArtifact uploads an artifact. The caller is responsible to call Close().
 // Existing artifacts are overwritten.
-func (s *s) NewArtifact(ctx context.Context, artifactID string) (wc io.WriteCloser, err error) {
+func (s *s) NewArtifact(ctx context.Context, artifactID string, size int64) (wc io.WriteCloser, err error) {
 	s.wg.Add(1)
 	reader, writer := io.Pipe()
 
@@ -58,6 +58,7 @@ func (s *s) NewArtifact(ctx context.Context, artifactID string) (wc io.WriteClos
 			s.project,
 			artifactID,
 			reader,
+			size,
 		)
 		if err != nil {
 			// store the error, it will be returned from s.Done()
@@ -69,13 +70,13 @@ func (s *s) NewArtifact(ctx context.Context, artifactID string) (wc io.WriteClos
 }
 
 // GetArtifact opens a file
-func (s *s) GetArtifact(ctx context.Context, id string) (rc io.ReadCloser, err error) {
+func (s *s) GetArtifact(ctx context.Context, id string) (rc io.ReadCloser, size int64, err error) {
 	defer errz.Recover(&err)
 
-	rc, err = s.client.GetArtifact(ctx, s.project, id)
+	rc, size, err = s.client.GetArtifact(ctx, s.project, id)
 	errz.Fatal(err)
 
-	return rc, nil
+	return rc, size, nil
 }
 
 func (s *s) Clean(_ context.Context) (err error) {
@@ -102,6 +103,6 @@ func (s *s) Done() error {
 
 // ArtifactExists TODO: naive implementation.. implement one without downloading the artifact
 func (s *s) ArtifactExists(ctx context.Context, id string) bool {
-	_, err := s.client.GetArtifact(ctx, s.project, id)
+	_, _, err := s.client.GetArtifact(ctx, s.project, id)
 	return err == nil
 }

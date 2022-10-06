@@ -29,7 +29,7 @@ func (t *Task) ArtifactInspect(artifactNames ...hash.In) (ai ArtifactInfo, err e
 		errz.Fatal(err)
 	}
 
-	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
+	artifact, _, err := t.local.GetArtifact(context.TODO(), artifactName.String())
 	if err != nil {
 		_, ok := err.(*fs.PathError)
 		if ok {

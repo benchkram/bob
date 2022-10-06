@@ -24,10 +24,10 @@ func Sync(ctx context.Context, src, dst Store, id string) (err error) {
 		return ErrArtifactAlreadyExists
 	}
 
-	srcReader, err := src.GetArtifact(ctx, id)
+	srcReader, size, err := src.GetArtifact(ctx, id)
 	errz.Fatal(err)
 
-	dstWriter, err := dst.NewArtifact(ctx, id)
+	dstWriter, err := dst.NewArtifact(ctx, id, size)
 	errz.Fatal(err)
 
 	tr := io.TeeReader(srcReader, dstWriter)

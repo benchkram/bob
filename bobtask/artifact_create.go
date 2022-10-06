@@ -64,7 +64,7 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 		defer func(dst string) { _ = os.Remove(dst) }(target)
 	}
 
-	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String())
+	artifact, err := t.local.NewArtifact(context.TODO(), artifactName.String(), 0)
 	errz.Fatal(err)
 	defer artifact.Close()
 
@@ -199,7 +199,7 @@ func (t *Task) ArtifactExists(artifactName hash.In) bool {
 // GetArtifactMetadata creates a new artifact instance to retrive Metadata
 // separately and returns ArtifactMetadata, close the artifacts before returning
 func (t *Task) GetArtifactMetadata(artifactName string) (_ *ArtifactMetadata, err error) {
-	artifact, err := t.local.GetArtifact(context.TODO(), artifactName)
+	artifact, _, err := t.local.GetArtifact(context.TODO(), artifactName)
 	if err != nil {
 		_, ok := err.(*fs.PathError)
 		if ok {
