@@ -192,4 +192,133 @@ var _ = Describe("Testing input for a task", func() {
 			Expect(inputsAfterBuild[2]).To(Equal(filepath.Join(dir, "second_level", "third_level", "bob.yaml")))
 		})
 	})
+
+	When("input is same as target", func() {
+		It("should filter out the input", func() {
+			func() {
+				bf, ok := nameToBobfile["with_same_input_and_target"]
+				Expect(ok).To(BeTrue())
+
+				err := bf.BobfileSave(dir, "bob.yaml")
+				Expect(err).NotTo(HaveOccurred())
+			}()
+
+			defer func() {
+				err := os.Remove("bob.yaml")
+				Expect(err).NotTo(HaveOccurred())
+			}()
+
+			b, err := BobSetup()
+			Expect(err).NotTo(HaveOccurred())
+			taskName := "build"
+
+			bobfile, err := b.Aggregate()
+			Expect(err).NotTo(HaveOccurred())
+
+			task, ok := bobfile.BTasks[taskName]
+			Expect(ok).To(BeTrue())
+
+			inputs := task.Inputs()
+
+			Expect(len(inputs)).To(Equal(0))
+
+			// Build and aggregate again
+			err = b.Build(ctx, taskName)
+			Expect(err).NotTo(HaveOccurred())
+			bobfile, err = b.Aggregate()
+			Expect(err).NotTo(HaveOccurred())
+
+			task, ok = bobfile.BTasks[taskName]
+			Expect(ok).To(BeTrue())
+
+			inputsAfterBuild := task.Inputs()
+			Expect(len(inputsAfterBuild)).To(Equal(0))
+		})
+	})
+
+	When("input is same as target and input declared relative from .", func() {
+		It("should filter out the input", func() {
+			func() {
+				bf, ok := nameToBobfile["with_same_input_and_target_relative"]
+				Expect(ok).To(BeTrue())
+
+				err := bf.BobfileSave(dir, "bob.yaml")
+				Expect(err).NotTo(HaveOccurred())
+			}()
+
+			defer func() {
+				err := os.Remove("bob.yaml")
+				Expect(err).NotTo(HaveOccurred())
+			}()
+
+			b, err := BobSetup()
+			Expect(err).NotTo(HaveOccurred())
+			taskName := "build"
+
+			bobfile, err := b.Aggregate()
+			Expect(err).NotTo(HaveOccurred())
+
+			task, ok := bobfile.BTasks[taskName]
+			Expect(ok).To(BeTrue())
+
+			inputs := task.Inputs()
+
+			Expect(len(inputs)).To(Equal(0))
+
+			// Build and aggregate again
+			err = b.Build(ctx, taskName)
+			Expect(err).NotTo(HaveOccurred())
+			bobfile, err = b.Aggregate()
+			Expect(err).NotTo(HaveOccurred())
+
+			task, ok = bobfile.BTasks[taskName]
+			Expect(ok).To(BeTrue())
+
+			inputsAfterBuild := task.Inputs()
+			Expect(len(inputsAfterBuild)).To(Equal(0))
+		})
+	})
+
+	When("input is same as target and target declared relative from .", func() {
+		It("should filter out the input", func() {
+			func() {
+				bf, ok := nameToBobfile["with_same_input_and_target_relative_target"]
+				Expect(ok).To(BeTrue())
+
+				err := bf.BobfileSave(dir, "bob.yaml")
+				Expect(err).NotTo(HaveOccurred())
+			}()
+
+			defer func() {
+				err := os.Remove("bob.yaml")
+				Expect(err).NotTo(HaveOccurred())
+			}()
+
+			b, err := BobSetup()
+			Expect(err).NotTo(HaveOccurred())
+			taskName := "build"
+
+			bobfile, err := b.Aggregate()
+			Expect(err).NotTo(HaveOccurred())
+
+			task, ok := bobfile.BTasks[taskName]
+			Expect(ok).To(BeTrue())
+
+			inputs := task.Inputs()
+
+			Expect(len(inputs)).To(Equal(0))
+
+			// Build and aggregate again
+			err = b.Build(ctx, taskName)
+			Expect(err).NotTo(HaveOccurred())
+			bobfile, err = b.Aggregate()
+			Expect(err).NotTo(HaveOccurred())
+
+			task, ok = bobfile.BTasks[taskName]
+			Expect(ok).To(BeTrue())
+
+			inputsAfterBuild := task.Inputs()
+			Expect(len(inputsAfterBuild)).To(Equal(0))
+		})
+	})
 })

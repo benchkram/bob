@@ -1,0 +1,5 @@
+build:
+  build:
+    input: ./hello-relative
+    cmd: touch hello-relative
+    target: hello-relative

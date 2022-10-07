@@ -1,0 +1,5 @@
+build:
+  build:
+    input: hello
+    cmd: touch hello
+    target: hello
