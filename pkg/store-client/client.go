@@ -60,7 +60,7 @@ func (c *c) UploadArtifact(
 			if err0 != nil {
 				_ = w.CloseWithError(err)
 			}
-			bar.Add(n)
+			_ = bar.Add(n)
 		}
 	}()
 
@@ -68,7 +68,8 @@ func (c *c) UploadArtifact(
 		ctx, projectName, mpw.FormDataContentType(), r)
 	errz.Fatal(err)
 
-	bar.Finish()
+	err = bar.Finish()
+	errz.Fatal(err)
 
 	if resp.StatusCode() != http.StatusOK {
 		err = errors.Errorf("request failed [status: %d, msg: %q]", resp.StatusCode(), resp.Body)
