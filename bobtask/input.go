@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -126,7 +127,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 	for _, input := range inputs {
 		var isIgnored bool
 		for _, ignore := range ignores {
-			if input == ignore {
+			if path.Clean(input) == path.Clean(ignore) {
 				isIgnored = true
 				break
 			}
