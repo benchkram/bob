@@ -35,7 +35,6 @@ func (b B) Install() (err error) {
 	fmt.Println()
 
 	if len(allDeps) > 0 {
-		fmt.Println("Building nix dependencies...")
 		_, err := b.nix.BuildDependencies(allDeps)
 		if err != nil {
 			return err
