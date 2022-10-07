@@ -1,0 +1,5 @@
+build:
+  build:
+    cmd: docker build -t my-image:latest .
+    target:
+      image: my-image:latest

@@ -1,0 +1,9 @@
+build:
+  build:
+    cmd: touch hello && mkdir some-dir
+    target: |-
+      hello
+      some-dir
+  another:
+    cmd: touch hello
+    target: hello

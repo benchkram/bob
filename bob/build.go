@@ -3,7 +3,6 @@ package bob
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/benchkram/errz"
 
@@ -23,10 +22,8 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 
 	b.PrintVersionCompatibility(ag)
 
-	fmt.Println("Building nix dependencies...")
 	err = b.nix.BuildNixDependenciesInPipeline(ag, taskName)
 	errz.Fatal(err)
-	fmt.Println("Succeeded building nix dependencies")
 
 	// Hint: Hash computation (playbook execution) can only start after
 	// nix dependencies are resolved.

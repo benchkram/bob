@@ -12,4 +12,6 @@ var (
 
 	ErrInvalidTargetDefinition  = fmt.Errorf("invalid target definition, can't find 'path' or 'image' directive")
 	ErrAmbigousTargetDefinition = fmt.Errorf("ambigous target definition, can't have 'path' and 'image' directive on same target")
+
+	ErrAmbigousTargets = fmt.Errorf("ambigous targets detected")
 )

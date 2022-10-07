@@ -25,6 +25,7 @@ type Target interface {
 	// Paths() []string
 	// PathsPlain() []string
 	// Type() targettype.T
+	DockerImages() []string
 }
 
 type T struct {
@@ -117,4 +118,8 @@ func (t *T) FilesystemEntriesRawPlain() []string {
 func (t *T) WithExpected(expected *buildinfo.Targets) *T {
 	t.expected = expected
 	return t
+}
+
+func (t *T) DockerImages() []string {
+	return t.dockerImages
 }
