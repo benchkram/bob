@@ -36,6 +36,9 @@ var _ = BeforeSuite(func() {
 		"with_three_level",
 		"with_three_level/second_level",
 		"with_three_level/second_level/third_level",
+		"with_same_input_and_target",
+		"with_same_input_and_target_relative",
+		"with_same_input_and_target_relative_target",
 	}
 	nameToBobfile = make(map[string]*bobfile.Bobfile)
 	for _, name := range bobFiles {

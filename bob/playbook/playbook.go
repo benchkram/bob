@@ -287,7 +287,7 @@ func (p *Playbook) setTaskState(taskname string, state State, taskError error) e
 
 	task.SetState(state, taskError)
 	switch state {
-	case StateCompleted, StateCanceled, StateNoRebuildRequired:
+	case StateCompleted, StateCanceled, StateNoRebuildRequired, StateFailed:
 		task.SetEnd(time.Now())
 	}
 

@@ -43,6 +43,8 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 					p.Done()
 				}
+
+				processedTasks = append(processedTasks, t)
 			}
 		}(i + 1)
 	}
@@ -52,7 +54,6 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		c := p.TaskChannel()
 		for t := range c {
 			boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
-			processedTasks = append(processedTasks, t)
 
 			// blocks till a worker is available
 			queue <- t
