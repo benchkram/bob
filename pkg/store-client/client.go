@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
@@ -150,23 +151,21 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 }
 
 func progress(ctx context.Context, msg string, size int64) *progressbar.ProgressBar {
-
-	// todo custom keys for these
-	f := func(ctx context.Context, k string) string {
+	getTaskName := func(ctx context.Context, k playbook.TaskKey) string {
 		if v := ctx.Value(k); v != nil {
 			return v.(string)
 		}
 		return ""
 	}
-	nmp := func(ctx context.Context, k string) int {
+	getNamePad := func(ctx context.Context, k playbook.TaskKey) int {
 		if v := ctx.Value(k); v != nil {
 			return v.(int)
 		}
 		return 0
 	}
 
-	taskName := f(ctx, "taskName")
-	namePad := nmp(ctx, "namePad")
+	taskName := getTaskName(ctx, "taskName")
+	namePad := getNamePad(ctx, "namePad")
 
 	description := fmt.Sprintf("  %-*s\t%s", namePad, taskName, aurora.Faint(msg))
 

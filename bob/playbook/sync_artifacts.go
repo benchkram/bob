@@ -10,18 +10,21 @@ import (
 	"github.com/benchkram/bob/pkg/store"
 )
 
+// TaskKey is key for context values passed to client for upload/download output formatting
+type TaskKey string
+
 func (p *Playbook) downloadArtifact(ctx context.Context, a hash.In, taskName string) {
 	if p.enableCaching && p.remoteStore != nil && p.localStore != nil {
-		ctx = context.WithValue(ctx, "taskName", taskName)
-		ctx = context.WithValue(ctx, "namePad", p.namePad)
+		ctx = context.WithValue(ctx, TaskKey("taskName"), taskName)
+		ctx = context.WithValue(ctx, TaskKey("namePad"), p.namePad)
 		syncFromRemoteToLocal(ctx, p.remoteStore, p.localStore, a)
 	}
 }
 
 func (p *Playbook) pushArtifacts(ctx context.Context, a []hash.In, taskName string) {
 	if p.enableCaching && p.remoteStore != nil && p.localStore != nil {
-		ctx = context.WithValue(ctx, "taskName", taskName)
-		ctx = context.WithValue(ctx, "namePad", p.namePad)
+		ctx = context.WithValue(ctx, TaskKey("taskName"), taskName)
+		ctx = context.WithValue(ctx, TaskKey("namePad"), p.namePad)
 		syncFromLocalToRemote(ctx, p.localStore, p.remoteStore, a)
 	}
 }
