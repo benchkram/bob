@@ -7,8 +7,11 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"os"
+	"time"
 
 	"github.com/benchkram/errz"
+	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
 
@@ -29,10 +32,7 @@ func (c *c) UploadArtifact(
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
 
-	bar := progressbar.DefaultBytes(
-		size,
-		fmt.Sprintf("Upload %s", artifactID),
-	)
+	bar := progress(ctx, "upload artifact "+artifactID, size)
 
 	go func() {
 		err0 := attachMimeHeader(mpw, "id", artifactID)
@@ -142,12 +142,54 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 		errz.Fatal(fmt.Errorf("invalid response"))
 	}
 
-	bar := progressbar.DefaultBytes(
-		res2.ContentLength,
-		fmt.Sprintf("Download %s", artifactId),
-	)
+	bar := progress(ctx, "download artifact "+artifactId, res2.ContentLength)
 
 	rb := progressbar.NewReader(res2.Body, bar)
 
 	return &rb, res2.ContentLength, nil
+}
+
+func progress(ctx context.Context, msg string, size int64) *progressbar.ProgressBar {
+
+	// todo custom keys for these
+	f := func(ctx context.Context, k string) string {
+		if v := ctx.Value(k); v != nil {
+			return v.(string)
+		}
+		return ""
+	}
+	nmp := func(ctx context.Context, k string) int {
+		if v := ctx.Value(k); v != nil {
+			return v.(int)
+		}
+		return 0
+	}
+
+	taskName := f(ctx, "taskName")
+	namePad := nmp(ctx, "namePad")
+
+	description := fmt.Sprintf("  %-*s\t%s", namePad, taskName, aurora.Faint(msg))
+
+	bar := progressbar.NewOptions64(size,
+		progressbar.OptionSetWriter(os.Stderr),
+		progressbar.OptionSetPredictTime(false),
+		progressbar.OptionShowCount(),
+		progressbar.OptionThrottle(time.Second),
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionSetWidth(10),
+		progressbar.OptionSetDescription(description),
+		progressbar.OptionOnCompletion(func() {
+			fmt.Fprint(os.Stderr, "\n")
+		}),
+		progressbar.OptionSetRenderBlankState(false),
+		progressbar.OptionSetTheme(
+			progressbar.Theme{
+				Saucer:        "",
+				SaucerHead:    "",
+				SaucerPadding: "",
+				BarStart:      "",
+				BarEnd:        "",
+			},
+		))
+	return bar
 }

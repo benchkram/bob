@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"github.com/benchkram/errz"
@@ -10,7 +9,7 @@ import (
 
 // Sync an item from the src store to the dst store.
 // In case the item exists in dst Sync does nothing and returns nil.
-func Sync(ctx context.Context, src, dst Store, id string, msgOnSync string) (err error) {
+func Sync(ctx context.Context, src, dst Store, id string) (err error) {
 	defer errz.Recover(&err)
 
 	found, err := exists(ctx, src, id)
@@ -23,10 +22,6 @@ func Sync(ctx context.Context, src, dst Store, id string, msgOnSync string) (err
 	errz.Fatal(err)
 	if found {
 		return ErrArtifactAlreadyExists
-	}
-
-	if msgOnSync != "" {
-		fmt.Println(msgOnSync)
 	}
 
 	srcReader, size, err := src.GetArtifact(ctx, id)
