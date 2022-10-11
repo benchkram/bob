@@ -12,7 +12,6 @@ import (
 
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/errz"
-	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
 
@@ -33,7 +32,7 @@ func (c *c) UploadArtifact(
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
 
-	bar := progress(ctx, "upload artifact "+artifactID, size)
+	bar := progress(ctx, size)
 
 	go func() {
 		err0 := attachMimeHeader(mpw, "id", artifactID)
@@ -143,31 +142,21 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 		errz.Fatal(fmt.Errorf("invalid response"))
 	}
 
-	bar := progress(ctx, "download artifact "+artifactId, res2.ContentLength)
+	bar := progress(ctx, res2.ContentLength)
 
 	rb := progressbar.NewReader(res2.Body, bar)
 
 	return &rb, res2.ContentLength, nil
 }
 
-func progress(ctx context.Context, msg string, size int64) *progressbar.ProgressBar {
-	getTaskName := func(ctx context.Context, k playbook.TaskKey) string {
+func progress(ctx context.Context, size int64) *progressbar.ProgressBar {
+	getDescription := func(ctx context.Context, k playbook.TaskKey) string {
 		if v := ctx.Value(k); v != nil {
 			return v.(string)
 		}
 		return ""
 	}
-	getNamePad := func(ctx context.Context, k playbook.TaskKey) int {
-		if v := ctx.Value(k); v != nil {
-			return v.(int)
-		}
-		return 0
-	}
-
-	taskName := getTaskName(ctx, "taskName")
-	namePad := getNamePad(ctx, "namePad")
-
-	description := fmt.Sprintf("  %-*s\t%s", namePad, taskName, aurora.Faint(msg))
+	description := getDescription(ctx, "description")
 
 	bar := progressbar.NewOptions64(size,
 		progressbar.OptionSetWriter(os.Stderr),
