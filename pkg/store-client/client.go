@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/benchkram/bob/bob/playbook"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
@@ -32,7 +33,8 @@ func (c *c) UploadArtifact(
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
 
-	bar := progress(ctx, size)
+	bar := progressBar(ctx, size)
+	rb := progressbar.NewReader(src, bar)
 
 	go func() {
 		err0 := attachMimeHeader(mpw, "id", artifactID)
@@ -47,11 +49,11 @@ func (c *c) UploadArtifact(
 			return
 		}
 
-		tr := io.TeeReader(src, pw)
+		tr := io.TeeReader(&rb, pw)
 		buf := make([]byte, 8192)
 
 		for {
-			n, err0 := tr.Read(buf)
+			_, err0 := tr.Read(buf)
 			if err0 == io.EOF {
 				_ = mpw.Close()
 				_ = w.Close()
@@ -60,15 +62,11 @@ func (c *c) UploadArtifact(
 			if err0 != nil {
 				_ = w.CloseWithError(err)
 			}
-			_ = bar.Add(n)
 		}
 	}()
 
 	resp, err := c.clientWithResponses.UploadArtifactWithBodyWithResponse(
 		ctx, projectName, mpw.FormDataContentType(), r)
-	errz.Fatal(err)
-
-	err = bar.Finish()
 	errz.Fatal(err)
 
 	if resp.StatusCode() != http.StatusOK {
@@ -144,12 +142,23 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 
 	bar := progress(ctx, res2.ContentLength)
 
-	rb := progressbar.NewReader(res2.Body, bar)
+	rb := boblog.NewReader(res2.Body, bar)
 
 	return &rb, res2.ContentLength, nil
 }
 
-func progress(ctx context.Context, size int64) *progressbar.ProgressBar {
+func progress(ctx context.Context, size int64) *boblog.Progress {
+	getDescription := func(ctx context.Context, k playbook.TaskKey) string {
+		if v := ctx.Value(k); v != nil {
+			return v.(string)
+		}
+		return ""
+	}
+	description := getDescription(ctx, "description")
+	return boblog.NewProgress(size, description, time.Second)
+}
+
+func progressBar(ctx context.Context, size int64) *progressbar.ProgressBar {
 	getDescription := func(ctx context.Context, k playbook.TaskKey) string {
 		if v := ctx.Value(k); v != nil {
 			return v.(string)
@@ -159,15 +168,14 @@ func progress(ctx context.Context, size int64) *progressbar.ProgressBar {
 	description := getDescription(ctx, "description")
 
 	bar := progressbar.NewOptions64(size,
-		progressbar.OptionSetWriter(os.Stderr),
+		progressbar.OptionSetWriter(os.Stdout),
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionShowCount(),
-		progressbar.OptionThrottle(time.Second),
+		progressbar.OptionThrottle(100*time.Millisecond),
 		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionSetWidth(10),
 		progressbar.OptionSetDescription(description),
 		progressbar.OptionOnCompletion(func() {
-			fmt.Fprint(os.Stderr, "\n")
+			fmt.Fprint(os.Stdout, "\n")
 		}),
 		progressbar.OptionSetRenderBlankState(false),
 		progressbar.OptionSetTheme(
