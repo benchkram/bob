@@ -59,15 +59,13 @@ func (p *Progress) Add64(num int64) {
 	p.currentBytes += num
 	p.currentPercent = int(float64(p.currentBytes) / float64(p.maxBytes) * 100)
 
-	if p.currentBytes == p.maxBytes && p.currentPercent != p.lastPercent {
-		p.render()
+	if p.currentPercent == p.lastPercent {
 		return
 	}
-	if time.Since(p.lastRendered) >= p.intervalToRender && p.currentPercent != p.lastPercent {
+
+	if p.currentBytes == p.maxBytes || time.Since(p.lastRendered) >= p.intervalToRender {
 		p.render()
 	}
-
-	return
 }
 
 // render current progress ex. `description 54% (7.4kB/7.4kB)`
