@@ -66,7 +66,7 @@ type Playbook struct {
 	// remoteStore is the artifacts remote store
 	remoteStore store.Store
 
-	// remoteStore is the artifacts local store
+	// localStore is the artifacts local store
 	localStore store.Store
 }
 
