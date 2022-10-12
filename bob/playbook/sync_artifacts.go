@@ -16,7 +16,7 @@ type TaskKey string
 
 func (p *Playbook) downloadArtifact(ctx context.Context, a hash.In, taskName string) {
 	if p.enableCaching && p.remoteStore != nil && p.localStore != nil {
-		description := fmt.Sprintf("%-*s%s", p.namePad, taskName, aurora.Faint("download artifact "+a.String()))
+		description := fmt.Sprintf("%-*s\t  %s", p.namePad, taskName, aurora.Faint("download artifact "+a.String()))
 		ctx = context.WithValue(ctx, TaskKey("description"), description)
 		syncFromRemoteToLocal(ctx, p.remoteStore, p.localStore, a)
 	}
