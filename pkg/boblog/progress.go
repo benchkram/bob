@@ -47,12 +47,12 @@ func NewProgress(maxBytes int64, description string, intervalToShow time.Duratio
 }
 
 // Add will add the specified amount to the progressbar
-func (p *Progress) Add(num int) error {
-	return p.Add64(int64(num))
+func (p *Progress) Add(num int) {
+	p.Add64(int64(num))
 }
 
 // Add64 will add the specified amount to the progressbar
-func (p *Progress) Add64(num int64) error {
+func (p *Progress) Add64(num int64) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
@@ -61,13 +61,13 @@ func (p *Progress) Add64(num int64) error {
 
 	if p.currentBytes == p.maxBytes && p.currentPercent != p.lastPercent {
 		p.render()
-		return nil
+		return
 	}
 	if time.Since(p.lastRendered) >= p.intervalToRender && p.currentPercent != p.lastPercent {
 		p.render()
 	}
 
-	return nil
+	return
 }
 
 // render current progress ex. `description 54% (7.4kB/7.4kB)`
@@ -81,11 +81,11 @@ func (p *Progress) render() {
 }
 
 // Finish sets the current progress to 100%
-func (p *Progress) Finish() error {
+func (p *Progress) Finish() {
 	p.lock.Lock()
 	p.currentBytes = p.maxBytes
 	p.lock.Unlock()
-	return p.Add(0)
+	p.Add(0)
 }
 
 // Reader will wrap an io.Reader adding progress functionality
@@ -106,7 +106,7 @@ func NewReader(r io.Reader, bar *Progress) Reader {
 func (r *Reader) Read(p []byte) (n int, err error) {
 	n, err = r.Reader.Read(p)
 	r.bar.Add(n)
-	return
+	return n, err
 }
 
 // Close the reader when it implements io.Closer
