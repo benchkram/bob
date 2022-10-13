@@ -8,13 +8,25 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
+//	     Run this to pick a new color
+//		 	for i := uint8(16); i <= 231; i++ {
+//				fmt.Println(i, aurora.Index(i, "pew-pew"))
+//			}
 var colorPool = []aurora.Color{
+	aurora.Gray(18, nil).Color(),
 	aurora.GreenFg,
 	aurora.BlueFg,
 	aurora.CyanFg,
 	aurora.MagentaFg,
 	aurora.YellowFg,
 	aurora.RedFg,
+	aurora.Index(42, nil).Color(),
+	aurora.Index(45, nil).Color(),
+	aurora.Index(45, nil).Color(),
+	aurora.Index(51, nil).Color(),
+	aurora.Index(111, nil).Color(),
+	aurora.Index(141, nil).Color(),
+	aurora.Index(225, nil).Color(),
 }
 
 // pickTaskColors picks a display color for each task in the playbook.
