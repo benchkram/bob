@@ -22,6 +22,8 @@ type Store interface {
 
 	ArtifactExists(ctx context.Context, id string) bool
 
+	ArtifactRemove(ctx context.Context, id string) error
+
 	Done() error
 }
 

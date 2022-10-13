@@ -42,6 +42,8 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		case <-done:
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.Canceled) {
+				artifactId, _ := task.HashIn()
+				_ = p.localStore.ArtifactRemove(context.TODO(), artifactId.String())
 				boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, StateCanceled))
 				_ = p.TaskCanceled(task.Name())
 			}

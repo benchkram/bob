@@ -106,3 +106,8 @@ func (s *s) ArtifactExists(ctx context.Context, id string) bool {
 	_, _, err := s.client.GetArtifact(ctx, s.project, id)
 	return err == nil
 }
+
+func (s *s) ArtifactRemove(ctx context.Context, id string) error {
+	// not implemented
+	return nil
+}

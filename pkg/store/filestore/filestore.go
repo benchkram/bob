@@ -96,3 +96,10 @@ func (s *s) Done() error {
 func (s *s) ArtifactExists(ctx context.Context, id string) bool {
 	return file.Exists(filepath.Join(s.dir, id))
 }
+
+func (s *s) ArtifactRemove(ctx context.Context, id string) error {
+	if !s.ArtifactExists(ctx, id) {
+		return nil
+	}
+	return os.Remove(filepath.Join(s.dir, id))
+}
