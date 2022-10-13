@@ -9,9 +9,8 @@ import (
 )
 
 var colorPool = []aurora.Color{
-	1,
-	aurora.BlueFg,
 	aurora.GreenFg,
+	aurora.BlueFg,
 	aurora.CyanFg,
 	aurora.MagentaFg,
 	aurora.YellowFg,
