@@ -14,11 +14,11 @@ import (
 // TaskKey is key for context values passed to client for upload/download output formatting
 type TaskKey string
 
-func (p *Playbook) downloadArtifact(ctx context.Context, a hash.In, taskName string) {
+func (p *Playbook) downloadArtifact(ctx context.Context, a hash.In, taskName string, ignoreLocal bool) {
 	if p.enableCaching && p.remoteStore != nil && p.localStore != nil {
 		description := fmt.Sprintf("%-*s\t  %s", p.namePad, taskName, aurora.Faint("download artifact "+a.String()))
 		ctx = context.WithValue(ctx, TaskKey("description"), description)
-		syncFromRemoteToLocal(ctx, p.remoteStore, p.localStore, a)
+		syncFromRemoteToLocal(ctx, p.remoteStore, p.localStore, a, ignoreLocal)
 	}
 }
 
@@ -31,8 +31,9 @@ func (p *Playbook) pushArtifact(ctx context.Context, a hash.In, taskName string)
 }
 
 // syncFromRemoteToLocal syncs the artifact from the remote store to the local store.
-func syncFromRemoteToLocal(ctx context.Context, remote store.Store, local store.Store, a hash.In) {
-	err := store.Sync(ctx, remote, local, a.String())
+// if ignoreAlreadyExists is true it will ignore local artifact and perform a fresh download
+func syncFromRemoteToLocal(ctx context.Context, remote store.Store, local store.Store, a hash.In, ignoreAlreadyExists bool) {
+	err := store.Sync(ctx, remote, local, a.String(), ignoreAlreadyExists)
 	if errors.Is(err, store.ErrArtifactAlreadyExists) {
 		boblog.Log.V(5).Info(fmt.Sprintf("artifact already exists locally [artifactId: %s]. skipping...", a.String()))
 	} else if errors.Is(err, store.ErrArtifactNotFoundinSrc) {
@@ -46,7 +47,7 @@ func syncFromRemoteToLocal(ctx context.Context, remote store.Store, local store.
 
 // syncFromLocalToRemote syncs the artifact from the local store to the remote store.
 func syncFromLocalToRemote(ctx context.Context, local store.Store, remote store.Store, a hash.In) {
-	err := store.Sync(ctx, local, remote, a.String())
+	err := store.Sync(ctx, local, remote, a.String(), false)
 	if errors.Is(err, store.ErrArtifactAlreadyExists) {
 		boblog.Log.V(5).Info(fmt.Sprintf("artifact already exists on the remote [artifactId: %s]. skipping...", a.String()))
 		return

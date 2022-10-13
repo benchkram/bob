@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"sync"
 
 	"github.com/benchkram/bob/bobtask"
@@ -63,10 +64,18 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 			hashIn, err := task.HashIn()
 			errz.Fatal(err)
 
-			// download artifact if it exists on the remote
-			p.downloadArtifact(ctx, hashIn, task.ColoredName())
+			// download artifact if it exists on the remote. if exists locally will use that one
+			p.downloadArtifact(ctx, hashIn, task.ColoredName(), false)
 
 			success, err := task.ArtifactExtract(hashIn)
+			if err != nil {
+				// if local artifact is corrupted due to incomplete previous download, try a fresh download
+				if errors.Is(err, io.ErrUnexpectedEOF) {
+					p.downloadArtifact(ctx, hashIn, task.ColoredName(), true)
+					success, err = task.ArtifactExtract(hashIn)
+				}
+			}
+
 			errz.Fatal(err)
 			if success {
 				rebuildRequired = false

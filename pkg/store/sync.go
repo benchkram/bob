@@ -9,7 +9,7 @@ import (
 
 // Sync an item from the src store to the dst store.
 // In case the item exists in dst Sync does nothing and returns nil.
-func Sync(ctx context.Context, src, dst Store, id string) (err error) {
+func Sync(ctx context.Context, src, dst Store, id string, ignoreAlreadyExists bool) (err error) {
 	defer errz.Recover(&err)
 
 	found, err := exists(ctx, src, id)
@@ -18,10 +18,12 @@ func Sync(ctx context.Context, src, dst Store, id string) (err error) {
 	}
 	errz.Fatal(err)
 
-	found, err = exists(ctx, dst, id)
-	errz.Fatal(err)
-	if found {
-		return ErrArtifactAlreadyExists
+	if !ignoreAlreadyExists {
+		found, err = exists(ctx, dst, id)
+		errz.Fatal(err)
+		if found {
+			return ErrArtifactAlreadyExists
+		}
 	}
 
 	srcReader, size, err := src.GetArtifact(ctx, id)
