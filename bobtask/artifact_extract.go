@@ -21,6 +21,8 @@ import (
 func (t *Task) ArtifactExtract(artifactName hash.In) (success bool, err error) {
 	defer errz.Recover(&err)
 
+	fmt.Println("ArtifactExtract", artifactName)
+
 	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
 	if err != nil {
 		_, ok := err.(*fs.PathError)
