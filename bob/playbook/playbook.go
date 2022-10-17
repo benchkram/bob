@@ -71,6 +71,9 @@ type Playbook struct {
 
 	// enablePush allows pushing artifacts to remote store
 	enablePush bool
+
+	// enablePull allows pulling artifacts from remote store
+	enablePull bool
 }
 
 func New(root string, opts ...Option) *Playbook {

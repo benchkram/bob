@@ -54,6 +54,9 @@ type B struct {
 	// enablePush enables upload artifacts to remote store
 	enablePush bool
 
+	// enablePull enables the artifacts download from remote store
+	enablePull bool
+
 	// nix builds dependencies for tasks
 	nix *NixBuilder
 

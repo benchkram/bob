@@ -16,6 +16,12 @@ func WithPushEnabled(enable bool) Option {
 	}
 }
 
+func WithPullEnabled(enable bool) Option {
+	return func(p *Playbook) {
+		p.enablePull = enable
+	}
+}
+
 func WithPredictedNumOfTasks(tasks int) Option {
 	return func(p *Playbook) {
 		p.predictedNumOfTasks = tasks

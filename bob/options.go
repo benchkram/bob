@@ -58,6 +58,12 @@ func WithPushEnabled(enabled bool) Option {
 	}
 }
 
+func WithPullEnabled(enabled bool) Option {
+	return func(b *B) {
+		b.enablePull = enabled
+	}
+}
+
 func WithInsecure(allow bool) Option {
 	return func(b *B) {
 		b.allowInsecure = allow
