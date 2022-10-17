@@ -13,6 +13,7 @@ import (
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boberror"
+	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
@@ -22,7 +23,6 @@ import (
 
 var ErrDone = fmt.Errorf("playbook is done")
 var ErrFailed = fmt.Errorf("playbook failed")
-var ErrUnexpectedTaskState = fmt.Errorf("task state is unexpected")
 
 type Playbook struct {
 	// taskChannel is closed when the root
@@ -62,6 +62,18 @@ type Playbook struct {
 
 	// maxParallel is the maximum number of parallel executed tasks
 	maxParallel int
+
+	// remoteStore is the artifacts remote store
+	remoteStore store.Store
+
+	// localStore is the artifacts local store
+	localStore store.Store
+
+	// enablePush allows pushing artifacts to remote store
+	enablePush bool
+
+	// enablePull allows pulling artifacts from remote store
+	enablePull bool
 }
 
 func New(root string, opts ...Option) *Playbook {
@@ -99,11 +111,11 @@ func (rc *RebuildCause) String() string {
 }
 
 const (
-	TaskInputChanged      RebuildCause = "input-changed"
-	TaskForcedRebuild     RebuildCause = "forced"
-	DependencyChanged     RebuildCause = "dependency-changed"
-	TargetInvalid         RebuildCause = "target-invalid"
-	TargetNotInLocalStore RebuildCause = "target-not-in-localstore"
+	InputNotFoundInBuildInfo RebuildCause = "input-not-in-build-info"
+	TaskForcedRebuild        RebuildCause = "forced"
+	DependencyChanged        RebuildCause = "dependency-changed"
+	TargetInvalid            RebuildCause = "target-invalid"
+	TargetNotInLocalStore    RebuildCause = "target-not-in-localstore"
 )
 
 func (p *Playbook) numRunningTasks() int {

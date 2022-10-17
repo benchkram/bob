@@ -11,8 +11,8 @@ import (
 	"github.com/benchkram/errz"
 )
 
-// TaskNeedsRebuild check if a tasks need a rebuild by looking at it's hash value
-// and it's child tasks.
+// TaskNeedsRebuild check if a tasks need a rebuild by looking at its hash value
+// and its child tasks.
 func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, cause RebuildCause, err error) {
 	ts, ok := p.Tasks[taskname]
 	if !ok {
@@ -34,12 +34,12 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, caus
 	}
 
 	// Did the current task change?
-	// Indicating acache miss in buildinfostore.
+	// Indicating a cache miss in buildinfostore.
 	rebuildRequired, err = task.DidTaskChange()
 	errz.Fatal(err)
 	if rebuildRequired {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
-		return true, TaskInputChanged, nil
+		return true, InputNotFoundInBuildInfo, nil
 	}
 
 	// Check rebuild due to invalidated targets

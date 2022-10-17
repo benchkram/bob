@@ -41,7 +41,7 @@ var _ = Describe("Test artifact creation and extraction", func() {
 		})
 
 		It("inspect artifact", func() {
-			artifact, err := artifactStore.GetArtifact(context.Background(), artifactID)
+			artifact, _, err := artifactStore.GetArtifact(context.Background(), artifactID)
 			Expect(err).NotTo(HaveOccurred())
 			description, err := bobtask.ArtifactInspectFromReader(artifact)
 			Expect(err).NotTo(HaveOccurred())
@@ -121,7 +121,7 @@ var _ = Describe("Test artifact creation and extraction from docker targets", fu
 		})
 
 		It("inspect artifact", func() {
-			artifact, err := artifactStore.GetArtifact(context.Background(), artifactID)
+			artifact, _, err := artifactStore.GetArtifact(context.Background(), artifactID)
 			Expect(err).NotTo(HaveOccurred())
 			_, err = bobtask.ArtifactInspectFromReader(artifact)
 			Expect(err).NotTo(HaveOccurred())

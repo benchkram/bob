@@ -8,15 +8,16 @@ import (
 	"sync"
 
 	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boblog"
 )
 
 // Build the playbook starting at root.
 func (p *Playbook) Build(ctx context.Context) (err error) {
 	processingErrorsMutex := sync.Mutex{}
-	processingErrors := []error{}
+	var processingErrors []error
 
-	processedTasks := []*bobtask.Task{}
+	var processedTasks []*bobtask.Task
 
 	p.pickTaskColors()
 
@@ -36,7 +37,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 					processingErrors = append(processingErrors, fmt.Errorf("[task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 
-					// Any error occured during a build puts the
+					// Any error occurred during a build puts the
 					// playbook in a done state. This prevents
 					// further tasks be queued for execution.
 
@@ -93,6 +94,13 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	p.summary(processedTasks)
 
+	// sync any newly generated artifacts with the remote store
+	if p.enablePush {
+		for taskName, artifact := range p.inputHashes(true) {
+			p.pushArtifact(ctx, artifact, taskName)
+		}
+	}
+
 	if len(processingErrors) > 0 {
 		// Pass only the very first processing error.
 		return processingErrors[0]
@@ -100,6 +108,8 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	return nil
 }
+
+const maxSkippedInputs = 5
 
 // logSkippedInputs until max is reached
 func logSkippedInputs(count int, taskname string, skippedInputs []string) int {
@@ -121,4 +131,24 @@ func logSkippedInputs(count int, taskname string, skippedInputs []string) int {
 	}
 
 	return count
+}
+
+// inputHashes returns and array of input hashes of the playbook,
+// optionally filters tasks without targets.
+func (p *Playbook) inputHashes(filterTarget bool) map[string]hash.In {
+	artifactIds := make(map[string]hash.In)
+
+	for _, t := range p.Tasks {
+		if filterTarget && !t.TargetExists() {
+			continue
+		}
+
+		h, err := t.HashIn()
+		if err != nil {
+			continue
+		}
+
+		artifactIds[t.Name()] = h
+	}
+	return artifactIds
 }

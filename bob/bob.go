@@ -51,6 +51,12 @@ type B struct {
 	// allowInsecure uses http protocol for accessing the remote artifact store, if any
 	allowInsecure bool
 
+	// enablePush enables upload artifacts to remote store
+	enablePush bool
+
+	// enablePull enables the artifacts download from remote store
+	enablePull bool
+
 	// nix builds dependencies for tasks
 	nix *NixBuilder
 

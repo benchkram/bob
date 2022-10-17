@@ -7,9 +7,14 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"os"
+	"time"
 
+	"github.com/benchkram/bob/bob/playbook"
+	progress2 "github.com/benchkram/bob/pkg/progress"
 	"github.com/benchkram/errz"
 	"github.com/pkg/errors"
+	"github.com/schollz/progressbar/v3"
 
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -21,11 +26,15 @@ func (c *c) UploadArtifact(
 	projectName string,
 	artifactID string,
 	src io.Reader,
+	size int64,
 ) (err error) {
 	defer errz.Recover(&err)
 
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
+
+	bar := progressBar(ctx, size)
+	rb := progressbar.NewReader(src, bar)
 
 	go func() {
 		err0 := attachMimeHeader(mpw, "id", artifactID)
@@ -40,8 +49,9 @@ func (c *c) UploadArtifact(
 			return
 		}
 
-		tr := io.TeeReader(src, pw)
+		tr := io.TeeReader(&rb, pw)
 		buf := make([]byte, 8192)
+
 		for {
 			_, err0 := tr.Read(buf)
 			if err0 == io.EOF {
@@ -105,7 +115,7 @@ func (c *c) ListArtifacts(ctx context.Context, project string) (ids []string, er
 	return *res.JSON200, nil
 }
 
-func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string) (rc io.ReadCloser, err error) {
+func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string) (rc io.ReadCloser, size int64, err error) {
 	defer errz.Recover(&err)
 
 	res, err := c.clientWithResponses.GetProjectArtifactWithResponse(
@@ -130,5 +140,52 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 		errz.Fatal(fmt.Errorf("invalid response"))
 	}
 
-	return res2.Body, nil
+	bar := progress(ctx, res2.ContentLength)
+
+	rb := progress2.NewReader(res2.Body, bar)
+
+	return &rb, res2.ContentLength, nil
+}
+
+func progress(ctx context.Context, size int64) *progress2.Progress {
+	getDescription := func(ctx context.Context, k playbook.TaskKey) string {
+		if v := ctx.Value(k); v != nil {
+			return v.(string)
+		}
+		return ""
+	}
+	description := getDescription(ctx, "description")
+	return progress2.NewProgress(size, description, time.Second)
+}
+
+func progressBar(ctx context.Context, size int64) *progressbar.ProgressBar {
+	getDescription := func(ctx context.Context, k playbook.TaskKey) string {
+		if v := ctx.Value(k); v != nil {
+			return v.(string)
+		}
+		return ""
+	}
+	description := getDescription(ctx, "description")
+
+	bar := progressbar.NewOptions64(size,
+		progressbar.OptionSetWriter(os.Stdout),
+		progressbar.OptionSetPredictTime(false),
+		progressbar.OptionShowCount(),
+		progressbar.OptionThrottle(100*time.Millisecond),
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionSetDescription(description),
+		progressbar.OptionOnCompletion(func() {
+			fmt.Fprint(os.Stdout, "\n")
+		}),
+		progressbar.OptionSetRenderBlankState(false),
+		progressbar.OptionSetTheme(
+			progressbar.Theme{
+				Saucer:        "",
+				SaucerHead:    "",
+				SaucerPadding: "",
+				BarStart:      "",
+				BarEnd:        "",
+			},
+		))
+	return bar
 }
