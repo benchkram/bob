@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/benchkram/bob/bob/playbook"
-	"github.com/benchkram/bob/pkg/boblog"
+	progress2 "github.com/benchkram/bob/pkg/progress"
 	"github.com/benchkram/errz"
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
@@ -142,12 +142,12 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 
 	bar := progress(ctx, res2.ContentLength)
 
-	rb := boblog.NewReader(res2.Body, bar)
+	rb := progress2.NewReader(res2.Body, bar)
 
 	return &rb, res2.ContentLength, nil
 }
 
-func progress(ctx context.Context, size int64) *boblog.Progress {
+func progress(ctx context.Context, size int64) *progress2.Progress {
 	getDescription := func(ctx context.Context, k playbook.TaskKey) string {
 		if v := ctx.Value(k); v != nil {
 			return v.(string)
@@ -155,7 +155,7 @@ func progress(ctx context.Context, size int64) *boblog.Progress {
 		return ""
 	}
 	description := getDescription(ctx, "description")
-	return boblog.NewProgress(size, description, time.Second)
+	return progress2.NewProgress(size, description, time.Second)
 }
 
 func progressBar(ctx context.Context, size int64) *progressbar.ProgressBar {

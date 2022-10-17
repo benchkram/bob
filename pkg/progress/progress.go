@@ -1,4 +1,4 @@
-package boblog
+package progress
 
 import (
 	"fmt"
