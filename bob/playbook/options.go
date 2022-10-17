@@ -10,6 +10,12 @@ func WithCachingEnabled(enable bool) Option {
 	}
 }
 
+func WithPushEnabled(enable bool) Option {
+	return func(p *Playbook) {
+		p.enablePush = enable
+	}
+}
+
 func WithPredictedNumOfTasks(tasks int) Option {
 	return func(p *Playbook) {
 		p.predictedNumOfTasks = tasks

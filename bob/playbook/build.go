@@ -95,8 +95,10 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	p.summary(processedTasks)
 
 	// sync any newly generated artifacts with the remote store
-	for taskName, artifact := range p.inputHashes(true) {
-		p.pushArtifact(ctx, artifact, taskName)
+	if p.enablePush {
+		for taskName, artifact := range p.inputHashes(true) {
+			p.pushArtifact(ctx, artifact, taskName)
+		}
 	}
 
 	if len(processingErrors) > 0 {

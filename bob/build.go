@@ -35,6 +35,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 		playbook.WithMaxParallel(b.maxParallel),
 		playbook.WithRemoteStore(ag.Remotestore()),
 		playbook.WithLocalStore(b.local),
+		playbook.WithPushEnabled(b.enablePush),
 	)
 	errz.Fatal(err)
 

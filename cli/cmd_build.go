@@ -40,12 +40,15 @@ var buildCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		enablePush, err := cmd.Flags().GetBool("push")
+		errz.Fatal(err)
+
 		taskname := global.DefaultBuildTask
 		if len(args) > 0 {
 			taskname = args[0]
 		}
 
-		runBuild(taskname, noCache, allowInsecure, flagEnvVars, maxParallel)
+		runBuild(taskname, noCache, allowInsecure, enablePush, flagEnvVars, maxParallel)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getBuildTasks()
@@ -66,7 +69,7 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(taskname string, noCache, allowInsecure bool, flagEnvVars []string, maxParallel int) {
+func runBuild(taskname string, noCache, allowInsecure, enablePush bool, flagEnvVars []string, maxParallel int) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
@@ -78,6 +81,7 @@ func runBuild(taskname string, noCache, allowInsecure bool, flagEnvVars []string
 		bob.WithInsecure(allowInsecure),
 		bob.WithEnvVariables(parseEnvVarsFlag(flagEnvVars)),
 		bob.WithMaxParallel(maxParallel),
+		bob.WithPushEnabled(enablePush),
 	)
 	if err != nil {
 		exitCode = 1
@@ -128,8 +132,9 @@ func getBuildTasks() ([]string, error) {
 
 // parseEnvVarsFlag will parse flagEnvVars and return the environment variables
 // based on:
-//   --env VAR_ONE         uses VAR_ONE from host environment variable
-//   --env VAR_ONE=value   overwrites value from host with given `value`
+//
+//	--env VAR_ONE         uses VAR_ONE from host environment variable
+//	--env VAR_ONE=value   overwrites value from host with given `value`
 func parseEnvVarsFlag(flagEnvVars []string) []string {
 	var result []string
 	for _, v := range flagEnvVars {

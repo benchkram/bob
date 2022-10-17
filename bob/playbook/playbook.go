@@ -68,6 +68,9 @@ type Playbook struct {
 
 	// localStore is the artifacts local store
 	localStore store.Store
+
+	// enablePush allows pushing artifacts to remote store
+	enablePush bool
 }
 
 func New(root string, opts ...Option) *Playbook {

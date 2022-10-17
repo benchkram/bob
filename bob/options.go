@@ -52,6 +52,12 @@ func WithCachingEnabled(enabled bool) Option {
 	}
 }
 
+func WithPushEnabled(enabled bool) Option {
+	return func(b *B) {
+		b.enablePush = enabled
+	}
+}
+
 func WithInsecure(allow bool) Option {
 	return func(b *B) {
 		b.allowInsecure = allow
