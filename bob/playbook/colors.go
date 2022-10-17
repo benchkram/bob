@@ -22,7 +22,6 @@ var colorPool = []aurora.Color{
 	aurora.RedFg,
 	aurora.Index(42, nil).Color(),
 	aurora.Index(45, nil).Color(),
-	aurora.Index(45, nil).Color(),
 	aurora.Index(51, nil).Color(),
 	aurora.Index(111, nil).Color(),
 	aurora.Index(141, nil).Color(),
