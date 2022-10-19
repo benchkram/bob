@@ -20,6 +20,7 @@ import (
 )
 
 var ErrProjectNotFound = errors.New("project not found")
+var ErrNotAuthorized = errors.New("not authorized")
 
 func (c *c) UploadArtifact(
 	ctx context.Context,
@@ -103,6 +104,8 @@ func (c *c) ListArtifacts(ctx context.Context, project string) (ids []string, er
 
 	if res.StatusCode() == http.StatusNotFound {
 		errz.Fatal(usererror.Wrapm(ErrProjectNotFound, "upload to remote repository failed"))
+	} else if res.StatusCode() == http.StatusUnauthorized {
+		errz.Fatal(usererror.Wrapm(ErrNotAuthorized, "upload to remote repository failed"))
 	} else if res.StatusCode() != http.StatusOK {
 		err = errors.Errorf("request failed [status: %d, msg: %q]", res.StatusCode(), res.Body)
 		errz.Fatal(err)
