@@ -23,12 +23,14 @@ func (p *Playbook) downloadArtifact(ctx context.Context, a hash.In, task *bobtas
 	}
 }
 
-func (p *Playbook) pushArtifact(ctx context.Context, a hash.In, taskName string) {
-	if p.enableCaching && p.remoteStore != nil && p.localStore != nil {
-		description := fmt.Sprintf("  %-*s\t%s", p.namePad, taskName, aurora.Faint("pushing artifact "+a.String()))
-		ctx = context.WithValue(ctx, TaskKey("description"), description)
-		syncFromLocalToRemote(ctx, p.localStore, p.remoteStore, a, taskName, p.namePad)
+func (p *Playbook) pushArtifact(ctx context.Context, a hash.In, taskName string) error {
+	if !(p.enableCaching && p.remoteStore != nil && p.localStore != nil) {
+		return nil
 	}
+
+	description := fmt.Sprintf("  %-*s\t%s", p.namePad, taskName, aurora.Faint("pushing artifact "+a.String()))
+	ctx = context.WithValue(ctx, TaskKey("description"), description)
+	return syncFromLocalToRemote(ctx, p.localStore, p.remoteStore, a, taskName, p.namePad)
 }
 
 // syncFromRemoteToLocal syncs the artifact from the remote store to the local store.
@@ -47,14 +49,13 @@ func syncFromRemoteToLocal(ctx context.Context, remote store.Store, local store.
 }
 
 // syncFromLocalToRemote syncs the artifact from the local store to the remote store.
-func syncFromLocalToRemote(ctx context.Context, local store.Store, remote store.Store, a hash.In, taskName string, namePad int) {
+func syncFromLocalToRemote(ctx context.Context, local store.Store, remote store.Store, a hash.In, taskName string, namePad int) error {
 	err := store.Sync(ctx, local, remote, a.String(), false)
 	if errors.Is(err, store.ErrArtifactAlreadyExists) {
 		boblog.Log.V(5).Info(fmt.Sprintf("artifact already exists on the remote [artifactId: %s]. skipping...", a.String()))
-		return
+		return nil
 	} else if err != nil {
-		boblog.Log.V(5).Error(err, fmt.Sprintf("  %-*s\tfailed to sync from local to remote [artifactId: %s]", namePad, taskName, a.String()))
-		return
+		return errors.New(fmt.Sprintf("  %-*s\tfailed to sync from local to remote [artifactId: %s]", namePad, taskName, a.String()))
 	}
 
 	// wait for the remote store to finish uploading this artifact. can be moved outside the for loop, but then
@@ -62,7 +63,8 @@ func syncFromLocalToRemote(ctx context.Context, local store.Store, remote store.
 	err = remote.Done()
 	if err != nil {
 		boblog.Log.V(5).Error(err, fmt.Sprintf("failed to sync from local to remote [artifactId: %s]", a.String()))
-		return
+		return nil
 	}
 	boblog.Log.V(5).Info(fmt.Sprintf("synced from local to remote [artifactId: %s]", a.String()))
+	return nil
 }
