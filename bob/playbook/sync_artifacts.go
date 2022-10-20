@@ -55,7 +55,7 @@ func syncFromLocalToRemote(ctx context.Context, local store.Store, remote store.
 		boblog.Log.V(5).Info(fmt.Sprintf("artifact already exists on the remote [artifactId: %s]. skipping...", a.String()))
 		return nil
 	} else if err != nil {
-		return errors.New(fmt.Sprintf("  %-*s\tfailed to sync from local to remote [artifactId: %s]", namePad, taskName, a.String()))
+		return fmt.Errorf("  %-*s\tfailed to sync from local to remote [artifactId: %s]", namePad, taskName, a.String())
 	}
 
 	// wait for the remote store to finish uploading this artifact. can be moved outside the for loop, but then
