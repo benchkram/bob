@@ -153,6 +153,36 @@ Example:
 			errz.Fatal(err)
 		}
 	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		contextNames, err := getAuthContextNames()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+
+		return contextNames, cobra.ShellCompDirectiveDefault
+	},
+}
+
+func getAuthContextNames() ([]string, error) {
+	b, err := bob.Bob()
+	if err != nil {
+		return nil, err
+	}
+	authContexts, err := b.AuthContexts()
+	errz.Fatal(err)
+
+	if len(authContexts) == 0 {
+		return nil, nil
+	}
+
+	var names []string
+	for _, v := range authContexts {
+		if v.Current {
+			continue
+		}
+		names = append(names, v.Name)
+	}
+	return names, nil
 }
 
 var AuthContextListCmd = &cobra.Command{
