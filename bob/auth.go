@@ -29,7 +29,7 @@ func (b *B) DeleteAuthContext(name string) (err error) {
 		return usererror.Wrapm(err, "failed to delete authentication context")
 	}
 
-	return nil
+	return err
 }
 
 func (b *B) AuthContexts() ([]auth.Context, error) {
