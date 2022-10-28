@@ -218,7 +218,7 @@ func BuildEnvironment(deps []Dependency) (_ []string, err error) {
 		}
 	}
 
-	arguments := append([]string{"--pure", "-p", "--command", "'env'"}, listOfPackages...)
+	arguments := append([]string{"--pure", "-p", "--command", "'env'", "--keep", "NIX_SSL_CERT_FILE"}, listOfPackages...)
 	if nixpkgs != "" {
 		arguments = append(arguments, "-I", "nixpkgs="+nixpkgs)
 	}
