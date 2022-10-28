@@ -218,14 +218,15 @@ func BuildEnvironment(deps []Dependency) (_ []string, err error) {
 		}
 	}
 
-	arguments := append([]string{"--pure", "-p", "--command", "'env'", "--keep", "NIX_SSL_CERT_FILE SSL_CERT_FILE"}, listOfPackages...)
-
+	arguments := append([]string{"--pure", "-p", "--command", "'env'"}, listOfPackages...)
 	if nixpkgs != "" {
 		arguments = append(arguments, "-I", "nixpkgs="+nixpkgs)
 	}
 
-	cmd := exec.Command("nix-shell", arguments...)
-	fmt.Println("CMD:", cmd.String())
+	arguments = append(arguments, []string{"--keep", "NIX_SSL_CERT_FILE", "--keep", "SSL_CERT_FILE"}...)
+
+	cmd := exec.Command("nix-shell", "--pure")
+	cmd.Args = append(cmd.Args, arguments...)
 
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -259,7 +260,7 @@ func BuildEnvironment(deps []Dependency) (_ []string, err error) {
 		}
 	}
 
-	// fix NIX_SSL_CERT_FILE && SSL_CERT_FILE
+	// if NIX_SSL_CERT_FILE && SSL_CERT_FILE are set to /no-cert-file.crt unset them
 	var clearedEnv []string
 	for _, e := range env {
 		pair := strings.SplitN(e, "=", 2)
