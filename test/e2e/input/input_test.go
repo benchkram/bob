@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/benchkram/errz"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -56,7 +55,6 @@ var _ = Describe("Testing input for a task", func() {
 
 			// Build and aggregate again
 			err = b.Build(ctx, taskName)
-			errz.Log(err)
 			Expect(err).NotTo(HaveOccurred())
 			bobfile, err = b.Aggregate()
 			Expect(err).NotTo(HaveOccurred())
