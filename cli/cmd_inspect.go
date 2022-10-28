@@ -69,17 +69,11 @@ func runEnv(taskname string) {
 		fmt.Printf("%s\n", aurora.Red("Task does not exists"))
 		exit(1)
 	}
-
-	// Build nix dependencies
-	err = b.Nix().BuildNixDependencies(bobfile, []string{taskname}, []string{})
-	errz.Fatal(err)
-
 	task = bobfile.BTasks[taskname]
 
-	taskEnv := task.Env()
-	if len(task.StorePaths()) > 0 {
-		taskEnv = nix.AddPATH(task.StorePaths(), task.Env())
-	}
+	taskEnv, err := nix.BuildEnvironment(task.Dependencies())
+	errz.Fatal(err)
+
 	for _, e := range taskEnv {
 		println(e)
 	}
