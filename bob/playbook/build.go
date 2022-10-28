@@ -27,12 +27,12 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	boblog.Log.Info(fmt.Sprintf("Using %d workers", parallelTasks))
 
-	//	processing := sync.WaitGroup{}
+	processing := sync.WaitGroup{}
 
 	for i := 0; i < parallelTasks; i++ {
 		go func(workerID int) {
 			for t := range queue {
-				// processing.Add(1)
+				processing.Add(1)
 				boblog.Log.V(5).Info(fmt.Sprintf("RUNNING task %s on worker  %d ", t.Name(), workerID))
 				err := p.build(ctx, t)
 				if err != nil {
@@ -48,7 +48,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 				}
 
 				processedTasks = append(processedTasks, t)
-				// processing.Done()
+				processing.Done()
 			}
 		}(i + 1)
 	}
@@ -82,7 +82,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	}
 
 	<-p.DoneChan()
-	// processing.Wait()
+	processing.Wait()
 
 	close(queue)
 
