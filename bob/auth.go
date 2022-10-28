@@ -26,7 +26,7 @@ func (b *B) DeleteAuthContext(name string) (err error) {
 
 	err = b.authStore.DeleteContext(name)
 	if errors.Is(err, auth.ErrNotFound) {
-		return usererror.Wrapm(err, "failed to delete authentication context")
+		return usererror.Wrapm(err, fmt.Sprintf("failed to delete context [%s]", name))
 	}
 
 	return err
