@@ -2,7 +2,6 @@ package bobtask
 
 import (
 	"path/filepath"
-	"strings"
 
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
@@ -105,10 +104,4 @@ func (t *Task) WithBuildinfoStore(s buildinfostore.Store) *Task {
 func (t *Task) WithDockerRegistryClient(c dockermobyutil.RegistryClient) *Task {
 	t.dockerRegistryClient = c
 	return t
-}
-
-const EnvironSeparator = "="
-
-func (t *Task) AddEnvironmentVariable(key, value string) {
-	t.env = append(t.env, strings.Join([]string{key, value}, EnvironSeparator))
 }

@@ -197,3 +197,68 @@ func source(nixpkgs string) string {
 	}
 	return "<nixpkgs>"
 }
+
+// BuildEnvironment is running nix-shell for a list of dependencies and fetch its whole environment
+//
+// nix-shell --pure -p package1 package2 --command 'env' -I nixpkgs=tarballURL
+//
+// The -I nixpkgs=tarballURL is added only if deps have Nixpkgs URL set
+func BuildEnvironment(deps []Dependency) (_ []string, err error) {
+	defer errz.Recover(&err)
+
+	var listOfPackages []string
+	var nixpkgs string
+	for _, v := range deps {
+		if strings.HasSuffix(v.Name, ".nix") {
+			continue
+		}
+		listOfPackages = append(listOfPackages, v.Name)
+		if v.Nixpkgs != "" {
+			nixpkgs = v.Nixpkgs
+		}
+	}
+
+	arguments := append([]string{"--pure", "-p", "--command", "'env'"}, listOfPackages...)
+	if nixpkgs != "" {
+		arguments = append(arguments, "-I", "nixpkgs="+nixpkgs)
+	}
+
+	cmd := exec.Command("nix-shell", arguments...)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+
+	err = cmd.Run()
+	if err != nil {
+		errz.Fatal(err)
+	}
+
+	var env []string
+	for _, v := range strings.Split(out.String(), "\n") {
+		env = append(env, v)
+	}
+
+	// build .nix files
+	var fileStorePaths []string
+	for _, v := range deps {
+		if !strings.HasSuffix(v.Name, ".nix") {
+			continue
+		}
+		storePath, err := buildFile(v.Name, v.Nixpkgs)
+		if err != nil {
+			return []string{}, err
+		}
+		fileStorePaths = append(fileStorePaths, storePath)
+	}
+
+	// add file store paths to existing env PATH
+	for k, e := range env {
+		pair := strings.SplitN(e, "=", 2)
+		if pair[0] == "PATH" {
+			updatedPath := "PATH=" + pair[1] + ":" + strings.Join(StorePathsBin(fileStorePaths), ":")
+			env[k] = updatedPath
+		}
+	}
+
+	return env, nil
+}

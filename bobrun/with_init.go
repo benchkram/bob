@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
@@ -231,7 +232,9 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 
 		env := rw.run.Env()
 		if len(rw.run.storePaths) > 0 {
-			env = nix.AddPATH(rw.run.storePaths, env)
+			nixShellEnv, err := nix.BuildEnvironment(rw.run.dependencies)
+			errz.Fatal(err)
+			env = envutil.Merge(nixShellEnv, env)
 		}
 		pr, pw, err := os.Pipe()
 		errz.Fatal(err)
