@@ -238,6 +238,7 @@ func BuildEnvironment(deps []Dependency) (_ []string, err error) {
 	err = cmd.Run()
 	if err != nil {
 		fmt.Println("CMD RUN FAILED")
+		fmt.Println(out.String())
 		errz.Fatal(err)
 	}
 
