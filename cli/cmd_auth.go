@@ -123,6 +123,14 @@ Example:
 			errz.Fatal(err)
 		}
 	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		contextNames, err := getAuthContextNames()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+
+		return contextNames, cobra.ShellCompDirectiveDefault
+	},
 }
 
 var AuthContextSwitchCmd = &cobra.Command{
