@@ -47,3 +47,6 @@ jobs:
 
       - name: Check flake
         run: nix build
+
+      - name: Check environment
+        run: env
