@@ -114,7 +114,7 @@ func (s *Store) DeleteContext(name string) (err error) {
 			ctxs = append(ctxs[:i], ctxs[i+1:]...)
 			if c.Current && len(ctxs) > 0 {
 				// mark the next context as current (if any left)
-				ctxs[i].Current = true
+				ctxs[len(ctxs)-1].Current = true
 			}
 
 			break
