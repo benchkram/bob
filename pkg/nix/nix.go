@@ -233,10 +233,7 @@ func BuildEnvironment(deps []Dependency) (_ []string, err error) {
 		errz.Fatal(err)
 	}
 
-	var env []string
-	for _, v := range strings.Split(out.String(), "\n") {
-		env = append(env, v)
-	}
+	env := strings.Split(out.String(), "\n")
 
 	// build .nix files
 	var fileStorePaths []string
