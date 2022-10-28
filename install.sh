@@ -313,21 +313,21 @@ To add auto-completion:
 "
 }
 
+absolute_path() {
+  cd "$(dirname "$1")"
+  case $(basename $1) in
+  ..) echo "$(dirname $(pwd))" ;;
+  .) echo "$(pwd)" ;;
+  *) echo "$(pwd)/$(basename $1)" ;;
+  esac
+}
+
 validate_os
 
 tmpdir=$(mktemp -d)
 log_debug "downloading files into ${tmpdir}"
 
 bin_dir="${BIN_DIR:-$(pwd)}"
-install_path=$(realpath -m "$bin_dir"/${name})
-
-# If bob already exists in bin dir, remove it
-if [ -f "${install_path}" ]; then
-  if ! rm "${install_path}"; then
-    echo "Kindly asking for your password in order to remove ${install_path}"
-    sudo rm "${install_path}"
-  fi
-fi
 
 # Create the bin dir if it doesn't exists
 if [ ! -d "${bin_dir}" ]; then
@@ -335,6 +335,16 @@ if [ ! -d "${bin_dir}" ]; then
   if ! mkdir "${bin_dir}"; then
     echo "Kindly asking for your password in order to install ${name} to ${install_path}"
     sudo mkdir "${bin_dir}"
+  fi
+fi
+
+install_path=$(absolute_path "$bin_dir"/${name})
+
+# If bob already exists in bin dir, remove it
+if [ -f "${install_path}" ]; then
+  if ! rm "${install_path}"; then
+    echo "Kindly asking for your password in order to remove ${install_path}"
+    sudo rm "${install_path}"
   fi
 fi
 
