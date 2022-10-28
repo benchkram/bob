@@ -280,7 +280,7 @@ func BuildEnvironment(deps []Dependency) (_ []string, err error) {
 		clearedEnv = append(clearedEnv, e)
 	}
 
-	fmt.Println("RESULTING ENV", env)
+	fmt.Println("RESULTING ENV", clearedEnv)
 
 	return clearedEnv, nil
 }
