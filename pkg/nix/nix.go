@@ -218,7 +218,7 @@ func BuildEnvironment(deps []Dependency) (_ []string, err error) {
 		}
 	}
 
-	arguments := append([]string{"--pure", "-p", "--command", "'env'"}, listOfPackages...)
+	arguments := append([]string{"-p", "--command", "'env'"}, listOfPackages...)
 	if nixpkgs != "" {
 		arguments = append(arguments, "-I", "nixpkgs="+nixpkgs)
 	}
@@ -231,7 +231,7 @@ func BuildEnvironment(deps []Dependency) (_ []string, err error) {
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
-
+	fmt.Println("CMD", cmd.String())
 	err = cmd.Run()
 	if err != nil {
 		errz.Fatal(err)
