@@ -177,9 +177,6 @@ func getAuthContextNames() ([]string, error) {
 
 	var names []string
 	for _, v := range authContexts {
-		if v.Current {
-			continue
-		}
 		names = append(names, v.Name)
 	}
 	return names, nil
