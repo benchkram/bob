@@ -42,11 +42,11 @@ jobs:
       - name: Set Git author name and email address
         run: git config --global user.name "builder" && git config --global user.email "builder@bob.build"
 
+      - name: Check env
+        run: bob build checkEnv
+
       - name: Run tests
         run: bob build test
 
       - name: Check flake
         run: nix build
-
-      - name: Check environment
-        run: env

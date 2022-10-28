@@ -24,6 +24,9 @@ build:
       protoc --go_out=. buildinfo.proto
     target: bobtask/buildinfo/protos
 
+  checkEnv:
+    cmd: env
+
 dependencies:
   - nix
   - git
