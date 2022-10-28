@@ -46,11 +46,18 @@ Example:
 		}
 
 		if token == "" {
-			boblog.Log.UserError(fmt.Errorf("token missing "))
+			boblog.Log.UserError(fmt.Errorf("token missing"))
 			return
 		}
 
 		err = runAuthContextCreate(name, token)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+		} else {
+			errz.Fatal(err)
+		}
+
+		err = runAuthContextSwitch(name)
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
 		} else {
