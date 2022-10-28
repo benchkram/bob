@@ -211,7 +211,7 @@ func initializeDependencies(dir string, taskDependencies []string, bobfile *Bobf
 
 	taskDeps = append(taskDeps, nix.DefaultPackages(bobfile.Nixpkgs)...)
 
-	return append(nix.UniqueDeps(taskDeps))
+	return nix.UniqueDeps(taskDeps)
 }
 
 func NewRemotestore(endpoint *url.URL, allowInsecure bool, token string) (s store.Store) {
