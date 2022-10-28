@@ -230,6 +230,7 @@ func BuildEnvironment(deps []Dependency) (_ []string, err error) {
 
 	var out bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &out
 
 	err = cmd.Run()
 	if err != nil {
