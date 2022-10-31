@@ -1,7 +1,6 @@
 package hermeticmodetest
 
 import (
-	"bufio"
 	"context"
 	"io/ioutil"
 	"os"
@@ -115,7 +114,7 @@ func TestRun(t *testing.T) {
 	RunSpecs(t, "hermetic mode suite")
 }
 
-// useBobfile sets the right bobfile to be used for test
+/*// useBobfile sets the right bobfile to be used for test
 func useBobfile(name string) {
 	err := os.Rename(name+".yaml", "bob.yaml")
 	Expect(err).NotTo(HaveOccurred())
@@ -172,4 +171,4 @@ func keyHasValue(key, expectedValue string, env []string) bool {
 		}
 	}
 	return false
-}
+}*/
