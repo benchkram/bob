@@ -10,9 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/sliceutil"
 	"gopkg.in/yaml.v2"
 
 	"github.com/benchkram/bob/bobtask/hash"
@@ -67,7 +65,7 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	}
 
 	// Hash the environment
-	env := filterOutWhitelistEnv(t.env)
+	env := t.env
 	sort.Strings(env)
 	environment := strings.Join(env, ",")
 	err = h.AddBytes(bytes.NewBufferString(environment))
@@ -95,16 +93,4 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	boblog.Log.V(4).Info(fmt.Sprintf("Computed hash [h: %s] for task [t: %s], using [inputs:%d] input files ", t.hashIn.String(), t.Name(), len(t.inputs)))
 
 	return hashIn, nil
-}
-
-func filterOutWhitelistEnv(env []string) []string {
-	var result []string
-	for _, v := range env {
-		pair := strings.SplitN(v, "=", 2)
-		if sliceutil.Contains(global.EnvWhitelist, pair[0]) {
-			continue
-		}
-		result = append(result, v)
-	}
-	return result
 }
