@@ -66,6 +66,14 @@ func (t *Task) StorePaths() []string {
 	return t.storePaths
 }
 
+func (t *Task) SetNixpkgs(nixpkgs string) {
+	t.nixpkgs = nixpkgs
+}
+
+func (t *Task) Nixpkgs() string {
+	return t.nixpkgs
+}
+
 // Project returns the projectname. In case of a non existing projectname the
 // tasks local directory is returned.
 func (t *Task) Project() string {

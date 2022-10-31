@@ -23,11 +23,10 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
 	env := t.Env()
-	if len(t.storePaths) > 0 {
-		nixShellEnv, err := nix.BuildEnvironment(t.dependencies)
-		errz.Fatal(err)
-		env = envutil.Merge(nixShellEnv, env)
-	}
+
+	nixShellEnv, err := nix.BuildEnvironment(t.dependencies, t.nixpkgs)
+	errz.Fatal(err)
+	env = envutil.Merge(nixShellEnv, env)
 
 	for _, run := range t.cmds {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")

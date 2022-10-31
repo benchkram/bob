@@ -71,7 +71,7 @@ func runEnv(taskname string) {
 	}
 	task = bobfile.BTasks[taskname]
 
-	taskEnv, err := nix.BuildEnvironment(task.Dependencies())
+	taskEnv, err := nix.BuildEnvironment(task.Dependencies(), task.Nixpkgs())
 	errz.Fatal(err)
 
 	for _, e := range taskEnv {

@@ -231,11 +231,11 @@ func (rw *WithInit) shexec(ctx context.Context, cmds []string) (err error) {
 		errz.Fatal(err)
 
 		env := rw.run.Env()
-		if len(rw.run.storePaths) > 0 {
-			nixShellEnv, err := nix.BuildEnvironment(rw.run.dependencies)
-			errz.Fatal(err)
-			env = envutil.Merge(nixShellEnv, env)
-		}
+		// if len(rw.run.storePaths) > 0 {
+		nixShellEnv, err := nix.BuildEnvironment(rw.run.dependencies, rw.run.nixpkgs)
+		errz.Fatal(err)
+		env = envutil.Merge(nixShellEnv, env)
+		// }
 		pr, pw, err := os.Pipe()
 		errz.Fatal(err)
 

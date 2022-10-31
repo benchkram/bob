@@ -49,6 +49,8 @@ type Run struct {
 	// in the order which they need to be added to PATH
 	storePaths []string
 
+	nixpkgs string
+
 	dir string
 
 	// env holds key=value pairs passed to the environment
@@ -64,6 +66,10 @@ func (r *Run) Name() string {
 
 func (r *Run) SetEnv(env []string) {
 	r.env = env
+}
+
+func (r *Run) SetNixpkgs(nixpkgs string) {
+	r.nixpkgs = nixpkgs
 }
 
 func (r *Run) Env() []string {

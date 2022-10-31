@@ -70,7 +70,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 	nixDependencies = append(nixDependencies, runTasksDependencies...)
 
 	depStorePathMapping, err := nix.BuildDependencies(
-		nix.UniqueDeps(append(nix.DefaultPackages(ag.Nixpkgs), nixDependencies...)),
+		nix.UniqueDeps(nixDependencies),
 		n.cache,
 	)
 	errz.Fatal(err)
@@ -81,7 +81,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		t := ag.BTasks[name]
 
 		// construct used dependencies for this task
-		deps := nix.DefaultPackages(ag.Nixpkgs)
+		var deps []nix.Dependency
 		deps = append(deps, t.Dependencies()...)
 		deps = nix.UniqueDeps(deps)
 
@@ -89,6 +89,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		errz.Fatal(err)
 
 		t.SetStorePaths(storePaths)
+		t.SetNixpkgs(ag.Nixpkgs)
 		ag.BTasks[name] = t
 	}
 
@@ -96,7 +97,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		t := ag.RTasks[name]
 
 		// construct used dependencies for this task
-		deps := nix.DefaultPackages(ag.Nixpkgs)
+		var deps []nix.Dependency
 		deps = append(deps, t.Dependencies()...)
 		deps = nix.UniqueDeps(deps)
 
@@ -104,6 +105,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		errz.Fatal(err)
 
 		t.SetStorePaths(storePaths)
+		t.SetNixpkgs(ag.Nixpkgs)
 
 		ag.RTasks[name] = t
 	}

@@ -202,20 +202,18 @@ func source(nixpkgs string) string {
 //
 // nix-shell --pure -p package1 package2 --command 'env' -I nixpkgs=tarballURL
 //
+// nix shell can be started with empty list of packages so this method works with empty deps as well
+//
 // The -I nixpkgs=tarballURL is added only if deps have Nixpkgs URL set
-func BuildEnvironment(deps []Dependency) (_ []string, err error) {
+func BuildEnvironment(deps []Dependency, nixpkgs string) (_ []string, err error) {
 	defer errz.Recover(&err)
 
 	var listOfPackages []string
-	var nixpkgs string
 	for _, v := range deps {
 		if strings.HasSuffix(v.Name, ".nix") {
 			continue
 		}
 		listOfPackages = append(listOfPackages, v.Name)
-		if v.Nixpkgs != "" {
-			nixpkgs = v.Nixpkgs
-		}
 	}
 
 	arguments := append([]string{"-p"}, listOfPackages...)
