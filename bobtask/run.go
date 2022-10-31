@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/envutil"
-	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
@@ -21,12 +19,6 @@ import (
 
 func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
-
-	env := t.Env()
-
-	nixShellEnv, err := nix.BuildEnvironment(t.dependencies, t.nixpkgs)
-	errz.Fatal(err)
-	env = envutil.Merge(nixShellEnv, env)
 
 	for _, run := range t.cmds {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
@@ -60,7 +52,7 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		r, err := interp.New(
 			interp.Params("-e"),
 			interp.Dir(t.dir),
-			interp.Env(expand.ListEnviron(env...)),
+			interp.Env(expand.ListEnviron(t.Env()...)),
 			interp.StdIO(os.Stdin, pw, pw),
 		)
 

@@ -3,6 +3,7 @@ package bob
 import (
 	"fmt"
 
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
@@ -90,6 +91,11 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 
 		t.SetStorePaths(storePaths)
 		t.SetNixpkgs(ag.Nixpkgs)
+
+		nixShellEnv, err := nix.BuildEnvironment(deps, ag.Nixpkgs)
+		errz.Fatal(err)
+		t.SetEnv(envutil.Merge(nixShellEnv, t.Env()))
+
 		ag.BTasks[name] = t
 	}
 
@@ -106,6 +112,10 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 
 		t.SetStorePaths(storePaths)
 		t.SetNixpkgs(ag.Nixpkgs)
+
+		nixShellEnv, err := nix.BuildEnvironment(deps, ag.Nixpkgs)
+		errz.Fatal(err)
+		t.SetEnv(envutil.Merge(nixShellEnv, t.Env()))
 
 		ag.RTasks[name] = t
 	}
