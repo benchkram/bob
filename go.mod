@@ -28,7 +28,7 @@ require (
 	github.com/schollz/progressbar/v3 v3.11.0
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.13.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/whilp/git-urls v1.0.0
 	github.com/xlab/treeprint v1.1.0
 	github.com/yargevad/filepathx v1.0.0
