@@ -63,13 +63,6 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
-	nixDependencies, err := ag.BTasks.CollectNixDependenciesForTasks(buildTasksInPipeline)
-	errz.Fatal(err)
-
-	runTasksDependencies, err := ag.RTasks.CollectNixDependenciesForTasks(runTasksInPipeline)
-	errz.Fatal(err)
-	nixDependencies = append(nixDependencies, runTasksDependencies...)
-
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
 	for _, name := range buildTasksInPipeline {
