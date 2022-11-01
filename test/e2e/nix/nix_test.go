@@ -12,12 +12,6 @@ import (
 	"github.com/benchkram/bob/pkg/nix"
 )
 
-var nixCacheContent = `5710bc1834e1cda5:/nix/store/sh0x9kihzkdz15x18ldg989pf29m4nm7-go-1.17.9
-2ad93148f49750ec:/nix/store/6jpdfshhyqic7a85j02scrbwcxh2lfic-git-2.35.3
-2954a404deb42501:/nix/store/crzgdqkbiaz30z709j8xbal7ylm29j42-go-1.18.1
-e33686c0c937b507:/nix/store/h59dfk7dwrn7d2csykh9z9xm2miqmrnz-hello-2.12
-`
-
 var _ = Describe("Testing new nix implementation", func() {
 	AfterEach(func() {
 		filepathutil.ClearListRecursiveCache()
@@ -45,11 +39,6 @@ var _ = Describe("Testing new nix implementation", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(output()).To(ContainSubstring("go version go1.17.9"))
-
-			// build paths are cached in the custom file
-			data, err := os.ReadFile(nixCacheFilePath)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(data)).To(Equal(nixCacheContent))
 		})
 	})
 

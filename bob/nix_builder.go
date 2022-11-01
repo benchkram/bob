@@ -70,12 +70,6 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 	errz.Fatal(err)
 	nixDependencies = append(nixDependencies, runTasksDependencies...)
 
-	depStorePathMapping, err := nix.BuildDependencies(
-		nix.UniqueDeps(nixDependencies),
-		n.cache,
-	)
-	errz.Fatal(err)
-
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
 	for _, name := range buildTasksInPipeline {
@@ -86,10 +80,6 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		deps = append(deps, t.Dependencies()...)
 		deps = nix.UniqueDeps(deps)
 
-		storePaths, err := nix.DependenciesToStorePaths(deps, depStorePathMapping)
-		errz.Fatal(err)
-
-		t.SetStorePaths(storePaths)
 		t.SetNixpkgs(ag.Nixpkgs)
 
 		nixShellEnv, err := nix.BuildEnvironment(deps, ag.Nixpkgs)
@@ -107,10 +97,6 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		deps = append(deps, t.Dependencies()...)
 		deps = nix.UniqueDeps(deps)
 
-		storePaths, err := nix.DependenciesToStorePaths(deps, depStorePathMapping)
-		errz.Fatal(err)
-
-		t.SetStorePaths(storePaths)
 		t.SetNixpkgs(ag.Nixpkgs)
 
 		nixShellEnv, err := nix.BuildEnvironment(deps, ag.Nixpkgs)

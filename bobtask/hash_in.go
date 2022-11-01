@@ -74,12 +74,6 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
 	}
 
-	// Hash store paths
-	err = h.AddBytes(bytes.NewBufferString(strings.Join(t.storePaths, "")))
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to write store paths hash: %w", err)
-	}
-
 	// Hash system env
 	err = h.AddBytes(bytes.NewBufferString(strings.Join([]string{runtime.GOOS, runtime.GOARCH}, "-")))
 	if err != nil {

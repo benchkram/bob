@@ -58,14 +58,6 @@ func (t *Task) SetDependencies(dependencies []nix.Dependency) {
 	t.dependencies = dependencies
 }
 
-func (t *Task) SetStorePaths(storePaths []string) {
-	t.storePaths = storePaths
-}
-
-func (t *Task) StorePaths() []string {
-	return t.storePaths
-}
-
 func (t *Task) SetNixpkgs(nixpkgs string) {
 	t.nixpkgs = nixpkgs
 }

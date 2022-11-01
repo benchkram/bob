@@ -45,10 +45,6 @@ type Run struct {
 	// in the order which they need to be added to PATH
 	dependencies []nix.Dependency
 
-	// storePaths contain /nix/store/* paths
-	// in the order which they need to be added to PATH
-	storePaths []string
-
 	nixpkgs string
 
 	dir string
@@ -93,10 +89,6 @@ func (r *Run) Dependencies() []nix.Dependency {
 }
 func (r *Run) SetDependencies(dependencies []nix.Dependency) {
 	r.dependencies = dependencies
-}
-
-func (r *Run) SetStorePaths(storePaths []string) {
-	r.storePaths = storePaths
 }
 
 func (r *Run) UnmarshalYAML(value *yaml.Node) (err error) {
@@ -148,7 +140,6 @@ func (r *Run) Command(ctx context.Context) (rc ctl.Command, err error) {
 			r.name,
 			r.Path,
 			execctl.WithEnv(r.Env()),
-			execctl.WithStorePaths(r.storePaths),
 		)
 		errz.Fatal(err)
 	case RunTypeCompose:
