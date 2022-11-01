@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
 	"sort"
 	"strings"
 
@@ -72,12 +71,6 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	err = h.AddBytes(bytes.NewBufferString(environment))
 	if err != nil {
 		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
-	}
-
-	// Hash system env
-	err = h.AddBytes(bytes.NewBufferString(strings.Join([]string{runtime.GOOS, runtime.GOARCH}, "-")))
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to write system env hash: %w", err)
 	}
 
 	hashIn := hash.In(hex.EncodeToString(h.Sum()))
