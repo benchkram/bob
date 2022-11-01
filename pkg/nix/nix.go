@@ -61,7 +61,7 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 
 	for _, v := range unsatisfiedDeps {
 		if strings.HasSuffix(v.Name, ".nix") {
-			storePath, err := buildFile(v.Name, v.Nixpkgs)
+			storePath, err := buildFile(v.Name, v.Nixpkgs, true)
 			if err != nil {
 				return DependenciesToStorePathMap{}, err
 			}
@@ -110,12 +110,16 @@ func buildPackage(pkgName string, nixpkgs string) (string, error) {
 
 // buildFile builds a .nix expression file
 // `nix-build --no-out-link -E 'with import <nixpkgs> { }; callPackage filepath.nix {}'`
-func buildFile(filePath string, nixpkgs string) (string, error) {
+func buildFile(filePath string, nixpkgs string, displayToStdOut bool) (string, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
 	var stdoutBuf bytes.Buffer
-	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
+	if displayToStdOut {
+		cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
+	} else {
+		cmd.Stdout = &stdoutBuf
+	}
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
@@ -241,7 +245,7 @@ func BuildEnvironment(deps []Dependency, nixpkgs string) (_ []string, err error)
 		if !strings.HasSuffix(v.Name, ".nix") {
 			continue
 		}
-		storePath, err := buildFile(v.Name, v.Nixpkgs)
+		storePath, err := buildFile(v.Name, v.Nixpkgs, false)
 		if err != nil {
 			return []string{}, err
 		}
