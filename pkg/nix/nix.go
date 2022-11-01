@@ -166,23 +166,6 @@ func DownloadURl() string {
 	return url
 }
 
-// DependenciesToStorePaths resolves a dependency array to their
-// associated nix storePath. The order of the output is guaranteed
-// to match the order of the input.
-func DependenciesToStorePaths(dependencies []Dependency, m DependenciesToStorePathMap) ([]string, error) {
-	storePaths := make([]string, len(dependencies))
-
-	for i, d := range dependencies {
-		storePath, ok := m[d]
-		if !ok {
-			return nil, fmt.Errorf("could not resolve store path for [%s]", d)
-		}
-		storePaths[i] = string(storePath)
-	}
-
-	return storePaths, nil
-}
-
 // AddDir add the dir path to .nix files specified in dependencies
 func AddDir(dir string, dependencies []string) []string {
 	for k, v := range dependencies {
@@ -204,28 +187,18 @@ func source(nixpkgs string) string {
 
 // BuildEnvironment is running nix-shell for a list of dependencies and fetch its whole environment
 //
-// nix-shell --pure -p package1 package2 --command 'env' -I nixpkgs=tarballURL
+// nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' -E nixExpressionFromDeps
 //
 // nix shell can be started with empty list of packages so this method works with empty deps as well
-//
-// The -I nixpkgs=tarballURL is added only if deps have Nixpkgs URL set
 func BuildEnvironment(deps []Dependency, nixpkgs string) (_ []string, err error) {
 	defer errz.Recover(&err)
 
-	var listOfPackages []string
-	for _, v := range deps {
-		if strings.HasSuffix(v.Name, ".nix") {
-			continue
-		}
-		listOfPackages = append(listOfPackages, v.Name)
-	}
+	expression := nixExpression(deps, nixpkgs)
 
-	arguments := append([]string{"-p"}, listOfPackages...)
+	var arguments []string
 	arguments = append(arguments, []string{"--keep", "NIX_SSL_CERT_FILE", "--keep", "SSL_CERT_FILE"}...)
-	arguments = append(arguments, []string{"--command", "'env'"}...)
-	if nixpkgs != "" {
-		arguments = append(arguments, "-I", "nixpkgs="+nixpkgs)
-	}
+	arguments = append(arguments, []string{"--command", "env"}...)
+	arguments = append(arguments, []string{"-E", fmt.Sprintf("%s", expression)}...)
 
 	cmd := exec.Command("nix-shell", "--pure")
 	cmd.Args = append(cmd.Args, arguments...)
@@ -238,28 +211,6 @@ func BuildEnvironment(deps []Dependency, nixpkgs string) (_ []string, err error)
 	}
 
 	env := strings.Split(out.String(), "\n")
-
-	// build .nix files
-	var fileStorePaths []string
-	for _, v := range deps {
-		if !strings.HasSuffix(v.Name, ".nix") {
-			continue
-		}
-		storePath, err := buildFile(v.Name, v.Nixpkgs, false)
-		if err != nil {
-			return []string{}, err
-		}
-		fileStorePaths = append(fileStorePaths, storePath)
-	}
-
-	// add file store paths to existing env PATH
-	for k, e := range env {
-		pair := strings.SplitN(e, "=", 2)
-		if pair[0] == "PATH" {
-			updatedPath := "PATH=" + pair[1] + ":" + strings.Join(StorePathsBin(fileStorePaths), ":")
-			env[k] = updatedPath
-		}
-	}
 
 	// if NIX_SSL_CERT_FILE && SSL_CERT_FILE are set to /no-cert-file.crt unset them
 	var clearedEnv []string
@@ -275,4 +226,35 @@ func BuildEnvironment(deps []Dependency, nixpkgs string) (_ []string, err error)
 	}
 
 	return clearedEnv, nil
+}
+
+// nixExpression computes the Nix expression which is passed to nix-shell via -E flag
+// Example of a Nix expression containing go_1_18 and a custom oapicodegen_v1.6.0.nix file:
+// { pkgs ? import <nixpkgs> {} }:
+//
+//	pkgs.mkShell {
+//	 buildInputs = [
+//	    pkgs.go_1_18
+//	    (pkgs.callPackage ./oapicodegen_v1.6.0.nix { } )
+//	 ];
+//	}
+func nixExpression(deps []Dependency, nixpkgs string) string {
+	var buildInputs []string
+	for _, v := range deps {
+		if strings.HasSuffix(v.Name, ".nix") {
+			buildInputs = append(buildInputs, fmt.Sprintf("(pkgs.callPackage %s{ } )", v.Name))
+		} else {
+			buildInputs = append(buildInputs, "pkgs."+v.Name)
+		}
+	}
+
+	exp := `
+{ pkgs ? import %s {} }:
+pkgs.mkShell {
+  buildInputs = [
+	 %s
+  ];
+}
+`
+	return fmt.Sprintf(exp, source(nixpkgs), strings.Join(buildInputs, "\n"))
 }
