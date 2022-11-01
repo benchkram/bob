@@ -198,7 +198,7 @@ func BuildEnvironment(deps []Dependency, nixpkgs string) (_ []string, err error)
 	var arguments []string
 	arguments = append(arguments, []string{"--keep", "NIX_SSL_CERT_FILE", "--keep", "SSL_CERT_FILE"}...)
 	arguments = append(arguments, []string{"--command", "env"}...)
-	arguments = append(arguments, []string{"-E", fmt.Sprintf("%s", expression)}...)
+	arguments = append(arguments, []string{"-E", expression}...)
 
 	cmd := exec.Command("nix-shell", "--pure")
 	cmd.Args = append(cmd.Args, arguments...)
