@@ -22,8 +22,9 @@ import (
 func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
+	// todo fix this. empty cache
 	if len(t.Env()) == 0 {
-		nixShellEnv, err := nix.BuildEnvironment(t.dependencies, t.nixpkgs)
+		nixShellEnv, err := nix.BuildEnvironment(t.dependencies, t.nixpkgs, nil)
 		errz.Fatal(err)
 		t.SetEnv(envutil.Merge(nixShellEnv, t.env))
 	}

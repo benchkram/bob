@@ -50,6 +50,8 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 				continue
 			}
 			unsatisfiedDeps = append(unsatisfiedDeps, v)
+		} else {
+			unsatisfiedDeps = append(unsatisfiedDeps, v)
 		}
 	}
 
@@ -172,8 +174,12 @@ func source(nixpkgs string) string {
 // nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' -E nixExpressionFromDeps
 //
 // nix shell can be started with empty list of packages so this method works with empty deps as well
-func BuildEnvironment(deps []Dependency, nixpkgs string) (_ []string, err error) {
+func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache) (_ []string, err error) {
 	defer errz.Recover(&err)
+
+	// building dependencies with nix-build to display store paths to output
+	_, err = BuildDependencies(deps, cache)
+	errz.Fatal(err)
 
 	expression := nixExpression(deps, nixpkgs)
 
@@ -188,9 +194,7 @@ func BuildEnvironment(deps []Dependency, nixpkgs string) (_ []string, err error)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err = cmd.Run()
-	if err != nil {
-		errz.Fatal(err)
-	}
+	errz.Fatal(err)
 
 	env := strings.Split(out.String(), "\n")
 

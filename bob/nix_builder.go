@@ -75,7 +75,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 
 		t.SetNixpkgs(ag.Nixpkgs)
 
-		nixShellEnv, err := nix.BuildEnvironment(deps, ag.Nixpkgs)
+		nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
 		errz.Fatal(err)
 		t.SetEnv(envutil.Merge(nixShellEnv, t.Env()))
 
@@ -92,7 +92,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 
 		t.SetNixpkgs(ag.Nixpkgs)
 
-		nixShellEnv, err := nix.BuildEnvironment(deps, ag.Nixpkgs)
+		nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
 		errz.Fatal(err)
 		t.SetEnv(envutil.Merge(nixShellEnv, t.Env()))
 
@@ -105,4 +105,9 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 // BuildDependencies builds the list of all nix deps
 func (n *NixBuilder) BuildDependencies(deps []nix.Dependency) (nix.DependenciesToStorePathMap, error) {
 	return nix.BuildDependencies(deps, n.cache)
+}
+
+// BuildEnvironment builds the environment with all nix deps
+func (n *NixBuilder) BuildEnvironment(deps []nix.Dependency, nixpkgs string) (_ []string, err error) {
+	return nix.BuildEnvironment(deps, nixpkgs, n.cache)
 }

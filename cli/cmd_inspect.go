@@ -8,7 +8,6 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
@@ -71,7 +70,7 @@ func runEnv(taskname string) {
 	}
 	task = bobfile.BTasks[taskname]
 
-	taskEnv, err := nix.BuildEnvironment(task.Dependencies(), task.Nixpkgs())
+	taskEnv, err := b.Nix().BuildEnvironment(task.Dependencies(), task.Nixpkgs())
 	errz.Fatal(err)
 
 	for _, e := range taskEnv {

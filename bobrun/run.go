@@ -45,6 +45,7 @@ type Run struct {
 	// in the order which they need to be added to PATH
 	dependencies []nix.Dependency
 
+	// URL of nixpkgs used. If empty, will use local <nixpkgs> channel
 	nixpkgs string
 
 	dir string

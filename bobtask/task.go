@@ -92,7 +92,7 @@ type Task struct {
 	// in the order which they need to be added to PATH
 	dependencies []nix.Dependency
 
-	// todo
+	// URL of nixpkgs used. If empty, will use local <nixpkgs> channel
 	nixpkgs string
 }
 
