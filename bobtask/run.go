@@ -19,12 +19,11 @@ import (
 	"github.com/benchkram/errz"
 )
 
-func (t *Task) Run(ctx context.Context, namePad int) (err error) {
+func (t *Task) Run(ctx context.Context, namePad int, nixCache *nix.Cache) (err error) {
 	defer errz.Recover(&err)
 
-	// todo fix this. empty cache
 	if len(t.Env()) == 0 {
-		nixShellEnv, err := nix.BuildEnvironment(t.dependencies, t.nixpkgs, nil)
+		nixShellEnv, err := nix.BuildEnvironment(t.dependencies, t.nixpkgs, nixCache)
 		errz.Fatal(err)
 		t.SetEnv(envutil.Merge(nixShellEnv, t.env))
 	}
