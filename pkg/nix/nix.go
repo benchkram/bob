@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -61,7 +60,7 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 
 	for _, v := range unsatisfiedDeps {
 		if strings.HasSuffix(v.Name, ".nix") {
-			storePath, err := buildFile(v.Name, v.Nixpkgs, true)
+			storePath, err := buildFile(v.Name, v.Nixpkgs)
 			if err != nil {
 				return DependenciesToStorePathMap{}, err
 			}
@@ -110,16 +109,13 @@ func buildPackage(pkgName string, nixpkgs string) (string, error) {
 
 // buildFile builds a .nix expression file
 // `nix-build --no-out-link -E 'with import <nixpkgs> { }; callPackage filepath.nix {}'`
-func buildFile(filePath string, nixpkgs string, displayToStdOut bool) (string, error) {
+func buildFile(filePath string, nixpkgs string) (string, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
 	var stdoutBuf bytes.Buffer
-	if displayToStdOut {
-		cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
-	} else {
-		cmd.Stdout = &stdoutBuf
-	}
+
+	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
@@ -134,20 +130,6 @@ func buildFile(filePath string, nixpkgs string, displayToStdOut bool) (string, e
 	}
 
 	return "", nil
-}
-
-// StorePathsBin adds the /bin dir to each of storePaths
-func StorePathsBin(storePaths []string) []string {
-	out := make([]string, len(storePaths))
-	for i, sp := range storePaths {
-		out[i] = storePathBin(sp)
-	}
-	return out
-}
-
-// storePathBin adds the /bin dir to storePath
-func storePathBin(storePath string) string {
-	return filepath.Join(storePath, "/bin")
 }
 
 // DownloadURl give nix download URL based on OS
