@@ -55,7 +55,7 @@ func push(ctx context.Context, local store.Store, remote store.Store, a hash.In,
 		boblog.Log.V(5).Info(fmt.Sprintf("artifact already exists on the remote [artifactId: %s]. skipping...", a.String()))
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("  %-*s\tfailed to push [artifactId: %s]", namePad, taskName, a.String())
+		return fmt.Errorf("  %-*s\tfailed push [artifactId: %s]: %w", namePad, taskName, a.String(), err)
 	}
 
 	// wait for the remote store to finish uploading this artifact. can be moved outside the for loop, but then
