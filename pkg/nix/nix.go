@@ -197,3 +197,80 @@ func source(nixpkgs string) string {
 	}
 	return "<nixpkgs>"
 }
+
+// BuildEnvironment is running nix-shell for a list of dependencies and fetch its whole environment
+//
+// nix-shell --pure -p package1 package2 --command 'env' -I nixpkgs=tarballURL
+//
+// The -I nixpkgs=tarballURL is added only if deps have Nixpkgs URL set
+func BuildEnvironment(deps []Dependency) (_ []string, err error) {
+	defer errz.Recover(&err)
+
+	var listOfPackages []string
+	var nixpkgs string
+	for _, v := range deps {
+		if strings.HasSuffix(v.Name, ".nix") {
+			continue
+		}
+		listOfPackages = append(listOfPackages, v.Name)
+		if v.Nixpkgs != "" {
+			nixpkgs = v.Nixpkgs
+		}
+	}
+
+	arguments := append([]string{"-p"}, listOfPackages...)
+	arguments = append(arguments, []string{"--keep", "NIX_SSL_CERT_FILE", "--keep", "SSL_CERT_FILE"}...)
+	arguments = append(arguments, []string{"--command", "'env'"}...)
+	if nixpkgs != "" {
+		arguments = append(arguments, "-I", "nixpkgs="+nixpkgs)
+	}
+
+	cmd := exec.Command("nix-shell", "--pure")
+	cmd.Args = append(cmd.Args, arguments...)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err = cmd.Run()
+	if err != nil {
+		errz.Fatal(err)
+	}
+
+	env := strings.Split(out.String(), "\n")
+
+	// build .nix files
+	var fileStorePaths []string
+	for _, v := range deps {
+		if !strings.HasSuffix(v.Name, ".nix") {
+			continue
+		}
+		storePath, err := buildFile(v.Name, v.Nixpkgs)
+		if err != nil {
+			return []string{}, err
+		}
+		fileStorePaths = append(fileStorePaths, storePath)
+	}
+
+	// add file store paths to existing env PATH
+	for k, e := range env {
+		pair := strings.SplitN(e, "=", 2)
+		if pair[0] == "PATH" {
+			updatedPath := "PATH=" + pair[1] + ":" + strings.Join(StorePathsBin(fileStorePaths), ":")
+			env[k] = updatedPath
+		}
+	}
+
+	// if NIX_SSL_CERT_FILE && SSL_CERT_FILE are set to /no-cert-file.crt unset them
+	var clearedEnv []string
+	for _, e := range env {
+		pair := strings.SplitN(e, "=", 2)
+		if pair[0] == "NIX_SSL_CERT_FILE" && pair[1] == "/no-cert-file.crt" {
+			continue
+		}
+		if pair[0] == "SSL_CERT_FILE" && pair[1] == "/no-cert-file.crt" {
+			continue
+		}
+		clearedEnv = append(clearedEnv, e)
+	}
+
+	return clearedEnv, nil
+}
