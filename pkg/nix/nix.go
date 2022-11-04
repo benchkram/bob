@@ -2,13 +2,13 @@ package nix
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"io"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
 
@@ -56,8 +56,7 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 	}
 
 	if len(unsatisfiedDeps) > 0 {
-		fmt.Println("Building nix dependencies...")
-		defer fmt.Println("Succeeded building nix dependencies")
+		fmt.Println("Building nix dependencies. This may take a while...")
 	}
 
 	for _, v := range unsatisfiedDeps {
@@ -75,6 +74,8 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 			pkgToStorePath[v] = StorePath(storePath)
 		}
 
+		fmt.Println(pkgToStorePath[v])
+
 		if cache != nil {
 			key, err := GenerateKey(v)
 			errz.Fatal(err)
@@ -83,6 +84,10 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 			errz.Fatal(err)
 		}
 	}
+	if len(unsatisfiedDeps) > 0 {
+		fmt.Println("Succeeded building nix dependencies")
+	}
+
 	return pkgToStorePath, nil
 }
 
@@ -91,13 +96,14 @@ func buildPackage(pkgName string, nixpkgs string) (string, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
+	fmt.Printf("%s: ", pkgName)
+
 	var stdoutBuf bytes.Buffer
-	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = &stdoutBuf
 
 	err := cmd.Run()
 	if err != nil {
-		return "", err
+		return "", usererror.Wrap(errors.New("could not build package"))
 	}
 
 	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
@@ -115,14 +121,14 @@ func buildFile(filePath string, nixpkgs string) (string, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
-	var stdoutBuf bytes.Buffer
+	fmt.Printf("%s: ", filePath)
 
+	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
 	if err != nil {
-		return "", err
+		return "", usererror.Wrap(fmt.Errorf("could not build file `%s`", filePath))
 	}
 
 	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
