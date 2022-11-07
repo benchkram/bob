@@ -112,6 +112,7 @@ func buildPackage(pkgName string, nixpkgs, padding string) (buildResult, error) 
 	done := make(chan bool)
 
 	start := time.Now()
+	fmt.Print(".")
 
 	go func() {
 		for {
@@ -158,6 +159,7 @@ func buildFile(filePath string, nixpkgs, padding string) (buildResult, error) {
 	ticker := time.NewTicker(5 * time.Second)
 	done := make(chan bool)
 	start := time.Now()
+	fmt.Print(".")
 
 	go func() {
 		for {
