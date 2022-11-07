@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
@@ -60,21 +61,24 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 	}
 
 	for _, v := range unsatisfiedDeps {
+		var br buildResult
+
 		if strings.HasSuffix(v.Name, ".nix") {
-			storePath, err := buildFile(v.Name, v.Nixpkgs)
+			br, err = buildFile(v.Name, v.Nixpkgs)
 			if err != nil {
 				return DependenciesToStorePathMap{}, err
 			}
-			pkgToStorePath[v] = StorePath(storePath)
+			pkgToStorePath[v] = StorePath(br.storePath)
 		} else {
-			storePath, err := buildPackage(v.Name, v.Nixpkgs)
+			br, err = buildPackage(v.Name, v.Nixpkgs)
 			if err != nil {
 				return DependenciesToStorePathMap{}, err
 			}
-			pkgToStorePath[v] = StorePath(storePath)
+			pkgToStorePath[v] = StorePath(br.storePath)
 		}
 
-		fmt.Println(pkgToStorePath[v])
+		fmt.Println()
+		fmt.Printf("%s: %s took %s\n", v.Name, pkgToStorePath[v], displayDuration(br.duration))
 
 		if cache != nil {
 			key, err := GenerateKey(v)
@@ -91,53 +95,101 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 	return pkgToStorePath, nil
 }
 
+type buildResult struct {
+	storePath string
+	duration  time.Duration
+}
+
 // buildPackage builds a nix package: nix-build --no-out-link -E 'with import <nixpkgs> { }; pkg' and returns the store path
-func buildPackage(pkgName string, nixpkgs string) (string, error) {
+func buildPackage(pkgName string, nixpkgs string) (buildResult, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
 	fmt.Printf("%s: ", pkgName)
+	ticker := time.NewTicker(1 * time.Second)
+	done := make(chan bool)
+
+	start := time.Now()
+
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				fmt.Print(".")
+			}
+		}
+	}()
 
 	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
 
 	err := cmd.Run()
 	if err != nil {
-		return "", usererror.Wrap(errors.New("could not build package"))
+		ticker.Stop()
+		done <- true
+		return buildResult{}, usererror.Wrap(errors.New("could not build package"))
 	}
 
 	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
 		if strings.HasPrefix(v, "/nix/store/") {
-			return v, nil
+			ticker.Stop()
+			done <- true
+			return buildResult{
+				storePath: v,
+				duration:  time.Since(start),
+			}, nil
 		}
 	}
 
-	return "", nil
+	return buildResult{}, nil
 }
 
 // buildFile builds a .nix expression file
 // `nix-build --no-out-link -E 'with import <nixpkgs> { }; callPackage filepath.nix {}'`
-func buildFile(filePath string, nixpkgs string) (string, error) {
+func buildFile(filePath string, nixpkgs string) (buildResult, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
 	fmt.Printf("%s: ", filePath)
+	ticker := time.NewTicker(1 * time.Second)
+	done := make(chan bool)
+	start := time.Now()
+
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				fmt.Print(".")
+			}
+		}
+	}()
 
 	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
 
 	err := cmd.Run()
 	if err != nil {
-		return "", usererror.Wrap(fmt.Errorf("could not build file `%s`", filePath))
+		ticker.Stop()
+		done <- true
+		return buildResult{}, usererror.Wrap(fmt.Errorf("could not build file `%s`", filePath))
 	}
 
 	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
+		ticker.Stop()
+		done <- true
 		if strings.HasPrefix(v, "/nix/store/") {
-			return v, nil
+			return buildResult{
+				storePath: v,
+				duration:  time.Since(start),
+			}, nil
 		}
 	}
 
-	return "", nil
+	return buildResult{}, nil
 }
 
 // DownloadURl give nix download URL based on OS
@@ -249,4 +301,14 @@ pkgs.mkShell {
 }
 `
 	return fmt.Sprintf(exp, source(nixpkgs), strings.Join(buildInputs, "\n"))
+}
+
+func displayDuration(d time.Duration) string {
+	if d.Minutes() > 1 {
+		return fmt.Sprintf("%.1fm", float64(d)/float64(time.Minute))
+	}
+	if d.Seconds() > 1 {
+		return fmt.Sprintf("%.1fs", float64(d)/float64(time.Second))
+	}
+	return fmt.Sprintf("%.1fms", float64(d)/float64(time.Millisecond)+0.1) // add .1ms so that it never returns 0.0ms
 }
