@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"time"
 
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/format"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
@@ -214,7 +216,11 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache) (_ []stri
 	expression := nixExpression(deps, nixpkgs)
 
 	var arguments []string
-	arguments = append(arguments, []string{"--keep", "NIX_SSL_CERT_FILE", "--keep", "SSL_CERT_FILE"}...)
+	for _, envKey := range global.EnvWhitelist {
+		if _, exists := os.LookupEnv(envKey); exists {
+			arguments = append(arguments, []string{"--keep", envKey}...)
+		}
+	}
 	arguments = append(arguments, []string{"--command", "env"}...)
 	arguments = append(arguments, []string{"-E", expression}...)
 
