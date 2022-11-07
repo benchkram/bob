@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/benchkram/bob/pkg/format"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
@@ -80,7 +81,7 @@ func BuildDependencies(deps []Dependency, cache *Cache) (err error) {
 		}
 
 		fmt.Println()
-		fmt.Printf("%s:%s%s took %s\n", v.Name, padding, br.storePath, displayDuration(br.duration))
+		fmt.Printf("%s:%s%s took %s\n", v.Name, padding, br.storePath, format.DisplayDuration(br.duration))
 
 		if cache != nil {
 			key, err := GenerateKey(v)
@@ -107,41 +108,24 @@ func buildPackage(pkgName string, nixpkgs, padding string) (buildResult, error) 
 	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
-	fmt.Printf("%s:%s", pkgName, padding)
-	ticker := time.NewTicker(5 * time.Second)
-	done := make(chan bool)
-
-	start := time.Now()
-	fmt.Print(".")
-
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case <-ticker.C:
-				fmt.Print(".")
-			}
-		}
-	}()
+	progress := newBuildProgress(pkgName, padding)
+	progress.Start(5 * time.Second)
 
 	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
 
 	err := cmd.Run()
 	if err != nil {
-		ticker.Stop()
-		done <- true
+		progress.Stop()
 		return buildResult{}, usererror.Wrap(errors.New("could not build package"))
 	}
 
 	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
 		if strings.HasPrefix(v, "/nix/store/") {
-			ticker.Stop()
-			done <- true
+			progress.Stop()
 			return buildResult{
 				storePath: v,
-				duration:  time.Since(start),
+				duration:  progress.Duration(),
 			}, nil
 		}
 	}
@@ -155,40 +139,24 @@ func buildFile(filePath string, nixpkgs, padding string) (buildResult, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
-	fmt.Printf("%s:%s", filePath, padding)
-	ticker := time.NewTicker(5 * time.Second)
-	done := make(chan bool)
-	start := time.Now()
-	fmt.Print(".")
-
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case <-ticker.C:
-				fmt.Print(".")
-			}
-		}
-	}()
+	progress := newBuildProgress(filePath, padding)
+	progress.Start(5 * time.Second)
 
 	var stdoutBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
 
 	err := cmd.Run()
 	if err != nil {
-		ticker.Stop()
-		done <- true
+		progress.Stop()
 		return buildResult{}, usererror.Wrap(fmt.Errorf("could not build file `%s`", filePath))
 	}
 
 	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
-		ticker.Stop()
-		done <- true
+		progress.Stop()
 		if strings.HasPrefix(v, "/nix/store/") {
 			return buildResult{
 				storePath: v,
-				duration:  time.Since(start),
+				duration:  progress.Duration(),
 			}, nil
 		}
 	}
@@ -305,14 +273,4 @@ pkgs.mkShell {
 }
 `
 	return fmt.Sprintf(exp, source(nixpkgs), strings.Join(buildInputs, "\n"))
-}
-
-func displayDuration(d time.Duration) string {
-	if d.Minutes() > 1 {
-		return fmt.Sprintf("%.1fm", float64(d)/float64(time.Minute))
-	}
-	if d.Seconds() > 1 {
-		return fmt.Sprintf("%.1fs", float64(d)/float64(time.Second))
-	}
-	return fmt.Sprintf("%.1fms", float64(d)/float64(time.Millisecond)+0.1) // add .1ms so that it never returns 0.0ms
 }
