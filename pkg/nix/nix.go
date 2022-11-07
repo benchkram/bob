@@ -55,23 +55,32 @@ func BuildDependencies(deps []Dependency, cache *Cache) (err error) {
 		fmt.Println("Building nix dependencies. This may take a while...")
 	}
 
+	var max int
+	for _, v := range unsatisfiedDeps {
+		if len(v.Name) > max {
+			max = len(v.Name)
+		}
+	}
+	max += 1
+
 	for _, v := range unsatisfiedDeps {
 		var br buildResult
+		padding := strings.Repeat(" ", max-len(v.Name))
 
 		if strings.HasSuffix(v.Name, ".nix") {
-			br, err = buildFile(v.Name, v.Nixpkgs)
+			br, err = buildFile(v.Name, v.Nixpkgs, padding)
 			if err != nil {
 				return err
 			}
 		} else {
-			br, err = buildPackage(v.Name, v.Nixpkgs)
+			br, err = buildPackage(v.Name, v.Nixpkgs, padding)
 			if err != nil {
 				return err
 			}
 		}
 
 		fmt.Println()
-		fmt.Printf("%s: %s took %s\n", v.Name, br.storePath, displayDuration(br.duration))
+		fmt.Printf("%s:%s%s took %s\n", v.Name, padding, br.storePath, displayDuration(br.duration))
 
 		if cache != nil {
 			key, err := GenerateKey(v)
@@ -94,11 +103,11 @@ type buildResult struct {
 }
 
 // buildPackage builds a nix package: nix-build --no-out-link -E 'with import <nixpkgs> { }; pkg' and returns the store path
-func buildPackage(pkgName string, nixpkgs string) (buildResult, error) {
+func buildPackage(pkgName string, nixpkgs, padding string) (buildResult, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
-	fmt.Printf("%s: ", pkgName)
+	fmt.Printf("%s:%s", pkgName, padding)
 	ticker := time.NewTicker(1 * time.Second)
 	done := make(chan bool)
 
@@ -141,11 +150,11 @@ func buildPackage(pkgName string, nixpkgs string) (buildResult, error) {
 
 // buildFile builds a .nix expression file
 // `nix-build --no-out-link -E 'with import <nixpkgs> { }; callPackage filepath.nix {}'`
-func buildFile(filePath string, nixpkgs string) (buildResult, error) {
+func buildFile(filePath string, nixpkgs, padding string) (buildResult, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
-	fmt.Printf("%s: ", filePath)
+	fmt.Printf("%s:%s", filePath, padding)
 	ticker := time.NewTicker(1 * time.Second)
 	done := make(chan bool)
 	start := time.Now()
