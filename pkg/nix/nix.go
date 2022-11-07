@@ -108,7 +108,7 @@ func buildPackage(pkgName string, nixpkgs, padding string) (buildResult, error) 
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
 	fmt.Printf("%s:%s", pkgName, padding)
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	done := make(chan bool)
 
 	start := time.Now()
@@ -155,7 +155,7 @@ func buildFile(filePath string, nixpkgs, padding string) (buildResult, error) {
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
 	fmt.Printf("%s:%s", filePath, padding)
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	done := make(chan bool)
 	start := time.Now()
 
