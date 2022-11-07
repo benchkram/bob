@@ -22,7 +22,6 @@ type Dependency struct {
 }
 
 type StorePath string
-type DependenciesToStorePathMap map[Dependency]StorePath
 
 // IsInstalled checks if nix is installed on the system
 func IsInstalled() bool {
@@ -35,19 +34,17 @@ func IsInstalled() bool {
 // dependencies can be either a package name ex. php or a path to .nix file
 // nixpkgs can be empty which means it will use local nixpkgs channel
 // or a link to desired revision ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
-func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePathMap, err error) {
+func BuildDependencies(deps []Dependency, cache *Cache) (err error) {
 	defer errz.Recover(&err)
 
 	var unsatisfiedDeps []Dependency
-	pkgToStorePath := make(DependenciesToStorePathMap)
 
 	for _, v := range deps {
 		if cache != nil {
 			key, err := GenerateKey(v)
 			errz.Fatal(err)
 
-			if storePath, ok := cache.Get(key); ok {
-				pkgToStorePath[v] = StorePath(storePath)
+			if _, ok := cache.Get(key); ok {
 				continue
 			}
 			unsatisfiedDeps = append(unsatisfiedDeps, v)
@@ -66,25 +63,23 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 		if strings.HasSuffix(v.Name, ".nix") {
 			br, err = buildFile(v.Name, v.Nixpkgs)
 			if err != nil {
-				return DependenciesToStorePathMap{}, err
+				return err
 			}
-			pkgToStorePath[v] = StorePath(br.storePath)
 		} else {
 			br, err = buildPackage(v.Name, v.Nixpkgs)
 			if err != nil {
-				return DependenciesToStorePathMap{}, err
+				return err
 			}
-			pkgToStorePath[v] = StorePath(br.storePath)
 		}
 
 		fmt.Println()
-		fmt.Printf("%s: %s took %s\n", v.Name, pkgToStorePath[v], displayDuration(br.duration))
+		fmt.Printf("%s: %s took %s\n", v.Name, br.storePath, displayDuration(br.duration))
 
 		if cache != nil {
 			key, err := GenerateKey(v)
 			errz.Fatal(err)
 
-			err = cache.Save(key, string(pkgToStorePath[v]))
+			err = cache.Save(key, br.storePath)
 			errz.Fatal(err)
 		}
 	}
@@ -92,7 +87,7 @@ func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePa
 		fmt.Println("Succeeded building nix dependencies")
 	}
 
-	return pkgToStorePath, nil
+	return nil
 }
 
 type buildResult struct {
@@ -236,7 +231,7 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache) (_ []stri
 	defer errz.Recover(&err)
 
 	// building dependencies with nix-build to display store paths to output
-	_, err = BuildDependencies(deps, cache)
+	err = BuildDependencies(deps, cache)
 	errz.Fatal(err)
 
 	expression := nixExpression(deps, nixpkgs)

@@ -103,7 +103,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 }
 
 // BuildDependencies builds the list of all nix deps
-func (n *NixBuilder) BuildDependencies(deps []nix.Dependency) (nix.DependenciesToStorePathMap, error) {
+func (n *NixBuilder) BuildDependencies(deps []nix.Dependency) error {
 	return nix.BuildDependencies(deps, n.cache)
 }
 
