@@ -50,9 +50,10 @@ func runInit(project string) {
 		os.Exit(1)
 	}
 
+	wd, _ := os.Getwd()
+
 	var err error
 	if project != "" {
-
 		var token string
 		fmt.Print("Enter your access token:")
 		fmt.Scanf("%s", &token)
@@ -90,10 +91,10 @@ func runInit(project string) {
 			errz.Fatal(err)
 		}
 		err = createBobfile(fmt.Sprintf(withProject, project))
-		fmt.Println("bob.yaml created. Push your first artifact to remote store: `bob build --push`!")
+		fmt.Printf("Initialized bob project in %s\n", wd)
 	} else {
 		err = createBobfile(withoutProject)
-		fmt.Println("bob.yaml created. Run your first `bob build`!")
+		fmt.Printf("Initialized bob project in %s\n", wd)
 	}
 
 	if err != nil {
