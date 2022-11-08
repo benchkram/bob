@@ -33,7 +33,8 @@ Why is this useful?
 * Easily jump between different versions of a programming language.
 
 
-
+What else?
+* Write build outputs relative to your repository to keep IDE & Hot-Reloading functional
 
 # Getting Started
 
