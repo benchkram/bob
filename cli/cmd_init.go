@@ -55,7 +55,7 @@ func runInit(project string) {
 	var err error
 	if project != "" {
 		var token string
-		fmt.Print("Enter your access token:")
+		fmt.Print("Enter your access token: ")
 		fmt.Scanf("%s", &token)
 
 		if token == "" {
@@ -68,7 +68,7 @@ func runInit(project string) {
 		var name string
 		if errors.As(err, &usererror.Err) {
 			if errors.Is(err, auth.ErrAlreadyExists) {
-				fmt.Printf("Enter your name for auth context[%s]:", path.Base(project))
+				fmt.Printf("Enter your name for auth context[%s]: ", path.Base(project))
 				fmt.Scanf("%s", &name)
 
 				if name == "" {
