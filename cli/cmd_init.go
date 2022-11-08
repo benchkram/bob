@@ -85,6 +85,7 @@ func runInit(project string) {
 		err = runAuthContextSwitch(name)
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
+			os.Exit(1)
 		} else {
 			errz.Fatal(err)
 		}
