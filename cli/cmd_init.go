@@ -67,7 +67,7 @@ func runInit(project string) {
 		var name string
 		if errors.As(err, &usererror.Err) {
 			if errors.Is(err, auth.ErrAlreadyExists) {
-				fmt.Print(fmt.Sprintf("Enter your name for auth context[%s]:", path.Base(project)))
+				fmt.Printf("Enter your name for auth context[%s]:", path.Base(project))
 				fmt.Scanf("%s", &name)
 
 				if name == "" {
