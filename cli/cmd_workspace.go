@@ -16,11 +16,11 @@ var cmdWorkspace = &cobra.Command{
 	Short: "Manage a bob workspace",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		runInit()
+		runInitWorkspace()
 	},
 }
 
-func runInit() {
+func runInitWorkspace() {
 	b, err := bob.Bob()
 	errz.Fatal(err)
 

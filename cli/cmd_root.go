@@ -27,6 +27,7 @@ func init() {
 
 	rootCmd.AddCommand(verifyCmd)
 	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(initCmd)
 
 	// clone
 	CmdClone.Flags().Bool("fail-fast", false, "Fail on first error without user prompt")
