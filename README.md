@@ -34,7 +34,7 @@ Why is this useful?
 
 
 What else?
-* Write build outputs relative to your repository to keep IDE & Hot-Reloading functional
+* **Full Stack Friendly** - Write build outputs relative to your repository to keep IDE & Hot-Reloading functional
 
 # Getting Started
 
