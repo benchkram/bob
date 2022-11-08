@@ -1,4 +1,36 @@
-nixpkgs: https://github.com/NixOS/nixpkgs/archive/refs/tags/22.05.tar.gz
+variables:
+  VERSION: v0.0.0
+
 build:
   build:
-    cmd: echo "Hello bob!"
+    cmd: go build -tags dev -ldflags="-X 'main.Version=${VERSION}'" -o ./run
+    target: run
+    dependson:
+      - proto
+
+  gomodtidy:
+    cmd: go mod tidy
+
+  lint:
+    cmd: CGO_ENABLED=0 golangci-lint run --timeout=10m0s
+
+  test:
+    cmd: go test ./...
+
+  proto:
+    input: buildinfo.proto
+    cmd: |
+      mkdir -p bobtask/buildinfo/protos
+      protoc --go_out=. buildinfo.proto
+    target: bobtask/buildinfo/protos
+
+dependencies:
+  - nix
+  - git
+  - go_1_18
+  - golangci-lint
+  - docker
+  - gcc
+  - protobuf
+  - protoc-gen-go
+
