@@ -92,9 +92,11 @@ func runInit(project string) {
 		}
 		err = createBobfile(fmt.Sprintf(withProject, project))
 		fmt.Printf("Initialized bob project in %s\n", wd)
+		fmt.Println("Run your first build: bob build --push")
 	} else {
 		err = createBobfile(withoutProject)
 		fmt.Printf("Initialized bob project in %s\n", wd)
+		fmt.Println("Run your first build: bob build")
 	}
 
 	if err != nil {
