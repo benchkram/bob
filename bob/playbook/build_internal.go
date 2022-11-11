@@ -63,13 +63,15 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 			errz.Fatal(err)
 
 			// pull artifact if it exists on the remote. if exists locally will use that one
-			p.pullArtifact(ctx, hashIn, task, false)
+			err = p.pullArtifact(ctx, hashIn, task, false)
+			errz.Fatal(err)
 
 			success, err := task.ArtifactExtract(hashIn)
 			if err != nil {
 				// if local artifact is corrupted due to incomplete previous download, try a fresh download
 				if errors.Is(err, io.ErrUnexpectedEOF) {
-					p.pullArtifact(ctx, hashIn, task, true)
+					err = p.pullArtifact(ctx, hashIn, task, true)
+					errz.Fatal(err)
 					success, err = task.ArtifactExtract(hashIn)
 				}
 			}

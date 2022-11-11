@@ -136,7 +136,12 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 		errz.Fatal(errors.New("invalid response"))
 	}
 
-	res2, err := http.Get(*res.JSON200.Location)
+	req, err := http.NewRequest("GET", *res.JSON200.Location, nil)
+	errz.Fatal(err)
+	req = req.WithContext(ctx)
+
+	client := http.DefaultClient
+	res2, err := client.Do(req)
 	errz.Fatal(err)
 
 	if res2.StatusCode != http.StatusOK {
