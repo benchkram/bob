@@ -60,6 +60,8 @@ func push(ctx context.Context, local store.Store, remote store.Store, a hash.In,
 	if errors.Is(err, store.ErrArtifactAlreadyExists) {
 		boblog.Log.V(5).Info(fmt.Sprintf("artifact already exists on the remote [artifactId: %s]. skipping...", a.String()))
 		return nil
+	} else if errors.Is(err, context.Canceled) {
+		return nil // cancel err is handled after remote.Done()
 	} else if err != nil {
 		return fmt.Errorf("  %-*s\tfailed push [artifactId: %s]: %w", namePad, taskName, a.String(), err)
 	}
@@ -68,8 +70,7 @@ func push(ctx context.Context, local store.Store, remote store.Store, a hash.In,
 	// we don't know which artifacts failed to upload.
 	err = remote.Done()
 	if err != nil {
-		boblog.Log.V(5).Error(err, fmt.Sprintf("failed to push [artifactId: %s]", a.String()))
-		return nil
+		return fmt.Errorf("  %-*s\tfailed push [artifactId: %s]: cancelled", namePad, taskName, a.String())
 	}
 	boblog.Log.V(5).Info(fmt.Sprintf("push succeeded [artifactId: %s]", a.String()))
 	return nil
