@@ -5,17 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"sync"
 
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
 )
-
-// didWriteBuildOutput assures that a new line is added
-// before writing state or logs of a task to stdout.
-var didWriteBuildOutputMu sync.Mutex
-var didWriteBuildOutput bool
 
 // build a single task and update the playbook state after completion.
 func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
@@ -110,13 +104,6 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		taskSuccessFul = true
 		return p.TaskNoRebuildRequired(task.Name())
 	}
-
-	didWriteBuildOutputMu.Lock()
-	if !didWriteBuildOutput {
-		boblog.Log.V(1).Info("")
-		didWriteBuildOutput = true
-	}
-	didWriteBuildOutputMu.Unlock()
 
 	err = task.Clean()
 	errz.Fatal(err)
