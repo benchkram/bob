@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img  width="300" src="https://bob.build/assets/logo.654a7917.svg" />
+  <img  width="300" src="https://bob.build/assets/logo.070b920e.svg" />
 </p>
 <p align="center">
 Write Once, Build Once, Anywhere
