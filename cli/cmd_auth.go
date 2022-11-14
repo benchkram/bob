@@ -53,6 +53,7 @@ Example:
 		err = runAuthContextCreate(name, token)
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
+			return
 		} else {
 			errz.Fatal(err)
 		}
