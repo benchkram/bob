@@ -104,7 +104,7 @@ func (c *c) ListArtifacts(ctx context.Context, project string) (ids []string, er
 
 	if res.StatusCode() == http.StatusNotFound {
 		errz.Fatal(usererror.Wrapm(ErrProjectNotFound, "upload to remote repository failed"))
-	} else if res.StatusCode() == http.StatusUnauthorized {
+	} else if res.StatusCode() == http.StatusUnauthorized || res.StatusCode() == http.StatusForbidden {
 		errz.Fatal(usererror.Wrap(ErrNotAuthorized))
 	} else if res.StatusCode() != http.StatusOK {
 		err = errors.Errorf("request failed [status: %d, msg: %q]", res.StatusCode(), res.Body)
