@@ -23,7 +23,7 @@ func (p *Playbook) pullArtifact(ctx context.Context, a hash.In, task *bobtask.Ta
 
 	description := fmt.Sprintf("%-*s\t  %s", p.namePad, task.ColoredName(), aurora.Faint("pulling artifact "+a.String()))
 	ctx = context.WithValue(ctx, TaskKey("description"), description)
-	return pull(ctx, p.remoteStore, p.localStore, a, task.Name(), ignoreLocal)
+	return pull(ctx, p.remoteStore, p.localStore, a, p.namePad, task, ignoreLocal)
 }
 
 func (p *Playbook) pushArtifact(ctx context.Context, a hash.In, taskName string) error {
@@ -38,7 +38,7 @@ func (p *Playbook) pushArtifact(ctx context.Context, a hash.In, taskName string)
 
 // pull syncs the artifact from the remote store to the local store.
 // if ignoreAlreadyExists is true it will ignore local artifact and perform a fresh download
-func pull(ctx context.Context, remote store.Store, local store.Store, a hash.In, taskName string, ignoreAlreadyExists bool) error {
+func pull(ctx context.Context, remote store.Store, local store.Store, a hash.In, namePad int, task *bobtask.Task, ignoreAlreadyExists bool) error {
 	err := store.Sync(ctx, remote, local, a.String(), ignoreAlreadyExists)
 	if errors.Is(err, store.ErrArtifactAlreadyExists) {
 		boblog.Log.V(5).Info(fmt.Sprintf("artifact already exists locally [artifactId: %s]. skipping...", a.String()))
@@ -47,7 +47,11 @@ func pull(ctx context.Context, remote store.Store, local store.Store, a hash.In,
 	} else if errors.Is(err, context.Canceled) {
 		return usererror.Wrap(err)
 	} else if err != nil {
-		boblog.Log.V(5).Error(err, fmt.Sprintf("%s: failed pull [artifactId: %s]", taskName, a.String()))
+		fmt.Printf("%-*s\t%s",
+			namePad,
+			task.ColoredName(),
+			aurora.Red(fmt.Errorf("failed pull [artifactId: %s]: %w", a.String(), err)),
+		)
 	}
 
 	boblog.Log.V(5).Info(fmt.Sprintf("pull succeeded [artifactId: %s]", a.String()))
