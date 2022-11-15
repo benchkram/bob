@@ -48,6 +48,11 @@ build:
     # Is packed into an .tar.gz and stored as artifact 
     # in the local and/or remote cache.
     # target: run
+
+    # Create pipelines by depending on other tasks.
+    # Bob takes care of executing tasks in the correct order
+    # and if possible in parallel. 
+    # dependsOn:
 `
 
 var withProject = `project: %s
@@ -74,6 +79,11 @@ build:
     # Is packed into an .tar.gz and stored as artifact 
     # in the local and/or remote cache.
     # target: run
+
+    # Create pipelines by depending on other tasks.
+    # Bob takes care of executing tasks in the correct order
+    # and if possible in parallel. 
+    # dependsOn:
 `
 
 func runInit(projectName string) {
