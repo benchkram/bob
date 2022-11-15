@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install nix
         uses: cachix/install-nix-action@v15
@@ -22,10 +22,13 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version: 1.19
 
       - name: Install bob
         run: make install-prod
+
+      - name: bob login 
+        run: bob auth init --token ${{ secrets.BOB_TOKEN }}
 
       - name: Install nix derivations
         run: bob install
@@ -37,7 +40,7 @@ jobs:
         run: bob build lint
 
       - name: Build
-        run: bob build
+        run: bob build --push
 
       - name: Set Git author name and email address
         run: git config --global user.name "builder" && git config --global user.email "builder@bob.build"
