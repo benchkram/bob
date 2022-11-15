@@ -13,7 +13,6 @@ import (
 //				fmt.Println(i, aurora.Index(i, "pew-pew"))
 //			}
 var colorPool = []aurora.Color{
-	aurora.Gray(18, nil).Color(),
 	aurora.GreenFg,
 	aurora.BlueFg,
 	aurora.CyanFg,

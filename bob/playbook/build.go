@@ -10,6 +10,7 @@ import (
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/usererror"
 )
 
 // Build the playbook starting at root.
@@ -99,16 +100,19 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	p.summary(processedTasks)
 
-	// sync any newly generated artifacts with the remote store
-	if p.enablePush {
-		for taskName, artifact := range p.inputHashes(true) {
-			p.pushArtifact(ctx, artifact, taskName)
-		}
-	}
-
 	if len(processingErrors) > 0 {
 		// Pass only the very first processing error.
 		return processingErrors[0]
+	}
+
+	// sync any newly generated artifacts with the remote store
+	if p.enablePush {
+		for taskName, artifact := range p.inputHashes(true) {
+			err = p.pushArtifact(ctx, artifact, taskName)
+			if err != nil {
+				return usererror.Wrap(err)
+			}
+		}
 	}
 
 	return nil
