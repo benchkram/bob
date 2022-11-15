@@ -25,7 +25,7 @@ var (
 
 	ErrInvalidProjectName = fmt.Errorf("invalid project name")
 
-	ProjectNameFormatHint = "project name should be in the form 'project' or 'registry.com/user/project'"
+	ProjectNameFormatHint = "project name should be in the form 'project' or 'bob.build/user/project'"
 )
 
 type T string
@@ -70,7 +70,7 @@ func (n *Name) Remote() (*url.URL, error) {
 func Parse(projectname string) (Name, error) {
 	if !RestrictedProjectNamePattern.MatchString(projectname) {
 		return "", usererror.Wrap(errors.WithMessage(ErrInvalidProjectName,
-			"project name should be in the form 'project' or 'registry.com/user/project'",
+			"project name should be in the form 'project' or 'bob.build/user/project'",
 		))
 	}
 
