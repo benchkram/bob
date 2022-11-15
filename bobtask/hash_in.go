@@ -6,11 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
 	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/sliceutil"
 	"gopkg.in/yaml.v2"
@@ -67,24 +65,12 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	}
 
 	// Hash the environment
-	env := filterOutWhitelistEnv(t.env)
+	env := filterEnvOfIgnores(t.env)
 	sort.Strings(env)
 	environment := strings.Join(env, ",")
 	err = h.AddBytes(bytes.NewBufferString(environment))
 	if err != nil {
 		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
-	}
-
-	// Hash store paths
-	err = h.AddBytes(bytes.NewBufferString(strings.Join(t.storePaths, "")))
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to write store paths hash: %w", err)
-	}
-
-	// Hash system env
-	err = h.AddBytes(bytes.NewBufferString(strings.Join([]string{runtime.GOOS, runtime.GOARCH}, "-")))
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to write system env hash: %w", err)
 	}
 
 	hashIn := hash.In(hex.EncodeToString(h.Sum()))
@@ -97,11 +83,13 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	return hashIn, nil
 }
 
-func filterOutWhitelistEnv(env []string) []string {
+func filterEnvOfIgnores(env []string) []string {
+	ignore := []string{"buildCommandPath"}
+
 	var result []string
 	for _, v := range env {
 		pair := strings.SplitN(v, "=", 2)
-		if sliceutil.Contains(global.EnvWhitelist, pair[0]) {
+		if sliceutil.Contains(ignore, pair[0]) {
 			continue
 		}
 		result = append(result, v)
