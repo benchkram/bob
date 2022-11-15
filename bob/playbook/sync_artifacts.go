@@ -47,7 +47,7 @@ func pull(ctx context.Context, remote store.Store, local store.Store, a hash.In,
 	} else if errors.Is(err, context.Canceled) {
 		return usererror.Wrap(err)
 	} else if err != nil {
-		fmt.Printf("%-*s\t%s",
+		fmt.Printf("%-*s\t%s\n",
 			namePad,
 			task.ColoredName(),
 			aurora.Red(fmt.Errorf("failed pull [artifactId: %s]: %w", a.String(), err)),
