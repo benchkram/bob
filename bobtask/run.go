@@ -19,14 +19,13 @@ import (
 	"github.com/benchkram/errz"
 )
 
-func (t *Task) Run(ctx context.Context, namePad int) (err error) {
+func (t *Task) Run(ctx context.Context, namePad int, nixCache *nix.Cache) (err error) {
 	defer errz.Recover(&err)
 
-	env := t.Env()
-	if len(t.storePaths) > 0 {
-		nixShellEnv, err := nix.BuildEnvironment(t.dependencies)
+	if len(t.Env()) == 0 {
+		nixShellEnv, err := nix.BuildEnvironment(t.dependencies, t.nixpkgs, nixCache)
 		errz.Fatal(err)
-		env = envutil.Merge(nixShellEnv, env)
+		t.SetEnv(envutil.Merge(nixShellEnv, t.env))
 	}
 
 	for _, run := range t.cmds {
@@ -61,7 +60,7 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		r, err := interp.New(
 			interp.Params("-e"),
 			interp.Dir(t.dir),
-			interp.Env(expand.ListEnviron(env...)),
+			interp.Env(expand.ListEnviron(t.Env()...)),
 			interp.StdIO(os.Stdin, pw, pw),
 		)
 

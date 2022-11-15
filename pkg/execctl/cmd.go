@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/benchkram/bob/pkg/ctl"
-	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
@@ -35,7 +34,6 @@ type Cmd struct {
 	interrupted bool
 	err         chan error
 	lastErr     error
-	storePaths  []string
 	env         []string
 }
 
@@ -109,12 +107,7 @@ func (c *Cmd) Start() error {
 	// create the command with the found executable and the its args
 	cmd := exec.Command(c.exe, c.args...)
 	c.cmd = cmd
-
-	env := c.env
-	if len(c.storePaths) > 0 {
-		env = nix.AddPATH(c.storePaths, env)
-	}
-	c.cmd.Env = env
+	c.cmd.Env = c.env
 	// assign the pipes to the command
 	c.cmd.Stdout = c.stdout.w
 	c.cmd.Stderr = c.stderr.w
