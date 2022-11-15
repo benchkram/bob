@@ -1,13 +1,13 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/benchkram/bob/bob/bobfile/project"
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/spf13/cobra"
 )
@@ -44,8 +44,8 @@ build:
 `
 
 func runInit(projectName string) {
-	if _, err := os.Stat("bob.yaml"); err == nil {
-		boblog.Log.UserError(errors.New("there is already a bob.yaml in your project"))
+	if _, err := os.Stat(global.BobFileName); err == nil {
+		boblog.Log.UserError(fmt.Errorf("there is already a %s in your project", global.BobFileName))
 		os.Exit(1)
 	}
 
@@ -59,12 +59,10 @@ func runInit(projectName string) {
 			os.Exit(1)
 		}
 		err = createBobfile(fmt.Sprintf(withProject, projectName))
-		fmt.Printf("Initialized bob project in %s\n", wd)
-		fmt.Println("Run your first build: bob build --push")
+		fmt.Printf("Initialized basic %s in %s\n", global.BobFileName, wd)
 	} else {
 		err = createBobfile(withoutProject)
-		fmt.Printf("Initialized bob project in %s\n", wd)
-		fmt.Println("Run your first build: bob build")
+		fmt.Printf("Initialized basic %s in %s\n", global.BobFileName, wd)
 	}
 
 	if err != nil {
@@ -73,5 +71,5 @@ func runInit(projectName string) {
 }
 
 func createBobfile(content string) error {
-	return os.WriteFile("bob.yaml", []byte(content), 0664)
+	return os.WriteFile(global.BobFileName, []byte(content), 0664)
 }
