@@ -209,8 +209,6 @@ func initializeDependencies(dir string, taskDependencies []string, bobfile *Bobf
 		})
 	}
 
-	taskDeps = append(taskDeps, nix.DefaultPackages(bobfile.Nixpkgs)...)
-
 	return nix.UniqueDeps(taskDeps)
 }
 

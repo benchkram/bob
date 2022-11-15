@@ -3,6 +3,7 @@ package bob
 import (
 	"fmt"
 
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
@@ -62,33 +63,22 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
-	nixDependencies, err := ag.BTasks.CollectNixDependenciesForTasks(buildTasksInPipeline)
-	errz.Fatal(err)
-
-	runTasksDependencies, err := ag.RTasks.CollectNixDependenciesForTasks(runTasksInPipeline)
-	errz.Fatal(err)
-	nixDependencies = append(nixDependencies, runTasksDependencies...)
-
-	depStorePathMapping, err := nix.BuildDependencies(
-		nix.UniqueDeps(append(nix.DefaultPackages(ag.Nixpkgs), nixDependencies...)),
-		n.cache,
-	)
-	errz.Fatal(err)
-
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
 	for _, name := range buildTasksInPipeline {
 		t := ag.BTasks[name]
 
 		// construct used dependencies for this task
-		deps := nix.DefaultPackages(ag.Nixpkgs)
+		var deps []nix.Dependency
 		deps = append(deps, t.Dependencies()...)
 		deps = nix.UniqueDeps(deps)
 
-		storePaths, err := nix.DependenciesToStorePaths(deps, depStorePathMapping)
-		errz.Fatal(err)
+		t.SetNixpkgs(ag.Nixpkgs)
 
-		t.SetStorePaths(storePaths)
+		nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
+		errz.Fatal(err)
+		t.SetEnv(envutil.Merge(nixShellEnv, t.Env()))
+
 		ag.BTasks[name] = t
 	}
 
@@ -96,14 +86,15 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		t := ag.RTasks[name]
 
 		// construct used dependencies for this task
-		deps := nix.DefaultPackages(ag.Nixpkgs)
+		var deps []nix.Dependency
 		deps = append(deps, t.Dependencies()...)
 		deps = nix.UniqueDeps(deps)
 
-		storePaths, err := nix.DependenciesToStorePaths(deps, depStorePathMapping)
-		errz.Fatal(err)
+		t.SetNixpkgs(ag.Nixpkgs)
 
-		t.SetStorePaths(storePaths)
+		nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
+		errz.Fatal(err)
+		t.SetEnv(envutil.Merge(nixShellEnv, t.Env()))
 
 		ag.RTasks[name] = t
 	}
@@ -112,6 +103,11 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 }
 
 // BuildDependencies builds the list of all nix deps
-func (n *NixBuilder) BuildDependencies(deps []nix.Dependency) (nix.DependenciesToStorePathMap, error) {
+func (n *NixBuilder) BuildDependencies(deps []nix.Dependency) error {
 	return nix.BuildDependencies(deps, n.cache)
+}
+
+// BuildEnvironment builds the environment with all nix deps
+func (n *NixBuilder) BuildEnvironment(deps []nix.Dependency, nixpkgs string) (_ []string, err error) {
+	return nix.BuildEnvironment(deps, nixpkgs, n.cache)
 }

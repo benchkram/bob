@@ -108,7 +108,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	err = task.Clean()
 	errz.Fatal(err)
 
-	err = task.Run(ctx, p.namePad)
+	err = task.Run(ctx, p.namePad, p.nixCache)
 	if err != nil {
 		taskSuccessFul = false
 		taskErr = err

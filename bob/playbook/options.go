@@ -1,6 +1,9 @@
 package playbook
 
-import "github.com/benchkram/bob/pkg/store"
+import (
+	"github.com/benchkram/bob/pkg/nix"
+	"github.com/benchkram/bob/pkg/store"
+)
 
 type Option func(p *Playbook)
 
@@ -43,5 +46,11 @@ func WithRemoteStore(s store.Store) Option {
 func WithLocalStore(s store.Store) Option {
 	return func(p *Playbook) {
 		p.localStore = s
+	}
+}
+
+func WitNixCache(c *nix.Cache) Option {
+	return func(p *Playbook) {
+		p.nixCache = c
 	}
 }
