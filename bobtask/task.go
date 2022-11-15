@@ -92,9 +92,8 @@ type Task struct {
 	// in the order which they need to be added to PATH
 	dependencies []nix.Dependency
 
-	// storePaths contain /nix/store/* paths
-	// in the order which they need to be added to PATH
-	storePaths []string
+	// URL of nixpkgs used. If empty, will use local <nixpkgs> channel
+	nixpkgs string
 }
 
 type TargetEntry interface{}

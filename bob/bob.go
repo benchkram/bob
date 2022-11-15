@@ -5,7 +5,6 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -92,7 +91,6 @@ func newBob(opts ...Option) *B {
 		}
 		opt(b)
 	}
-	b.keepWhitelistEnv()
 
 	return b
 }
@@ -220,14 +218,4 @@ func (b *B) read() (err error) {
 	}
 
 	return nil
-}
-
-// keepWhitelistEnv will keep whitelisted env variables
-// from local host
-func (b *B) keepWhitelistEnv() {
-	for _, envKey := range global.EnvWhitelist {
-		if value, exists := os.LookupEnv(envKey); exists {
-			b.env = append(b.env, envKey+"="+value)
-		}
-	}
 }

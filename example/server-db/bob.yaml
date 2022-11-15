@@ -22,7 +22,7 @@ build:
     cmd: go build -o ./build/server main.go
     dependson:
       - generate-api
-    target: /build/server
+    target: ./build/server
 run:
   server:
     type: binary
