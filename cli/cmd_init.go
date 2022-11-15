@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/spf13/cobra"
 )
@@ -42,7 +43,7 @@ build:
     target: hello-world
 `
 
-func runInit(project string) {
+func runInit(projectName string) {
 	if _, err := os.Stat("bob.yaml"); err == nil {
 		boblog.Log.UserError(errors.New("there is already a bob.yaml in your project"))
 		os.Exit(1)
@@ -51,8 +52,13 @@ func runInit(project string) {
 	wd, _ := os.Getwd()
 
 	var err error
-	if project != "" {
-		err = createBobfile(fmt.Sprintf(withProject, project))
+	if projectName != "" {
+		_, err = project.Parse(projectName)
+		if err != nil {
+			boblog.Log.UserError(err)
+			os.Exit(1)
+		}
+		err = createBobfile(fmt.Sprintf(withProject, projectName))
 		fmt.Printf("Initialized bob project in %s\n", wd)
 		fmt.Println("Run your first build: bob build --push")
 	} else {
