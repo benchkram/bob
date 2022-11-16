@@ -25,7 +25,7 @@ Bob is a high-level build tool for multi-language projects.
 
 Use it to build codebases organized in multiple repositories or in a monorepo.
 
-When should i consider using Bob?
+When to consider using Bob?
 
 * You want a pipeline which runs locally and on CI.
 * You want remote caching and never do the same build twice!
