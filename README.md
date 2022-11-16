@@ -5,9 +5,6 @@
 <p align="center">
 Write Once, Build Once, Anywhere
 </p>
-<p align="center">
-A build system for microservices
-</p>
 
 ---
 
@@ -24,25 +21,23 @@ A build system for microservices
 </p>
 
 
-Bob is a high-level build system that isolates pipelines from the host system by executing them in a sandboxed shell to run them anywhere - [Nix Inside™](https://nixos.org/).
+Bob is a high-level build tool for multi-language projects.
 
-Why is this useful?
+Use it to build codebases organized in multiple repositories or in a monorepo.
 
-* Get rid of "Works on My Machine".
-* No more building in Docker.
-* Easily jump between different versions of a programming language.
+When should i consider using Bob?
 
-
-What else?
-* **Full Stack Friendly** - Write build outputs relative to your repository to keep IDE & Hot-Reloading functional
+* You want a pipeline which runs locally and on CI.
+* You want remote caching and never do the same build twice!
+* You want to get rid of "Works on My Machine".
+* You like Bazel and it's features but think its too complex.
+* You want a build system which keeps frontend tooling functional.
 
 # Getting Started
 
-Documentation is available at [bob.build](https://bob.build/docs)
+[Docs](https://bob.build/docs/) | [Install](https://bob.build/docs/getting-started/installation/)
 
-# Install
-
-[install](https://bob.build/docs/getting-started/installation)
+## Install From Source 
 
 If you wanna go wild and have Go 1.17 or later installed, the short version is:
 
@@ -53,6 +48,8 @@ go install
 ```
 
 For shell autocompletion (bash and zsh supported) add `source <(bob completion)` to your `.bashrc`/`.zshrc`.
+
+
 
 # How it works
 Bob generates its internal build graph from tasks described in a `bob.yaml` file (usually refered to as "Bobfile").
