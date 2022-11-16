@@ -84,7 +84,7 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 }
 
 func filterEnvOfIgnores(env []string) []string {
-	ignore := []string{"buildCommandPath"}
+	ignore := []string{"buildCommandPath", "SHLVL"}
 
 	var result []string
 	for _, v := range env {
