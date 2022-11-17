@@ -28,7 +28,7 @@ Use it to build codebases organized in multiple repositories or in a monorepo.
 When to consider using Bob?
 
 * You want a pipeline which runs locally and on CI.
-* You want remote caching and never having to do the same build twice!
+* You want remote caching and never having to do the same build twice.
 * You want to get rid of "Works on My Machine".
 * You like Bazel and its features but think it's too complex.
 * You want a build system which keeps frontend tooling functional.
