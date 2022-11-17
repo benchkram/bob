@@ -28,18 +28,18 @@ Use it to build codebases organized in multiple repositories or in a monorepo.
 When to consider using Bob?
 
 * You want a pipeline which runs locally and on CI.
-* You want remote caching and never do the same build twice!
+* You want remote caching and never having to do the same build twice!
 * You want to get rid of "Works on My Machine".
-* You like Bazel and it's features but think its too complex.
+* You like Bazel and its features but think it's too complex.
 * You want a build system which keeps frontend tooling functional.
 
 # Getting Started
 
 [Docs](https://bob.build/docs/) | [Install](https://bob.build/docs/getting-started/installation/)
 
-## Install From Source 
+## Installing From Source 
 
-If you wanna go wild and have Go 1.17 or later installed, the short version is:
+If you want to go wild, and have Go 1.17 or later installed, the short version is:
 
 ```bash
 git clone https://github.com/benchkram/bob
@@ -52,8 +52,8 @@ For shell autocompletion (bash and zsh supported) add `source <(bob completion)`
 
 
 # How it works
-Bob generates its internal build graph from tasks described in a `bob.yaml` file (usually refered to as "Bobfile").
-Each build step is executed in a sandbox shell only using the given dependencies required from the nix package manager.
+Bob generates its internal build graph from tasks described in a `bob.yaml` file (usually referred to as "Bobfile").
+Each build step is executed in a sandboxed shell only using the given dependencies required from the nix package manager.
 
 The basic components of a build task are:
 
