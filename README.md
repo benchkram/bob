@@ -5,9 +5,6 @@
 <p align="center">
 Write Once, Build Once, Anywhere
 </p>
-<p align="center">
-A build system for microservices
-</p>
 
 ---
 
@@ -24,27 +21,25 @@ A build system for microservices
 </p>
 
 
-Bob is a high-level build system that isolates pipelines from the host system by executing them in a sandboxed shell to run them anywhere - [Nix Inside™](https://nixos.org/).
+Bob is a high-level build tool for multi-language projects.
 
-Why is this useful?
+Use it to build codebases organized in multiple repositories or in a monorepo.
 
-* Get rid of "Works on My Machine".
-* No more building in Docker.
-* Easily jump between different versions of a programming language.
+When to consider using Bob?
 
-
-What else?
-* **Full Stack Friendly** - Write build outputs relative to your repository to keep IDE & Hot-Reloading functional
+* You want a pipeline which runs locally and on CI.
+* You want remote caching and never having to do the same build twice.
+* You want to get rid of "Works on My Machine".
+* You like Bazel and its features but think it's too complex.
+* You want a build system which keeps frontend tooling functional.
 
 # Getting Started
 
-Documentation is available at [bob.build](https://bob.build/docs)
+[Docs](https://bob.build/docs/) | [Install](https://bob.build/docs/getting-started/installation/)
 
-# Install
+## Installing From Source 
 
-[install](https://bob.build/docs/getting-started/installation)
-
-If you wanna go wild and have Go 1.17 or later installed, the short version is:
+If you want to go wild, and have Go 1.17 or later installed, the short version is:
 
 ```bash
 git clone https://github.com/benchkram/bob
@@ -54,9 +49,11 @@ go install
 
 For shell autocompletion (bash and zsh supported) add `source <(bob completion)` to your `.bashrc`/`.zshrc`.
 
+
+
 # How it works
-Bob generates its internal build graph from tasks described in a `bob.yaml` file (usually refered to as "Bobfile").
-Each build step is executed in a sandbox shell only using the given dependencies required from the nix package manager.
+Bob generates its internal build graph from tasks described in a `bob.yaml` file (usually referred to as "Bobfile").
+Each build step is executed in a sandboxed shell only using the given dependencies required from the nix package manager.
 
 The basic components of a build task are:
 
