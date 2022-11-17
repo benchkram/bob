@@ -68,6 +68,10 @@ func (t *Task) filteredInputs() ([]string, error) {
 			continue
 		}
 
+		if strings.HasPrefix(input, "./") {
+			input = strings.TrimPrefix(input, "./")
+		}
+
 		list, err := filepathutil.ListRecursive(input)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
@@ -124,11 +128,10 @@ func (t *Task) filteredInputs() ([]string, error) {
 	// Filter
 	filteredInputs := make([]string, 0, len(inputs))
 	for _, input := range inputs {
-		input = filepath.Clean(input)
 
 		var isIgnored bool
 		for _, ignore := range ignores {
-			if input == filepath.Clean(ignore) {
+			if input == ignore {
 				isIgnored = true
 				break
 			}
