@@ -206,7 +206,7 @@ func source(nixpkgs string) string {
 // nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' -E nixExpressionFromDeps
 //
 // nix shell can be started with empty list of packages so this method works with empty deps as well
-func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache) (_ []string, err error) {
+func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache, shellCache *ShellCache) (_ []string, err error) {
 	defer errz.Recover(&err)
 
 	// building dependencies with nix-build to display store paths to output
@@ -229,8 +229,24 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache) (_ []stri
 
 	var out bytes.Buffer
 	cmd.Stdout = &out
-	err = cmd.Run()
-	errz.Fatal(err)
+
+	if shellCache != nil {
+		key, err := shellCache.GenerateKey(deps, cmd.String())
+		errz.Fatal(err)
+
+		if dat, ok := shellCache.Get(key); ok {
+			out.Write(dat)
+		} else {
+			err = cmd.Run()
+			errz.Fatal(err)
+
+			err = shellCache.Save(key, out.Bytes())
+			errz.Fatal(err)
+		}
+	} else {
+		err = cmd.Run()
+		errz.Fatal(err)
+	}
 
 	env := strings.Split(out.String(), "\n")
 

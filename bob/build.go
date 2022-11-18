@@ -38,6 +38,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 		playbook.WithPushEnabled(b.enablePush),
 		playbook.WithPullEnabled(b.enablePull),
 		playbook.WitNixCache(b.Nix().cache),
+		playbook.WitNixShellCache(b.Nix().shellCache),
 	)
 	errz.Fatal(err)
 

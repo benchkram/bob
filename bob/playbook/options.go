@@ -54,3 +54,9 @@ func WitNixCache(c *nix.Cache) Option {
 		p.nixCache = c
 	}
 }
+
+func WitNixShellCache(c *nix.ShellCache) Option {
+	return func(p *Playbook) {
+		p.nixShellCache = c
+	}
+}

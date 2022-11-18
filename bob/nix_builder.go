@@ -16,6 +16,8 @@ import (
 type NixBuilder struct {
 	// cache allows caching the dependency to store path
 	cache *nix.Cache
+	// shellCache allows caching of the nix-shell --command='env' output
+	shellCache *nix.ShellCache
 }
 
 type NixOption func(n *NixBuilder)
@@ -23,6 +25,12 @@ type NixOption func(n *NixBuilder)
 func WithCache(cache *nix.Cache) NixOption {
 	return func(n *NixBuilder) {
 		n.cache = cache
+	}
+}
+
+func WithShellCache(cache *nix.ShellCache) NixOption {
+	return func(n *NixBuilder) {
+		n.shellCache = cache
 	}
 }
 
@@ -109,5 +117,5 @@ func (n *NixBuilder) BuildDependencies(deps []nix.Dependency) error {
 
 // BuildEnvironment builds the environment with all nix deps
 func (n *NixBuilder) BuildEnvironment(deps []nix.Dependency, nixpkgs string) (_ []string, err error) {
-	return nix.BuildEnvironment(deps, nixpkgs, n.cache)
+	return nix.BuildEnvironment(deps, nixpkgs, n.cache, n.shellCache)
 }

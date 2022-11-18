@@ -24,5 +24,7 @@ func DefaultNix() (_ *NixBuilder, err error) {
 	nixCache, err := nix.NewCacheStore(nix.WithPath(cacheDir))
 	errz.Fatal(err)
 
-	return NewNixBuilder(WithCache(nixCache)), nil
+	shellCache := nix.NewShellCache(filepath.Join(home, global.BobCacheNixShellCacheDir))
+
+	return NewNixBuilder(WithCache(nixCache), WithShellCache(shellCache)), nil
 }
