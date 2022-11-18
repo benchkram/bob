@@ -19,5 +19,6 @@ var (
 	BobCacheArtifactsDir       = filepath.Join(BobCacheDir, "artifacts")
 	BobAuthStoreDir            = filepath.Join(BobCacheDir, "auth")
 
-	BobCacheNixFileName = filepath.Join(BobCacheDir, BobNixCacheFile)
+	BobCacheNixFileName      = filepath.Join(BobCacheDir, BobNixCacheFile)
+	BobCacheNixShellCacheDir = filepath.Join(BobCacheDir, "env")
 )

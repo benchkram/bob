@@ -76,8 +76,11 @@ type Playbook struct {
 	// enablePull allows pulling artifacts from remote store
 	enablePull bool
 
-	// nixCache stores the Nix store paths
+	// nixCache caches the Nix store paths
 	nixCache *nix.Cache
+
+	// nixShellCache caches the nix-shell --command='env' command output
+	nixShellCache *nix.ShellCache
 }
 
 func New(root string, opts ...Option) *Playbook {
