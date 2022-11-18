@@ -124,11 +124,9 @@ func (t *Task) filteredInputs() ([]string, error) {
 	// Filter
 	filteredInputs := make([]string, 0, len(inputs))
 	for _, input := range inputs {
-		input = filepath.Clean(input)
-
 		var isIgnored bool
 		for _, ignore := range ignores {
-			if input == filepath.Clean(ignore) {
+			if strings.TrimPrefix(input, "./") == ignore {
 				isIgnored = true
 				break
 			}
