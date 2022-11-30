@@ -6,6 +6,7 @@ build:
   second/build:
     dependsOn: [ before ]
   before:
+    input: "*"
     cmd: echo "before"
   
 

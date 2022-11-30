@@ -20,7 +20,7 @@ const (
 	RebuildOnChange RebuildType = "on-change"
 )
 
-// Hint: When adding a new *Dirty field assure to update IsValidDecoration().
+// Hint: When adding a new *Dirty field assure to update IsCompoundTask().
 type Task struct {
 	// Inputs are directorys or files
 	// the task monitors for a rebuild.
@@ -143,13 +143,32 @@ func (t *Task) IsDecoration() bool {
 	return strings.ContainsRune(t.name, TaskPathSeparator)
 }
 
-// IsValidDecoration checks if the task is a valid decoration.
-// tasks containing a `dependsOn` node only are considered as
-// valid decoration.
+// IsCompoundTask checks if the task is a compound task
 //
-// Make sure to update IsValidDecoration() very time a new
-// *Dirty field is added to the task.
-func (t *Task) IsValidDecoration() bool {
+// tasks containing only `dependsOn` node are considered as compound task
+//
+// # Compound tasks are used when decorating a task or when grouping several tasks together
+//
+// Grouping tasks example:
+//
+//		build:
+//	    	dependsOn:
+//				- backend
+//				- frontend
+//
+// Decoration example:
+//
+//			import:
+//	 			- backend
+//			build:
+//			 	backend/hello: # the task decoration
+//	   				dependsOn:
+//	     				- generateDocs
+//	 			generateDocs:
+//	   		cmd: touch docs.md
+//
+// Make sure to update IsCompoundTask() very time a new *Dirty field is added to the task.
+func (t *Task) IsCompoundTask() bool {
 	if t.InputDirty != "" {
 		return false
 	}

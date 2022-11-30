@@ -80,7 +80,7 @@ func (p *Playbook) didChildTaskChange(taskname string, namePad int, coloredName 
 		}
 
 		// Check if child task changed
-		if t.State() != StateNoRebuildRequired {
+		if t.State() != StateCached && t.State() != StateNoRebuildRequired {
 			return Done
 		}
 

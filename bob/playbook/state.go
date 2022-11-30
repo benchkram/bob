@@ -12,8 +12,10 @@ func (s *State) Summary() string {
 		return "⌛       "
 	case StateCompleted:
 		return aurora.Green("✔").Bold().String() + "       "
-	case StateNoRebuildRequired:
+	case StateCached:
 		return aurora.Green("cached").String() + "  "
+	case StateNoRebuildRequired:
+		return aurora.Green("no-rebuild").String() + "  "
 	case StateFailed:
 		return aurora.Red("failed").String() + "  "
 	case StateCanceled:
@@ -29,8 +31,10 @@ func (s *State) Short() string {
 		return "pending"
 	case StateCompleted:
 		return "done"
-	case StateNoRebuildRequired:
+	case StateCached:
 		return "cached"
+	case StateNoRebuildRequired:
+		return "not-rebuild"
 	case StateFailed:
 		return "failed"
 	case StateCanceled:
@@ -43,7 +47,8 @@ func (s *State) Short() string {
 const (
 	StatePending           State = "PENDING"
 	StateCompleted         State = "COMPLETED"
-	StateNoRebuildRequired State = "CACHED"
+	StateCached            State = "CACHED"
+	StateNoRebuildRequired State = "NO-REBUILD"
 	StateFailed            State = "FAILED"
 	StateRunning           State = "RUNNING"
 	StateCanceled          State = "CANCELED"

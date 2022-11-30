@@ -57,7 +57,7 @@ var _ = Describe("Test artifact creation and extraction", func() {
 		It("extract artifact from store on rebuild", func() {
 			state, err := buildTask(b, bob.BuildTargetwithdirsTargetName)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCached))
 		})
 
 		It("cleanup", func() {
@@ -140,7 +140,7 @@ var _ = Describe("Test artifact creation and extraction from docker targets", fu
 		It("should extract artifact from store on rebuild", func() {
 			state, err := buildTask(b, bob.BuildTargetDockerImageName)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCached))
 		})
 
 		It("should check that the docker image was created correctly", func() {

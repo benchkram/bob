@@ -5,17 +5,20 @@ import:
 
 build:
   build:
+    input: "*"
     cmd: |-
       touch textfile_build2
       echo "Build!" > textfile_build2
     target: textfile_build2
     dependsOn: [ create ]
   hello:
+    input: "*"
     cmd: |-
       touch textfile_hello2
       echo "Hello!" > textfile_hello2
     target: textfile_hello2
   create:
+    input: "*"
     cmd: echo "create!"
 
 

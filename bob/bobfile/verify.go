@@ -5,13 +5,8 @@ import (
 )
 
 // Verify a bobfile before task runner.
-func (b *Bobfile) Verify() error {
-	return b.verifyBefore()
-}
-
-// VerifyBefore a bobfile before task runner.
-func (b *Bobfile) VerifyBefore() error {
-	return b.verifyBefore()
+func (b *Bobfile) Verify(cacheEnabled bool) error {
+	return b.verifyBefore(cacheEnabled)
 }
 
 // VerifyAfter a bobfile after task runner.
@@ -20,14 +15,17 @@ func (b *Bobfile) VerifyAfter() error {
 }
 
 // verifyBefore verifies a Bobfile before Run() is called.
-func (b *Bobfile) verifyBefore() (err error) {
+func (b *Bobfile) verifyBefore(cacheEnabled bool) (err error) {
 	defer errz.Recover(&err)
 
 	err = b.BTasks.VerifyDuplicateTargets()
 	errz.Fatal(err)
 
+	err = b.BTasks.VerifyMandatoryInputs()
+	errz.Fatal(err)
+
 	for _, task := range b.BTasks {
-		err = task.VerifyBefore()
+		err = task.VerifyBefore(cacheEnabled)
 		errz.Fatal(err)
 	}
 

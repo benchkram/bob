@@ -230,7 +230,7 @@ func requiresRebuildMustMatchFixtures(b *bob.B, fixtures []requiresRebuildFixtur
 	for _, f := range fixtures {
 		ts, err := pb.TaskStatus(f.taskname)
 		Expect(err).NotTo(HaveOccurred())
-		requiresRebuild := ts.State() != playbook.StateNoRebuildRequired
+		requiresRebuild := ts.State() != playbook.StateCached && ts.State() != playbook.StateNoRebuildRequired
 
 		Expect(f.requiresRebuild).To(Equal(requiresRebuild), fmt.Sprintf("task's %q rebuild requirement differ, got: %t, want: %t", f.taskname, requiresRebuild, f.requiresRebuild))
 	}

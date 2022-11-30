@@ -8,14 +8,9 @@ import (
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
-// Verify a bobfile before task runner.
-func (t *Task) Verify() error {
-	return t.verifyBefore()
-}
-
 // VerifyBefore a bobfile before task runner.
-func (t *Task) VerifyBefore() error {
-	return t.verifyBefore()
+func (t *Task) VerifyBefore(cacheEnabled bool) error {
+	return t.verifyBefore(cacheEnabled)
 }
 
 // VerifyAfter a bobfile after task runner.
@@ -23,8 +18,11 @@ func (t *Task) VerifyAfter() error {
 	return t.verifyAfter()
 }
 
-func (t *Task) verifyBefore() (err error) {
+func (t *Task) verifyBefore(cacheEnabled bool) (err error) {
 	if t.target != nil {
+		if cacheEnabled && t.Rebuild() == RebuildAlways {
+			return usererror.Wrap(fmt.Errorf("`rebuild:always` not allowed in combination with `target` for task: `%s`", t.name))
+		}
 		for _, path := range t.target.FilesystemEntriesRawPlain() {
 			if !isValidFilesystemTarget(path) {
 				return usererror.Wrap(fmt.Errorf("invalid target `%s` for task `%s`", path, t.name))

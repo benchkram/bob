@@ -27,7 +27,7 @@ func (p *Playbook) summary(processedTasks []*bobtask.Task) {
 
 		execTime := ""
 		status := stat.State()
-		if status != StateNoRebuildRequired {
+		if status != StateCached && status != StateNoRebuildRequired {
 			execTime = fmt.Sprintf("\t(%s)", format.DisplayDuration(stat.ExecutionTime()))
 		}
 

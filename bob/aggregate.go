@@ -217,7 +217,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
-	err = aggregate.Verify()
+	err = aggregate.Verify(b.enableCaching)
 	errz.Fatal(err)
 
 	err = aggregate.BTasks.IgnoreChildTargets()
@@ -246,7 +246,7 @@ func collectDecorations(ag *bobfile.Bobfile) (_ map[string][]string, err error) 
 		if !task.IsDecoration() {
 			continue
 		}
-		if !task.IsValidDecoration() {
+		if !task.IsCompoundTask() {
 			errz.Fatal(usererror.Wrap(fmt.Errorf("task `%s` modifies an imported task. It can only contain a `dependsOn` property", k)))
 		}
 		decorations[k] = task.DependsOn

@@ -232,6 +232,23 @@ func (tm Map) VerifyDuplicateTargets() error {
 	return nil
 }
 
+// VerifyMandatoryInputs check that build tasks have `input` field set
+// input is mandatory except when task has `rebuild:always` set or is a compound task
+func (tm Map) VerifyMandatoryInputs() error {
+	for taskName, v := range tm {
+		if v.InputDirty == "" {
+			if v.Rebuild() == RebuildAlways {
+				continue
+			}
+			if v.IsCompoundTask() {
+				continue
+			}
+			return usererror.Wrap(fmt.Errorf("no input provided for task `%s`", taskName))
+		}
+	}
+	return nil
+}
+
 func CreateErrAmbigousTargets(tasks []string, target string) error {
 	sort.Strings(tasks)
 	return fmt.Errorf("%w,\nmultiple tasks [%s] pointing to the same target `%s`", ErrAmbigousTargets, strings.Join(tasks, " "), target)
