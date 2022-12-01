@@ -297,7 +297,8 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 			"sleep 2",
 			"touch slowdone",
 		}, "\n"),
-		TargetDirty: "slowdone",
+		RebuildDirty: string(bobtask.RebuildAlways), // TODO: Requires Bob to allow rebuild always together with a target.
+		TargetDirty:  "slowdone",
 	}
 
 	// A run command to run a environment from a compose file
@@ -345,7 +346,8 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 	}
 
 	bobfile.BTasks["print"] = bobtask.Task{
-		CmdDirty: "echo ${HELLOWORLD}",
+		CmdDirty:     "echo ${HELLOWORLD}",
+		RebuildDirty: string(bobtask.RebuildAlways),
 	}
 
 	bobfile.BTasks["multilinetouch"] = bobtask.Task{
@@ -354,6 +356,7 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 			"touch \\\n\tmultilinefile1 \\\n\tmultilinefile2 \\\n\t\tmultilinefile3 \\\n        multilinefile4",
 			"touch \\\n  multilinefile5",
 		}, "\n"),
+		RebuildDirty: string(bobtask.RebuildAlways),
 	}
 
 	bobfile.BTasks["ignoredInputs"] = bobtask.Task{
@@ -369,7 +372,8 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 			"touch .bbuild/dirone/dirtwo/fileone",
 			"touch .bbuild/dirone/dirtwo/filetwo",
 		}, "\n"),
-		TargetDirty: ".bbuild/dirone/",
+		RebuildDirty: string(bobtask.RebuildAlways), // TODO: Requires Bob to allow rebuild always together with a target.
+		TargetDirty:  ".bbuild/dirone/",
 	}
 
 	bobfile.BTasks[SecondLevelDir+"/build2"] = bobtask.Task{
@@ -379,6 +383,7 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 	m := make(map[string]interface{})
 	m["image"] = BuildTargetBobTestImage
 	bobfile.BTasks[BuildTargetDockerImageName] = bobtask.Task{
+		InputDirty: "Dockerfile",
 		CmdDirty: strings.Join([]string{
 			fmt.Sprintf("docker build -t %s .", BuildTargetBobTestImage),
 		}, "\n"),
@@ -388,6 +393,7 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 	m = make(map[string]interface{})
 	m["image"] = BuildTargetBobTestImagePlus
 	bobfile.BTasks[BuildTargetDockerImagePlusName] = bobtask.Task{
+		InputDirty: "Dockerfile.plus",
 		CmdDirty: strings.Join([]string{
 			fmt.Sprintf("docker build -f Dockerfile.plus -t %s .", BuildTargetBobTestImagePlus),
 		}, "\n"),
@@ -444,7 +450,8 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool, projectName s
 	}
 
 	bobfile.BTasks["print"] = bobtask.Task{
-		CmdDirty: "echo hello-third-level",
+		CmdDirty:     "echo hello-third-level",
+		RebuildDirty: string(bobtask.RebuildAlways),
 	}
 
 	bobfile.Dependencies = []string{"docker", "go_1_18", "git"}
