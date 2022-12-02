@@ -15,7 +15,7 @@ func (s *State) Summary() string {
 	case StateCached:
 		return aurora.Green("cached").String() + "  "
 	case StateNoRebuildRequired:
-		return aurora.Green("no-rebuild").String() + "  "
+		return aurora.Gray(10, "✔").Bold().String() + "       "
 	case StateFailed:
 		return aurora.Red("failed").String() + "  "
 	case StateCanceled:
