@@ -9,8 +9,8 @@ import (
 )
 
 // VerifyBefore a bobfile before task runner.
-func (t *Task) VerifyBefore(cacheEnabled bool) error {
-	return t.verifyBefore(cacheEnabled)
+func (t *Task) VerifyBefore(cacheEnabled, allowRedundantTargets bool) error {
+	return t.verifyBefore(cacheEnabled, allowRedundantTargets)
 }
 
 // VerifyAfter a bobfile after task runner.
@@ -18,9 +18,9 @@ func (t *Task) VerifyAfter() error {
 	return t.verifyAfter()
 }
 
-func (t *Task) verifyBefore(cacheEnabled bool) (err error) {
+func (t *Task) verifyBefore(cacheEnabled, allowRedundantTargets bool) (err error) {
 	if t.target != nil {
-		if cacheEnabled && t.Rebuild() == RebuildAlways {
+		if !allowRedundantTargets && cacheEnabled && t.Rebuild() == RebuildAlways {
 			return usererror.Wrap(fmt.Errorf("`rebuild:always` not allowed in combination with `target` for task: `%s`", t.name))
 		}
 		for _, path := range t.target.FilesystemEntriesRawPlain() {

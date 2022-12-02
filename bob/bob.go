@@ -47,6 +47,11 @@ type B struct {
 	// from the cache Default: true
 	enableCaching bool
 
+	// allowRedundantTargets option allows redundant targets on build tasks
+	// a task has redundant target when it has a `target` used in combination with `rebuild:always`
+	// by default a user error will return when a task has both `target` and `rebuild:always` defined
+	allowRedundantTargets bool
+
 	// allowInsecure uses http protocol for accessing the remote artifact store, if any
 	allowInsecure bool
 
