@@ -57,7 +57,7 @@ var _ = Describe("Test artifact creation and extraction", func() {
 		It("extract artifact from store on rebuild", func() {
 			state, err := buildTask(b, bob.BuildTargetwithdirsTargetName)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateCached))
+			Expect(state.State()).To(Equal(playbook.StateCompleted))
 		})
 
 		It("cleanup", func() {

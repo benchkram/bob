@@ -108,14 +108,6 @@ var _ = Describe("Test bob multilevel build", func() {
 		It("checks that we do not require a rebuild of any of the levels", func() {
 			fixtures := []requiresRebuildFixture{
 				{
-					taskname:        bob.BuildAllTargetName,
-					requiresRebuild: false,
-				},
-				{
-					taskname:        "second-level/build2",
-					requiresRebuild: false,
-				},
-				{
 					taskname:        "second-level/third-level/build3",
 					requiresRebuild: false,
 				},
@@ -162,14 +154,6 @@ var _ = Describe("Test bob multilevel build", func() {
 
 		It("checks that we do not require a rebuild of any of the levels", func() {
 			fixtures := []requiresRebuildFixture{
-				{
-					taskname:        bob.BuildAllTargetName,
-					requiresRebuild: false,
-				},
-				{
-					taskname:        "second-level/build2",
-					requiresRebuild: false,
-				},
 				{
 					taskname:        "second-level/third-level/build3",
 					requiresRebuild: false,
