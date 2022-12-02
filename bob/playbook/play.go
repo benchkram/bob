@@ -91,16 +91,14 @@ func (p *Playbook) play() error {
 		return err
 	}
 
-	// Avoid finishing the playbook before all task are done running
-	// if p.numRunningTasks() > 0 {
-	// 	return nil
-	// }
+	// When arriving here it means that either there is currently
+	// no work necessary or that the playbook is done processing all tasks.
 
-	// // no work done, usually happens when
-	// // no task needs a rebuild.
-	// println("play done")
-	// p.Done()
-	//return ErrDone
+	// Finishing the playbook when there is no work left.
+	if !p.hasRunningOrPendingTasks() {
+		p.Done()
+		return ErrDone
+	}
 
-	return ErrDone
+	return nil
 }
