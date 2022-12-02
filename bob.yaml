@@ -5,18 +5,22 @@ variables:
 
 build:
   build:
+    input: "*"
     cmd: go build -tags dev -ldflags="-X 'main.Version=${VERSION}'" -o ./run
     target: run
     dependson:
       - proto
 
   gomodtidy:
+    input: "*"
     cmd: go mod tidy
 
   lint:
+    input: "*"
     cmd: CGO_ENABLED=0 golangci-lint run --timeout=10m0s
 
   test:
+    input: "*"
     cmd: go test ./...
 
   proto:
