@@ -297,7 +297,7 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 			"sleep 2",
 			"touch slowdone",
 		}, "\n"),
-		RebuildDirty: string(bobtask.RebuildAlways), // TODO: Requires Bob to allow rebuild always together with a target.
+		RebuildDirty: string(bobtask.RebuildAlways),
 		TargetDirty:  "slowdone",
 	}
 
@@ -372,7 +372,7 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 			"touch .bbuild/dirone/dirtwo/fileone",
 			"touch .bbuild/dirone/dirtwo/filetwo",
 		}, "\n"),
-		RebuildDirty: string(bobtask.RebuildAlways), // TODO: Requires Bob to allow rebuild always together with a target.
+		RebuildDirty: string(bobtask.RebuildAlways),
 		TargetDirty:  ".bbuild/dirone/",
 	}
 
