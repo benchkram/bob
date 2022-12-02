@@ -39,7 +39,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 				err := p.build(ctx, t)
 				if err != nil {
 					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, fmt.Errorf("(build loop) [task: %s], %w", t.Name(), err))
+					processingErrors = append(processingErrors, fmt.Errorf("(worker) [task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 
 					// Any error occurred during a build puts the
@@ -70,7 +70,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			if err != nil {
 				if !errors.Is(err, ErrDone) {
 					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, fmt.Errorf("(playbook exit) [task: %s], %w", t.Name(), err))
+					processingErrors = append(processingErrors, fmt.Errorf("(scheduler) [task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 				}
 				break
