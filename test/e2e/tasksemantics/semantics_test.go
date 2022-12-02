@@ -188,9 +188,8 @@ var _ = Describe("Testing task semantics behaviour", func() {
 			out := output()
 			Expect(out).To(ContainSubstring(buildCached.Summary()))
 
-			// build is marked as no-rebuild
-			buildNotRequired := playbook.StateNoRebuildRequired
-			Expect(out).To(ContainSubstring(buildNotRequired.Summary()))
+			// build is marked as no-rebuild and shown with -
+			Expect(out).To(ContainSubstring("-"))
 		})
 
 		It("it will be rebuilt when input * changes", func() {
