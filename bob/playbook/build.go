@@ -38,7 +38,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 				err := p.build(ctx, t)
 				if err != nil {
 					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, fmt.Errorf("[task: %s], %w", t.Name(), err))
+					processingErrors = append(processingErrors, fmt.Errorf("(build loop) [task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 
 					// Any error occurred during a build puts the
@@ -61,15 +61,18 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
 
 			// blocks till a worker is available
+			println("sending " + t.Name())
 			queue <- t
 
 			// initiate another playbook run
 			// as there might be workers without assigned tasks left.
 			err := p.Play()
 			if err != nil {
-				if !errors.Is(err, ErrDone) {
+				if errors.Is(err, ErrDone) {
+					p.Done()
+				} else {
 					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, fmt.Errorf("[task: %s], %w", t.Name(), err))
+					processingErrors = append(processingErrors, fmt.Errorf("(playbook exit) [task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 				}
 				break
@@ -85,6 +88,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	<-p.DoneChan()
 	processing.Wait()
 
+	println("closing")
 	close(queue)
 
 	// iterate through tasks and logs
@@ -98,7 +102,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		)
 	}
 
-	p.summary(processedTasks)
+	//p.summary(processedTasks)
 
 	if len(processingErrors) > 0 {
 		// Pass only the very first processing error.

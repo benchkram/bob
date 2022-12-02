@@ -74,6 +74,7 @@ func (p *Playbook) play() error {
 		task.SetStart(time.Now())
 		// TODO: for async assure to handle send to a closed channel.
 		_ = p.setTaskState(task.Name(), StateRunning, nil)
+		println("sending to task channel " + task.Name())
 		p.taskChannel <- task.Task
 		return taskQueued
 	})
@@ -92,13 +93,15 @@ func (p *Playbook) play() error {
 	}
 
 	// Avoid finishing the playbook before all task are done running
-	if p.numRunningTasks() > 0 {
-		return nil
-	}
+	// if p.numRunningTasks() > 0 {
+	// 	return nil
+	// }
 
-	// no work done, usually happens when
-	// no task needs a rebuild.
-	p.Done()
+	// // no work done, usually happens when
+	// // no task needs a rebuild.
+	// println("play done")
+	// p.Done()
+	//return ErrDone
 
-	return nil
+	return ErrDone
 }
