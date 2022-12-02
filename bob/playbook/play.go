@@ -74,7 +74,6 @@ func (p *Playbook) play() error {
 		task.SetStart(time.Now())
 		// TODO: for async assure to handle send to a closed channel.
 		_ = p.setTaskState(task.Name(), StateRunning, nil)
-		println("sending to task channel " + task.Name())
 		p.taskChannel <- task.Task
 		return taskQueued
 	})

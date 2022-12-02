@@ -61,7 +61,6 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
 
 			// blocks till a worker is available
-			println("sending " + t.Name())
 			queue <- t
 
 			// initiate another playbook run
@@ -88,7 +87,6 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	<-p.DoneChan()
 	processing.Wait()
 
-	println("closing")
 	close(queue)
 
 	// iterate through tasks and logs
@@ -102,7 +100,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		)
 	}
 
-	//p.summary(processedTasks)
+	p.summary(processedTasks)
 
 	if len(processingErrors) > 0 {
 		// Pass only the very first processing error.
