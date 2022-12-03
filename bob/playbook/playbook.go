@@ -34,9 +34,13 @@ type Playbook struct {
 	errorChannel chan error
 
 	// root task
-	root string
+	root   string
+	rootID int
 
 	Tasks StatusMap
+
+	// TasksOptimized uses a array instead of an map
+	TasksOptimized StatusSlice
 
 	namePad int
 
@@ -81,15 +85,21 @@ type Playbook struct {
 
 	// nixShellCache caches the nix-shell --command='env' command output
 	nixShellCache *nix.ShellCache
+
+	// oncePrepareOptimizedAccess is used to initalize the optimized
+	// slice to access tasks.
+	oncePrepareOptimizedAccess sync.Once
 }
 
-func New(root string, opts ...Option) *Playbook {
+func New(root string, rootID int, opts ...Option) *Playbook {
 	p := &Playbook{
-		errorChannel:  make(chan error),
-		Tasks:         make(StatusMap),
-		doneChannel:   make(chan struct{}),
-		enableCaching: true,
-		root:          root,
+		errorChannel:   make(chan error),
+		Tasks:          make(StatusMap),
+		TasksOptimized: make(StatusSlice, 0),
+		doneChannel:    make(chan struct{}),
+		enableCaching:  true,
+		root:           root,
+		rootID:         rootID,
 
 		maxParallel: runtime.NumCPU(),
 
@@ -127,7 +137,7 @@ const (
 
 func (p *Playbook) hasRunningOrPendingTasks() bool {
 	var runningOrPending bool
-	_ = p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
+	_ = p.TasksOptimized.walk(p.rootID, func(taskID int, task *Status, err error) error {
 		if err != nil {
 			return err
 		}

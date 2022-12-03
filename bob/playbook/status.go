@@ -12,7 +12,7 @@ import (
 type Status struct {
 	*bobtask.Task
 
-	stateMu sync.RWMutex
+	stateMu sync.Mutex
 	state   State
 
 	startMu sync.RWMutex
@@ -32,17 +32,17 @@ func NewStatus(task *bobtask.Task) *Status {
 }
 
 func (ts *Status) State() State {
-	ts.stateMu.RLock()
+	ts.stateMu.Lock()
 	state := ts.state
-	ts.stateMu.RUnlock()
+	ts.stateMu.Unlock()
 	return state
 }
 
 func (ts *Status) SetState(s State, err error) {
 	ts.stateMu.Lock()
-	defer ts.stateMu.Unlock()
 	ts.state = s
 	ts.Error = err
+	ts.stateMu.Unlock()
 }
 
 func (ts *Status) ExecutionTime() time.Duration {

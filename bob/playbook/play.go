@@ -4,12 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
-	"github.com/benchkram/bob/pkg/boberror"
-	"github.com/benchkram/bob/pkg/usererror"
 )
 
 func (p *Playbook) Play() (err error) {
+
 	return p.play()
 }
 
@@ -18,6 +16,15 @@ func (p *Playbook) play() error {
 	if p.done {
 		return ErrDone
 	}
+	p.oncePrepareOptimizedAccess.Do(func() {
+		_ = p.Tasks.walk(p.root, func(taskname string, task *Status, _ error) error {
+			for _, dependentTaskName := range task.DependsOn {
+				t := p.Tasks[dependentTaskName]
+				task.DependsOnIDs = append(task.DependsOnIDs, t.TaskID)
+			}
+			return nil
+		})
+	})
 
 	p.playMutex.Lock()
 	defer p.playMutex.Unlock()
@@ -33,7 +40,7 @@ func (p *Playbook) play() error {
 	var taskQueued = fmt.Errorf("task queued")
 	var taskFailed = fmt.Errorf("task failed")
 	//var noTaskReadyToRun = fmt.Errorf("no task ready to run")
-	err := p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
+	err := p.TasksOptimized.walk(p.rootID, func(taskID int, task *Status, err error) error {
 		if err != nil {
 			return err
 		}
@@ -43,12 +50,8 @@ func (p *Playbook) play() error {
 		switch task.State() {
 		case StatePending:
 			// Check if all dependent tasks are completed
-			for _, dependentTaskName := range task.Task.DependsOn {
-				t, ok := p.Tasks[dependentTaskName]
-				if !ok {
-					//fmt.Printf("Task %s does not exist", dependentTaskName)
-					return usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
-				}
+			for _, dependentTaskID := range task.Task.DependsOnIDs {
+				t := p.TasksOptimized[dependentTaskID]
 
 				state := t.State()
 				if state != StateCompleted && state != StateNoRebuildRequired {
