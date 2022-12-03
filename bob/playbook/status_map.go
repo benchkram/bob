@@ -1,11 +1,15 @@
 package playbook
 
 import (
+	"fmt"
+
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
 type StatusMap map[string]*Status
+
+var ErrWalkDone = fmt.Errorf("walking done")
 
 // walk the task tree starting at root. Following dependend tasks.
 func (tsm StatusMap) walk(root string, fn func(taskname string, _ *Status, _ error) error) error {

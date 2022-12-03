@@ -126,7 +126,7 @@ const (
 )
 
 func (p *Playbook) hasRunningOrPendingTasks() bool {
-	var num int
+	var runningOrPending bool
 	_ = p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
 		if err != nil {
 			return err
@@ -134,12 +134,13 @@ func (p *Playbook) hasRunningOrPendingTasks() bool {
 
 		state := task.State()
 		if state == StateRunning || state == StatePending {
-			num++
+			runningOrPending = true
+			return ErrWalkDone
 		}
 
 		return nil
 	})
-	return num > 0
+	return runningOrPending
 }
 
 func (p *Playbook) Done() {

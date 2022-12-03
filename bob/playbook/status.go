@@ -33,8 +33,9 @@ func NewStatus(task *bobtask.Task) *Status {
 
 func (ts *Status) State() State {
 	ts.stateMu.RLock()
-	defer ts.stateMu.RUnlock()
-	return ts.state
+	state := ts.state
+	ts.stateMu.RUnlock()
+	return state
 }
 
 func (ts *Status) SetState(s State, err error) {

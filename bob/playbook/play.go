@@ -32,6 +32,7 @@ func (p *Playbook) play() error {
 	// Once it returns `nil` the playbook is done with it's work.
 	var taskQueued = fmt.Errorf("task queued")
 	var taskFailed = fmt.Errorf("task failed")
+	//var noTaskReadyToRun = fmt.Errorf("no task ready to run")
 	err := p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
 		if err != nil {
 			return err

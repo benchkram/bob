@@ -23,8 +23,8 @@ func (b *Bobfile) VerifyAfter() error {
 func (b *Bobfile) verifyBefore() (err error) {
 	defer errz.Recover(&err)
 
-	err = b.BTasks.VerifyDuplicateTargets()
-	errz.Fatal(err)
+	// err = b.BTasks.VerifyDuplicateTargets()
+	// errz.Fatal(err)
 
 	for _, task := range b.BTasks {
 		err = task.VerifyBefore()
