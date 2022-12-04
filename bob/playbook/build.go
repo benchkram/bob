@@ -2,7 +2,6 @@ package playbook
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -29,19 +28,20 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	boblog.Log.Info(fmt.Sprintf("Using %d workers", workers))
 
 	processing := sync.WaitGroup{}
-	var processingMutex sync.Mutex
-	var processingNum int
+	// var processingMutex sync.Mutex
+	// var processingNum int
 
 	// Start the workers which listen on task queue
 	for i := 0; i < workers; i++ {
 		go func(workerID int) {
-			for t := range queue {
+			for t := range p.TaskChannel() {
 				processing.Add(1)
-				processingMutex.Lock()
-				processingNum++
-				processingMutex.Unlock()
+				// processingMutex.Lock()
+				// processingNum++
+				// processingMutex.Unlock()
 
 				boblog.Log.V(5).Info(fmt.Sprintf("RUNNING task %s on worker  %d ", t.Name(), workerID))
+
 				err := p.build(ctx, t)
 				if err != nil {
 					processingErrorsMutex.Lock()
@@ -51,54 +51,54 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 					// Any error occurred during a build puts the
 					// playbook in a done state. This prevents
 					// further tasks be queued for execution.
-					p.Done()
+					// p.Done()
 				}
 
 				processedTasks = append(processedTasks, t)
 				processing.Done()
-				processingMutex.Lock()
-				processingNum--
-				processingMutex.Unlock()
+				// processingMutex.Lock()
+				// processingNum--
+				// processingMutex.Unlock()
 			}
 		}(i + 1)
 	}
 
 	// Listen for tasks from the playbook and forward them to the worker pool
-	go func() {
-		c := p.TaskChannel()
-		for t := range c {
-			boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
+	// go func() {
+	// 	c := p.TaskChannel()
+	// 	for t := range c {
+	// 		boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
 
-			// blocks till a worker is available
-			queue <- t
+	// 		// blocks till a worker is available
+	// 		queue <- t
 
-			// initiate another playbook run,
-			// if there might are workers without
-			// assigned tasks left.
-			processingMutex.Lock()
-			numProc := processingNum
-			processingMutex.Unlock()
-			if numProc < workers {
-				err := p.Play()
-				if err != nil {
-					if !errors.Is(err, ErrDone) {
-						processingErrorsMutex.Lock()
-						processingErrors = append(processingErrors, fmt.Errorf("(scheduler) [task: %s], %w", t.Name(), err))
-						processingErrorsMutex.Unlock()
-					}
-					break
-				}
-			}
+	// 		// // initiate another playbook run,
+	// 		// // if there might are workers without
+	// 		// // assigned tasks left.
+	// 		// processingMutex.Lock()
+	// 		// numProc := processingNum
+	// 		// processingMutex.Unlock()
+	// 		// if numProc < workers {
+	// 		// 	err := p.Play()
+	// 		// 	if err != nil {
+	// 		// 		if !errors.Is(err, ErrDone) {
+	// 		// 			processingErrorsMutex.Lock()
+	// 		// 			processingErrors = append(processingErrors, fmt.Errorf("(scheduler) [task: %s], %w", t.Name(), err))
+	// 		// 			processingErrorsMutex.Unlock()
+	// 		// 		}
+	// 		// 		break
+	// 		// 	}
+	// 		// }
 
-		}
-	}()
+	// 	}
+	// }()
 
 	err = p.Play()
 	if err != nil {
 		return err
 	}
 
-	<-p.DoneChan()
+	//<-p.DoneChan()
 	processing.Wait()
 
 	close(queue)

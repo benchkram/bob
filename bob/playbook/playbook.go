@@ -2,7 +2,6 @@ package playbook
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"runtime"
 	"sort"
@@ -214,12 +213,12 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 	// update task state and trigger another playbook run
 	err = p.setTaskState(taskname, StateCompleted, nil)
 	errz.Fatal(err)
-	err = p.play()
-	if err != nil {
-		if !errors.Is(err, ErrDone) {
-			errz.Fatal(err)
-		}
-	}
+	// err = p.play()
+	// if err != nil {
+	// 	if !errors.Is(err, ErrDone) {
+	// 		errz.Fatal(err)
+	// 	}
+	// }
 
 	return nil
 }
@@ -231,12 +230,12 @@ func (p *Playbook) TaskNoRebuildRequired(taskname string) (err error) {
 	err = p.setTaskState(taskname, StateNoRebuildRequired, nil)
 	errz.Fatal(err)
 
-	err = p.play()
-	if err != nil {
-		if !errors.Is(err, ErrDone) {
-			errz.Fatal(err)
-		}
-	}
+	// err = p.play()
+	// if err != nil {
+	// 	if !errors.Is(err, ErrDone) {
+	// 		errz.Fatal(err)
+	// 	}
+	// }
 
 	return nil
 }
@@ -252,7 +251,7 @@ func (p *Playbook) TaskFailed(taskname string, taskErr error) (err error) {
 
 	// give the playbook the chance to set
 	// the state to done.
-	_ = p.play()
+	//_ = p.play()
 
 	return nil
 }

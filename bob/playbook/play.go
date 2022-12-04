@@ -8,7 +8,7 @@ import (
 
 func (p *Playbook) Play() (err error) {
 
-	return p.play()
+	return p.playOnce()
 }
 
 func (p *Playbook) play() error {
@@ -136,7 +136,7 @@ func (p *Playbook) playOnce() error {
 	var taskQueued = fmt.Errorf("task queued")
 	var taskFailed = fmt.Errorf("task failed")
 	//var noTaskReadyToRun = fmt.Errorf("no task ready to run")
-	err := p.TasksOptimized.walk(p.rootID, func(taskID int, task *Status, err error) error {
+	err := p.TasksOptimized.walkBottomFirst(p.rootID, func(taskID int, task *Status, err error) error {
 		if err != nil {
 			return err
 		}
@@ -145,17 +145,7 @@ func (p *Playbook) playOnce() error {
 
 		switch task.State() {
 		case StatePending:
-			// Check if all dependent tasks are completed
-			for _, dependentTaskID := range task.Task.DependsOnIDs {
-				t := p.TasksOptimized[dependentTaskID]
-
-				state := t.State()
-				if state != StateCompleted && state != StateNoRebuildRequired {
-					// A dependent task is not completed.
-					// So this task is not yet ready to run.
-					return nil
-				}
-			}
+			// Queue task
 		case StateFailed:
 			return taskFailed
 		case StateCanceled:
@@ -177,7 +167,7 @@ func (p *Playbook) playOnce() error {
 		// TODO: for async assure to handle send to a closed channel.
 		_ = p.setTaskState(task.Name(), StateRunning, nil)
 		p.taskChannel <- task.Task
-		return taskQueued
+		return nil
 	})
 
 	// taskQueued => return nil (happy path)
@@ -193,14 +183,14 @@ func (p *Playbook) playOnce() error {
 		return err
 	}
 
-	// When arriving here it means that either there is currently
-	// no work necessary or that the playbook is done processing all tasks.
+	// // When arriving here it means that either there is currently
+	// // no work necessary or that the playbook is done processing all tasks.
 
-	// Finishing the playbook when there is no work left.
-	if !p.hasRunningOrPendingTasks() {
-		p.Done()
-		return ErrDone
-	}
+	// // Finishing the playbook when there is no work left.
+	// if !p.hasRunningOrPendingTasks() {
+	// 	p.Done()
+	// 	return ErrDone
+	// }
 
 	return nil
 }
