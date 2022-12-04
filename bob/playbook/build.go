@@ -29,12 +29,18 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	boblog.Log.Info(fmt.Sprintf("Using %d workers", workers))
 
 	processing := sync.WaitGroup{}
+	var processingMutex sync.Mutex
+	var processingNum int
 
 	// Start the workers which listen on task queue
 	for i := 0; i < workers; i++ {
 		go func(workerID int) {
 			for t := range queue {
 				processing.Add(1)
+				processingMutex.Lock()
+				processingNum++
+				processingMutex.Unlock()
+
 				boblog.Log.V(5).Info(fmt.Sprintf("RUNNING task %s on worker  %d ", t.Name(), workerID))
 				err := p.build(ctx, t)
 				if err != nil {
@@ -50,6 +56,9 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 				processedTasks = append(processedTasks, t)
 				processing.Done()
+				processingMutex.Lock()
+				processingNum--
+				processingMutex.Unlock()
 			}
 		}(i + 1)
 	}
@@ -64,17 +73,23 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			queue <- t
 
 			// initiate another playbook run,
-			// as there might be workers without
+			// if there might are workers without
 			// assigned tasks left.
-			err := p.Play()
-			if err != nil {
-				if !errors.Is(err, ErrDone) {
-					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, fmt.Errorf("(scheduler) [task: %s], %w", t.Name(), err))
-					processingErrorsMutex.Unlock()
+			processingMutex.Lock()
+			numProc := processingNum
+			processingMutex.Unlock()
+			if numProc < workers {
+				err := p.Play()
+				if err != nil {
+					if !errors.Is(err, ErrDone) {
+						processingErrorsMutex.Lock()
+						processingErrors = append(processingErrors, fmt.Errorf("(scheduler) [task: %s], %w", t.Name(), err))
+						processingErrorsMutex.Unlock()
+					}
+					break
 				}
-				break
 			}
+
 		}
 	}()
 

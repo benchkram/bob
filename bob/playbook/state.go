@@ -35,6 +35,8 @@ func (s *State) Short() string {
 		return "failed"
 	case StateCanceled:
 		return "canceled"
+	case StateQueued:
+		return "queued"
 	default:
 		return ""
 	}
@@ -47,4 +49,5 @@ const (
 	StateFailed            State = "FAILED"
 	StateRunning           State = "RUNNING"
 	StateCanceled          State = "CANCELED"
+	StateQueued            State = "QUEUED"
 )
