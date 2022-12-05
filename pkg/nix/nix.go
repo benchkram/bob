@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/bob/pkg/format"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
@@ -22,6 +23,17 @@ type Dependency struct {
 	// Nixpkgs can be empty or a link to desired revision
 	// ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
 	Nixpkgs string
+}
+
+func HashDependencies(deps []Dependency) (string, error) {
+	hash := filehash.New()
+	for _, dep := range deps {
+		err := hash.AddBytes(bytes.NewBuffer([]byte(dep.Name + dep.Nixpkgs)))
+		if err != nil {
+			return "", err
+		}
+	}
+	return string(hash.Sum()), nil
 }
 
 // IsInstalled checks if nix is installed on the system

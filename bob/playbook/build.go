@@ -114,7 +114,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		)
 	}
 
-	p.summary(processedTasks)
+	//p.summary(processedTasks)
 
 	if len(processingErrors) > 0 {
 		// Pass only the very first processing error.

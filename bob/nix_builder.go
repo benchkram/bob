@@ -71,22 +71,34 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
+	// maps nix dependecies to nixShellEnv
+	schellEnvCache := make(map[string][]string)
+
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
 	for _, name := range buildTasksInPipeline {
 		t := ag.BTasks[name]
+
+		t.SetNixpkgs(ag.Nixpkgs)
 
 		// construct used dependencies for this task
 		var deps []nix.Dependency
 		deps = append(deps, t.Dependencies()...)
 		deps = nix.UniqueDeps(deps)
 
-		t.SetNixpkgs(ag.Nixpkgs)
-
-		nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
+		hash, err := nix.HashDependencies(deps)
 		errz.Fatal(err)
-		t.SetEnv(envutil.Merge(nixShellEnv, t.Env()))
 
+		env, ok := schellEnvCache[hash]
+		if !ok {
+			// build the environment using nix-shell
+			nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
+			errz.Fatal(err)
+			env = envutil.Merge(nixShellEnv, t.Env())
+			t.SetEnv(env)
+		}
+
+		schellEnvCache[hash] = env
 		ag.BTasks[name] = t
 	}
 
