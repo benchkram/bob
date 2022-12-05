@@ -205,16 +205,14 @@ func (tm Map) VerifyDuplicateTargets() error {
 		if !v.TargetExists() {
 			continue
 		}
-		target, _ := v.Target()
-
-		for _, t := range target.DockerImages() {
+		for _, t := range v.target.DockerImages() {
 			targetToTasks[t] = append(targetToTasks[t], taskName)
 
 			if len(targetToTasks[t]) > 1 {
 				return usererror.Wrap(CreateErrAmbiguousTargets(targetToTasks[t], t))
 			}
 		}
-		for _, t := range target.FilesystemEntriesRaw() {
+		for _, t := range v.target.FilesystemEntriesRaw() {
 			targetToTasks[t] = append(targetToTasks[t], taskName)
 
 			if len(targetToTasks[t]) > 1 {
