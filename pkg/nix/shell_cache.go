@@ -18,11 +18,15 @@ import (
 type ShellCache struct {
 	// dir is the root directory where the cache files are stored
 	dir string
+	// dataCache caches the file contents, so we don't need to call os.ReadFile on second read of the same file
+	dataCache map[string][]byte
 }
 
 // NewShellCache creates a new instance of ShellCache
 func NewShellCache(dir string) *ShellCache {
-	return &ShellCache{dir}
+	dataCache := make(map[string][]byte)
+
+	return &ShellCache{dir, dataCache}
 }
 
 // Save caches the output inside a file named by the key cache
@@ -41,6 +45,10 @@ func (c *ShellCache) Save(key string, output []byte) (err error) {
 // Get the data by cache key
 // If Reading the file returns an error, empty data is returned
 func (c *ShellCache) Get(key string) ([]byte, bool) {
+	if i, ok := c.dataCache[filepath.Join(c.dir, key)]; ok {
+		return i, true
+	}
+
 	if !file.Exists(filepath.Join(c.dir, key)) {
 		return []byte{}, false
 	}
@@ -48,6 +56,8 @@ func (c *ShellCache) Get(key string) ([]byte, bool) {
 	if err != nil {
 		return []byte{}, false
 	}
+
+	c.dataCache[filepath.Join(c.dir, key)] = data
 	return data, true
 }
 

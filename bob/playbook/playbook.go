@@ -125,20 +125,21 @@ const (
 	TargetNotInLocalStore    RebuildCause = "target-not-in-localstore"
 )
 
-func (p *Playbook) numRunningTasks() int {
-	var parallel int
+func (p *Playbook) hasRunningOrPendingTasks() bool {
+	var num int
 	_ = p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if task.State() == StateRunning {
-			parallel++
+		state := task.State()
+		if state == StateRunning || state == StatePending {
+			num++
 		}
 
 		return nil
 	})
-	return parallel
+	return num > 0
 }
 
 func (p *Playbook) Done() {
