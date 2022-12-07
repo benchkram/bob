@@ -2,6 +2,7 @@ package playbook
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -23,22 +24,36 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	// Setup worker pool and queue.
 	workers := p.maxParallel
-	queue := make(chan *bobtask.Task)
+	workerQueues := []chan *bobtask.Task{}
+	workerAvailabilityQueue := make(chan int, 1000)
 
 	boblog.Log.Info(fmt.Sprintf("Using %d workers", workers))
 
-	processing := sync.WaitGroup{}
-	// var processingMutex sync.Mutex
-	// var processingNum int
+	runningWorkers := sync.WaitGroup{}
+
+	var once sync.Once
+	shutdownWorkers := func() {
+		once.Do(func() {
+			// Intitate gracefull shutdown of all workers
+			// by closing their queues.
+			for _, wq := range workerQueues {
+				close(wq)
+			}
+			// clearing the queue
+			workerQueues = []chan *bobtask.Task{}
+		})
+	}
 
 	// Start the workers which listen on task queue
 	for i := 0; i < workers; i++ {
+		queue := make(chan *bobtask.Task)
+		workerQueues = append(workerQueues, queue)
+		runningWorkers.Add(1)
 		go func(workerID int) {
-			for t := range p.TaskChannel() {
-				processing.Add(1)
-				// processingMutex.Lock()
-				// processingNum++
-				// processingMutex.Unlock()
+			// initially signal availability to receive workload
+			workerAvailabilityQueue <- workerID
+
+			for t := range queue {
 
 				boblog.Log.V(5).Info(fmt.Sprintf("RUNNING task %s on worker  %d ", t.Name(), workerID))
 
@@ -48,60 +63,81 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 					processingErrors = append(processingErrors, fmt.Errorf("(worker) [task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 
+					shutdownWorkers()
+
 					// Any error occurred during a build puts the
 					// playbook in a done state. This prevents
 					// further tasks be queued for execution.
 					// p.Done()
+
+					// TODO: shutdown gracefully.
+					// close(workerAvailabilityQueue)
+					// for _, wq := range workerQeues {
+					//  close(wq)
+					// }
+
 				}
 
 				processedTasks = append(processedTasks, t)
-				processing.Done()
-				// processingMutex.Lock()
-				// processingNum--
-				// processingMutex.Unlock()
+
+				// done with processing. signal availability.
+				select {
+				case workerAvailabilityQueue <- workerID:
+				default:
+				}
 			}
+			runningWorkers.Done()
 		}(i + 1)
 	}
 
-	// Listen for tasks from the playbook and forward them to the worker pool
-	// go func() {
-	// 	c := p.TaskChannel()
-	// 	for t := range c {
-	// 		boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
+	// listen for available workers
+	go func() {
+		// A buffer for workers which have
+		// no workload assigned.
+		workerBuffer := []int{}
 
-	// 		// blocks till a worker is available
-	// 		queue <- t
+		for workerID := range workerAvailabilityQueue {
+			task, err := p.Next()
+			if err != nil {
+				if errors.Is(err, ErrDone) {
+					shutdownWorkers()
 
-	// 		// // initiate another playbook run,
-	// 		// // if there might are workers without
-	// 		// // assigned tasks left.
-	// 		// processingMutex.Lock()
-	// 		// numProc := processingNum
-	// 		// processingMutex.Unlock()
-	// 		// if numProc < workers {
-	// 		// 	err := p.Play()
-	// 		// 	if err != nil {
-	// 		// 		if !errors.Is(err, ErrDone) {
-	// 		// 			processingErrorsMutex.Lock()
-	// 		// 			processingErrors = append(processingErrors, fmt.Errorf("(scheduler) [task: %s], %w", t.Name(), err))
-	// 		// 			processingErrorsMutex.Unlock()
-	// 		// 		}
-	// 		// 		break
-	// 		// 	}
-	// 		// }
+					// exit
+					return
+				}
 
-	// 	}
-	// }()
+				processingErrorsMutex.Lock()
+				processingErrors = append(processingErrors, fmt.Errorf("worker-availability-queue: unexpected error comming from Next(): %w", err))
+				processingErrorsMutex.Unlock()
+				return
+			}
 
-	err = p.Play()
-	if err != nil {
-		return err
-	}
+			// Push workload to the worker or store the worker for later.
+			if task != nil {
+				// Send workload to worker
+				workerQueues[workerID-1] <- task
 
-	//<-p.DoneChan()
-	processing.Wait()
+				// There might be more workload left.
+				// Reqeuing a workler from the buffer.
+				if len(workerBuffer) > 0 {
+					wID := workerBuffer[len(workerBuffer)-1]
+					workerBuffer = workerBuffer[:len(workerBuffer)-1]
 
-	close(queue)
+					// requeue a buffered worker
+					workerAvailabilityQueue <- wID
+				}
+			} else {
+				// No task yet ready to be worked on butt the playbook is not done yet.
+				// Therfore the worker is stored in a buffer and is requeued on
+				// the next change to the playbook.
+				workerBuffer = append(workerBuffer, workerID)
+			}
+		}
+
+	}()
+
+	runningWorkers.Wait()
+	close(workerAvailabilityQueue)
 
 	// iterate through tasks and logs
 	// skipped input files.
