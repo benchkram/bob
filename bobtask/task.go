@@ -51,7 +51,6 @@ type Task struct {
 	rebuild      RebuildType
 
 	// name is the name of the task
-	// TODO: Make this public to allow yaml.Marshal to add this to the task hash?!?
 	name string
 
 	// project this tasks belongs to
@@ -172,9 +171,16 @@ func (t *Task) IsValidDecoration() bool {
 	return true
 }
 
-// Description of the Task used in hashing. It influences the re-build policy of the task
-func (t *Task) Description() string {
+// description of the Task used in hashing.
+// Influences the re-build policy of the task.
+//
+// inputs are intentionaly not cosidered here as the
+// content of those files is included in the hash.
+func (t *Task) description() string {
 	var sb strings.Builder
+
+	sb.WriteString(t.name)
+	sb.WriteString(t.project)
 
 	for _, v := range t.cmds {
 		sb.WriteString(v)
@@ -187,10 +193,11 @@ func (t *Task) Description() string {
 	sort.Strings(t.env)
 	for _, v := range t.env {
 		// ignore buildCommandPath and SHLVL due to non-reproducibility
-		if strings.HasPrefix(v, "buildCommandPath=") {
+		v = strings.ToLower(v)
+		if strings.HasPrefix(v, "buildcommandpath=") {
 			continue
 		}
-		if strings.HasPrefix(v, "SHLVL=") {
+		if strings.HasPrefix(v, "shlvl=") {
 			continue
 		}
 		sb.WriteString(v)

@@ -30,7 +30,7 @@ func (t *Task) HashIn() (taskHash hash.In, err error) {
 func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	h := filehash.New()
 
-	// Hash input files
+	// Hash content of input files
 	for _, f := range t.inputs {
 		err = h.AddFile(f)
 		if err != nil {
@@ -43,8 +43,8 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 		}
 	}
 
-	// Hash the public task description
-	err = h.AddBytes(strings.NewReader(t.Description()))
+	// Hash the task description
+	err = h.AddBytes(strings.NewReader(t.description()))
 	if err != nil {
 		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
 	}
