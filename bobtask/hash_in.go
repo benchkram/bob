@@ -58,17 +58,3 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 
 	return hashIn, nil
 }
-
-func filterEnvOfIgnores(env []string) []string {
-	var result []string
-	for _, v := range env {
-		if strings.HasPrefix(v, "buildCommandPath=") {
-			continue
-		}
-		if strings.HasPrefix(v, "SHLVL=") {
-			continue
-		}
-		result = append(result, v)
-	}
-	return result
-}
