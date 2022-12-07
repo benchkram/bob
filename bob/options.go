@@ -52,9 +52,9 @@ func WithCachingEnabled(enabled bool) Option {
 	}
 }
 
-func WithAllowRedundantTargets() Option {
+func WithEnableRedundantTargets() Option {
 	return func(b *B) {
-		b.allowRedundantTargets = true
+		b.enableRedundantTargets = true
 	}
 }
 

@@ -190,7 +190,7 @@ func TestEmptyProjectName(t *testing.T) {
 	err = os.Chdir(dir)
 	assert.Nil(t, err)
 
-	testBob, err := Bob(WithDir(dir), WithAllowRedundantTargets())
+	testBob, err := Bob(WithDir(dir), WithEnableRedundantTargets())
 	assert.Nil(t, err)
 
 	err = CreatePlayground(PlaygroundOptions{Dir: dir})
@@ -213,7 +213,7 @@ func TestProjectName(t *testing.T) {
 	err = os.Chdir(dir)
 	assert.Nil(t, err)
 
-	testBob, err := Bob(WithDir(dir), WithAllowRedundantTargets())
+	testBob, err := Bob(WithDir(dir), WithEnableRedundantTargets())
 	assert.Nil(t, err)
 
 	projectName := "example.com/test-user/test-project"
@@ -240,7 +240,7 @@ func TestInvalidProjectName(t *testing.T) {
 	err = os.Chdir(dir)
 	assert.Nil(t, err)
 
-	testBob, err := Bob(WithDir(dir), WithAllowRedundantTargets())
+	testBob, err := Bob(WithDir(dir), WithEnableRedundantTargets())
 	assert.Nil(t, err)
 
 	projectName := "@"
@@ -333,7 +333,7 @@ func TestMultiLevelBobfileSameProjectName(t *testing.T) {
 	err = os.Chdir(dir)
 	assert.Nil(t, err)
 
-	testBob, err := Bob(WithDir(dir), WithAllowRedundantTargets())
+	testBob, err := Bob(WithDir(dir), WithEnableRedundantTargets())
 	assert.Nil(t, err)
 
 	projectName := "first-level"

@@ -217,7 +217,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
-	err = aggregate.Verify(b.enableCaching, b.allowRedundantTargets)
+	err = aggregate.Verify(b.enableCaching, b.enableRedundantTargets)
 	errz.Fatal(err)
 
 	err = aggregate.BTasks.IgnoreChildTargets()

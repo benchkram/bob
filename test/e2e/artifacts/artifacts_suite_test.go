@@ -86,7 +86,7 @@ var _ = BeforeSuite(func() {
 		bob.WithFilestore(artifactStore),
 		bob.WithBuildinfoStore(buildinfoStore),
 		bob.WithNixBuilder(nixBuilder),
-		bob.WithAllowRedundantTargets(),
+		bob.WithEnableRedundantTargets(),
 	)
 	Expect(err).NotTo(HaveOccurred())
 
