@@ -1,19 +1,14 @@
 package bobtask
 
 import (
-	"bytes"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/sliceutil"
-	"gopkg.in/yaml.v2"
-
 	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/filehash"
 )
 
@@ -35,7 +30,7 @@ func (t *Task) HashIn() (taskHash hash.In, err error) {
 func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	h := filehash.New()
 
-	// Hash input files
+	// Hash content of input files
 	for _, f := range t.inputs {
 		err = h.AddFile(f)
 		if err != nil {
@@ -48,27 +43,8 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 		}
 	}
 
-	// Hash the public task description
-	description, err := yaml.Marshal(t)
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to marshal task: %w", err)
-	}
-	err = h.AddBytes(bytes.NewBuffer(description))
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
-	}
-
-	// Hash the project name
-	err = h.AddBytes(bytes.NewBuffer([]byte(t.project)))
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to write project name hash: %w", err)
-	}
-
-	// Hash the environment
-	env := filterEnvOfIgnores(t.env)
-	sort.Strings(env)
-	environment := strings.Join(env, ",")
-	err = h.AddBytes(bytes.NewBufferString(environment))
+	// Hash the task description
+	err = h.AddBytes(strings.NewReader(t.description()))
 	if err != nil {
 		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
 	}
@@ -81,18 +57,4 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	boblog.Log.V(4).Info(fmt.Sprintf("Computed hash [h: %s] for task [t: %s], using [inputs:%d] input files ", t.hashIn.String(), t.Name(), len(t.inputs)))
 
 	return hashIn, nil
-}
-
-func filterEnvOfIgnores(env []string) []string {
-	ignore := []string{"buildCommandPath", "SHLVL"}
-
-	var result []string
-	for _, v := range env {
-		pair := strings.SplitN(v, "=", 2)
-		if sliceutil.Contains(ignore, pair[0]) {
-			continue
-		}
-		result = append(result, v)
-	}
-	return result
 }
