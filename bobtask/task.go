@@ -1,6 +1,7 @@
 package bobtask
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/nix"
@@ -171,18 +172,31 @@ func (t *Task) IsValidDecoration() bool {
 	return true
 }
 
+// Description of the Task used in hashing. It influences the re-build policy of the task
 func (t *Task) Description() string {
 	var sb strings.Builder
 
-	sb.WriteString(t.InputDirty)
-	sb.WriteString(t.CmdDirty)
-	sb.WriteString(strings.Join(t.DependsOn, ","))
-	sb.WriteString(t.RebuildDirty)
-	sb.WriteString(strings.Join(t.DependenciesDirty, ","))
+	for _, v := range t.cmds {
+		sb.WriteString(v)
+	}
+
+	sb.WriteString(t.project)
+	sb.WriteString(t.nixpkgs)
+
+	// env is influenced by t.dependencies, so no need to hash t.dependencies
+	env := filterEnvOfIgnores(t.env)
+	sort.Strings(env)
+	for _, v := range env {
+		sb.WriteString(v)
+	}
 
 	if t.target != nil {
-		sb.WriteString(strings.Join(t.target.DockerImages(), ","))
-		sb.WriteString(strings.Join(t.target.FilesystemEntriesRaw(), ","))
+		for _, v := range t.target.DockerImages() {
+			sb.WriteString(v)
+		}
+		for _, v := range t.target.FilesystemEntriesRaw() {
+			sb.WriteString(v)
+		}
 	}
 
 	return sb.String()

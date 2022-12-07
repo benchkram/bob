@@ -1,12 +1,10 @@
 package bobtask
 
 import (
-	"bytes"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/benchkram/bob/bobtask/hash"
@@ -48,21 +46,6 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 
 	// Hash the public task description
 	err = h.AddBytes(strings.NewReader(t.Description()))
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
-	}
-
-	// Hash the project name
-	err = h.AddBytes(bytes.NewBuffer([]byte(t.project)))
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to write project name hash: %w", err)
-	}
-
-	// Hash the environment
-	env := filterEnvOfIgnores(t.env)
-	sort.Strings(env)
-	environment := strings.Join(env, ",")
-	err = h.AddBytes(bytes.NewBufferString(environment))
 	if err != nil {
 		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
 	}
