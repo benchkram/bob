@@ -9,12 +9,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/sliceutil"
-	"gopkg.in/yaml.v2"
-
 	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/filehash"
+	"github.com/benchkram/bob/pkg/sliceutil"
 )
 
 // HashInAlways computes the input hash without using a cached value
@@ -49,11 +47,7 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 	}
 
 	// Hash the public task description
-	description, err := yaml.Marshal(t)
-	if err != nil {
-		return taskHash, fmt.Errorf("failed to marshal task: %w", err)
-	}
-	err = h.AddBytes(bytes.NewBuffer(description))
+	err = h.AddBytes(strings.NewReader(t.Description()))
 	if err != nil {
 		return taskHash, fmt.Errorf("failed to write description hash: %w", err)
 	}

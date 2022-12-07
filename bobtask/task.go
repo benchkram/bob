@@ -22,7 +22,7 @@ const (
 
 // Hint: When adding a new *Dirty field assure to update IsValidDecoration().
 type Task struct {
-	// Inputs are directorys or files
+	// Inputs are directories or files
 	// the task monitors for a rebuild.
 
 	// InputDirty is the representation read from a bobfile.
@@ -169,4 +169,21 @@ func (t *Task) IsValidDecoration() bool {
 		return false
 	}
 	return true
+}
+
+func (t *Task) Description() string {
+	var sb strings.Builder
+
+	sb.WriteString(t.InputDirty)
+	sb.WriteString(t.CmdDirty)
+	sb.WriteString(strings.Join(t.DependsOn, ","))
+	sb.WriteString(t.RebuildDirty)
+	sb.WriteString(strings.Join(t.DependenciesDirty, ","))
+
+	if t.target != nil {
+		sb.WriteString(strings.Join(t.target.DockerImages(), ","))
+		sb.WriteString(strings.Join(t.target.FilesystemEntriesRaw(), ","))
+	}
+
+	return sb.String()
 }
