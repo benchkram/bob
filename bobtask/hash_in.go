@@ -10,7 +10,6 @@ import (
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/filehash"
-	"github.com/benchkram/bob/pkg/sliceutil"
 )
 
 // HashInAlways computes the input hash without using a cached value
@@ -61,12 +60,12 @@ func (t *Task) computeInputHash() (taskHash hash.In, err error) {
 }
 
 func filterEnvOfIgnores(env []string) []string {
-	ignore := []string{"buildCommandPath", "SHLVL"}
-
 	var result []string
 	for _, v := range env {
-		pair := strings.SplitN(v, "=", 2)
-		if sliceutil.Contains(ignore, pair[0]) {
+		if strings.HasPrefix(v, "buildCommandPath=") {
+			continue
+		}
+		if strings.HasPrefix(v, "SHLVL=") {
 			continue
 		}
 		result = append(result, v)

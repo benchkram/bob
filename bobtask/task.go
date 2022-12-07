@@ -1,7 +1,6 @@
 package bobtask
 
 import (
-	"sort"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/nix"
@@ -184,9 +183,14 @@ func (t *Task) Description() string {
 	sb.WriteString(t.nixpkgs)
 
 	// env is influenced by t.dependencies, so no need to hash t.dependencies
-	env := filterEnvOfIgnores(t.env)
-	sort.Strings(env)
-	for _, v := range env {
+	for _, v := range t.env {
+		// ignore buildCommandPath and SHLVL due to non-reproducibility
+		if strings.HasPrefix(v, "buildCommandPath=") {
+			continue
+		}
+		if strings.HasPrefix(v, "SHLVL=") {
+			continue
+		}
 		sb.WriteString(v)
 	}
 
