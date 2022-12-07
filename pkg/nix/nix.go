@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/bob/pkg/format"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
@@ -295,4 +296,24 @@ pkgs.mkShell {
 }
 `
 	return fmt.Sprintf(exp, source(nixpkgs), strings.Join(buildInputs, "\n"))
+}
+
+func HashDependencies(deps []Dependency) (_ string, err error) {
+	defer errz.Recover(&err)
+
+	h := filehash.New()
+	for _, dependency := range deps {
+		if strings.HasSuffix(dependency.Name, ".nix") {
+			err = h.AddBytes(bytes.NewBufferString(dependency.Nixpkgs))
+			errz.Fatal(err)
+
+			err = h.AddFile(dependency.Name)
+			errz.Fatal(err)
+		} else {
+			toHash := fmt.Sprintf("%s:%s", dependency.Name, dependency.Nixpkgs)
+			err = h.AddBytes(bytes.NewBufferString(toHash))
+			errz.Fatal(err)
+		}
+	}
+	return string(h.Sum()), nil
 }

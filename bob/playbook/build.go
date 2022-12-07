@@ -22,15 +22,16 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	p.pickTaskColors()
 
-	// Setup worker pool and queue
-	parallelTasks := p.maxParallel
+	// Setup worker pool and queue.
+	workers := p.maxParallel
 	queue := make(chan *bobtask.Task)
 
-	boblog.Log.Info(fmt.Sprintf("Using %d workers", parallelTasks))
+	boblog.Log.Info(fmt.Sprintf("Using %d workers", workers))
 
 	processing := sync.WaitGroup{}
 
-	for i := 0; i < parallelTasks; i++ {
+	// Start the workers which listen on task queue
+	for i := 0; i < workers; i++ {
 		go func(workerID int) {
 			for t := range queue {
 				processing.Add(1)
@@ -38,13 +39,12 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 				err := p.build(ctx, t)
 				if err != nil {
 					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, fmt.Errorf("[task: %s], %w", t.Name(), err))
+					processingErrors = append(processingErrors, fmt.Errorf("(worker) [task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 
 					// Any error occurred during a build puts the
 					// playbook in a done state. This prevents
 					// further tasks be queued for execution.
-
 					p.Done()
 				}
 
@@ -63,13 +63,14 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			// blocks till a worker is available
 			queue <- t
 
-			// initiate another playbook run
-			// as there might be workers without assigned tasks left.
+			// initiate another playbook run,
+			// as there might be workers without
+			// assigned tasks left.
 			err := p.Play()
 			if err != nil {
 				if !errors.Is(err, ErrDone) {
 					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, fmt.Errorf("[task: %s], %w", t.Name(), err))
+					processingErrors = append(processingErrors, fmt.Errorf("(scheduler) [task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 				}
 				break
