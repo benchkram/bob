@@ -42,6 +42,10 @@ type Task struct {
 	// can run.
 	DependsOn []string `yaml:"dependsOn,omitempty"`
 
+	// dependsOnIDs task id's used for optimization.
+	// Not exposed in a Bobfile.
+	DependsOnIDs []int `yaml:"-"`
+
 	// Target defines the output of a task.
 	TargetDirty TargetEntry `yaml:"target,omitempty"`
 	target      *target.T
@@ -52,6 +56,11 @@ type Task struct {
 
 	// name is the name of the task
 	name string
+
+	// taskID is a integer provided to
+	// avoid referencing tasks by name
+	// (string comparison, map access)
+	TaskID int
 
 	// project this tasks belongs to
 	project string
