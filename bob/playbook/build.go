@@ -39,15 +39,27 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 			for _, wq := range workerQueues {
 				close(wq)
 			}
-			// clearing the queue
-			workerQueues = []chan *bobtask.Task{}
+		})
+	}
+
+	var shutdown bool
+	var shutdownM sync.Mutex
+	shutdownAvailabilityQueue := func() {
+		once.Do(func() {
+			shutdownM.Lock()
+			defer shutdownM.Unlock()
+			shutdown = true
+			close(workerAvailabilityQueue)
 		})
 	}
 
 	// Start the workers which listen on task queue
 	for i := 0; i < workers; i++ {
+
+		// create workload queue for this worker
 		queue := make(chan *bobtask.Task)
 		workerQueues = append(workerQueues, queue)
+
 		runningWorkers.Add(1)
 		go func(workerID int) {
 			// initially signal availability to receive workload
@@ -63,7 +75,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 					processingErrors = append(processingErrors, fmt.Errorf("(worker) [task: %s], %w", t.Name(), err))
 					processingErrorsMutex.Unlock()
 
-					shutdownWorkers()
+					shutdownAvailabilityQueue()
 
 					// Any error occurred during a build puts the
 					// playbook in a done state. This prevents
@@ -81,11 +93,9 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 				processedTasks = append(processedTasks, t)
 
 				// done with processing. signal availability.
-				select {
-				case workerAvailabilityQueue <- workerID:
-				default:
-				}
+				workerAvailabilityQueue <- workerID
 			}
+			fmt.Printf("worker %d is shutting down\n", workerID)
 			runningWorkers.Done()
 		}(i + 1)
 	}
@@ -97,28 +107,39 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		workerBuffer := []int{}
 
 		for workerID := range workerAvailabilityQueue {
+			shutdownM.Lock()
+			if shutdown {
+				shutdownM.Unlock()
+				break
+			}
+			shutdownM.Unlock()
+
 			task, err := p.Next()
 			if err != nil {
 				if errors.Is(err, ErrDone) {
-					shutdownWorkers()
-
 					// exit
-					return
+					break
 				}
 
 				processingErrorsMutex.Lock()
-				processingErrors = append(processingErrors, fmt.Errorf("worker-availability-queue: unexpected error comming from Next(): %w", err))
+				processingErrors = append(
+					processingErrors,
+					fmt.Errorf("worker-availability-queue: unexpected error comming from Next(): %w", err),
+				)
 				processingErrorsMutex.Unlock()
-				return
+				break
 			}
 
 			// Push workload to the worker or store the worker for later.
 			if task != nil {
 				// Send workload to worker
-				workerQueues[workerID-1] <- task
+				select {
+				case workerQueues[workerID-1] <- task:
+				default:
+				}
 
 				// There might be more workload left.
-				// Reqeuing a workler from the buffer.
+				// Reqeuing a worker from the buffer.
 				if len(workerBuffer) > 0 {
 					wID := workerBuffer[len(workerBuffer)-1]
 					workerBuffer = workerBuffer[:len(workerBuffer)-1]
@@ -133,7 +154,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 				workerBuffer = append(workerBuffer, workerID)
 			}
 		}
-
+		shutdownWorkers()
 	}()
 
 	runningWorkers.Wait()

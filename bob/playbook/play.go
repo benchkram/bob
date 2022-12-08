@@ -112,11 +112,13 @@ func (p *Playbook) Next() (_ *bobtask.Task, err error) {
 	for r := range c {
 		switch r.state {
 		case "queued":
-			//fmt.Printf("received task %s and returning\n", r.t.Name())
+			fmt.Printf("received task %s and returning\n", r.t.Name())
 			return r.t, nil
 		case "failed":
+			fmt.Println("failed")
 			fallthrough
 		case "playbook-done":
+			fmt.Println("playbook-done")
 			p.done = true
 			return nil, ErrDone
 		}
