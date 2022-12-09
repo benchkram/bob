@@ -38,7 +38,6 @@ func (t *T) BuildInfo() (bi *buildinfo.Targets, err error) {
 }
 
 func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error) {
-
 	bi = *buildinfo.NewBuildInfoFiles()
 
 	h := filehash.New()
@@ -62,7 +61,7 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 					return nil
 				}
 
-				err = h.AddFile(p)
+				err = h.AddFile(p) //
 				if err != nil {
 					return fmt.Errorf("failed to hash target %q: %w", f, err)
 				}
@@ -71,7 +70,13 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 				if err != nil {
 					return fmt.Errorf("failed to get file info %q: %w", p, err)
 				}
-				bi.Files[p] = buildinfo.BuildInfoFile{Size: info.Size()}
+
+				contentHash, err := filehash.HashOfFile(p)
+				if err != nil {
+					return fmt.Errorf("failed to get file hash %q: %w", p, err)
+				}
+
+				bi.Files[p] = buildinfo.BuildInfoFile{Size: info.Size(), Hash: contentHash}
 
 				return nil
 			}); err != nil {
@@ -83,7 +88,11 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 			if err != nil {
 				return buildinfo.BuildInfoFiles{}, fmt.Errorf("failed to hash target %q: %w", path, err)
 			}
-			bi.Files[path] = buildinfo.BuildInfoFile{Size: targetInfo.Size()}
+			contentHash, err := filehash.HashOfFile(path)
+			if err != nil {
+				return buildinfo.BuildInfoFiles{}, fmt.Errorf("failed to get file hash %q: %w", path, err)
+			}
+			bi.Files[path] = buildinfo.BuildInfoFile{Size: targetInfo.Size(), Hash: contentHash}
 		}
 	}
 

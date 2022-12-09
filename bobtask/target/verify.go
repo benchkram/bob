@@ -21,8 +21,8 @@ func (t *T) VerifyShallow() bool {
 	return t.verifyFilesystemShallow() && t.verifyDocker()
 }
 
-// Verify existence and integrity of targets against a expected buildinfo.
-// In case the expect buildinfo does not exist Verify checks against filesystemEntriesRaw.
+// Verify existence and integrity of targets against an expected buildinfo.
+// In case the expected buildinfo does not exist Verify checks against filesystemEntriesRaw.
 //
 // Verify returns true when no targets are defined.
 // Verify returns when there is nothing to compare against.
@@ -38,7 +38,7 @@ func (t *T) preConditionsFilesystem() bool {
 	// In case there was no previous local build
 	// verify returns false indicating that there can't
 	// exist a valid target from a previous build.
-	// Loading from the cash must be handled by the calling function.
+	// Loading from the cache must be handled by the calling function.
 	if t.expected == nil {
 		return false
 	}

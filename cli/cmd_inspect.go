@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/benchkram/bob/bob"
@@ -25,6 +26,7 @@ func init() {
 	inspectCmd.AddCommand(envCmd)
 	inspectArtifactCmd.AddCommand(inspectArtifactListCmd)
 	inspectCmd.AddCommand(inspectArtifactCmd)
+	inspectCmd.AddCommand(inspectBuildInfoCmd)
 	rootCmd.AddCommand(inspectCmd)
 }
 
@@ -173,4 +175,40 @@ func runInspectInputs(taskname string) {
 	}
 
 	fmt.Printf("Task %s has %d inputs\n", taskname, len(inputs))
+}
+
+var inspectBuildInfoCmd = &cobra.Command{
+	Use:   "buildinfo",
+	Short: "Inspect build info",
+	Args:  cobra.ExactArgs(1),
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		inspectBuildInfo(args[0])
+	},
+}
+
+func inspectBuildInfo(hash string) {
+	var exitCode int
+	defer func() { os.Exit(exitCode) }()
+
+	bs, err := bob.DefaultBuildinfoStore()
+	if err != nil {
+		panic(err)
+	}
+
+	bi, err := bs.GetBuildInfo(hash)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Meta:")
+	fmt.Println("\ttask:", bi.Meta.Task)
+	fmt.Println("\tinput hash", bi.Meta.InputHash)
+
+	fmt.Println("Filesystem:")
+	fmt.Println("\thash of all files", bi.Target.Filesystem.Hash)
+	fmt.Println("\tfiles:")
+	for k, v := range bi.Target.Filesystem.Files {
+		fmt.Println("\t", k, v.Size, v.Hash)
+	}
 }
