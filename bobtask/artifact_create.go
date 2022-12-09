@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/errz"
 	"github.com/mholt/archiver/v3"
 	"gopkg.in/yaml.v3"
@@ -76,13 +77,14 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 	boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] file in buildinfo %d", t.name, len(buildInfo.Filesystem.Files)))
 
 	// targets filesystem
+	var files []File
 	for fname := range buildInfo.Filesystem.Files {
 		info, err := os.Lstat(fname)
 		errz.Fatal(err)
 
 		// trim the tasks directory from the internal name
 		internalName := strings.TrimPrefix(fname, t.dir)
-		// saved docker images are temporarly stored in the tmp dir,
+		// saved docker images are temporarily stored in the tmp dir,
 		// this assures it's not added as prefix.
 		internalName = strings.TrimPrefix(internalName, os.TempDir())
 		internalName = strings.TrimPrefix(internalName, tempdir)
@@ -110,6 +112,14 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 			ReadCloser: file,
 		})
 		errz.Fatal(err)
+
+		contentHash, err := filehash.HashOfFile(fname)
+		errz.Fatal(err)
+
+		files = append(files, File{
+			Path: fname,
+			Hash: contentHash,
+		})
 
 		err = file.Close()
 		errz.Fatal(err)
@@ -159,6 +169,7 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 	metadata.Taskname = t.name
 	metadata.Project = t.Project()
 	metadata.InputHash = artifactName.String()
+	metadata.Files = files
 	bin, err := yaml.Marshal(metadata)
 	errz.Fatal(err)
 
