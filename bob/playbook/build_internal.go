@@ -20,7 +20,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	var taskErr error
 	defer func() {
 		if !taskSuccessFul {
-			errr := p.TaskFailed(task.Name(), taskErr)
+			errr := p.TaskFailed(task.TaskID, taskErr)
 			if errr != nil {
 				boblog.Log.Error(errr, "Setting the task state to failed, failed.")
 			}
@@ -38,7 +38,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.Canceled) {
 				boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, StateCanceled))
-				_ = p.TaskCanceled(task.Name())
+				_ = p.TaskCanceled(task.TaskID)
 			}
 		}
 	}()
@@ -102,7 +102,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		status := StateNoRebuildRequired
 		boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, status.Short()))
 		taskSuccessFul = true
-		return p.TaskNoRebuildRequired(task.Name())
+		return p.TaskNoRebuildRequired(task.TaskID)
 	}
 
 	err = task.Clean()
@@ -123,7 +123,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	// flagged as failed in a defered function call.
 	taskSuccessFul = true
 
-	err = p.TaskCompleted(task.Name())
+	err = p.TaskCompleted(task.TaskID)
 	if err != nil {
 		if errors.Is(err, ErrFailed) {
 			return err

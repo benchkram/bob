@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"sync"
 
-	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -15,83 +12,78 @@ import (
 
 // Build the playbook starting at root.
 func (p *Playbook) Build(ctx context.Context) (err error) {
-	processingErrorsMutex := sync.Mutex{}
-	var processingErrors []error
-
-	var processedTasks []*bobtask.Task
-
-	p.pickTaskColors()
 
 	// Setup worker pool and queue.
 	workers := p.maxParallel
-	queue := make(chan *bobtask.Task)
-
 	boblog.Log.Info(fmt.Sprintf("Using %d workers", workers))
 
-	processing := sync.WaitGroup{}
+	p.pickTaskColors()
 
-	// Start the workers which listen on task queue
-	for i := 0; i < workers; i++ {
-		go func(workerID int) {
-			for t := range queue {
-				processing.Add(1)
-				boblog.Log.V(5).Info(fmt.Sprintf("RUNNING task %s on worker  %d ", t.Name(), workerID))
-				err := p.build(ctx, t)
-				if err != nil {
-					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, fmt.Errorf("(worker) [task: %s], %w", t.Name(), err))
-					processingErrorsMutex.Unlock()
+	wm := p.startWorkers(ctx, workers)
 
-					// Any error occurred during a build puts the
-					// playbook in a done state. This prevents
-					// further tasks be queued for execution.
-					p.Done()
-				}
-
-				processedTasks = append(processedTasks, t)
-				processing.Done()
-			}
-		}(i + 1)
-	}
-
-	// Listen for tasks from the playbook and forward them to the worker pool
+	// listen for idle workers
 	go func() {
-		c := p.TaskChannel()
-		for t := range c {
-			boblog.Log.V(5).Info(fmt.Sprintf("Sending task %s", t.Name()))
+		// A buffer for workers which have
+		// no workload assigned.
+		workerBuffer := []int{}
 
-			// blocks till a worker is available
-			queue <- t
+		for workerID := range wm.idleChan {
 
-			// initiate another playbook run,
-			// as there might be workers without
-			// assigned tasks left.
-			err := p.Play()
+			// boblog.Log.V(1).Info("Calling Next")
+			task, err := p.Next()
 			if err != nil {
-				if !errors.Is(err, ErrDone) {
-					processingErrorsMutex.Lock()
-					processingErrors = append(processingErrors, fmt.Errorf("(scheduler) [task: %s], %w", t.Name(), err))
-					processingErrorsMutex.Unlock()
+
+				if errors.Is(err, ErrDone) {
+					//boblog.Log.V(1).Info("Done")
+					wm.stopWorkers()
+					// exit
+					break
 				}
+
+				wm.addError(fmt.Errorf("worker-availability-queue: unexpected error comming from Next(): %w", err))
+				wm.stopWorkers()
 				break
 			}
+
+			// Push workload to the worker or store the worker for later.
+			if task != nil {
+				//boblog.Log.V(1).Info(fmt.Sprintf("Sending task %s to worker", task.Name()))
+				// Send workload to worker
+				wm.workloadQueues[workerID] <- task
+
+				// There might be more workload left.
+				// Reqeuing a worker from the buffer.
+				if len(workerBuffer) > 0 {
+					wID := workerBuffer[len(workerBuffer)-1]
+					workerBuffer = workerBuffer[:len(workerBuffer)-1]
+
+					//	boblog.Log.V(1).Info("Requeue Worker")
+					// requeue a buffered worker
+					wm.idleChan <- wID
+				}
+			} else {
+
+				// No task yet ready to be worked on but the playbook is not done yet.
+				// Therfore the worker is stored in a buffer and is requeued on
+				// the next change to the playbook.
+				workerBuffer = append(workerBuffer, workerID)
+				//boblog.Log.V(1).Info(fmt.Sprintf("Buffering Worker [worker_id:%d ] [%s:%d]", workerID, "buffer_size", len(workerBuffer)))
+
+			}
+
+			//wm.printWorkerState()
 		}
+
+		// to assure even idling workers will be shutdown.
+		wm.closeWorkloadQueues()
 	}()
 
-	err = p.Play()
-	if err != nil {
-		return err
-	}
-
-	<-p.DoneChan()
-	processing.Wait()
-
-	close(queue)
+	wm.workerWG.Wait()
 
 	// iterate through tasks and logs
 	// skipped input files.
 	var skippedInputs int
-	for _, task := range processedTasks {
+	for _, task := range wm.processed {
 		skippedInputs = logSkippedInputs(
 			skippedInputs,
 			task.ColoredName(),
@@ -99,11 +91,11 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 		)
 	}
 
-	p.summary(processedTasks)
+	//p.summary(processedTasks)
 
-	if len(processingErrors) > 0 {
+	if len(wm.errors) > 0 {
 		// Pass only the very first processing error.
-		return processingErrors[0]
+		return wm.errors[0]
 	}
 
 	// sync any newly generated artifacts with the remote store
@@ -117,30 +109,6 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	}
 
 	return nil
-}
-
-const maxSkippedInputs = 5
-
-// logSkippedInputs until max is reached
-func logSkippedInputs(count int, taskname string, skippedInputs []string) int {
-	if len(skippedInputs) == 0 {
-		return count
-	}
-	if count >= maxSkippedInputs {
-		return maxSkippedInputs
-	}
-
-	for _, f := range skippedInputs {
-		count = count + 1
-		boblog.Log.V(1).Info(fmt.Sprintf("skipped %s '%s' %s", taskname, f, os.ErrPermission))
-
-		if count >= maxSkippedInputs {
-			boblog.Log.V(1).Info(fmt.Sprintf("skipped %s %s", taskname, "& more..."))
-			break
-		}
-	}
-
-	return count
 }
 
 // inputHashes returns and array of input hashes of the playbook,

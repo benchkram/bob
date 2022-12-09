@@ -2,7 +2,6 @@ package playbook
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"runtime"
 	"sort"
@@ -187,80 +186,61 @@ func (p *Playbook) TaskStatus(taskname string) (ts *Status, _ error) {
 }
 
 // TaskCompleted sets a task to completed
-func (p *Playbook) TaskCompleted(taskname string) (err error) {
+func (p *Playbook) TaskCompleted(taskID int) (err error) {
 	defer errz.Recover(&err)
 
-	task, ok := p.Tasks[taskname]
-	if !ok {
-		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
-	}
+	task := p.TasksOptimized[taskID]
 
-	buildInfo, err := p.computeBuildinfo(taskname)
+	buildInfo, err := p.computeBuildinfo(task.Name())
 	errz.Fatal(err)
 
 	// Store buildinfo
-	err = p.storeBuildInfo(taskname, buildInfo)
+	err = p.storeBuildInfo(task.Name(), buildInfo)
 	errz.Fatal(err)
 
 	// Store targets in the artifact store
 	if p.enableCaching {
 		hashIn, err := task.HashIn()
 		errz.Fatal(err)
-		err = p.artifactCreate(taskname, hashIn)
+		err = p.artifactCreate(task.Name(), hashIn)
 		errz.Fatal(err)
 	}
 
 	// update task state and trigger another playbook run
-	err = p.setTaskState(taskname, StateCompleted, nil)
+	err = p.setTaskState(taskID, StateCompleted, nil)
 	errz.Fatal(err)
-	err = p.play()
-	if err != nil {
-		if !errors.Is(err, ErrDone) {
-			errz.Fatal(err)
-		}
-	}
 
 	return nil
 }
 
 // TaskNoRebuildRequired sets a task's state to indicate that no rebuild is required
-func (p *Playbook) TaskNoRebuildRequired(taskname string) (err error) {
+func (p *Playbook) TaskNoRebuildRequired(taskID int) (err error) {
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateNoRebuildRequired, nil)
+	err = p.setTaskState(taskID, StateNoRebuildRequired, nil)
 	errz.Fatal(err)
-
-	err = p.play()
-	if err != nil {
-		if !errors.Is(err, ErrDone) {
-			errz.Fatal(err)
-		}
-	}
 
 	return nil
 }
 
 // TaskFailed sets a task to failed
-func (p *Playbook) TaskFailed(taskname string, taskErr error) (err error) {
+func (p *Playbook) TaskFailed(taskID int, taskErr error) (err error) {
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateFailed, taskErr)
+	err = p.setTaskState(taskID, StateFailed, taskErr)
 	errz.Fatal(err)
 
 	// p.errorChannel <- fmt.Errorf("Task %s failed", taskname)
-
-	// give the playbook the chance to set
-	// the state to done.
-	_ = p.play()
 
 	return nil
 }
 
 // TaskCanceled sets a task to canceled
-func (p *Playbook) TaskCanceled(taskname string) (err error) {
+func (p *Playbook) TaskCanceled(taskID int) (err error) {
+
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateCanceled, nil)
+	err = p.setTaskState(taskID, StateCanceled, nil)
 	errz.Fatal(err)
 
 	// p.errorChannel <- fmt.Errorf("Task %s cancelled", taskname)
@@ -303,11 +283,8 @@ func (p *Playbook) String() string {
 	return description.String()
 }
 
-func (p *Playbook) setTaskState(taskname string, state State, taskError error) error {
-	task, ok := p.Tasks[taskname]
-	if !ok {
-		return boberror.ErrTaskDoesNotExistF(taskname)
-	}
+func (p *Playbook) setTaskState(taskID int, state State, taskError error) error {
+	task := p.TasksOptimized[taskID]
 
 	task.SetState(state, taskError)
 	switch state {

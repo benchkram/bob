@@ -30,7 +30,7 @@ func (tsm StatusSlice) walkBottomFirst(root int, fn func(taskID int, _ *Status, 
 
 	var err error
 	for _, id := range task.Task.DependsOnIDs {
-		err = tsm.walk(id, fn)
+		err = tsm.walkBottomFirst(id, fn)
 		if err != nil {
 			return err
 		}
