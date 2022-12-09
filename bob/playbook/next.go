@@ -20,7 +20,7 @@ func (p *Playbook) Next() (_ *Status, err error) {
 	})
 
 	// Required? Yes!
-	p.playMutex.Lock()
+	//p.playMutex.Lock()
 	//defer p.playMutex.Unlock()
 
 	if p.start.IsZero() {
@@ -51,10 +51,6 @@ func (p *Playbook) Next() (_ *Status, err error) {
 				return err
 			}
 
-			// if taskID == p.rootID || task.Name() == "apps/build" {
-			// 	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t walking [state: %s]", p.namePad, task.Name(), task.State()))
-			// }
-
 			switch task.State() {
 			case StatePending:
 				didAllTaskComplete = false
@@ -63,11 +59,6 @@ func (p *Playbook) Next() (_ *Status, err error) {
 					t := p.TasksOptimized[dependentTaskID]
 
 					state := t.State()
-					// if taskID == p.rootID || task.Name() == "apps/build" {
-					// 	if state != StateNoRebuildRequired {
-					// 		boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t walking [state: %s]", p.namePad, t.Name(), state))
-					// 	}
-					// }
 					if state != StateCompleted && state != StateNoRebuildRequired {
 						// A dependent task is not completed.
 						// So this task is not yet ready to run.
@@ -97,11 +88,6 @@ func (p *Playbook) Next() (_ *Status, err error) {
 			// setting the task start time before passing it to channel
 
 			// TODO: for async assure to handle send to a closed channel.
-
-			// if task.State() != StatePending {
-			// 	boblog.Log.Info(fmt.Sprintf("Queuing a task [%s] with state %s is invalid", task.Name(), task.State()))
-			// 	os.Exit(1)
-			// }
 			_ = p.setTaskState(task.TaskID, StateQueued, nil)
 			output <- result{t: task, state: "queued"}
 			return taskQueued
@@ -115,7 +101,7 @@ func (p *Playbook) Next() (_ *Status, err error) {
 		// the goroutine can outlive the Next() run.
 		// avoiding concurrrent runs by only unlocking at the
 		// end of the walk.
-		p.playMutex.Unlock()
+		//p.playMutex.Unlock()
 
 	}(c)
 
