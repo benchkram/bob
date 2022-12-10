@@ -202,11 +202,10 @@ func (t *Task) description() string {
 	sort.Strings(t.env)
 	for _, v := range t.env {
 		// ignore buildCommandPath and SHLVL due to non-reproducibility
-		v = strings.ToLower(v)
-		if strings.HasPrefix(v, "buildcommandpath=") {
+		if strings.Contains(v, "buildCommandPath=") {
 			continue
 		}
-		if strings.HasPrefix(v, "shlvl=") {
+		if strings.Contains(v, "shlvl=") {
 			continue
 		}
 		sb.WriteString(v)
