@@ -12,11 +12,11 @@ import (
 // Hint: comparing the modification time is tricky as a artifact extraction
 // from a tar archive changes the modification time of a file.
 
-// VerifyShallow compare targets against a existing
-// buildinfo. It will only check if the size of any of the files changed.
+// VerifyShallow compare targets against an existing
+// buildinfo. It will only check if the size of the files changed.
 // Docker targets are verified similarly as in plain verify
-// as there is no performance penality.
-// In case the expect buildinfo does not exist Verify checks against filesystemEntriesRaw.
+// as there is no performance penalty.
+// In case the expected buildinfo does not exist Verify checks against filesystemEntriesRaw.
 func (t *T) VerifyShallow() bool {
 	return t.verifyFilesystemShallow() && t.verifyDocker()
 }
@@ -53,7 +53,6 @@ func (t *T) preConditionsFilesystem() bool {
 }
 
 func (t *T) verifyFilesystemShallow() bool {
-
 	if !t.preConditionsFilesystem() {
 		return false
 	}
