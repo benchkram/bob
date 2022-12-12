@@ -54,7 +54,7 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, caus
 			return true, TargetInvalid, nil
 		}
 
-		// Check if target exists in localstore
+		// Check if target exists in local store
 		hashIn, err := task.HashIn()
 		errz.Fatal(err)
 		if !task.ArtifactExists(hashIn) {
