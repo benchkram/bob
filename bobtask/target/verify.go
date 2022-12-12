@@ -58,7 +58,6 @@ func (t *T) verifyFilesystemShallow() bool {
 	}
 
 	for _, path := range *t.filesystemEntries {
-
 		fileInfo, err := os.Lstat(path)
 		if err != nil {
 			return false
@@ -75,13 +74,23 @@ func (t *T) verifyFilesystemShallow() bool {
 				path, fileInfo.Size(), expectedFileInfo.Size))
 			return false
 		}
+
+		// checks the contents has of the file with the ones from build info
+		// todo this makes this method non-shallow anymore. rename this
+		hashOfFile, err := filehash.HashOfFile(path)
+		if err != nil {
+			return false
+		}
+		if hashOfFile != expectedFileInfo.Hash {
+			boblog.Log.V(2).Info(fmt.Sprintf("failed to verify [%s], different hashes [current: %s != expected: %s]",
+				path, hashOfFile, expectedFileInfo.Hash))
+		}
 	}
 
 	return true
 }
 
 func (t *T) verifyFilesystem() bool {
-
 	if !t.preConditionsFilesystem() {
 		return false
 	}

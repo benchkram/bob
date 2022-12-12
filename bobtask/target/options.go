@@ -1,7 +1,5 @@
 package target
 
-import "github.com/benchkram/bob/bobtask/buildinfo"
-
 type Option func(t *T)
 
 func WithDir(dir string) Option {
@@ -19,11 +17,5 @@ func WithFilesystemEntries(entries []string) Option {
 func WithDockerImages(images []string) Option {
 	return func(t *T) {
 		t.dockerImages = images
-	}
-}
-
-func WithExpected(bi *buildinfo.Targets) Option {
-	return func(t *T) {
-		t.expected = bi
 	}
 }
