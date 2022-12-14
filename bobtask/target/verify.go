@@ -18,10 +18,9 @@ import (
 // Docker targets are verified similarly as in plain verify
 // as there is no performance penalty.
 // In case the expected buildinfo does not exist Verify checks against filesystemEntriesRaw.
-func (t *T) VerifyShallow() *VerifyResult {
+func (t *T) VerifyShallow() VerifyResult {
 	r := NewVerifyResult()
-	r.TargetIsValid = t.verifyFilesystemShallow(r) && t.verifyDocker()
-
+	r.TargetIsValid = t.verifyFilesystemShallow(&r) && t.verifyDocker()
 	return r
 }
 
@@ -36,14 +35,14 @@ type VerifyResult struct {
 }
 
 // NewVerifyResult initializes a new VerifyResult
-func NewVerifyResult() *VerifyResult {
+func NewVerifyResult() VerifyResult {
 	var v VerifyResult
 	v.InvalidFiles = make(map[string][]Reason)
-	return &v
+	return v
 }
 
 // AddInvalidReason adds a reason for invalidation to a certain filePath
-func (v *VerifyResult) AddInvalidReason(filePath string, reason Reason) {
+func (v VerifyResult) AddInvalidReason(filePath string, reason Reason) {
 	if _, ok := v.InvalidFiles[filePath]; ok {
 		v.InvalidFiles[filePath] = append(v.InvalidFiles[filePath], reason)
 	} else {

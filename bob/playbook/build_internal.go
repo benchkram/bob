@@ -105,10 +105,8 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		return p.TaskNoRebuildRequired(task.Name())
 	}
 
-	if rebuild.VerifyResult != nil {
-		err = task.Clean(rebuild.VerifyResult.InvalidFiles)
-		errz.Fatal(err)
-	}
+	err = task.Clean(rebuild.VerifyResult.InvalidFiles)
+	errz.Fatal(err)
 
 	err = task.Run(ctx, p.namePad, p.nixCache, p.nixShellCache)
 	if err != nil {

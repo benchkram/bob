@@ -11,7 +11,7 @@ type Target interface {
 	BuildInfo() (*buildinfo.Targets, error)
 
 	Verify() bool
-	VerifyShallow() *VerifyResult
+	VerifyShallow() VerifyResult
 	Resolve() error
 
 	FilesystemEntries() []string
