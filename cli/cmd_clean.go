@@ -67,7 +67,7 @@ func runCleanTargets() {
 	}
 
 	for _, t := range ag.BTasks {
-		err := t.Clean(true)
+		err := t.Clean(nil, true)
 		if err != nil {
 			boblog.Log.Error(err, "Unable to clean target")
 		}

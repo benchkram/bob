@@ -43,15 +43,15 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		}
 	}()
 
-	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.Name())
+	rebuild, err := p.TaskNeedsRebuild(task.Name())
 	errz.Fatal(err)
-	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuildRequired, rebuildCause))
+	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuild.IsRequired, rebuild.Cause))
 
 	// task might need a rebuild due to an input change.
 	// Could still be possible to load the targets from the artifact store.
 	// If a task needs a rebuild due to a dependency change => rebuild.
-	if rebuildRequired {
-		switch rebuildCause {
+	if rebuild.IsRequired {
+		switch rebuild.Cause {
 		case InputNotFoundInBuildInfo:
 			hashIn, err := task.HashIn()
 			errz.Fatal(err)
@@ -60,19 +60,19 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 			err = p.pullArtifact(ctx, hashIn, task, false)
 			errz.Fatal(err)
 
-			success, err := task.ArtifactExtract(hashIn)
+			success, err := task.ArtifactExtract(hashIn, nil)
 			if err != nil {
 				// if local artifact is corrupted due to incomplete previous download, try a fresh download
 				if errors.Is(err, io.ErrUnexpectedEOF) {
 					err = p.pullArtifact(ctx, hashIn, task, true)
 					errz.Fatal(err)
-					success, err = task.ArtifactExtract(hashIn)
+					success, err = task.ArtifactExtract(hashIn, nil)
 				}
 			}
 
 			errz.Fatal(err)
 			if success {
-				rebuildRequired = false
+				rebuild.IsRequired = false
 
 				// In case an artifact was synced from the remote store no buildinfo exists...
 				// To avoid subsequent artifact extraction the Buildinfo is created after
@@ -83,13 +83,13 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 				errz.Fatal(err)
 			}
 		case TargetInvalid:
-			boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s, extracting artifact", p.namePad, coloredName, rebuildCause))
+			boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s, extracting artifact", p.namePad, coloredName, rebuild.Cause))
 			hashIn, err := task.HashIn()
 			errz.Fatal(err)
-			success, err := task.ArtifactExtract(hashIn)
+			success, err := task.ArtifactExtract(hashIn, rebuild.VerifyResult.InvalidFiles)
 			errz.Fatal(err)
 			if success {
-				rebuildRequired = false
+				rebuild.IsRequired = false
 			}
 		case TargetNotInLocalStore:
 		case TaskForcedRebuild:
@@ -98,15 +98,17 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		}
 	}
 
-	if !rebuildRequired {
+	if !rebuild.IsRequired {
 		status := StateNoRebuildRequired
 		boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, status.Short()))
 		taskSuccessFul = true
 		return p.TaskNoRebuildRequired(task.Name())
 	}
 
-	err = task.Clean()
-	errz.Fatal(err)
+	if rebuild.VerifyResult != nil {
+		err = task.Clean(rebuild.VerifyResult.InvalidFiles)
+		errz.Fatal(err)
+	}
 
 	err = task.Run(ctx, p.namePad, p.nixCache, p.nixShellCache)
 	if err != nil {

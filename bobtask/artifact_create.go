@@ -82,6 +82,10 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 		info, err := os.Lstat(fname)
 		errz.Fatal(err)
 
+		if info.IsDir() {
+			continue
+		}
+
 		// trim the tasks directory from the internal name
 		internalName := strings.TrimPrefix(fname, t.dir)
 		// saved docker images are temporarily stored in the tmp dir,

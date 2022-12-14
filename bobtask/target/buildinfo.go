@@ -58,6 +58,8 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 					return err
 				}
 				if f.IsDir() {
+					// we add directories to the list of files to later verify target, but no need for size and hash
+					bi.Files[p] = buildinfo.BuildInfoFile{Size: -1, Hash: ""}
 					return nil
 				}
 

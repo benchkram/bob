@@ -49,11 +49,11 @@ var _ = Describe("Test bob build", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			task := pb.Tasks[targetTask]
-			rebuildRequired, rebuildCause, err := pb.TaskNeedsRebuild(task.Name())
+			rebuild, err := pb.TaskNeedsRebuild(task.Name())
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(rebuildRequired).To(BeTrue())
-			Expect(rebuildCause).To(Equal(playbook.TaskForcedRebuild))
+			Expect(rebuild.IsRequired).To(BeTrue())
+			Expect(rebuild.Cause).To(Equal(playbook.TaskForcedRebuild))
 		})
 	})
 })

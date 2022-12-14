@@ -17,12 +17,11 @@ func (t *T) Resolve() error {
 	calls++
 	boblog.Log.V(2).Info(fmt.Sprintf("Calling Resolve the %d time", calls))
 
-	resolved := []string{}
-
 	if t.filesystemEntries != nil {
 		return nil
 	}
 
+	var resolved []string
 	for _, path := range t.FilesystemEntriesRaw() {
 		boblog.Log.V(2).Info(fmt.Sprintf("resolving %s", path))
 		fileInfo, err := os.Lstat(path)
@@ -38,14 +37,7 @@ func (t *T) Resolve() error {
 				if err != nil {
 					return err
 				}
-
-				// Skip dirs
-				if fi.IsDir() {
-					return nil
-				}
-
 				resolved = append(resolved, p)
-
 				return nil
 			}); err != nil {
 				return fmt.Errorf("failed to walk dir %q: %w", path, err)

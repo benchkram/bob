@@ -11,7 +11,7 @@ type Target interface {
 	BuildInfo() (*buildinfo.Targets, error)
 
 	Verify() bool
-	VerifyShallow() bool
+	VerifyShallow() *VerifyResult
 	Resolve() error
 
 	FilesystemEntries() []string
@@ -45,7 +45,7 @@ type T struct {
 
 	// dockerImages an array of docker tags
 	dockerImages []string
-	// filesystemEntries is an array of files,
+	// filesystemEntries is an array of files/directories,
 	// read from the filesystem.
 	// resolve(filesystemEntriesRaw) = filesystemEntriesRaw.
 	//

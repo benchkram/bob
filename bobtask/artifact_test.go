@@ -54,7 +54,7 @@ func TestArtifactCreateAndExtract(t *testing.T) {
 	err = os.RemoveAll(filepath.Join(testdir, ".build/dirone"))
 	assert.Nil(t, err)
 
-	success, err := tsk.ArtifactExtract("aaa")
+	success, err := tsk.ArtifactExtract("aaa", nil)
 	assert.Nil(t, err)
 	assert.True(t, success)
 
