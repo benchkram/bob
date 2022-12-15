@@ -44,11 +44,7 @@ func NewVerifyResult() VerifyResult {
 
 // AddInvalidReason adds a reason for invalidation to a certain filePath
 func (v VerifyResult) AddInvalidReason(filePath string, reason Reason) {
-	if _, ok := v.InvalidFiles[filePath]; ok {
-		v.InvalidFiles[filePath] = append(v.InvalidFiles[filePath], reason)
-	} else {
-		v.InvalidFiles[filePath] = []Reason{reason}
-	}
+	v.InvalidFiles[filePath] = append(v.InvalidFiles[filePath], reason)
 }
 
 // Reason contains the reason why a file/directory makes the target invalid
@@ -100,7 +96,7 @@ func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 	}
 
 	// check for deleted files
-	for k, _ := range t.expected.Filesystem.Files {
+	for k := range t.expected.Filesystem.Files {
 		if !sliceutil.Contains(*t.filesystemEntries, k) {
 			v.AddInvalidReason(k, ReasonDeleted)
 		}
