@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	target2 "github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/errz"
 	"github.com/mholt/archiver/v3"
@@ -79,6 +80,9 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 	// targets filesystem
 	var files []File
 	for fname := range buildInfo.Filesystem.Files {
+		if target2.ShouldIgnore(fname) {
+			continue
+		}
 		info, err := os.Lstat(fname)
 		errz.Fatal(err)
 

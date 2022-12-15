@@ -54,6 +54,9 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 
 		if targetInfo.IsDir() {
 			if err := filepath.WalkDir(path, func(p string, f fs.DirEntry, err error) error {
+				if ShouldIgnore(p) {
+					return nil
+				}
 				if err != nil {
 					return err
 				}
@@ -86,6 +89,9 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 			}
 			// TODO: what happens on a empty dir?
 		} else {
+			if ShouldIgnore(path) {
+				continue
+			}
 			err = h.AddFile(path)
 			if err != nil {
 				return buildinfo.BuildInfoFiles{}, fmt.Errorf("failed to hash target %q: %w", path, err)

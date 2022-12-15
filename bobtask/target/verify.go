@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/filehash"
@@ -106,6 +107,10 @@ func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 	}
 
 	for _, path := range *t.filesystemEntries {
+		if ShouldIgnore(path) {
+			continue
+		}
+
 		fileInfo, err := os.Lstat(path)
 		if err != nil {
 			return false
@@ -140,6 +145,19 @@ func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 	}
 
 	return len(v.InvalidFiles) == 0
+}
+
+var IgnoredTargets = []string{"node_modules/.cache"}
+
+// ShouldIgnore checks if file path should be ignored
+// when creating/extracting artifact or creating the buildinfo
+func ShouldIgnore(path string) bool {
+	for _, v := range IgnoredTargets {
+		if strings.HasPrefix(path, v) {
+			return true
+		}
+	}
+	return false
 }
 
 func (t *T) verifyFilesystem() bool {
