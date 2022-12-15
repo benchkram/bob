@@ -35,7 +35,21 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 	// Rebuild strategy set to `always`
 	if task.Rebuild() == bobtask.RebuildAlways {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(rebuild set to always)", p.namePad, coloredName))
-		return RebuildInfo{IsRequired: true, Cause: TaskForcedRebuild}, nil
+
+		// for forced rebuild all task targets are marked as invalid
+		invalidFiles := make(map[string][]target.Reason)
+		if task.TargetExists() {
+			t, err := ts.Target()
+			errz.Fatal(err)
+			for _, v := range t.FilesystemEntriesRaw() {
+				invalidFiles[v] = []target.Reason{target.ReasonForcedByNoCache}
+			}
+		}
+
+		return RebuildInfo{IsRequired: true, Cause: TaskForcedRebuild, VerifyResult: target.VerifyResult{
+			TargetIsValid: len(invalidFiles) > 0,
+			InvalidFiles:  invalidFiles,
+		}}, nil
 	}
 
 	// Did a child task change?

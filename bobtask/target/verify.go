@@ -55,6 +55,7 @@ const (
 	ReasonSizeChanged       Reason = "SIZE-CHANGED"
 	ReasonHashChanged       Reason = "HASH-CHANGED"
 	ReasonDeleted           Reason = "DELETED"
+	ReasonForcedByNoCache   Reason = "FORCED-BY-NO-CACHE"
 )
 
 // Verify existence and integrity of targets against an expected buildinfo.

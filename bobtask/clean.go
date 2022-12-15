@@ -28,10 +28,12 @@ func (t *Task) Clean(invalidFiles map[string][]target.Reason, verbose ...bool) e
 		if t.dir == "" {
 			return fmt.Errorf("task dir not set")
 		}
-		for k, v := range invalidFiles {
-			if v[0] == target.ReasonCreatedAfterBuild {
-				p := filepath.Join(t.dir, k)
-				os.RemoveAll(p)
+		for filename, reasons := range invalidFiles {
+			for _, reason := range reasons {
+				if reason == target.ReasonCreatedAfterBuild || reason == target.ReasonForcedByNoCache {
+					p := filepath.Join(t.dir, filename)
+					os.RemoveAll(p)
+				}
 			}
 		}
 	}

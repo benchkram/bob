@@ -102,18 +102,17 @@ var _ = Describe("Testing correct removal of directory targets", func() {
 
 		})
 
-		// todo fix the only failing test
-		/*		It("should remove the target directory and expect the targets being recreating doing a full rebuild", func() {
-				err := b.Build(ctx, "build")
-				Expect(err).NotTo(HaveOccurred())
+		It("should remove the target directory and expect the targets being recreating doing a full rebuild", func() {
+			err := b.Build(ctx, "build")
+			Expect(err).NotTo(HaveOccurred())
 
-				// the empty file should not be there anymore
-				dirContents, err := readDir("sub-dir")
-				Expect(err).NotTo(HaveOccurred())
-				Expect(dirContents).To(HaveLen(1))
-				Expect(dirContents).To(ContainElement("non-empty-file"))
-				Expect(dirContents).NotTo(ContainElement("empty-file"))
-			})*/
+			// the empty file should not be there anymore
+			dirContents, err := readDir("sub-dir")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(dirContents).To(HaveLen(1))
+			Expect(dirContents).To(ContainElement("non-empty-file"))
+			Expect(dirContents).NotTo(ContainElement("empty-file"))
+		})
 
 		It("should cleanup test environment", func() {
 			err := releaseBobfile("with_dir_target")
