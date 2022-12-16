@@ -27,9 +27,6 @@ jobs:
       - name: Install bob
         run: make install-prod
 
-      - name: Bob clean
-        run: bob clean system
-
       - name: bob login 
         run: bob auth init --token ${{ secrets.BOB_TOKEN }}
 
