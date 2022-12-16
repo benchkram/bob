@@ -40,9 +40,13 @@ func (t *T) BuildInfo() (bi *buildinfo.Targets, err error) {
 func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error) {
 	bi = *buildinfo.NewBuildInfoFiles()
 
+	fmt.Println("buildinfoFiles")
+
 	h := filehash.New()
 	for _, path := range paths {
 		path = filepath.Join(t.dir, path)
+
+		fmt.Println("search for", path)
 
 		if !file.Exists(path) {
 			return buildinfo.BuildInfoFiles{}, usererror.Wrapm(ErrTargetDoesNotExist, fmt.Sprintf("[path: %q]", path))
