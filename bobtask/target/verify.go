@@ -90,7 +90,6 @@ func (t *T) preConditionsFilesystem() bool {
 }
 
 // verifyFilesystemShallow
-// todo checking contents hash makes this method non-shallow anymore. rename this
 func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 	if t.filesystemEntries == nil {
 		return true

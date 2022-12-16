@@ -66,7 +66,7 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 					return nil
 				}
 
-				err = h.AddFile(p) //
+				err = h.AddFile(p)
 				if err != nil {
 					return fmt.Errorf("failed to hash target %q: %w", f, err)
 				}

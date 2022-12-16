@@ -125,7 +125,7 @@ func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]t
 }
 
 // shouldFetchFromCache checks if a file should be brought back from cache inside the target
-// A file will be brought back from cache if it was deleted or changed
+// A file will be brought back from cache if it's missing or was changed
 func shouldFetchFromCache(filename string, invalidFiles map[string][]target.Reason) bool {
 	if _, ok := invalidFiles[filename]; !ok {
 		return false
