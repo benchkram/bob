@@ -7,6 +7,7 @@ import (
 
 	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/logrusorgru/aurora"
 )
 
 // Clean the targets defined by this task.
@@ -32,7 +33,19 @@ func (t *Task) Clean(invalidFiles map[string][]target.Reason, verbose ...bool) e
 			for _, reason := range reasons {
 				if reason == target.ReasonCreatedAfterBuild || reason == target.ReasonForcedByNoCache {
 					p := filepath.Join(t.dir, filename)
-					os.RemoveAll(p)
+					if vb {
+						fmt.Printf("  %s ", p)
+					}
+					err := os.RemoveAll(p)
+					if err != nil {
+						if vb {
+							fmt.Printf("%s\n", aurora.Red("failed"))
+						}
+						return err
+					}
+					if vb {
+						fmt.Printf("%s\n", aurora.Green("done"))
+					}
 				}
 			}
 		}
