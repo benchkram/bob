@@ -27,7 +27,7 @@ jobs:
       - name: Install bob
         run: make install-prod
 
-      - name: bob login 
+      - name: bob login
         run: bob auth init --token ${{ secrets.BOB_TOKEN }}
 
       - name: Install nix derivations
@@ -38,12 +38,6 @@ jobs:
 
       - name: Lint code
         run: bob build lint
-
-      - name: Ls
-        run: ls -la
-
-      - name: Check buildinfos
-        run: ls ~/.bobcache/buildinfos
 
       - name: Build
         run: bob build --push

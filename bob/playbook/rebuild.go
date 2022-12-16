@@ -41,9 +41,7 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 		if task.TargetExists() {
 			t, err := ts.Target()
 			errz.Fatal(err)
-			for _, v := range t.FilesystemEntriesRaw() {
-				invalidFiles[v] = []target.Reason{target.ReasonForcedByNoCache}
-			}
+			invalidFiles = t.AsInvalidFiles(target.ReasonForcedByNoCache)
 		}
 
 		return RebuildInfo{IsRequired: true, Cause: TaskForcedRebuild, VerifyResult: target.VerifyResult{
@@ -64,7 +62,18 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 	errz.Fatal(err)
 	if rebuildRequired {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
-		return RebuildInfo{IsRequired: true, Cause: InputNotFoundInBuildInfo}, nil
+
+		invalidFiles := make(map[string][]target.Reason)
+		if task.TargetExists() {
+			t, err := ts.Target()
+			errz.Fatal(err)
+			invalidFiles = t.AsInvalidFiles(target.ReasonMissing)
+		}
+
+		return RebuildInfo{IsRequired: true, Cause: InputNotFoundInBuildInfo, VerifyResult: target.VerifyResult{
+			TargetIsValid: len(invalidFiles) > 0,
+			InvalidFiles:  invalidFiles,
+		}}, nil
 	}
 
 	// Check rebuild due to invalidated targets

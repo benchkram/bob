@@ -17,8 +17,6 @@ import (
 func (p *Playbook) computeBuildinfo(taskname string) (_ *buildinfo.I, err error) {
 	defer errz.Recover(&err)
 
-	fmt.Println("computeBuildinfo", taskname)
-
 	task, ok := p.Tasks[taskname]
 	if !ok {
 		return nil, usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))

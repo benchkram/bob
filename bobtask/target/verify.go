@@ -54,7 +54,7 @@ const (
 	ReasonCreatedAfterBuild Reason = "CREATED-AFTER-BUILD"
 	ReasonSizeChanged       Reason = "SIZE-CHANGED"
 	ReasonHashChanged       Reason = "HASH-CHANGED"
-	ReasonDeleted           Reason = "DELETED"
+	ReasonMissing           Reason = "MISSING"
 	ReasonForcedByNoCache   Reason = "FORCED-BY-NO-CACHE"
 )
 
@@ -96,10 +96,10 @@ func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 		return true
 	}
 
-	// check for deleted files
+	// check for deleted/never created files
 	for k := range t.expected.Filesystem.Files {
 		if !sliceutil.Contains(*t.filesystemEntries, k) {
-			v.AddInvalidReason(k, ReasonDeleted)
+			v.AddInvalidReason(k, ReasonMissing)
 		}
 	}
 

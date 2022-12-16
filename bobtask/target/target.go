@@ -18,14 +18,12 @@ type Target interface {
 	FilesystemEntriesPlain() []string
 	FilesystemEntriesRaw() []string
 	FilesystemEntriesRawPlain() []string
-	// Exists() bool
 
 	WithExpected(*buildinfo.Targets) *T
-
-	// Paths() []string
-	// PathsPlain() []string
-	// Type() targettype.T
 	DockerImages() []string
+
+	// AsInvalidFiles returns all FilesystemEntriesRaw as invalid with the specified reason
+	AsInvalidFiles(reason Reason) map[string][]Reason
 }
 
 type T struct {
@@ -122,4 +120,14 @@ func (t *T) WithExpected(expected *buildinfo.Targets) *T {
 
 func (t *T) DockerImages() []string {
 	return t.dockerImages
+}
+
+// AsInvalidFiles returns all FilesystemEntriesRaw as invalid with the specified reason
+func (t *T) AsInvalidFiles(reason Reason) map[string][]Reason {
+	invalidFiles := make(map[string][]Reason)
+
+	for _, v := range t.FilesystemEntriesRaw() {
+		invalidFiles[v] = []Reason{reason}
+	}
+	return invalidFiles
 }

@@ -42,8 +42,6 @@ func (ps *ps) NewBuildInfo(id string, info *buildinfo.I) (err error) {
 func (ps *ps) GetBuildInfo(id string) (info *buildinfo.I, err error) {
 	defer errz.Recover(&err)
 
-	fmt.Println("GetBuildInfo", id, filepath.Join(ps.dir, id))
-
 	f, err := os.Open(filepath.Join(ps.dir, id))
 	if err != nil {
 		return nil, ErrBuildInfoDoesNotExist

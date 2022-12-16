@@ -131,7 +131,7 @@ func shouldFetchFromCache(filename string, invalidFiles map[string][]target.Reas
 		return false
 	}
 	for _, reason := range invalidFiles[filename] {
-		if reason == target.ReasonHashChanged || reason == target.ReasonDeleted {
+		if reason == target.ReasonHashChanged || reason == target.ReasonMissing {
 			return true
 		}
 	}

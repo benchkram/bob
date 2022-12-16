@@ -60,13 +60,13 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 			err = p.pullArtifact(ctx, hashIn, task, false)
 			errz.Fatal(err)
 
-			success, err := task.ArtifactExtract(hashIn, nil)
+			success, err := task.ArtifactExtract(hashIn, rebuild.VerifyResult.InvalidFiles)
 			if err != nil {
 				// if local artifact is corrupted due to incomplete previous download, try a fresh download
 				if errors.Is(err, io.ErrUnexpectedEOF) {
 					err = p.pullArtifact(ctx, hashIn, task, true)
 					errz.Fatal(err)
-					success, err = task.ArtifactExtract(hashIn, nil)
+					success, err = task.ArtifactExtract(hashIn, rebuild.VerifyResult.InvalidFiles)
 				}
 			}
 
