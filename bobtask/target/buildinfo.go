@@ -1,10 +1,12 @@
 package target
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/benchkram/bob/bobtask/buildinfo"
@@ -41,6 +43,19 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 	bi = *buildinfo.NewBuildInfoFiles()
 
 	fmt.Println("buildinfoFiles")
+
+	cmd := exec.Command("ls")
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+
+	err := cmd.Run()
+	if err != nil {
+		return bi, err
+	}
+
+	fmt.Println("LISTING FILES")
+	fmt.Println(out.String())
 
 	h := filehash.New()
 	for _, path := range paths {
