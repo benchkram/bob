@@ -12,7 +12,6 @@ import (
 	"time"
 
 	target2 "github.com/benchkram/bob/bobtask/target"
-	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/errz"
 	"github.com/mholt/archiver/v3"
 	"gopkg.in/yaml.v3"
@@ -78,7 +77,6 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 	boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] file in buildinfo %d", t.name, len(buildInfo.Filesystem.Files)))
 
 	// targets filesystem
-	var files []File
 	for fname := range buildInfo.Filesystem.Files {
 		if target2.ShouldIgnore(fname) {
 			continue
@@ -120,14 +118,6 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 			ReadCloser: file,
 		})
 		errz.Fatal(err)
-
-		contentHash, err := filehash.HashOfFile(fname)
-		errz.Fatal(err)
-
-		files = append(files, File{
-			Path: fname,
-			Hash: contentHash,
-		})
 
 		err = file.Close()
 		errz.Fatal(err)
@@ -177,7 +167,6 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 	metadata.Taskname = t.name
 	metadata.Project = t.Project()
 	metadata.InputHash = artifactName.String()
-	metadata.Files = files
 	bin, err := yaml.Marshal(metadata)
 	errz.Fatal(err)
 
