@@ -10,7 +10,7 @@ import (
 type Target interface {
 	BuildInfo() (*buildinfo.Targets, error)
 
-	Verify() bool
+	//Verify() bool
 	VerifyShallow() bool
 	Resolve() error
 

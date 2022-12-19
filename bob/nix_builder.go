@@ -5,6 +5,7 @@ import (
 
 	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/errz"
+	"github.com/sanity-io/litter"
 
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/nix"
@@ -97,6 +98,12 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		t.SetEnv(envutil.Merge(environmentCache[hash], t.Env()))
 
 		ag.BTasks[name] = t
+	}
+
+	println(len(environmentCache))
+	for k, e := range environmentCache {
+		println(k)
+		litter.Dump(e)
 	}
 
 	for _, name := range runTasksInPipeline {
