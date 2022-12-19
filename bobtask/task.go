@@ -192,12 +192,7 @@ func (t *Task) description() string {
 	// env is influenced by t.dependencies, so no need to hash t.dependencies
 	sort.Strings(t.env)
 	for _, v := range t.env {
-		// ignore buildCommandPath and SHLVL due to non-reproducibility
-		v = strings.ToLower(v)
-		if strings.HasPrefix(v, "buildcommandpath=") {
-			continue
-		}
-		if strings.HasPrefix(v, "shlvl=") {
+		if shouldIgnore(v) {
 			continue
 		}
 		sb.WriteString(v)
@@ -213,4 +208,29 @@ func (t *Task) description() string {
 	}
 
 	return sb.String()
+}
+
+// shouldIgnore checks if the key-value env pair
+// should be ignored from the task description due to non-reproducibility
+func shouldIgnore(v string) bool {
+	v = strings.ToLower(v)
+	if strings.HasPrefix(v, "buildcommandpath=") {
+		return true
+	}
+	if strings.HasPrefix(v, "shlvl=") {
+		return true
+	}
+	if strings.HasPrefix(v, "home=") {
+		return true
+	}
+	if strings.HasPrefix(v, "logname=") {
+		return true
+	}
+	if strings.HasPrefix(v, "pwd=") {
+		return true
+	}
+	if strings.HasPrefix(v, "user=") {
+		return true
+	}
+	return false
 }
