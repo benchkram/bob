@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	target2 "github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/errz"
 	"github.com/mholt/archiver/v3"
 	"gopkg.in/yaml.v3"
@@ -45,9 +45,9 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 
 	boblog.Log.V(3).Info(fmt.Sprintf("[task:%s] creating artifact [%s] in localstore", t.name, artifactName))
 
-	target, err := t.Target()
+	tt, err := t.Target()
 	errz.Fatal(err)
-	buildInfo, err := target.BuildInfo()
+	buildInfo, err := tt.BuildInfo()
 
 	dockerTargets := []string{}
 	tempdir := ""
@@ -78,7 +78,7 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 
 	// targets filesystem
 	for fname := range buildInfo.Filesystem.Files {
-		if target2.ShouldIgnore(fname) {
+		if target.ShouldIgnore(fname) {
 			continue
 		}
 		info, err := os.Lstat(fname)
