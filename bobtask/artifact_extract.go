@@ -70,6 +70,7 @@ func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]t
 
 			// symlink
 			if archiveFile.FileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+				os.RemoveAll(dst)
 				err = os.Symlink(header.Linkname, dst)
 				errz.Fatal(err)
 				continue
@@ -131,7 +132,7 @@ func shouldFetchFromCache(filename string, invalidFiles map[string][]target.Reas
 		return false
 	}
 	for _, reason := range invalidFiles[filename] {
-		if reason == target.ReasonHashChanged || reason == target.ReasonMissing {
+		if reason == target.ReasonSizeChanged || reason == target.ReasonHashChanged || reason == target.ReasonMissing {
 			return true
 		}
 	}
