@@ -37,7 +37,7 @@ func (p *Playbook) play() error {
 			return err
 		}
 
-		//boblog.Log.V(3).Info(fmt.Sprintf("%-*s\t walking", p.namePad, taskname))
+		// boblog.Log.V(3).Info(fmt.Sprintf("%-*s\t walking", p.namePad, taskname))
 
 		switch task.State() {
 		case StatePending:
@@ -45,12 +45,12 @@ func (p *Playbook) play() error {
 			for _, dependentTaskName := range task.Task.DependsOn {
 				t, ok := p.Tasks[dependentTaskName]
 				if !ok {
-					//fmt.Printf("Task %s does not exist", dependentTaskName)
+					// fmt.Printf("Task %s does not exist", dependentTaskName)
 					return usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
 				}
 
 				state := t.State()
-				if state != StateCompleted && state != StateNoRebuildRequired {
+				if state != StateCompleted && state != StateCached && state != StateNoRebuildRequired {
 					// A dependent task is not completed.
 					// So this task is not yet ready to run.
 					return nil
@@ -60,7 +60,7 @@ func (p *Playbook) play() error {
 			return taskFailed
 		case StateCanceled:
 			return nil
-		case StateNoRebuildRequired:
+		case StateCached, StateNoRebuildRequired:
 			return nil
 		case StateCompleted:
 			return nil

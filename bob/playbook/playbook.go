@@ -214,10 +214,10 @@ func (p *Playbook) TaskCompleted(taskname string) (err error) {
 }
 
 // TaskNoRebuildRequired sets a task's state to indicate that no rebuild is required
-func (p *Playbook) TaskNoRebuildRequired(taskname string) (err error) {
+func (p *Playbook) TaskNoRebuildRequired(taskname string, status State) (err error) {
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateNoRebuildRequired, nil)
+	err = p.setTaskState(taskname, status, nil)
 	errz.Fatal(err)
 
 	err = p.play()
@@ -301,7 +301,7 @@ func (p *Playbook) setTaskState(taskname string, state State, taskError error) e
 
 	task.SetState(state, taskError)
 	switch state {
-	case StateCompleted, StateCanceled, StateNoRebuildRequired, StateFailed:
+	case StateCompleted, StateCanceled, StateCached, StateNoRebuildRequired, StateFailed:
 		task.SetEnd(time.Now())
 	}
 

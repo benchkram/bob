@@ -1,5 +1,6 @@
 build:
   build:
+    input: "*"
     cmd: |-
       mkdir sub-dir
       touch ./sub-dir/non-empty-file

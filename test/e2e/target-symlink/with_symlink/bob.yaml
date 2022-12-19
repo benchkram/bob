@@ -1,5 +1,6 @@
 build:
   build:
+    input: "*"
     cmd: |-
       touch hello
       ln -s hello shortcut

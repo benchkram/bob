@@ -72,7 +72,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 
 			state, err = buildTask(b, "build")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCached))
 		})
 
 		It("clean artifacts & buildinfo", func() {
@@ -165,7 +165,7 @@ var _ = Describe("Test artifact and target lifecycle for docker images without e
 
 			state, err = buildTask(b, bob.BuildTargetDockerImageName)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCached))
 		})
 
 		It("clean artifacts & buildinfo", func() {

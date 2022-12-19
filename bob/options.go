@@ -52,6 +52,12 @@ func WithCachingEnabled(enabled bool) Option {
 	}
 }
 
+func WithEnableRedundantTargets() Option {
+	return func(b *B) {
+		b.enableRedundantTargets = true
+	}
+}
+
 func WithPushEnabled(enabled bool) Option {
 	return func(b *B) {
 		b.enablePush = enabled

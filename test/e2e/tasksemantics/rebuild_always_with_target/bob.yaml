@@ -1,0 +1,6 @@
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
+build:
+  build:
+    cmd: touch content.json
+    rebuild: always
+    target: content.json

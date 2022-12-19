@@ -3,5 +3,6 @@ import:
 
 build:
   build:
+    input: "*"
     cmd: touch hello
     target: hello

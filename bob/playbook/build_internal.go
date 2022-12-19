@@ -99,10 +99,14 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	}
 
 	if !rebuildRequired {
-		status := StateNoRebuildRequired
+		status := StateCached
+		t, _ := task.Target()
+		if t == nil {
+			status = StateNoRebuildRequired
+		}
 		boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, status.Short()))
 		taskSuccessFul = true
-		return p.TaskNoRebuildRequired(task.Name())
+		return p.TaskNoRebuildRequired(task.Name(), status)
 	}
 
 	err = task.Clean()

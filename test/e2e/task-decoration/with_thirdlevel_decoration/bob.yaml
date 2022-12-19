@@ -8,6 +8,7 @@ build:
   second/third/build:
     dependsOn: [ second/hello ]
   before:
+    input: "*"
     cmd: |-
       touch textfile_before
       echo "Before!" > textfile_before

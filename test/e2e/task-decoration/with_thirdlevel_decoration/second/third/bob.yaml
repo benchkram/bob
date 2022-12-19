@@ -2,12 +2,14 @@ nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fff
 
 build:
   build:
+    input: "*"
     cmd: |-
       touch textfile_build
       echo "Build!" > textfile_build
     target: textfile_build
     dependsOn: [ hello ]
   hello:
+    input: "*"
     cmd: |-
       touch textfile_hello
       echo "Hello!" > textfile_hello

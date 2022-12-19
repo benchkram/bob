@@ -11,7 +11,6 @@ import (
 
 // summary prints the tasks processing details as a summary of the playbook.
 func (p *Playbook) summary(processedTasks []*bobtask.Task) {
-
 	boblog.Log.V(1).Info("")
 	boblog.Log.V(1).Info(aurora.Bold("● ● ● ●").BrightGreen().String())
 
@@ -27,12 +26,16 @@ func (p *Playbook) summary(processedTasks []*bobtask.Task) {
 
 		execTime := ""
 		status := stat.State()
-		if status != StateNoRebuildRequired {
+		if status != StateCached && status != StateNoRebuildRequired {
 			execTime = fmt.Sprintf("\t(%s)", format.DisplayDuration(stat.ExecutionTime()))
 		}
 
 		taskName := t.Name()
-		boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, status.Summary(), execTime))
+		if t.IsCompoundTask() {
+			boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, "-", execTime))
+		} else {
+			boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, status.Summary(), execTime))
+		}
 	}
 	boblog.Log.V(1).Info("")
 }

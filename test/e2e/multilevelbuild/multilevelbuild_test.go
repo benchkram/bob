@@ -108,14 +108,6 @@ var _ = Describe("Test bob multilevel build", func() {
 		It("checks that we do not require a rebuild of any of the levels", func() {
 			fixtures := []requiresRebuildFixture{
 				{
-					taskname:        bob.BuildAllTargetName,
-					requiresRebuild: false,
-				},
-				{
-					taskname:        "second-level/build2",
-					requiresRebuild: false,
-				},
-				{
 					taskname:        "second-level/third-level/build3",
 					requiresRebuild: false,
 				},
@@ -162,14 +154,6 @@ var _ = Describe("Test bob multilevel build", func() {
 
 		It("checks that we do not require a rebuild of any of the levels", func() {
 			fixtures := []requiresRebuildFixture{
-				{
-					taskname:        bob.BuildAllTargetName,
-					requiresRebuild: false,
-				},
-				{
-					taskname:        "second-level/build2",
-					requiresRebuild: false,
-				},
 				{
 					taskname:        "second-level/third-level/build3",
 					requiresRebuild: false,
@@ -230,7 +214,7 @@ func requiresRebuildMustMatchFixtures(b *bob.B, fixtures []requiresRebuildFixtur
 	for _, f := range fixtures {
 		ts, err := pb.TaskStatus(f.taskname)
 		Expect(err).NotTo(HaveOccurred())
-		requiresRebuild := ts.State() != playbook.StateNoRebuildRequired
+		requiresRebuild := ts.State() != playbook.StateCached && ts.State() != playbook.StateNoRebuildRequired
 
 		Expect(f.requiresRebuild).To(Equal(requiresRebuild), fmt.Sprintf("task's %q rebuild requirement differ, got: %t, want: %t", f.taskname, requiresRebuild, f.requiresRebuild))
 	}

@@ -33,7 +33,7 @@ var _ = BeforeSuite(func() {
 	nixBuilder, err := NixBuilder()
 	Expect(err).NotTo(HaveOccurred())
 
-	b, err = bob.BobWithBaseStoreDir(storageDir, bob.WithDir(dir), bob.WithNixBuilder(nixBuilder))
+	b, err = bob.BobWithBaseStoreDir(storageDir, bob.WithDir(dir), bob.WithNixBuilder(nixBuilder), bob.WithCachingEnabled(false))
 	Expect(err).NotTo(HaveOccurred())
 })
 

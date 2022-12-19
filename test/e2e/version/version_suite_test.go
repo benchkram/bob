@@ -35,7 +35,7 @@ var _ = BeforeSuite(func() {
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	b, err = bob.Bob(bob.WithDir(dir))
+	b, err = bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false))
 	Expect(err).NotTo(HaveOccurred())
 })
 
