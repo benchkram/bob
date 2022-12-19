@@ -1,6 +1,7 @@
 package bobtask
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/benchkram/bob/pkg/nix"
@@ -22,7 +23,7 @@ const (
 
 // Hint: When adding a new *Dirty field assure to update IsCompoundTask().
 type Task struct {
-	// Inputs are directorys or files
+	// Inputs are directories or files
 	// the task monitors for a rebuild.
 
 	// InputDirty is the representation read from a bobfile.
@@ -50,7 +51,6 @@ type Task struct {
 	rebuild      RebuildType
 
 	// name is the name of the task
-	// TODO: Make this public to allow yaml.Marshal to add this to the task hash?!?
 	name string
 
 	// project this tasks belongs to
@@ -185,4 +185,48 @@ func (t *Task) IsCompoundTask() bool {
 		return false
 	}
 	return true
+}
+
+// description of the Task used in hashing.
+// Influences the re-build policy of the task.
+//
+// inputs are intentionaly not cosidered here as the
+// content of those files is included in the hash.
+func (t *Task) description() string {
+	var sb strings.Builder
+
+	sb.WriteString(t.name)
+	sb.WriteString(t.project)
+
+	for _, v := range t.cmds {
+		sb.WriteString(v)
+	}
+
+	sb.WriteString(t.project)
+	sb.WriteString(t.nixpkgs)
+
+	// env is influenced by t.dependencies, so no need to hash t.dependencies
+	sort.Strings(t.env)
+	for _, v := range t.env {
+		// ignore buildCommandPath and SHLVL due to non-reproducibility
+		v = strings.ToLower(v)
+		if strings.HasPrefix(v, "buildcommandpath=") {
+			continue
+		}
+		if strings.HasPrefix(v, "shlvl=") {
+			continue
+		}
+		sb.WriteString(v)
+	}
+
+	if t.target != nil {
+		for _, v := range t.target.DockerImages() {
+			sb.WriteString(v)
+		}
+		for _, v := range t.target.FilesystemEntriesRaw() {
+			sb.WriteString(v)
+		}
+	}
+
+	return sb.String()
 }
