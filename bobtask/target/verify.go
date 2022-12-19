@@ -94,6 +94,9 @@ func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 	if t.filesystemEntries == nil {
 		return true
 	}
+	if t.expected == nil {
+		return true
+	}
 
 	// check for deleted/never created files
 	for k := range t.expected.Filesystem.Files {

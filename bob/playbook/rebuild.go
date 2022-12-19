@@ -52,6 +52,15 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 
 	// Did a child task change?
 	if p.didChildTaskChange(task.Name()) {
+		verifyResult := target.NewVerifyResult()
+		if task.TargetExists() {
+			tt, err := ts.Target()
+			errz.Fatal(err)
+			verifyResult = tt.VerifyShallow()
+			if !verifyResult.TargetIsValid {
+				return RebuildInfo{IsRequired: true, Cause: TargetInvalid, VerifyResult: verifyResult}, nil
+			}
+		}
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(dependecy changed)", p.namePad, coloredName))
 		return RebuildInfo{IsRequired: true, Cause: DependencyChanged}, nil
 	}
