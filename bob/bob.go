@@ -5,6 +5,7 @@ import (
 	"os"
 	"runtime"
 
+	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -57,7 +58,7 @@ type B struct {
 	enablePull bool
 
 	// nix builds dependencies for tasks
-	nix *NixBuilder
+	nix *nixbuilder.NB
 
 	// authStore is used to store authentication credentials for remote store
 	authStore *auth.Store
@@ -122,6 +123,12 @@ func BobWithBaseStoreDir(baseStoreDir string, opts ...Option) (*B, error) {
 	}
 	bob.authStore = authStore
 
+	nixBuilder, err := NixBuilder(baseStoreDir)
+	if err != nil {
+		return nil, err
+	}
+	bob.nix = nixBuilder
+
 	for _, opt := range opts {
 		if opt == nil {
 			continue
@@ -164,7 +171,7 @@ func Bob(opts ...Option) (*B, error) {
 	}
 
 	if bob.nix == nil {
-		nix, err := DefaultNix()
+		nix, err := DefaultNixBuilder()
 		if err != nil {
 			return nil, err
 		}
@@ -186,7 +193,7 @@ func (b *B) Dir() string {
 	return b.dir
 }
 
-func (b *B) Nix() *NixBuilder {
+func (b *B) Nix() *nixbuilder.NB {
 	return b.nix
 }
 

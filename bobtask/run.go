@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/envutil"
-	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
@@ -19,14 +17,14 @@ import (
 	"github.com/benchkram/errz"
 )
 
-func (t *Task) Run(ctx context.Context, namePad int, nixCache *nix.Cache, shellCache *nix.ShellCache) (err error) {
+func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
-	if len(t.Env()) == 0 {
-		nixShellEnv, err := nix.BuildEnvironment(t.dependencies, t.nixpkgs, nixCache, shellCache)
-		errz.Fatal(err)
-		t.SetEnv(envutil.Merge(nixShellEnv, t.env))
-	}
+	// if len(t.Env()) == 0 {
+	// 	nixShellEnv, err := nix.BuildEnvironment(t.dependencies, t.nixpkgs, nixCache, shellCache)
+	// 	errz.Fatal(err)
+	// 	t.SetEnv(envutil.Merge(nixShellEnv, t.env))
+	// }
 
 	for _, run := range t.cmds {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")

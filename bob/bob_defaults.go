@@ -7,8 +7,10 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/global"
+	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/buildinfostore"
+	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/pkg/store/filestore"
 )
@@ -83,4 +85,33 @@ func DefaultAuthStore() (s *auth.Store, err error) {
 	errz.Fatal(err)
 
 	return AuthStore(home)
+}
+
+func NixBuilder(baseDir string) (_ *nixbuilder.NB, err error) {
+
+	cacheDir := filepath.Join(baseDir, global.BobCacheNixFileName)
+
+	err = os.MkdirAll(filepath.Dir(cacheDir), 0775)
+	errz.Fatal(err)
+
+	nixCache, err := nix.NewCacheStore(nix.WithPath(cacheDir))
+	errz.Fatal(err)
+
+	shellCache := nix.NewShellCache(filepath.Join(baseDir, global.BobCacheNixShellCacheDir))
+
+	nb := nixbuilder.New(
+		nixbuilder.WithCache(nixCache),
+		nixbuilder.WithShellCache(shellCache),
+	)
+
+	return nb, nil
+}
+
+func DefaultNixBuilder() (_ *nixbuilder.NB, err error) {
+	defer errz.Recover(&err)
+
+	home, err := os.UserHomeDir()
+	errz.Fatal(err)
+
+	return NixBuilder(home)
 }
