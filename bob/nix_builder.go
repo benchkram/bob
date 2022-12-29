@@ -5,7 +5,6 @@ import (
 
 	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/errz"
-	"github.com/sanity-io/litter"
 
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/pkg/nix"
@@ -17,8 +16,13 @@ import (
 type NixBuilder struct {
 	// cache allows caching the dependency to store path
 	cache *nix.Cache
+
 	// shellCache allows caching of the nix-shell --command='env' output
 	shellCache *nix.ShellCache
+
+	// envStore is filled by NixBuilder with the environment
+	// used by tasks.
+	envStore envutil.Store
 }
 
 type NixOption func(n *NixBuilder)
@@ -35,9 +39,17 @@ func WithShellCache(cache *nix.ShellCache) NixOption {
 	}
 }
 
+func WithEnvironmentStore(store envutil.Store) NixOption {
+	return func(n *NixBuilder) {
+		n.envStore = store
+	}
+}
+
 // NewNixBuilder instantiates a new Nix builder instance
 func NewNixBuilder(opts ...NixOption) *NixBuilder {
-	n := &NixBuilder{}
+	n := &NixBuilder{
+		envStore: envutil.NewStore(),
+	}
 
 	for _, opt := range opts {
 		if opt == nil {
@@ -73,7 +85,7 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 	}
 
 	// maps nix dependencies to nixShellEnv
-	environmentCache := make(map[string][]string)
+	//environmentCache := make(map[string][]string)
 
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
@@ -90,21 +102,21 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		hash, err := nix.HashDependencies(deps)
 		errz.Fatal(err)
 
-		if _, ok := environmentCache[hash]; !ok {
+		if _, ok := n.envStore[envutil.Hash(hash)]; !ok {
 			nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
 			errz.Fatal(err)
-			environmentCache[hash] = nixShellEnv
+			n.envStore[envutil.Hash(hash)] = nixShellEnv
 		}
-		t.SetEnv(envutil.Merge(environmentCache[hash], t.Env()))
+		t.SetEnvID(envutil.Hash(hash))
 
 		ag.BTasks[name] = t
 	}
 
-	println(len(environmentCache))
-	for k, e := range environmentCache {
-		println(k)
-		litter.Dump(e)
-	}
+	// println(len(environmentCache))
+	// for k, e := range environmentCache {
+	// 	println(k)
+	// 	litter.Dump(e)
+	// }
 
 	for _, name := range runTasksInPipeline {
 		t := ag.RTasks[name]
@@ -119,12 +131,13 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		hash, err := nix.HashDependencies(deps)
 		errz.Fatal(err)
 
-		if _, ok := environmentCache[hash]; !ok {
+		if _, ok := n.envStore[envutil.Hash(hash)]; !ok {
 			nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
 			errz.Fatal(err)
-			environmentCache[hash] = nixShellEnv
+			n.envStore[envutil.Hash(hash)] = nixShellEnv
 		}
-		t.SetEnv(envutil.Merge(environmentCache[hash], t.Env()))
+		// TODO: also implement for run tasks
+		//t.SetEnvID(envutil.Hash(hash))
 
 		ag.RTasks[name] = t
 	}

@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/logrusorgru/aurora"
 
@@ -72,6 +73,11 @@ type Task struct {
 	// when the task is executed.
 	env []string
 
+	// envID is used to retrieve the environment
+	// from a environment store. This is used to
+	// optimize garbage collection.
+	envID envutil.Hash
+
 	// hashIn stores the `In` has for reuse
 	hashIn *hash.In
 
@@ -80,6 +86,10 @@ type Task struct {
 
 	// remote store for artifacts
 	remote store.Store
+
+	// envStore is the global store  used to
+	// manage environments.
+	envStore envutil.Store
 
 	// buildInfoStore stores buildinfos.
 	buildInfoStore buildinfostore.Store

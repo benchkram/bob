@@ -7,10 +7,11 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
 )
 
-func DefaultNix() (_ *NixBuilder, err error) {
+func DefaultNix(envStore envutil.Store) (_ *NixBuilder, err error) {
 	defer errz.Recover(&err)
 
 	home, err := os.UserHomeDir()
@@ -26,5 +27,11 @@ func DefaultNix() (_ *NixBuilder, err error) {
 
 	shellCache := nix.NewShellCache(filepath.Join(home, global.BobCacheNixShellCacheDir))
 
-	return NewNixBuilder(WithCache(nixCache), WithShellCache(shellCache)), nil
+	nb := NewNixBuilder(
+		WithCache(nixCache),
+		WithShellCache(shellCache),
+		WithEnvironmentStore(envStore),
+	)
+
+	return nb, nil
 }

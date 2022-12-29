@@ -6,6 +6,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/errz"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -27,6 +28,7 @@ var _ = Describe("Testing that symlink targets are preserved", func() {
 
 		It("should build the task", func() {
 			err := b.Build(ctx, "build")
+			errz.Log(err)
 			Expect(err).NotTo(HaveOccurred())
 
 			dirContents, err := readDir(".")

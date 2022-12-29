@@ -156,6 +156,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// Assure tasks are correctly initialised.
 	for i, task := range aggregate.BTasks {
 		task.WithLocalstore(b.local)
+		task.WithEnvStore(b.envStore)
 		task.WithBuildinfoStore(b.buildInfoStore)
 		task.WithDockerRegistryClient(b.dockerRegistryClient)
 
