@@ -23,8 +23,6 @@ func Merge(a []string, b []string) []string {
 		return r
 	}
 
-	println("herererr")
-
 	for _, v := range b {
 		pair := strings.SplitN(v, "=", 2)
 		envKeys[pair[0]] = v
