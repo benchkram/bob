@@ -1,6 +1,7 @@
 package bob
 
 import (
+	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/envutil"
@@ -77,7 +78,7 @@ func WithInsecure(allow bool) Option {
 	}
 }
 
-func WithNixBuilder(nix *NixBuilder) Option {
+func WithNixBuilder(nix *nixbuilder.NB) Option {
 	return func(b *B) {
 		b.nix = nix
 	}
