@@ -10,6 +10,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/file"
 
 	. "github.com/onsi/ginkgo"
@@ -34,6 +35,8 @@ type project struct {
 }
 
 var _ = BeforeSuite(func() {
+	boblog.SetLogLevel(10)
+
 	version = bob.Version
 	bob.Version = "1.0.0"
 

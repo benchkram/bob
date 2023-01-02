@@ -8,7 +8,6 @@ import (
 	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
-	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -36,9 +35,6 @@ type B struct {
 
 	// remotestore the place to store artifacts remotly
 	remote store.Store
-
-	// envStore the place to store environments in memory
-	envStore envutil.Store
 
 	// buildInfoStore stores build infos for tasks.
 	buildInfoStore buildinfostore.Store
@@ -86,8 +82,6 @@ func newBob(opts ...Option) *B {
 		enableCaching: true,
 		allowInsecure: false,
 		maxParallel:   runtime.NumCPU(),
-
-		envStore: envutil.NewStore(),
 
 		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
 	}

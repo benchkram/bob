@@ -61,6 +61,10 @@ func New(opts ...NixOption) *NB {
 	return n
 }
 
+func (n *NB) EnvStore() envutil.Store {
+	return n.envStore
+}
+
 // BuildNixDependenciesInPipeline collects and builds nix-dependencies for a pipeline starting at taskName.
 func (n *NB) BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err error) {
 	defer errz.Recover(&err)
@@ -83,9 +87,6 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 	if !nix.IsInstalled() {
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
-
-	// maps nix dependencies to nixShellEnv
-	//environmentCache := make(map[string][]string)
 
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
@@ -112,12 +113,9 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 		ag.BTasks[name] = t
 	}
 
-	// println(len(environmentCache))
-	// for k, e := range environmentCache {
-	// 	println(k)
-	// 	litter.Dump(e)
-	// }
-
+	// TODO: environment hash is just a workaround...
+	// maps nix dependencies to nixShellEnv
+	environmentCache := make(map[string][]string)
 	for _, name := range runTasksInPipeline {
 		t := ag.RTasks[name]
 
@@ -131,13 +129,12 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 		hash, err := nix.HashDependencies(deps)
 		errz.Fatal(err)
 
-		if _, ok := n.envStore[envutil.Hash(hash)]; !ok {
+		if _, ok := environmentCache[hash]; !ok {
 			nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
 			errz.Fatal(err)
-			n.envStore[envutil.Hash(hash)] = nixShellEnv
+			environmentCache[hash] = nixShellEnv
 		}
-		// TODO: also implement for run tasks
-		//t.SetEnvID(envutil.Hash(hash))
+		t.SetEnv(envutil.Merge(environmentCache[hash], t.Env()))
 
 		ag.RTasks[name] = t
 	}

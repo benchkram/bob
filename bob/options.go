@@ -4,7 +4,6 @@ import (
 	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/auth"
 	"github.com/benchkram/bob/pkg/buildinfostore"
-	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/store"
 )
 
@@ -45,12 +44,6 @@ func WithRemotestore(store store.Store) Option {
 func WithBuildinfoStore(store buildinfostore.Store) Option {
 	return func(b *B) {
 		b.buildInfoStore = store
-	}
-}
-
-func WithEnvStore(store envutil.Store) Option {
-	return func(b *B) {
-		b.envStore = store
 	}
 }
 
