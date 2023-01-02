@@ -47,6 +47,7 @@ require (
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/buger/goterm v1.0.4 // indirect
 	github.com/bugsnag/bugsnag-go v2.1.2+incompatible // indirect
 	github.com/bugsnag/panicwrap v1.3.4 // indirect

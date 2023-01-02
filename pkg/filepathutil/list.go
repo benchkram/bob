@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/yargevad/filepathx"
+	"github.com/benchkram/bob/pkg/filepathxx"
 )
 
 // DefaultIgnores
@@ -50,7 +50,7 @@ func ListRecursive(inp string) (all []string, err error) {
 	if s, err := os.Stat(inp); err != nil || !s.IsDir() {
 		// File
 		// Use glob for unknowns (wildcard-paths) and existing files (non-dirs)
-		matches, err := filepathx.Glob(inp)
+		matches, err := filepathxx.Glob(inp)
 		if err != nil {
 			return nil, fmt.Errorf("failed to glob %q: %w", inp, err)
 		}
@@ -85,11 +85,7 @@ func ListRecursive(inp string) (all []string, err error) {
 	return all, nil
 }
 
-var WalkedDirs = map[string]int{}
-
 func listDir(path string) ([]string, error) {
-	times := WalkedDirs[path]
-	WalkedDirs[path] = times + 1
 
 	var all []string
 	if err := filepath.WalkDir(path, func(p string, fi fs.DirEntry, err error) error {
