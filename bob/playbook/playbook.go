@@ -13,7 +13,6 @@ import (
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boberror"
-	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
@@ -75,12 +74,6 @@ type Playbook struct {
 
 	// enablePull allows pulling artifacts from remote store
 	enablePull bool
-
-	// nixCache caches the Nix store paths
-	nixCache *nix.Cache
-
-	// nixShellCache caches the nix-shell --command='env' command output
-	nixShellCache *nix.ShellCache
 }
 
 func New(root string, opts ...Option) *Playbook {

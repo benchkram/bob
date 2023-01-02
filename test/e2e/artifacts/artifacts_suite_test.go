@@ -1,7 +1,6 @@
 package artifactstest
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,7 +9,6 @@ import (
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/buildinfostore"
-	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/benchkram/bob/test/setup"
 
@@ -64,6 +62,7 @@ func reset() error {
 
 var _ = BeforeSuite(func() {
 	boblog.SetLogLevel(10)
+
 	var err error
 	var storageDir string
 	dir, storageDir, cleanup, err = setup.TestDirs("artifacts")
@@ -73,12 +72,14 @@ var _ = BeforeSuite(func() {
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
+	// objects using the local filesystem for caching and persistent.
+	// Initialized on a temporary location to avoid interference with
+	// a local bob installation.
 	artifactStore, err = bob.Filestore(storageDir)
 	Expect(err).NotTo(HaveOccurred())
 	buildinfoStore, err = bob.BuildinfoStore(storageDir)
 	Expect(err).NotTo(HaveOccurred())
-
-	nixBuilder, err := NixBuilder()
+	nixBuilder, err := bob.NixBuilder(storageDir)
 	Expect(err).NotTo(HaveOccurred())
 
 	b, err = bob.Bob(
@@ -99,10 +100,6 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	for _, file := range tmpFiles {
-		err := os.Remove(file)
-		Expect(err).NotTo(HaveOccurred())
-	}
 	err := cleanup()
 	Expect(err).NotTo(HaveOccurred())
 })
@@ -110,25 +107,4 @@ var _ = AfterSuite(func() {
 func TestArtifact(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "artifacts suite")
-}
-
-// tmpFiles tracks temporarily created files in these tests
-// to be cleaned up at the end.
-var tmpFiles []string
-
-func NixBuilder() (*bob.NixBuilder, error) {
-	file, err := ioutil.TempFile("", ".nix_cache*")
-	if err != nil {
-		return nil, err
-	}
-	name := file.Name()
-	file.Close()
-
-	tmpFiles = append(tmpFiles, name)
-	cache, err := nix.NewCacheStore(nix.WithPath(name))
-	if err != nil {
-		return nil, err
-	}
-
-	return bob.NewNixBuilder(bob.WithCache(cache)), nil
 }
