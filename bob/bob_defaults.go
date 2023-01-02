@@ -48,10 +48,10 @@ func DefaultBuildinfoStore() (s buildinfostore.Store, err error) {
 	return BuildinfoStore(home)
 }
 
-func BuildinfoStore(dir string) (s buildinfostore.Store, err error) {
+func BuildinfoStore(baseDir string) (s buildinfostore.Store, err error) {
 	defer errz.Recover(&err)
 
-	storeDir := filepath.Join(dir, global.BobCacheBuildinfoDir)
+	storeDir := filepath.Join(baseDir, global.BobCacheBuildinfoDir)
 	err = os.MkdirAll(storeDir, 0775)
 	errz.Fatal(err)
 
@@ -68,10 +68,10 @@ func (b *B) Localstore() store.Store {
 	return b.local
 }
 
-func AuthStore(dir string) (s *auth.Store, err error) {
+func AuthStore(baseDir string) (s *auth.Store, err error) {
 	defer errz.Recover(&err)
 
-	storeDir := filepath.Join(dir, global.BobAuthStoreDir)
+	storeDir := filepath.Join(baseDir, global.BobAuthStoreDir)
 	err = os.MkdirAll(storeDir, 0775)
 	errz.Fatal(err)
 
@@ -87,6 +87,11 @@ func DefaultAuthStore() (s *auth.Store, err error) {
 	return AuthStore(home)
 }
 
+// NixBuilder initialises a new nix builder object with the cache setup
+// in the given location.
+//
+// It's save to use the same base dir as for BuildinfoStore(),
+// Filestore() and AuthStore().
 func NixBuilder(baseDir string) (_ *nixbuilder.NB, err error) {
 
 	cacheDir := filepath.Join(baseDir, global.BobCacheNixFileName)

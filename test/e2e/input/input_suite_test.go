@@ -51,11 +51,6 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	for _, file := range tmpFiles {
-		err := os.Remove(file)
-		Expect(err).NotTo(HaveOccurred())
-	}
-
 	bob.Version = version
 })
 
