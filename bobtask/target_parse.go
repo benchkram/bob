@@ -110,10 +110,10 @@ func parseTargetPath(p string) ([]string, error) {
 		return targets, nil
 	}
 
-	targetStr := fmt.Sprintf("%v", p)
-	targetDirty := split(targetStr)
+	//targetStr := fmt.Sprintf("%v", p)
+	targetDirty := split(p)
 
-	return unique(targetDirty), nil
+	return appendUnique([]string{}, targetDirty...), nil
 }
 
 func parseTargetImage(p string) []string {
@@ -121,10 +121,10 @@ func parseTargetImage(p string) []string {
 		return []string{}
 	}
 
-	targetStr := fmt.Sprintf("%v", p)
-	targetDirty := split(targetStr)
+	//targetStr := fmt.Sprintf("%v", p)
+	targetDirty := split(p)
 
-	return unique(targetDirty)
+	return appendUnique([]string{}, targetDirty...)
 }
 
 func keyExists(m map[string]interface{}, key string) bool {

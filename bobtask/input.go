@@ -55,7 +55,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
-	for _, input := range unique(split(inputDirty)) {
+	for _, input := range appendUnique([]string{}, split(inputDirty)...) {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
@@ -64,7 +64,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 				return nil, fmt.Errorf("failed to list input: %w", err)
 			}
 
-			ignores = append(ignores, list...)
+			ignores = appendUnique(ignores, list...)
 			continue
 		}
 
@@ -73,7 +73,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 			return nil, fmt.Errorf("failed to list input: %w", err)
 		}
 
-		inputs = append(inputs, list...)
+		inputs = appendUnique(inputs, list...)
 	}
 
 	// Also ignore file & dir targets stored in the same directory
@@ -89,10 +89,10 @@ func (t *Task) filteredInputs() ([]string, error) {
 					if err != nil {
 						return nil, fmt.Errorf("failed to list input: %w", err)
 					}
-					ignores = append(ignores, list...)
+					ignores = appendUnique(ignores, list...)
 					continue
 				}
-				ignores = append(ignores, t.target.FilesystemEntriesRawPlain()...)
+				ignores = appendUnique(ignores, t.target.FilesystemEntriesRawPlain()...)
 			}
 		}
 	}
@@ -117,9 +117,6 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 		ignores = append(ignores, path)
 	}
-
-	inputs = unique(inputs)
-	ignores = unique(ignores)
 
 	// Filter
 	filteredInputs := make([]string, 0, len(inputs))
@@ -157,18 +154,21 @@ func (t *Task) filteredInputs() ([]string, error) {
 	return sortedInputs, nil
 }
 
-func unique(ss []string) []string {
-	unique := make([]string, 0, len(ss))
+func appendUnique(a []string, xx ...string) []string {
+	for _, x := range xx {
+		add := true
+		for _, y := range a {
+			if x == y {
+				add = false
+				break
+			}
+		}
 
-	um := make(map[string]struct{})
-	for _, s := range ss {
-		if _, ok := um[s]; !ok {
-			um[s] = struct{}{}
-			unique = append(unique, s)
+		if add {
+			a = append(a, x)
 		}
 	}
-
-	return unique
+	return a
 }
 
 // Split splits a single-line "input" to a slice of inputs.
