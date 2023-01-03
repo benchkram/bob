@@ -72,6 +72,7 @@ func (t *Task) parseTargets() error {
 			target.WithFilesystemEntries(filesystemEntries),
 			target.WithDockerImages(dockerImages),
 			target.WithDir(t.dir),
+			target.WithDockerRegistryClient(t.dockerRegistryClient),
 		)
 	}
 

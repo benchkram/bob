@@ -125,7 +125,6 @@ func Make(opts ...TaskOption) Task {
 		DependsOn:              []string{},
 		env:                    []string{},
 		rebuild:                RebuildOnChange,
-		dockerRegistryClient:   dockermobyutil.NewRegistryClient(),
 		dependencies:           []nix.Dependency{},
 	}
 
@@ -134,6 +133,10 @@ func Make(opts ...TaskOption) Task {
 			continue
 		}
 		opt(&t)
+	}
+
+	if t.dockerRegistryClient == nil {
+		t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
 	}
 
 	return t

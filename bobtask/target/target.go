@@ -58,24 +58,20 @@ type T struct {
 	// Used to verify that targets are created
 	// without verifying against expected buildinfo.
 	filesystemEntriesRaw []string
-
-	// exposed due to yaml marshalling
-	// PathsSerialize []string     `yaml:"Paths"`
-	// TypeSerialize  targettype.T `yaml:"Type"`
 }
 
 func New(opts ...Option) *T {
-	t := &T{
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		// PathsSerialize:       []string{},
-		// TypeSerialize:        DefaultType,
-	}
+	t := &T{}
 
 	for _, opt := range opts {
 		if opt == nil {
 			continue
 		}
 		opt(t)
+	}
+
+	if t.dockerRegistryClient == nil {
+		t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
 	}
 
 	return t
