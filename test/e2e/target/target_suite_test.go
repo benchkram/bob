@@ -27,6 +27,7 @@ var (
 
 var _ = BeforeSuite(func() {
 	boblog.SetLogLevel(10)
+
 	var err error
 	var storageDir string
 	dir, storageDir, cleanup, err = setup.TestDirs("target")

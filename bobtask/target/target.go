@@ -104,11 +104,11 @@ func (t *T) FilesystemEntriesRaw() []string {
 // FilesystemEntriesPlain does return the pure path
 // as given in the bobfile.
 func (t *T) FilesystemEntriesPlain() []string {
-	return *t.filesystemEntries
+	return append([]string{}, *t.filesystemEntries...)
 }
 
 func (t *T) FilesystemEntriesRawPlain() []string {
-	return t.filesystemEntriesRaw
+	return append([]string{}, t.filesystemEntriesRaw...)
 }
 
 func (t *T) WithExpected(expected *buildinfo.Targets) *T {
@@ -117,5 +117,5 @@ func (t *T) WithExpected(expected *buildinfo.Targets) *T {
 }
 
 func (t *T) DockerImages() []string {
-	return t.dockerImages
+	return append([]string{}, t.dockerImages...)
 }

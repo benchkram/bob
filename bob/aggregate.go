@@ -224,8 +224,8 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	err = aggregate.BTasks.IgnoreChildTargets()
 	errz.Fatal(err)
 
-	err = aggregate.BTasks.FilterInputs()
-	errz.Fatal(err)
+	// err = aggregate.BTasks.FilterInputs()
+	// errz.Fatal(err)
 
 	return aggregate, nil
 }

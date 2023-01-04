@@ -43,6 +43,11 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		}
 	}()
 
+	// Filter inputs populates the task input member by reading and validating
+	// inputs with the filesystem.
+	err = task.FilterInputs()
+	errz.Fatal(err)
+
 	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.Name())
 	errz.Fatal(err)
 	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuildRequired, rebuildCause))

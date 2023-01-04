@@ -2,7 +2,6 @@ package bobtask
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,6 +10,7 @@ import (
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filepathutil"
+	"github.com/benchkram/errz"
 )
 
 func (t *Task) Inputs() []string {
@@ -28,34 +28,44 @@ var (
 	)
 )
 
+func (t *Task) FilterInputs() (err error) {
+	defer errz.Recover(&err)
+
+	inputs, err := t.FilteredInputs()
+	errz.Fatal(err)
+	t.inputs = inputs
+
+	return nil
+}
+
 // filteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
-func (t *Task) filteredInputs() ([]string, error) {
+func (t *Task) FilteredInputs() ([]string, error) {
 
-	wd, err := filepath.Abs(t.dir)
+	wd, err := filepath.Abs(".")
 	if err != nil {
 		return nil, err
 	}
 
-	owd, err := os.Getwd()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get current working directory: %w", err)
-	}
-	if err := os.Chdir(wd); err != nil {
-		return nil, fmt.Errorf("failed to change current working directory to %s: %w", t.dir, err)
-	}
-	defer func() {
-		if err := os.Chdir(owd); err != nil {
-			log.Printf("failed to change current working directory back to %s: %v\n", owd, err)
-		}
-	}()
-
 	inputDirty := fmt.Sprintf("%s\n%s", t.InputDirty, defaultIgnores)
+	inputDirtyUnique := appendUnique([]string{}, split(inputDirty)...)
+	inputDirtyRooted := inputDirtyUnique
+	if t.dir != "." {
+		inputDirtyRooted = make([]string, len(inputDirtyUnique))
+		for i, input := range inputDirtyUnique {
+			// keep ignored in tact
+			if strings.HasPrefix(input, "!") {
+				inputDirtyRooted[i] = "!" + filepath.Join(t.dir, strings.TrimPrefix(input, "!"))
+				continue
+			}
+			inputDirtyRooted[i] = filepath.Join(t.dir, input)
+		}
+	}
 
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
-	for _, input := range appendUnique([]string{}, split(inputDirty)...) {
+	for _, input := range inputDirtyRooted {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
@@ -76,9 +86,10 @@ func (t *Task) filteredInputs() ([]string, error) {
 		inputs = appendUnique(inputs, list...)
 	}
 
-	// Also ignore file & dir targets stored in the same directory
+	// Ignore file & dir targets stored in the same directory
 	if t.target != nil {
-		for _, path := range t.target.FilesystemEntriesRawPlain() {
+
+		for _, path := range rooted(t.target.FilesystemEntriesRawPlain(), t.dir) {
 			if file.Exists(path) {
 				info, err := os.Stat(path)
 				if err != nil {
@@ -97,9 +108,9 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}
 
-	// Also ignore additional ignores found during aggregation.
+	// Ignore additional items found during aggregation.
 	// Usually the targets of child tasks.
-	for _, path := range t.InputAdditionalIgnores {
+	for _, path := range rooted(t.InputAdditionalIgnores, t.dir) {
 		if file.Exists(path) {
 			info, err := os.Stat(path)
 			if err != nil {
@@ -142,16 +153,26 @@ func (t *Task) filteredInputs() ([]string, error) {
 		return nil, fmt.Errorf("failed to sanitize inputs: %w", err)
 	}
 
-	sortedInputs := sanitizedInputs
 	sort.Strings(sanitizedInputs)
 
-	// fmt.Println("Inputs:", inputs)
+	//fmt.Println(t.name)
+	//fmt.Println("Inputs:", inputs)
 	// fmt.Println("Ignores:", ignores)
 	// fmt.Println("Filtered:", filteredInputs)
-	// fmt.Println("Sanitized:", sanitizedInputs)
+	//fmt.Println("Sanitized:", sanitizedInputs)
 	// fmt.Println("Sorted:", sortedInputs)
 
-	return sortedInputs, nil
+	return sanitizedInputs, nil
+}
+
+func rooted(ss []string, prefix string) []string {
+	if prefix == "." {
+		return ss
+	}
+	for i, s := range ss {
+		ss[i] = filepath.Join(prefix, s)
+	}
+	return ss
 }
 
 func appendUnique(a []string, xx ...string) []string {

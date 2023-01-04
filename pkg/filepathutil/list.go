@@ -98,7 +98,7 @@ func listDir(path string) ([]string, error) {
 			return fs.SkipDir
 		}
 
-		// Skip dirs
+		// Append files
 		if !fi.IsDir() {
 			all = append(all, p)
 		}

@@ -33,6 +33,9 @@ var _ = Describe("Test bob's file target handling", func() {
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
+			err = task.FilterInputs()
+			Expect(err).NotTo(HaveOccurred())
+
 			hashIn, err := task.HashInAlways()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -56,6 +59,9 @@ var _ = Describe("Test bob's file target handling", func() {
 
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
+
+			err = task.FilterInputs()
+			Expect(err).NotTo(HaveOccurred())
 
 			hashIn, err := task.HashInAlways()
 			Expect(err).NotTo(HaveOccurred())
@@ -97,10 +103,13 @@ var _ = Describe("Test bob's file target handling", func() {
 
 			globaltaskname := "second-level/third-level/build3"
 			err = b.Nix().BuildNixDependenciesInPipeline(aggregate, globaltaskname)
-			errz.Fatal(err)
+			Expect(err).NotTo(HaveOccurred())
 
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
+
+			err = task.FilterInputs()
+			Expect(err).NotTo(HaveOccurred())
 
 			hashIn, err := task.HashIn()
 			Expect(err).NotTo(HaveOccurred())
@@ -117,10 +126,13 @@ var _ = Describe("Test bob's file target handling", func() {
 
 			globaltaskname := "second-level/third-level/print"
 			err = b.Nix().BuildNixDependenciesInPipeline(aggregate, globaltaskname)
-			errz.Fatal(err)
+			Expect(err).NotTo(HaveOccurred())
 
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
+
+			err = task.FilterInputs()
+			Expect(err).NotTo(HaveOccurred())
 
 			hashIn, err := task.HashIn()
 			Expect(err).NotTo(HaveOccurred())
