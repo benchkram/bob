@@ -88,8 +88,8 @@ func (t *Task) FilteredInputs() ([]string, error) {
 
 	// Ignore file & dir targets stored in the same directory
 	if t.target != nil {
-
-		for _, path := range rooted(t.target.FilesystemEntriesRawPlain(), t.dir) {
+		rootedEntries := rooted(t.target.FilesystemEntriesRawPlain(), t.dir)
+		for _, path := range rootedEntries {
 			if file.Exists(path) {
 				info, err := os.Stat(path)
 				if err != nil {
@@ -109,8 +109,8 @@ func (t *Task) FilteredInputs() ([]string, error) {
 	}
 
 	// Ignore additional items found during aggregation.
-	// Usually the targets of child tasks.
-	for _, path := range rooted(t.InputAdditionalIgnores, t.dir) {
+	// Usually the targets of child tasks which are already rooted.
+	for _, path := range t.InputAdditionalIgnores {
 		if file.Exists(path) {
 			info, err := os.Stat(path)
 			if err != nil {
