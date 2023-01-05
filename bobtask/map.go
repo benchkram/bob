@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/benchkram/errz"
 
@@ -50,10 +51,16 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 func (tm Map) FilterInputs() (err error) {
 	defer errz.Recover(&err)
 
+	wg := sync.WaitGroup{}
 	for _, task := range tm {
-		err = task.FilterInputs()
-		errz.Fatal(err)
+		wg.Add(1)
+		go func(t Task) {
+			err = t.FilterInputs()
+			errz.Fatal(err)
+			wg.Done()
+		}(task)
 	}
+	wg.Wait()
 
 	return nil
 }

@@ -50,8 +50,8 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (_ processed.T
 	// Filter inputs populates the task input member by reading and validating
 	// inputs with the filesystem.
 	start := time.Now()
-	err = task.FilterInputs()
-	errz.Fatal(err)
+	// err = task.FilterInputs()
+	// errz.Fatal(err)
 	pt.FilterInputTook = time.Since(start)
 
 	start = time.Now()
