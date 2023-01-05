@@ -46,12 +46,15 @@ var buildCmd = &cobra.Command{
 		noPull, err := cmd.Flags().GetBool("no-pull")
 		errz.Fatal(err)
 
+		debug, err := cmd.Flags().GetBool("debug")
+		errz.Fatal(err)
+
 		taskname := global.DefaultBuildTask
 		if len(args) > 0 {
 			taskname = args[0]
 		}
 
-		runBuild(taskname, noCache, allowInsecure, enablePush, noPull, flagEnvVars, maxParallel)
+		runBuild(taskname, noCache, allowInsecure, enablePush, noPull, debug, flagEnvVars, maxParallel)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getBuildTasks()
@@ -72,7 +75,7 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(taskname string, noCache, allowInsecure, enablePush, noPull bool, flagEnvVars []string, maxParallel int) {
+func runBuild(taskname string, noCache, allowInsecure, enablePush, noPull, debug bool, flagEnvVars []string, maxParallel int) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
@@ -86,6 +89,7 @@ func runBuild(taskname string, noCache, allowInsecure, enablePush, noPull bool, 
 		bob.WithMaxParallel(maxParallel),
 		bob.WithPushEnabled(enablePush),
 		bob.WithPullEnabled(!noPull),
+		bob.WithDebug(debug),
 	)
 	if err != nil {
 		exitCode = 1

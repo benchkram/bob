@@ -75,6 +75,9 @@ type Playbook struct {
 	// oncePrepareOptimizedAccess is used to initalize the optimized
 	// slice to access tasks.
 	oncePrepareOptimizedAccess sync.Once
+
+	// debugSummary print a more detailed summary when set
+	debugSummary bool
 }
 
 func New(root string, rootID int, opts ...Option) *Playbook {

@@ -37,6 +37,7 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 		playbook.WithLocalStore(b.local),
 		playbook.WithPushEnabled(b.enablePush),
 		playbook.WithPullEnabled(b.enablePull),
+		playbook.WithDebug(b.debug),
 	)
 	errz.Fatal(err)
 

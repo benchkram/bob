@@ -5,15 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask/processed"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
 )
 
 // build a single task and update the playbook state after completion.
-func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
+func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (_ processed.Task, err error) {
 	defer errz.Recover(&err)
+
+	pt := processed.Task{Task: task}
 
 	// A task is flagged successful before
 	var taskSuccessFul bool
@@ -45,11 +49,15 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 
 	// Filter inputs populates the task input member by reading and validating
 	// inputs with the filesystem.
+	start := time.Now()
 	err = task.FilterInputs()
 	errz.Fatal(err)
+	pt.FilterInputTook = time.Since(start)
 
+	start = time.Now()
 	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.Name())
 	errz.Fatal(err)
+	pt.NeddRebuildTook = time.Since(start)
 	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuildRequired, rebuildCause))
 
 	// task might need a rebuild due to an input change.
@@ -107,18 +115,20 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		status := StateNoRebuildRequired
 		boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, status.Short()))
 		taskSuccessFul = true
-		return p.TaskNoRebuildRequired(task.TaskID)
+		return pt, p.TaskNoRebuildRequired(task.TaskID)
 	}
 
 	err = task.Clean()
 	errz.Fatal(err)
 
+	start = time.Now()
 	err = task.Run(ctx, p.namePad)
 	if err != nil {
 		taskSuccessFul = false
 		taskErr = err
 	}
 	errz.Fatal(err)
+	pt.BuildTook = time.Since(start)
 
 	// FIXME: Is this placed correctly?
 	// Could also be done after the task completion is
@@ -128,13 +138,16 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	// flagged as failed in a defered function call.
 	taskSuccessFul = true
 
+	start = time.Now()
 	err = p.TaskCompleted(task.TaskID)
 	if err != nil {
 		if errors.Is(err, ErrFailed) {
-			return err
+			pt.CompletionTook = time.Since(start)
+			return pt, err
 		}
 	}
 	errz.Fatal(err)
+	pt.CompletionTook = time.Since(start)
 
 	taskStatus, err := p.TaskStatus(task.Name())
 	errz.Fatal(err)
@@ -142,5 +155,5 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	state := taskStatus.State()
 	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, "..."+state.Short()))
 
-	return nil
+	return pt, nil
 }

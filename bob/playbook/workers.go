@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask/processed"
 )
 
 type workerManager struct {
@@ -27,7 +27,7 @@ type workerManager struct {
 	errors      []error
 
 	processedMutex sync.Mutex
-	processed      []*bobtask.Task
+	processed      []processed.Task
 
 	shutdownMutext sync.Mutex
 	shutdown       bool
@@ -40,7 +40,7 @@ func newWorkerManager() *workerManager {
 		workerState:    []string{},
 
 		errors:    []error{},
-		processed: []*bobtask.Task{},
+		processed: []processed.Task{},
 	}
 	return s
 }
@@ -73,7 +73,7 @@ func (wm *workerManager) addError(err error) {
 	wm.errorsMutex.Unlock()
 }
 
-func (wm *workerManager) addProcessedTask(t *bobtask.Task) {
+func (wm *workerManager) addProcessedTask(t processed.Task) {
 	wm.processedMutex.Lock()
 	wm.processed = append(wm.processed, t)
 	wm.processedMutex.Unlock()
@@ -131,7 +131,7 @@ func (p *Playbook) startWorkers(ctx context.Context, workers int) *workerManager
 
 				//boblog.Log.V(1).Info(fmt.Sprintf("RUNNING task %s on worker %d", t.Name(), workerID))
 
-				err := p.build(ctx, t.Task)
+				processedTask, err := p.build(ctx, t.Task)
 				if err != nil {
 					wm.addError(fmt.Errorf("(worker) [task: %s], %w", t.Name(), err))
 
@@ -151,7 +151,7 @@ func (p *Playbook) startWorkers(ctx context.Context, workers int) *workerManager
 					// }
 
 				}
-				wm.addProcessedTask(t.Task)
+				wm.addProcessedTask(processedTask)
 
 				//boblog.Log.V(1).Info(fmt.Sprintf("Done with task %s on worker  %d ", t.Name(), workerID))
 

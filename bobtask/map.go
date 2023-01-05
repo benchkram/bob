@@ -47,19 +47,16 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 	return nil
 }
 
-// func (tm Map) FilterInputs() (err error) {
-// 	defer errz.Recover(&err)
+func (tm Map) FilterInputs() (err error) {
+	defer errz.Recover(&err)
 
-// 	for key, task := range tm {
-// 		inputs, err := task.FilteredInputs()
-// 		errz.Fatal(err)
-// 		task.inputs = inputs
+	for _, task := range tm {
+		err = task.FilterInputs()
+		errz.Fatal(err)
+	}
 
-// 		tm[key] = task
-// 	}
-
-// 	return nil
-// }
+	return nil
+}
 
 // Sanitize task map and write filtered & sanitized
 // properties from dirty members to plain (e.g. dirtyInputs -> filter&sanitize -> inputs)
