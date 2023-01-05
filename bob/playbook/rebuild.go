@@ -3,22 +3,19 @@ package playbook
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/benchkram/bob/bobtask"
-	"github.com/benchkram/bob/pkg/boberror"
+	"github.com/benchkram/bob/bobtask/processed"
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
 
 // TaskNeedsRebuild check if a tasks need a rebuild by looking at its hash value
 // and its child tasks.
-func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, cause RebuildCause, err error) {
-	ts, ok := p.Tasks[taskname]
-	if !ok {
-		return false, "", usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
-	}
-	task := ts.Task
+func (p *Playbook) TaskNeedsRebuild(taskID int, pc *processed.Task) (rebuildRequired bool, cause RebuildCause, err error) {
+	task := p.TasksOptimized[taskID]
+
 	coloredName := task.ColoredName()
 
 	// Rebuild strategy set to `always`
@@ -28,27 +25,36 @@ func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, caus
 	}
 
 	// Did a child task change?
+	start := time.Now()
 	if p.didChildTaskChange(task.Name(), p.namePad, coloredName) {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(dependecy changed)", p.namePad, coloredName))
+		pc.NeedRebuildDidChildtaskChangeTook = time.Since(start)
 		return true, DependencyChanged, nil
 	}
+	pc.NeedRebuildDidChildtaskChangeTook = time.Since(start)
 
 	// Did the current task change?
 	// Indicating a cache miss in buildinfostore.
+	start = time.Now()
 	rebuildRequired, err = task.DidTaskChange()
 	errz.Fatal(err)
 	if rebuildRequired {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
 		return true, InputNotFoundInBuildInfo, nil
 	}
+	pc.NeedRebuildDidTaskCHangeTook = time.Since(start)
 
 	// Check rebuild due to invalidated targets
+	start = time.Now()
 	target, err := task.Target()
+	pc.NeedRebuildTargetTook = time.Since(start)
 	if err != nil {
 		return true, "", err
 	}
 	if target != nil {
+		start = time.Now()
 		targetValid := target.VerifyShallow()
+		pc.NeedRebuildTargetVerifyShallowTook = time.Since(start)
 		if !targetValid {
 			boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(invalid targets)", p.namePad, coloredName))
 			return true, TargetInvalid, nil

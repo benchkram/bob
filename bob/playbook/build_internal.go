@@ -55,7 +55,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (_ processed.T
 	pt.FilterInputTook = time.Since(start)
 
 	start = time.Now()
-	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.Name())
+	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.TaskID, &pt)
 	errz.Fatal(err)
 	pt.NeddRebuildTook = time.Since(start)
 	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuildRequired, rebuildCause))
