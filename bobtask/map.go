@@ -51,11 +51,16 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 func (tm Map) FilterInputs() (err error) {
 	defer errz.Recover(&err)
 
+	wd, err := filepath.Abs(".")
+	if err != nil {
+		return err
+	}
+
 	wg := sync.WaitGroup{}
 	for _, task := range tm {
 		wg.Add(1)
 		go func(t Task) {
-			err = t.FilterInputs()
+			err = t.FilterInputs(wd)
 			errz.Fatal(err)
 			wg.Done()
 		}(task)

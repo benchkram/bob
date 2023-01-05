@@ -28,10 +28,10 @@ var (
 	)
 )
 
-func (t *Task) FilterInputs() (err error) {
+func (t *Task) FilterInputs(wd string) (err error) {
 	defer errz.Recover(&err)
 
-	inputs, err := t.FilteredInputs()
+	inputs, err := t.FilteredInputs(wd)
 	errz.Fatal(err)
 	t.inputs = inputs
 
@@ -40,20 +40,14 @@ func (t *Task) FilterInputs() (err error) {
 
 // filteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
-func (t *Task) FilteredInputs() ([]string, error) {
+func (t *Task) FilteredInputs(wd string) ([]string, error) {
 
-	wd, err := filepath.Abs(".")
-	if err != nil {
-		return nil, err
-	}
-
-	inputDirty := fmt.Sprintf("%s\n%s", t.InputDirty, defaultIgnores)
-	inputDirtyUnique := appendUnique([]string{}, split(inputDirty)...)
-	inputDirtyRooted := inputDirtyUnique
+	inputDirty := split(fmt.Sprintf("%s\n%s", t.InputDirty, defaultIgnores))
+	inputDirtyRooted := inputDirty
 	if t.dir != "." {
-		inputDirtyRooted = make([]string, len(inputDirtyUnique))
-		for i, input := range inputDirtyUnique {
-			// keep ignored in tact
+		inputDirtyRooted = make([]string, len(inputDirty))
+		for i, input := range inputDirty {
+			// keep ignored in inputDirty
 			if strings.HasPrefix(input, "!") {
 				inputDirtyRooted[i] = "!" + filepath.Join(t.dir, strings.TrimPrefix(input, "!"))
 				continue
@@ -74,7 +68,7 @@ func (t *Task) FilteredInputs() ([]string, error) {
 				return nil, fmt.Errorf("failed to list input: %w", err)
 			}
 
-			ignores = appendUnique(ignores, list...)
+			ignores = append(ignores, list...)
 			continue
 		}
 
@@ -83,7 +77,7 @@ func (t *Task) FilteredInputs() ([]string, error) {
 			return nil, fmt.Errorf("failed to list input: %w", err)
 		}
 
-		inputs = appendUnique(inputs, list...)
+		inputs = append(inputs, list...)
 	}
 
 	// Ignore file & dir targets stored in the same directory
@@ -100,10 +94,10 @@ func (t *Task) FilteredInputs() ([]string, error) {
 					if err != nil {
 						return nil, fmt.Errorf("failed to list input: %w", err)
 					}
-					ignores = appendUnique(ignores, list...)
+					ignores = append(ignores, list...)
 					continue
 				}
-				ignores = appendUnique(ignores, t.target.FilesystemEntriesRawPlain()...)
+				ignores = append(ignores, t.target.FilesystemEntriesRawPlain()...)
 			}
 		}
 	}
@@ -128,6 +122,9 @@ func (t *Task) FilteredInputs() ([]string, error) {
 		}
 		ignores = append(ignores, path)
 	}
+
+	inputs = unique(inputs)
+	ignores = unique(ignores)
 
 	// Filter
 	filteredInputs := make([]string, 0, len(inputs))
@@ -173,6 +170,20 @@ func rooted(ss []string, prefix string) []string {
 		ss[i] = filepath.Join(prefix, s)
 	}
 	return ss
+}
+
+func unique(ss []string) []string {
+	unique := make([]string, 0, len(ss))
+
+	um := make(map[string]struct{})
+	for _, s := range ss {
+		if _, ok := um[s]; !ok {
+			um[s] = struct{}{}
+			unique = append(unique, s)
+		}
+	}
+
+	return unique
 }
 
 func appendUnique(a []string, xx ...string) []string {
