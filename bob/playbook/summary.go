@@ -27,9 +27,9 @@ func (p *Playbook) summary(processedTasks []*bobtask.Task) {
 
 		execTime := ""
 		status := stat.State()
-		if status != StateNoRebuildRequired {
-			execTime = fmt.Sprintf("\t(%s)", format.DisplayDuration(stat.ExecutionTime()))
-		}
+		//if status != StateNoRebuildRequired {
+		execTime = fmt.Sprintf("\t(%s)", format.DisplayDuration(stat.ExecutionTime()))
+		//}
 
 		taskName := t.Name()
 		boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, status.Summary(), execTime))

@@ -48,8 +48,6 @@ type Playbook struct {
 
 	// start is the point in time the playbook started
 	start time.Time
-	// end is the point in time the playbook ended
-	end time.Time
 
 	// enableCaching allows artifacts to be read & written to a store.
 	// Default: true.
@@ -58,10 +56,6 @@ type Playbook struct {
 	// predictedNumOfTasks is used to pick
 	// an appropriate channel size for the task queue.
 	predictedNumOfTasks int
-
-	// playMutex assures recomputation
-	// can only be done sequentially.
-	playMutex sync.Mutex
 
 	// maxParallel is the maximum number of parallel executed tasks
 	maxParallel int
@@ -127,31 +121,6 @@ const (
 	TargetNotInLocalStore    RebuildCause = "target-not-in-localstore"
 )
 
-func (p *Playbook) hasRunningOrPendingTasks() bool {
-	var num int
-	_ = p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
-		if err != nil {
-			return err
-		}
-
-		state := task.State()
-		if state == StateRunning || state == StatePending {
-			num++
-		}
-
-		return nil
-	})
-	return num > 0
-}
-
-func (p *Playbook) Done() {
-	if !p.done {
-		p.done = true
-		p.end = time.Now()
-		close(p.taskChannel)
-		close(p.doneChannel)
-	}
-}
 func (p *Playbook) DoneChan() chan struct{} {
 	return p.doneChannel
 }
@@ -166,7 +135,7 @@ func (p *Playbook) ErrorChannel() <-chan error {
 }
 
 func (p *Playbook) ExecutionTime() time.Duration {
-	return p.end.Sub(p.start)
+	return time.Since(p.start)
 }
 
 // TaskStatus returns the current state of a task

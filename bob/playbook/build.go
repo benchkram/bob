@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boblog"
@@ -12,6 +13,11 @@ import (
 
 // Build the playbook starting at root.
 func (p *Playbook) Build(ctx context.Context) (err error) {
+
+	if p.start.IsZero() {
+		println("starting clock")
+		p.start = time.Now()
+	}
 
 	// Setup worker pool and queue.
 	workers := p.maxParallel
@@ -71,7 +77,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 			}
 
-			//wm.printWorkerState()
+			wm.printWorkerState()
 		}
 
 		// to assure even idling workers will be shutdown.

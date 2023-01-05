@@ -2,7 +2,6 @@ package playbook
 
 import (
 	"fmt"
-	"time"
 )
 
 func (p *Playbook) Next() (_ *Status, err error) {
@@ -18,14 +17,6 @@ func (p *Playbook) Next() (_ *Status, err error) {
 			return nil
 		})
 	})
-
-	// Required? Yes!
-	//p.playMutex.Lock()
-	//defer p.playMutex.Unlock()
-
-	if p.start.IsZero() {
-		p.start = time.Now()
-	}
 
 	// Walk the task chain and determine the next build task. Send it to the task channel.
 	// Returns `taskQueued` when a task has been send to the taskChannel.
