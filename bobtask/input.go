@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/file"
@@ -32,13 +31,9 @@ var (
 func (t *Task) FilterInputs() (err error) {
 	defer errz.Recover(&err)
 
-	start := time.Now()
-
 	inputs, err := t.FilteredInputs()
 	errz.Fatal(err)
 	t.inputs = inputs
-
-	fmt.Printf("filtering input for task %s took %s\n", t.name, time.Since(start).String())
 
 	return nil
 }
