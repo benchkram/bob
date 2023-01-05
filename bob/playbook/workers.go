@@ -78,11 +78,12 @@ func (wm *workerManager) addProcessedTask(t *bobtask.Task) {
 	wm.processed = append(wm.processed, t)
 	wm.processedMutex.Unlock()
 }
-func (wm *workerManager) setWorkerState(workerID int, state string) {
-	wm.workerStateMutex.Lock()
-	wm.workerState[workerID] = state
-	wm.workerStateMutex.Unlock()
-}
+
+// func (wm *workerManager) setWorkerState(workerID int, state string) {
+// 	wm.workerStateMutex.Lock()
+// 	wm.workerState[workerID] = state
+// 	wm.workerStateMutex.Unlock()
+// }
 func (wm *workerManager) printWorkerState() {
 	wm.workerStateMutex.Lock()
 	for i, s := range wm.workerState {

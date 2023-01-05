@@ -104,15 +104,6 @@ func (globs Globs) Expand() ([]string, error) {
 	return matches, nil
 }
 
-func contains(entry string, arr []string) bool {
-	for _, e := range arr {
-		if entry == e {
-			return true
-		}
-	}
-	return false
-}
-
 func appendUnique(a []string, x string) []string {
 	for _, y := range a {
 		if x == y {
