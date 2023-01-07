@@ -1,14 +1,12 @@
 package inputest
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sanity-io/litter"
 )
 
 var _ = Describe("Testing input for a task", func() {
@@ -50,9 +48,6 @@ var _ = Describe("Testing input for a task", func() {
 
 			task, ok := bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
-
-			litter.Dump(task)
-			fmt.Println(task.Inputs())
 
 			inputsBeforeBuild := task.Inputs()
 			Expect(len(inputsBeforeBuild)).To(Equal(1))
