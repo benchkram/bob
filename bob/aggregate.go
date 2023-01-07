@@ -225,7 +225,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	errz.Fatal(err)
 
 	// Filter input must run before any work is done.
-	err = aggregate.BTasks.FilterInputs()
+	err = aggregate.BTasks.FilterInputsSequential()
 	errz.Fatal(err)
 
 	return aggregate, nil

@@ -76,6 +76,7 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		// wait for the reader to finish after closing the write pipe
 		pw.Close()
 		<-done
+
 	}
 
 	return nil

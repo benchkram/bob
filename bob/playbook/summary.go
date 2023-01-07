@@ -11,7 +11,7 @@ import (
 )
 
 // summary prints the tasks processing details as a summary of the playbook.
-func (p *Playbook) summary(processedTasks []processed.Task) {
+func (p *Playbook) summary(processedTasks []*processed.Task) {
 
 	boblog.Log.V(1).Info("")
 	boblog.Log.V(1).Info(aurora.Bold("● ● ● ●").BrightGreen().String())

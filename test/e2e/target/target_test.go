@@ -33,9 +33,6 @@ var _ = Describe("Test bob's file target handling", func() {
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
-
 			hashIn, err := task.HashInAlways()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -59,9 +56,6 @@ var _ = Describe("Test bob's file target handling", func() {
 
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
-
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
 
 			hashIn, err := task.HashInAlways()
 			Expect(err).NotTo(HaveOccurred())
@@ -108,9 +102,6 @@ var _ = Describe("Test bob's file target handling", func() {
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
 
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
-
 			hashIn, err := task.HashIn()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -130,9 +121,6 @@ var _ = Describe("Test bob's file target handling", func() {
 
 			task, ok := aggregate.BTasks[globaltaskname]
 			Expect(ok).To(BeTrue())
-
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
 
 			hashIn, err := task.HashIn()
 			Expect(err).NotTo(HaveOccurred())

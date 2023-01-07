@@ -35,7 +35,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 		for workerID := range wm.idleChan {
 
-			// boblog.Log.V(1).Info("Calling Next")
+			//boblog.Log.V(1).Info("Calling Next")
 			task, err := p.Next()
 			if err != nil {
 
@@ -89,11 +89,11 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 	// iterate through tasks and logs
 	// skipped input files.
 	var skippedInputs int
-	for _, task := range wm.processed {
+	for _, t := range wm.processed {
 		skippedInputs = logSkippedInputs(
 			skippedInputs,
-			task.ColoredName(),
-			task.LogSkippedInput(),
+			t.ColoredName(),
+			t.LogSkippedInput(),
 		)
 	}
 
@@ -122,7 +122,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 func (p *Playbook) inputHashes(filterTarget bool) map[string]hash.In {
 	artifactIds := make(map[string]hash.In)
 
-	for _, t := range p.Tasks {
+	for _, t := range p.TasksOptimized {
 		if filterTarget && !t.TargetExists() {
 			continue
 		}

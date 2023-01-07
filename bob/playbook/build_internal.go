@@ -14,10 +14,13 @@ import (
 )
 
 // build a single task and update the playbook state after completion.
-func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (_ processed.Task, err error) {
+func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed.Task, err error) {
 	defer errz.Recover(&err)
 
-	pt := processed.Task{Task: task}
+	// keep this, if `pt`` is not set errz.Fatal()
+	// returns a nil task which could lead
+	// to memory leaks down the line.
+	pt = &processed.Task{Task: task}
 
 	// A task is flagged successful before
 	var taskSuccessFul bool
@@ -47,15 +50,8 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (_ processed.T
 		}
 	}()
 
-	// Filter inputs populates the task input member by reading and validating
-	// inputs with the filesystem.
 	start := time.Now()
-	// err = task.FilterInputs()
-	// errz.Fatal(err)
-	pt.FilterInputTook = time.Since(start)
-
-	start = time.Now()
-	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.TaskID, &pt)
+	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.TaskID, pt)
 	errz.Fatal(err)
 	pt.NeddRebuildTook = time.Since(start)
 	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuildRequired, rebuildCause))

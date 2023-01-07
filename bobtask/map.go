@@ -51,21 +51,51 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 func (tm Map) FilterInputs() (err error) {
 	defer errz.Recover(&err)
 
+	errors := []error{}
+	errorsM := sync.Mutex{}
+
 	wd, err := filepath.Abs(".")
-	if err != nil {
-		return err
-	}
+	errz.Fatal(err)
 
 	wg := sync.WaitGroup{}
-	for _, task := range tm {
+	for key, task := range tm {
 		wg.Add(1)
-		go func(t Task) {
-			err = t.FilterInputs(wd)
-			errz.Fatal(err)
+		go func(k string, t Task) {
+			errr := t.FilterInputs(wd)
+			if errr != nil {
+				errorsM.Lock()
+				errors = append(errors, errr)
+				errorsM.Unlock()
+			}
+
+			tm[k] = t
+
 			wg.Done()
-		}(task)
+
+		}(key, task)
 	}
 	wg.Wait()
+
+	if len(errors) > 0 {
+		errz.Fatal(errors[0])
+	}
+
+	return nil
+}
+
+// FilterInputsSequential is the sequential version of FilterInputs.
+// Can be handy for debugging input errors.
+func (tm Map) FilterInputsSequential() (err error) {
+	defer errz.Recover(&err)
+
+	wd, err := filepath.Abs(".")
+	errz.Fatal(err)
+
+	for key, task := range tm {
+		err = task.FilterInputs(wd)
+		errz.Fatal(err)
+		tm[key] = task
+	}
 
 	return nil
 }

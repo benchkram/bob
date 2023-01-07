@@ -82,8 +82,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 
 	// Ignore file & dir targets stored in the same directory
 	if t.target != nil {
-		rootedEntries := rooted(t.target.FilesystemEntriesRawPlain(), t.dir)
-		for _, path := range rootedEntries {
+		for _, path := range rooted(t.target.FilesystemEntriesRawPlain(), t.dir) {
 			if file.Exists(path) {
 				info, err := os.Stat(path)
 				if err != nil {

@@ -27,7 +27,7 @@ type workerManager struct {
 	errors      []error
 
 	processedMutex sync.Mutex
-	processed      []processed.Task
+	processed      []*processed.Task
 
 	shutdownMutext sync.Mutex
 	shutdown       bool
@@ -40,7 +40,7 @@ func newWorkerManager() *workerManager {
 		workerState:    []string{},
 
 		errors:    []error{},
-		processed: []processed.Task{},
+		processed: []*processed.Task{},
 	}
 	return s
 }
@@ -73,7 +73,7 @@ func (wm *workerManager) addError(err error) {
 	wm.errorsMutex.Unlock()
 }
 
-func (wm *workerManager) addProcessedTask(t processed.Task) {
+func (wm *workerManager) addProcessedTask(t *processed.Task) {
 	wm.processedMutex.Lock()
 	wm.processed = append(wm.processed, t)
 	wm.processedMutex.Unlock()
@@ -152,8 +152,6 @@ func (p *Playbook) startWorkers(ctx context.Context, workers int) *workerManager
 
 				}
 				wm.addProcessedTask(processedTask)
-
-				//boblog.Log.V(1).Info(fmt.Sprintf("Done with task %s on worker  %d ", t.Name(), workerID))
 
 				//wm.setWorkerState(workerID, "idle")
 

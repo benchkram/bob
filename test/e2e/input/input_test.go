@@ -1,12 +1,14 @@
 package inputest
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/sanity-io/litter"
 )
 
 var _ = Describe("Testing input for a task", func() {
@@ -49,8 +51,8 @@ var _ = Describe("Testing input for a task", func() {
 			task, ok := bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
 
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
+			litter.Dump(task)
+			fmt.Println(task.Inputs())
 
 			inputsBeforeBuild := task.Inputs()
 			Expect(len(inputsBeforeBuild)).To(Equal(1))
@@ -64,9 +66,6 @@ var _ = Describe("Testing input for a task", func() {
 
 			task, ok = bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
-
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
 
 			inputsAfterBuild := task.Inputs()
 			Expect(len(inputsAfterBuild)).To(Equal(1))
@@ -109,9 +108,6 @@ var _ = Describe("Testing input for a task", func() {
 			task, ok := bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
 
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
-
 			inputsBeforeBuild := task.Inputs()
 			Expect(len(inputsBeforeBuild)).To(Equal(2))
 			Expect(inputsBeforeBuild[0]).To(Equal(filepath.Join(dir, "bob.yaml")))
@@ -125,9 +121,6 @@ var _ = Describe("Testing input for a task", func() {
 
 			task, ok = bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
-
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
 
 			inputsAfterBuild := task.Inputs()
 			Expect(len(inputsAfterBuild)).To(Equal(2))
@@ -182,9 +175,6 @@ var _ = Describe("Testing input for a task", func() {
 			task, ok := bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
 
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
-
 			inputsBeforeBuild := task.Inputs()
 			Expect(len(inputsBeforeBuild)).To(Equal(3))
 			Expect(inputsBeforeBuild[0]).To(Equal(filepath.Join(dir, "bob.yaml")))
@@ -199,9 +189,6 @@ var _ = Describe("Testing input for a task", func() {
 
 			task, ok = bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
-
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
 
 			inputsAfterBuild := task.Inputs()
 			Expect(len(inputsAfterBuild)).To(Equal(3))
@@ -236,9 +223,6 @@ var _ = Describe("Testing input for a task", func() {
 			task, ok := bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
 
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
-
 			inputs := task.Inputs()
 
 			Expect(len(inputs)).To(Equal(0))
@@ -251,9 +235,6 @@ var _ = Describe("Testing input for a task", func() {
 
 			task, ok = bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
-
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
 
 			inputsAfterBuild := task.Inputs()
 			Expect(len(inputsAfterBuild)).To(Equal(0))
@@ -285,9 +266,6 @@ var _ = Describe("Testing input for a task", func() {
 			task, ok := bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
 
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
-
 			inputs := task.Inputs()
 
 			Expect(len(inputs)).To(Equal(0))
@@ -300,9 +278,6 @@ var _ = Describe("Testing input for a task", func() {
 
 			task, ok = bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
-
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
 
 			inputsAfterBuild := task.Inputs()
 			Expect(len(inputsAfterBuild)).To(Equal(0))
@@ -334,9 +309,6 @@ var _ = Describe("Testing input for a task", func() {
 			task, ok := bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
 
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
-
 			inputs := task.Inputs()
 
 			Expect(len(inputs)).To(Equal(0))
@@ -349,9 +321,6 @@ var _ = Describe("Testing input for a task", func() {
 
 			task, ok = bobfile.BTasks[taskName]
 			Expect(ok).To(BeTrue())
-
-			err = task.FilterInputs()
-			Expect(err).NotTo(HaveOccurred())
 
 			inputsAfterBuild := task.Inputs()
 			Expect(len(inputsAfterBuild)).To(Equal(0))
