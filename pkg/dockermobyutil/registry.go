@@ -98,13 +98,13 @@ func (r *R) ImageHash(image string) (string, error) {
 }
 
 func (r *R) imageSaveToPath(image string, savedir string) (pathToArchive string, _ error) {
-	r.mutex.Lock()
+	//r.mutex.Lock()
 	reader, err := r.client.ImageSave(context.Background(), []string{image})
 	if err != nil {
-		r.mutex.Unlock()
+		//	r.mutex.Unlock()
 		return "", err
 	}
-	r.mutex.Unlock()
+	//r.mutex.Unlock()
 	defer reader.Close()
 
 	body, err := ioutil.ReadAll(reader)
@@ -112,6 +112,8 @@ func (r *R) imageSaveToPath(image string, savedir string) (pathToArchive string,
 		return "", err
 	}
 
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	// rndExtension is added to the archive name. It prevents overwrite of images in tmp directory in case
 	// of a image beeing used as target in multiple tasks (which should be avoided).
 	rndExtension := randStringRunes(8)
