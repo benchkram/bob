@@ -208,13 +208,13 @@ func initializeDependencies(dir string, taskDependencies []string, bobfile *Bobf
 
 	taskDeps := make([]nix.Dependency, 0)
 	for _, v := range dependencies {
-		taskDeps = nix.AppendUnique(taskDeps, nix.Dependency{
+		taskDeps = append(taskDeps, nix.Dependency{
 			Name:    v,
 			Nixpkgs: bobfile.Nixpkgs,
 		})
 	}
 
-	return taskDeps
+	return nix.UniqueDeps(taskDeps)
 }
 
 func NewRemotestore(endpoint *url.URL, allowInsecure bool, token string) (s store.Store) {
