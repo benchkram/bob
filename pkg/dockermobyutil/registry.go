@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -120,7 +120,7 @@ func (r *R) imageSaveToPath(image string, savedir string) (pathToArchive string,
 	}
 	defer reader.Close()
 
-	body, err := ioutil.ReadAll(reader)
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return "", err
 	}
@@ -132,7 +132,7 @@ func (r *R) imageSaveToPath(image string, savedir string) (pathToArchive string,
 	image = strings.ReplaceAll(image, "/", "-")
 
 	pathToArchive = filepath.Join(savedir, image+"-"+rndExtension+".tar")
-	err = ioutil.WriteFile(pathToArchive, body, 0644)
+	err = os.WriteFile(pathToArchive, body, 0644)
 	if err != nil {
 		return "", err
 	}

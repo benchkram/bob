@@ -3,8 +3,8 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -115,7 +115,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	if !file.Exists(bobfilePath) {
 		return nil, usererror.Wrap(ErrBobfileNotFound)
 	}
-	bin, err := ioutil.ReadFile(bobfilePath)
+	bin, err := os.ReadFile(bobfilePath)
 	errz.Fatal(err)
 
 	bobfile := &Bobfile{
@@ -346,7 +346,7 @@ func (b *Bobfile) BobfileSave(dir, name string) (err error) {
 	err = encoder.Encode(b)
 	errz.Fatal(err)
 
-	return ioutil.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0664)
+	return os.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0664)
 }
 
 func (b *Bobfile) Dir() string {

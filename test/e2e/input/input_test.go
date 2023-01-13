@@ -1,7 +1,6 @@
 package inputest
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -11,7 +10,7 @@ import (
 
 var _ = Describe("Testing input for a task", func() {
 	BeforeEach(func() {
-		testDir, err := ioutil.TempDir("", "input-test-*")
+		testDir, err := os.MkdirTemp("", "input-test-*")
 		Expect(err).NotTo(HaveOccurred())
 
 		dir = testDir

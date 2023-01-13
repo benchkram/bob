@@ -1,7 +1,6 @@
 package bob
 
 import (
-	"io/ioutil"
 	"os"
 	"runtime"
 
@@ -207,7 +206,7 @@ func (b *B) write() (err error) {
 	errz.Fatal(err)
 
 	const mode = 0644
-	return ioutil.WriteFile(b.WorkspaceFilePath(), bin, mode)
+	return os.WriteFile(b.WorkspaceFilePath(), bin, mode)
 }
 
 func (b *B) read() (err error) {
@@ -219,7 +218,7 @@ func (b *B) read() (err error) {
 		errz.Fatal(err)
 	}
 
-	bin, err := ioutil.ReadFile(b.WorkspaceFilePath())
+	bin, err := os.ReadFile(b.WorkspaceFilePath())
 	errz.Fatal(err)
 
 	err = yaml.Unmarshal(bin, b)

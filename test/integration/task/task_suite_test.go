@@ -1,7 +1,6 @@
 package tasktest
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -14,7 +13,7 @@ var (
 )
 
 var _ = BeforeSuite(func() {
-	testDir, err := ioutil.TempDir("", "bob-test-task-*")
+	testDir, err := os.MkdirTemp("", "bob-test-task-*")
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
 })

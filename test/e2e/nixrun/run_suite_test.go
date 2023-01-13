@@ -1,7 +1,6 @@
 package nixruntest
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -58,7 +57,7 @@ var _ = BeforeSuite(func() {
 		nameToBobfile[strings.ReplaceAll(name, "/", "_")] = bf
 	}
 
-	testDir, err := ioutil.TempDir("", "bob-test-nix-run-*")
+	testDir, err := os.MkdirTemp("", "bob-test-nix-run-*")
 	Expect(err).NotTo(HaveOccurred())
 
 	projects := []project{

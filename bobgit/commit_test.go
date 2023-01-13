@@ -3,7 +3,6 @@ package bobgit
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -305,7 +304,7 @@ func TestCommit(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		dir, err := ioutil.TempDir("", test.name+"-*")
+		dir, err := os.MkdirTemp("", test.name+"-*")
 		assert.Nil(t, err)
 
 		// Don't cleanup in testdir mode
