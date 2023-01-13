@@ -39,7 +39,10 @@ type R struct {
 	// Some storage driver might not allow for parallel image extraction,
 	// @rdnt realised this on his ubuntu22.04 using a zfsfilesystem.
 	// Some context https://github.com/moby/moby/issues/21814
-	mutex sync.Mutex
+	//
+	// explicitly using a pointer here to beeing able to detect
+	// weather a mutex is required.
+	mutex *sync.Mutex
 }
 
 func NewRegistryClient() RegistryClient {
@@ -54,6 +57,13 @@ func NewRegistryClient() RegistryClient {
 	r := &R{
 		client:     cli,
 		archiveDir: os.TempDir(),
+	}
+
+	// Use a lock to supress parallel image reads on zfs.
+	info, err := r.client.Info(context.Background())
+	errz.Log(err)
+	if info.Driver == "zfs" {
+		r.mutex = &sync.Mutex{}
 	}
 
 	return r
@@ -72,13 +82,10 @@ func (r *R) ImageExists(image string) (bool, error) {
 }
 
 func (r *R) ImageHash(image string) (string, error) {
-	//r.mutex.Lock()
 	summaries, err := r.client.ImageList(context.Background(), types.ImageListOptions{All: false})
 	if err != nil {
-		//r.mutex.Unlock()
 		return "", err
 	}
-	//r.mutex.Unlock()
 
 	var selected types.ImageSummary
 	for _, s := range summaries {
@@ -98,13 +105,19 @@ func (r *R) ImageHash(image string) (string, error) {
 }
 
 func (r *R) imageSaveToPath(image string, savedir string) (pathToArchive string, _ error) {
-	//	r.mutex.Lock()
+	if r.mutex != nil {
+		r.mutex.Lock()
+	}
 	reader, err := r.client.ImageSave(context.Background(), []string{image})
 	if err != nil {
-		//	r.mutex.Unlock()
+		if r.mutex != nil {
+			r.mutex.Unlock()
+		}
 		return "", err
 	}
-	//r.mutex.Unlock()
+	if r.mutex != nil {
+		r.mutex.Unlock()
+	}
 	defer reader.Close()
 
 	body, err := ioutil.ReadAll(reader)
@@ -135,8 +148,6 @@ func (r *R) ImageSave(image string) (pathToArchive string, _ error) {
 
 // ImageRemove from registry
 func (r *R) ImageRemove(imageID string) error {
-	// r.mutex.Lock()
-	// defer r.mutex.Unlock()
 	options := types.ImageRemoveOptions{
 		Force:         true,
 		PruneChildren: true,
@@ -157,8 +168,6 @@ func (r *R) ImageLoad(imgpath string) error {
 	}
 	defer f.Close()
 
-	// r.mutex.Lock()
-	// defer r.mutex.Unlock()
 	resp, err := r.client.ImageLoad(context.Background(), f, false)
 	if err != nil {
 		return err
@@ -169,8 +178,6 @@ func (r *R) ImageLoad(imgpath string) error {
 
 // ImageLoad from tar archive
 func (r *R) ImageTag(src string, target string) error {
-	// r.mutex.Lock()
-	// defer r.mutex.Unlock()
 	return r.client.ImageTag(context.Background(), src, target)
 }
 
