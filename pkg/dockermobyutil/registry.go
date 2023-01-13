@@ -72,13 +72,13 @@ func (r *R) ImageExists(image string) (bool, error) {
 }
 
 func (r *R) ImageHash(image string) (string, error) {
-	r.mutex.Lock()
+	//r.mutex.Lock()
 	summaries, err := r.client.ImageList(context.Background(), types.ImageListOptions{All: false})
 	if err != nil {
-		r.mutex.Unlock()
+		//r.mutex.Unlock()
 		return "", err
 	}
-	r.mutex.Unlock()
+	//r.mutex.Unlock()
 
 	var selected types.ImageSummary
 	for _, s := range summaries {
