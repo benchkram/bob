@@ -11,6 +11,7 @@ import (
 
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/filepathutil"
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
 
@@ -41,13 +42,19 @@ func (t *Task) FilterInputs(wd string) (err error) {
 
 // filteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
-func (t *Task) FilteredInputs(wd string) ([]string, error) {
+func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 
 	inputDirty := split(fmt.Sprintf("%s\n%s", t.InputDirty, defaultIgnores))
 	inputDirtyRooted := inputDirty
 	if t.dir != "." {
 		inputDirtyRooted = make([]string, len(inputDirty))
 		for i, input := range inputDirty {
+
+			err = t.sanitizeInput(input)
+			if err != nil {
+				return nil, usererror.Wrap(err)
+			}
+
 			// keep ignored in inputDirty
 			if strings.HasPrefix(input, "!") {
 				inputDirtyRooted[i] = "!" + filepath.Join(t.dir, strings.TrimPrefix(input, "!"))
@@ -64,7 +71,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
-			list, err := filepathutil.ListRecursive(input)
+			list, err := filepathutil.ListRecursive(input, projectRoot)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list input: %w", err)
 			}
@@ -73,7 +80,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 			continue
 		}
 
-		list, err := filepathutil.ListRecursive(input)
+		list, err := filepathutil.ListRecursive(input, projectRoot)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
 		}
@@ -84,7 +91,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 	// Ignore file & dir targets stored in the same directory
 	if t.target != nil {
 		for _, path := range rooted(t.target.FilesystemEntriesRawPlain(), t.dir) {
-			info, err := os.Stat(path)
+			info, err := os.Lstat(path)
 			if err != nil {
 				if errors.Is(err, fs.ErrNotExist) {
 					continue
@@ -93,7 +100,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 			}
 
 			if info.IsDir() {
-				list, err := filepathutil.ListRecursive(path)
+				list, err := filepathutil.ListRecursive(path, projectRoot)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list input: %w", err)
 				}
@@ -107,7 +114,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 	// Ignore additional items found during aggregation.
 	// Usually the targets of child tasks which are already rooted.
 	for _, path := range t.InputAdditionalIgnores {
-		info, err := os.Stat(path)
+		info, err := os.Lstat(path)
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				continue
@@ -116,7 +123,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 		}
 
 		if info.IsDir() {
-			list, err := filepathutil.ListRecursive(path)
+			list, err := filepathutil.ListRecursive(path, projectRoot)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list input: %w", err)
 			}
@@ -145,15 +152,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 		}
 	}
 
-	sanitizedInputs, err := t.sanitizeInputs(
-		filteredInputs,
-		optimisationOptions{},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sanitize inputs: %w", err)
-	}
-
-	sort.Strings(sanitizedInputs)
+	sort.Strings(filteredInputs)
 
 	// fmt.Println(t.name)
 	// fmt.Println("Inputs:", inputs)
@@ -162,7 +161,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 	// fmt.Println("Sanitized:", sanitizedInputs)
 	// fmt.Println("Sorted:", sortedInputs)
 
-	return sanitizedInputs, nil
+	return filteredInputs, nil
 }
 
 func rooted(ss []string, prefix string) []string {

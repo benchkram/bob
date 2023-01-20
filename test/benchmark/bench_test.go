@@ -16,7 +16,7 @@ var result error
 func BenchmarkMultilevelBuild(b *testing.B) {
 	dir, storageDir, cleanup, err := setup.TestDirs("build-benchmark")
 	assert.Nil(b, err)
-	defer cleanup()
+	defer func() { _ = cleanup() }()
 
 	err = os.Chdir(dir)
 	assert.Nil(b, err)
@@ -48,7 +48,7 @@ var resultAggregate *bobfile.Bobfile
 func BenchmarkAggregate(b *testing.B) {
 	dir, storageDir, cleanup, err := setup.TestDirs("build-benchmark")
 	assert.Nil(b, err)
-	defer cleanup()
+	defer func() { _ = cleanup() }()
 
 	err = os.Chdir(dir)
 	assert.Nil(b, err)
@@ -74,7 +74,7 @@ func BenchmarkAggregate(b *testing.B) {
 func BenchmarkFilterInputs(b *testing.B) {
 	dir, storageDir, cleanup, err := setup.TestDirs("build-benchmark")
 	assert.Nil(b, err)
-	defer cleanup()
+	defer func() { _ = cleanup() }()
 
 	err = os.Chdir(dir)
 	assert.Nil(b, err)
@@ -91,6 +91,36 @@ func BenchmarkFilterInputs(b *testing.B) {
 	var r error
 	for n := 0; n < b.N; n++ {
 		r = aggregate.BTasks.FilterInputs()
+
+	}
+	// always store the result to a package level variable
+	// so the compiler cannot eliminate the Benchmark itself.
+	result = r
+
+	b.ReportAllocs()
+
+}
+
+func BenchmarkFilterInputsSequential(b *testing.B) {
+	dir, storageDir, cleanup, err := setup.TestDirs("build-benchmark")
+	assert.Nil(b, err)
+	defer func() { _ = cleanup() }()
+
+	err = os.Chdir(dir)
+	assert.Nil(b, err)
+
+	bobInstance, err := bob.BobWithBaseStoreDir(storageDir, bob.WithDir(dir))
+	assert.Nil(b, err)
+
+	err = bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})
+	assert.Nil(b, err)
+
+	aggregate, err := bobInstance.Aggregate()
+	assert.Nil(b, err)
+
+	var r error
+	for n := 0; n < b.N; n++ {
+		r = aggregate.BTasks.FilterInputsSequential()
 
 	}
 	// always store the result to a package level variable
