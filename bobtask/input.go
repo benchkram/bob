@@ -1,14 +1,15 @@
 package bobtask
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/benchkram/bob/bob/global"
-	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/benchkram/errz"
 )
@@ -83,30 +84,11 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 	// Ignore file & dir targets stored in the same directory
 	if t.target != nil {
 		for _, path := range rooted(t.target.FilesystemEntriesRawPlain(), t.dir) {
-			if file.Exists(path) {
-				info, err := os.Stat(path)
-				if err != nil {
-					return nil, fmt.Errorf("failed to stat %s: %w", path, err)
-				}
-				if info.IsDir() {
-					list, err := filepathutil.ListRecursive(path)
-					if err != nil {
-						return nil, fmt.Errorf("failed to list input: %w", err)
-					}
-					ignores = append(ignores, list...)
-					continue
-				}
-				ignores = append(ignores, t.target.FilesystemEntriesRawPlain()...)
-			}
-		}
-	}
-
-	// Ignore additional items found during aggregation.
-	// Usually the targets of child tasks which are already rooted.
-	for _, path := range t.InputAdditionalIgnores {
-		if file.Exists(path) {
 			info, err := os.Stat(path)
 			if err != nil {
+				if errors.Is(err, fs.ErrNotExist) {
+					continue
+				}
 				return nil, fmt.Errorf("failed to stat %s: %w", path, err)
 			}
 
@@ -118,6 +100,28 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 				ignores = append(ignores, list...)
 				continue
 			}
+			ignores = append(ignores, t.target.FilesystemEntriesRawPlain()...)
+		}
+	}
+
+	// Ignore additional items found during aggregation.
+	// Usually the targets of child tasks which are already rooted.
+	for _, path := range t.InputAdditionalIgnores {
+		info, err := os.Stat(path)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return nil, fmt.Errorf("failed to stat %s: %w", path, err)
+		}
+
+		if info.IsDir() {
+			list, err := filepathutil.ListRecursive(path)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list input: %w", err)
+			}
+			ignores = append(ignores, list...)
+			continue
 		}
 		ignores = append(ignores, path)
 	}
@@ -143,7 +147,7 @@ func (t *Task) FilteredInputs(wd string) ([]string, error) {
 
 	sanitizedInputs, err := t.sanitizeInputs(
 		filteredInputs,
-		optimisationOptions{wd: wd},
+		optimisationOptions{},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sanitize inputs: %w", err)
