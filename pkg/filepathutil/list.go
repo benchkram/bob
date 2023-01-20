@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/filepathxx"
+	"github.com/logrusorgru/aurora"
 )
 
 // DefaultIgnores
@@ -97,8 +98,11 @@ func ListRecursive(inp string, projectRoot string) (all []string, err error) {
 		all = append(all, files...)
 	}
 
-	for _, sErr := range symlinkErrors {
-		fmt.Println(sErr.Error())
+	for i, sErr := range symlinkErrors {
+		fmt.Println(fmt.Sprintf("%s", aurora.Red("Warning: ")) + sErr.Error())
+		if i > 10 {
+			break
+		}
 	}
 
 	// listRecursiveMap[inp] = all
