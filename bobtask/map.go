@@ -77,7 +77,6 @@ func (tm Map) FilterInputs() (err error) {
 			mapM.Unlock()
 
 			wg.Done()
-
 		}(key, task)
 	}
 	mapM.Unlock()

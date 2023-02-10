@@ -15,7 +15,6 @@ import (
 func (p *Playbook) Build(ctx context.Context) (err error) {
 
 	if p.start.IsZero() {
-		println("starting clock")
 		p.start = time.Now()
 	}
 

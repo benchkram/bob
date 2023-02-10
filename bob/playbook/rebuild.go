@@ -3,7 +3,6 @@ package playbook
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/bobtask/processed"
@@ -25,36 +24,27 @@ func (p *Playbook) TaskNeedsRebuild(taskID int, pc *processed.Task) (rebuildRequ
 	}
 
 	// Did a child task change?
-	start := time.Now()
 	if p.didChildTaskChange(task.Name(), p.namePad, coloredName) {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(dependecy changed)", p.namePad, coloredName))
-		pc.NeedRebuildDidChildtaskChangeTook = time.Since(start)
 		return true, DependencyChanged, nil
 	}
-	pc.NeedRebuildDidChildtaskChangeTook = time.Since(start)
 
 	// Did the current task change?
 	// Indicating a cache miss in buildinfostore.
-	start = time.Now()
 	rebuildRequired, err = task.DidTaskChange()
 	errz.Fatal(err)
 	if rebuildRequired {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(input changed)", p.namePad, coloredName))
 		return true, InputNotFoundInBuildInfo, nil
 	}
-	pc.NeedRebuildDidTaskCHangeTook = time.Since(start)
 
 	// Check rebuild due to invalidated targets
-	start = time.Now()
 	target, err := task.Target()
-	pc.NeedRebuildTargetTook = time.Since(start)
 	if err != nil {
 		return true, "", err
 	}
 	if target != nil {
-		start = time.Now()
 		targetValid := target.VerifyShallow()
-		pc.NeedRebuildTargetVerifyShallowTook = time.Since(start)
 		if !targetValid {
 			boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(invalid targets)", p.namePad, coloredName))
 			return true, TargetInvalid, nil

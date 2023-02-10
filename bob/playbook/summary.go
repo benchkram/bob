@@ -35,18 +35,6 @@ func (p *Playbook) summary(processedTasks []*processed.Task) {
 		taskName := t.Name()
 		boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, status.Summary(), execTime))
 
-		if p.debugSummary {
-			pad := 45
-			printBuildDetails("filter-input", pad, t.FilterInputTook)
-			printBuildDetails("need-rebuild", pad, t.NeddRebuildTook)
-			printBuildDetails("need-rebuild-child-task-change?", pad, t.NeedRebuildDidChildtaskChangeTook)
-			printBuildDetails("need-rebuild-task-change?", pad, t.NeedRebuildDidTaskCHangeTook)
-			printBuildDetails("need-rebuild-target", pad, t.NeedRebuildTargetTook)
-			printBuildDetails("need-rebuild-target-verify-shallow", pad, t.NeedRebuildTargetVerifyShallowTook)
-			printBuildDetails("build", pad, t.BuildTook)
-			printBuildDetails("completion", pad, t.CompletionTook)
-		}
-
 	}
 	boblog.Log.V(1).Info("")
 }

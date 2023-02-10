@@ -47,9 +47,3 @@ func WithLocalStore(s store.Store) Option {
 		p.localStore = s
 	}
 }
-
-func WithDebug(debug bool) Option {
-	return func(p *Playbook) {
-		p.debugSummary = debug
-	}
-}
