@@ -34,12 +34,10 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 		for workerID := range wm.idleChan {
 
-			//boblog.Log.V(1).Info("Calling Next")
 			task, err := p.Next()
 			if err != nil {
 
 				if errors.Is(err, ErrDone) {
-					//boblog.Log.V(1).Info("Done")
 					wm.stopWorkers()
 					// exit
 					break
@@ -52,7 +50,6 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 
 			// Push workload to the worker or store the worker for later.
 			if task != nil {
-				//boblog.Log.V(1).Info(fmt.Sprintf("Sending task %s to worker", task.Name()))
 				// Send workload to worker
 				wm.workloadQueues[workerID] <- task
 
@@ -62,7 +59,6 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 					wID := workerBuffer[len(workerBuffer)-1]
 					workerBuffer = workerBuffer[:len(workerBuffer)-1]
 
-					//	boblog.Log.V(1).Info("Requeue Worker")
 					// requeue a buffered worker
 					wm.idleChan <- wID
 				}
@@ -72,11 +68,7 @@ func (p *Playbook) Build(ctx context.Context) (err error) {
 				// Therfore the worker is stored in a buffer and is requeued on
 				// the next change to the playbook.
 				workerBuffer = append(workerBuffer, workerID)
-				//boblog.Log.V(1).Info(fmt.Sprintf("Buffering Worker [worker_id:%d ] [%s:%d]", workerID, "buffer_size", len(workerBuffer)))
-
 			}
-
-			wm.printWorkerState()
 		}
 
 		// to assure even idling workers will be shutdown.

@@ -16,9 +16,6 @@ type workerManager struct {
 	// workloadQueues to send workload to a worker
 	workloadQueues []chan *Status
 
-	workerStateMutex sync.Mutex
-	workerState      []string
-
 	// workers report themself as idle
 	// by putting their id on this channel.
 	idleChan chan int
@@ -37,7 +34,6 @@ func newWorkerManager() *workerManager {
 	s := &workerManager{
 		workloadQueues: []chan *Status{},
 		idleChan:       make(chan int, 1000),
-		workerState:    []string{},
 
 		errors:    []error{},
 		processed: []*processed.Task{},
@@ -79,29 +75,10 @@ func (wm *workerManager) addProcessedTask(t *processed.Task) {
 	wm.processedMutex.Unlock()
 }
 
-// func (wm *workerManager) setWorkerState(workerID int, state string) {
-// 	wm.workerStateMutex.Lock()
-// 	wm.workerState[workerID] = state
-// 	wm.workerStateMutex.Unlock()
-// }
-func (wm *workerManager) printWorkerState() {
-	wm.workerStateMutex.Lock()
-	for i, s := range wm.workerState {
-		fmt.Printf("worker %d is in state %s\n", i, s)
-	}
-
-	wm.workerStateMutex.Unlock()
-}
-
 // startWorkers and return a state to interact with the workers.
 func (p *Playbook) startWorkers(ctx context.Context, workers int) *workerManager {
 
 	wm := newWorkerManager()
-
-	// initially set all workers to idle
-	// for i := 0; i < workers; i++ {
-	// 	wm.workerState = append(wm.workerState, "starting")
-	// }
 
 	// Start the workers which listen on task queue
 	for i := 0; i < workers; i++ {
@@ -115,21 +92,17 @@ func (p *Playbook) startWorkers(ctx context.Context, workers int) *workerManager
 
 		wm.workerWG.Add(1)
 		go func(workerID int) {
-			//wm.setWorkerState(workerID, "idle")
 			// signal availability to receive workload
 			wm.idleChan <- workerID
 
 			for t := range queue {
 				t.SetStart(time.Now())
 				_ = p.setTaskState(t.Task.TaskID, StateRunning, nil)
-				//wm.setWorkerState(workerID, "running")
 
 				// check if a shutdown is required.
 				if wm.canShutdown() {
 					break
 				}
-
-				//boblog.Log.V(1).Info(fmt.Sprintf("RUNNING task %s on worker %d", t.Name(), workerID))
 
 				processedTask, err := p.build(ctx, t.Task)
 				if err != nil {
@@ -137,29 +110,12 @@ func (p *Playbook) startWorkers(ctx context.Context, workers int) *workerManager
 
 					// stopp workers asap.
 					wm.stopWorkers()
-					//shutdownAvailabilityQueue()
-
-					// Any error occurred during a build puts the
-					// playbook in a done state. This prevents
-					// further tasks be queued for execution.
-					// p.Done()
-
-					// TODO: shutdown gracefully.
-					// close(workerAvailabilityQueue)
-					// for _, wq := range workerQeues {
-					//  close(wq)
-					// }
-
 				}
 				wm.addProcessedTask(processedTask)
-
-				//wm.setWorkerState(workerID, "idle")
 
 				// done with processing. signal availability.
 				wm.idleChan <- workerID
 			}
-			//fmt.Printf("worker %d is shutting down\n", workerID)
-			//wm.setWorkerState(workerID, "ended")
 			wm.workerWG.Done()
 		}(i)
 	}
