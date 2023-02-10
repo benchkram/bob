@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/test/setup"
 
 	. "github.com/onsi/ginkgo"
@@ -19,6 +20,7 @@ var (
 )
 
 var _ = BeforeSuite(func() {
+	boblog.SetLogLevel(10)
 	var err error
 	var storageDir string
 	dir, storageDir, cleanup, err = setup.TestDirs("build")

@@ -3,7 +3,7 @@ package buildinfostore
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -43,7 +43,7 @@ func (s *s) NewBuildInfo(id string, info *buildinfo.I) (err error) {
 	b, err := json.Marshal(info)
 	errz.Fatal(err)
 
-	err = ioutil.WriteFile(filepath.Join(s.dir, id), b, 0666)
+	err = os.WriteFile(filepath.Join(s.dir, id), b, 0666)
 	errz.Fatal(err)
 
 	return nil
@@ -61,7 +61,7 @@ func (s *s) GetBuildInfo(id string) (info *buildinfo.I, err error) {
 	}
 	defer f.Close()
 
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	errz.Fatal(err)
 
 	err = json.Unmarshal(b, info)

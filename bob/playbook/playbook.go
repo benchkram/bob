@@ -2,7 +2,6 @@ package playbook
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"runtime"
 	"sort"
@@ -34,8 +33,12 @@ type Playbook struct {
 
 	// root task
 	root string
+	// rootID for optimized access
+	rootID int
 
 	Tasks StatusMap
+	// TasksOptimized uses a array instead of an map
+	TasksOptimized StatusSlice
 
 	namePad int
 
@@ -45,8 +48,6 @@ type Playbook struct {
 
 	// start is the point in time the playbook started
 	start time.Time
-	// end is the point in time the playbook ended
-	end time.Time
 
 	// enableCaching allows artifacts to be read & written to a store.
 	// Default: true.
@@ -55,10 +56,6 @@ type Playbook struct {
 	// predictedNumOfTasks is used to pick
 	// an appropriate channel size for the task queue.
 	predictedNumOfTasks int
-
-	// playMutex assures recomputation
-	// can only be done sequentially.
-	playMutex sync.Mutex
 
 	// maxParallel is the maximum number of parallel executed tasks
 	maxParallel int
@@ -74,15 +71,21 @@ type Playbook struct {
 
 	// enablePull allows pulling artifacts from remote store
 	enablePull bool
+
+	// oncePrepareOptimizedAccess is used to initalize the optimized
+	// slice to access tasks.
+	oncePrepareOptimizedAccess sync.Once
 }
 
-func New(root string, opts ...Option) *Playbook {
+func New(root string, rootID int, opts ...Option) *Playbook {
 	p := &Playbook{
-		errorChannel:  make(chan error),
-		Tasks:         make(StatusMap),
-		doneChannel:   make(chan struct{}),
-		enableCaching: true,
-		root:          root,
+		errorChannel:   make(chan error),
+		Tasks:          make(StatusMap),
+		TasksOptimized: make(StatusSlice, 0),
+		doneChannel:    make(chan struct{}),
+		enableCaching:  true,
+		root:           root,
+		rootID:         rootID,
 
 		maxParallel: runtime.NumCPU(),
 
@@ -118,31 +121,6 @@ const (
 	TargetNotInLocalStore    RebuildCause = "target-not-in-localstore"
 )
 
-func (p *Playbook) hasRunningOrPendingTasks() bool {
-	var num int
-	_ = p.Tasks.walk(p.root, func(taskname string, task *Status, err error) error {
-		if err != nil {
-			return err
-		}
-
-		state := task.State()
-		if state == StateRunning || state == StatePending {
-			num++
-		}
-
-		return nil
-	})
-	return num > 0
-}
-
-func (p *Playbook) Done() {
-	if !p.done {
-		p.done = true
-		p.end = time.Now()
-		close(p.taskChannel)
-		close(p.doneChannel)
-	}
-}
 func (p *Playbook) DoneChan() chan struct{} {
 	return p.doneChannel
 }
@@ -157,7 +135,7 @@ func (p *Playbook) ErrorChannel() <-chan error {
 }
 
 func (p *Playbook) ExecutionTime() time.Duration {
-	return p.end.Sub(p.start)
+	return time.Since(p.start)
 }
 
 // TaskStatus returns the current state of a task
@@ -170,83 +148,60 @@ func (p *Playbook) TaskStatus(taskname string) (ts *Status, _ error) {
 }
 
 // TaskCompleted sets a task to completed
-func (p *Playbook) TaskCompleted(taskname string) (err error) {
+func (p *Playbook) TaskCompleted(taskID int) (err error) {
 	defer errz.Recover(&err)
 
-	task, ok := p.Tasks[taskname]
-	if !ok {
-		return usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
-	}
+	task := p.TasksOptimized[taskID]
 
-	buildInfo, err := p.computeBuildinfo(taskname)
+	buildInfo, err := p.computeBuildinfo(task.Name())
 	errz.Fatal(err)
 
 	// Store buildinfo
-	err = p.storeBuildInfo(taskname, buildInfo)
+	err = p.storeBuildInfo(task.Name(), buildInfo)
 	errz.Fatal(err)
 
 	// Store targets in the artifact store
 	if p.enableCaching {
 		hashIn, err := task.HashIn()
 		errz.Fatal(err)
-		err = p.artifactCreate(taskname, hashIn)
+		err = p.artifactCreate(task.Name(), hashIn)
 		errz.Fatal(err)
 	}
 
 	// update task state and trigger another playbook run
-	err = p.setTaskState(taskname, StateCompleted, nil)
+	err = p.setTaskState(taskID, StateCompleted, nil)
 	errz.Fatal(err)
-	err = p.play()
-	if err != nil {
-		if !errors.Is(err, ErrDone) {
-			errz.Fatal(err)
-		}
-	}
 
 	return nil
 }
 
 // TaskNoRebuildRequired sets a task's state to indicate that no rebuild is required
-func (p *Playbook) TaskNoRebuildRequired(taskname string) (err error) {
+func (p *Playbook) TaskNoRebuildRequired(taskID int) (err error) {
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateNoRebuildRequired, nil)
+	err = p.setTaskState(taskID, StateNoRebuildRequired, nil)
 	errz.Fatal(err)
-
-	err = p.play()
-	if err != nil {
-		if !errors.Is(err, ErrDone) {
-			errz.Fatal(err)
-		}
-	}
 
 	return nil
 }
 
 // TaskFailed sets a task to failed
-func (p *Playbook) TaskFailed(taskname string, taskErr error) (err error) {
+func (p *Playbook) TaskFailed(taskID int, taskErr error) (err error) {
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateFailed, taskErr)
+	err = p.setTaskState(taskID, StateFailed, taskErr)
 	errz.Fatal(err)
-
-	// p.errorChannel <- fmt.Errorf("Task %s failed", taskname)
-
-	// give the playbook the chance to set
-	// the state to done.
-	_ = p.play()
 
 	return nil
 }
 
 // TaskCanceled sets a task to canceled
-func (p *Playbook) TaskCanceled(taskname string) (err error) {
+func (p *Playbook) TaskCanceled(taskID int) (err error) {
+
 	defer errz.Recover(&err)
 
-	err = p.setTaskState(taskname, StateCanceled, nil)
+	err = p.setTaskState(taskID, StateCanceled, nil)
 	errz.Fatal(err)
-
-	// p.errorChannel <- fmt.Errorf("Task %s cancelled", taskname)
 
 	return nil
 }
@@ -286,11 +241,8 @@ func (p *Playbook) String() string {
 	return description.String()
 }
 
-func (p *Playbook) setTaskState(taskname string, state State, taskError error) error {
-	task, ok := p.Tasks[taskname]
-	if !ok {
-		return boberror.ErrTaskDoesNotExistF(taskname)
-	}
+func (p *Playbook) setTaskState(taskID int, state State, taskError error) error {
+	task := p.TasksOptimized[taskID]
 
 	task.SetState(state, taskError)
 	switch state {

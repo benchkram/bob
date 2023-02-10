@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/logrusorgru/aurora"
 
@@ -42,6 +43,10 @@ type Task struct {
 	// can run.
 	DependsOn []string `yaml:"dependsOn,omitempty"`
 
+	// dependsOnIDs task id's used for optimization.
+	// Not exposed in a Bobfile.
+	DependsOnIDs []int `yaml:"-"`
+
 	// Target defines the output of a task.
 	TargetDirty TargetEntry `yaml:"target,omitempty"`
 	target      *target.T
@@ -53,6 +58,11 @@ type Task struct {
 	// name is the name of the task
 	name string
 
+	// taskID is a integer provided to
+	// avoid referencing tasks by name
+	// (string comparison, map access)
+	TaskID int
+
 	// project this tasks belongs to
 	project string
 
@@ -63,6 +73,11 @@ type Task struct {
 	// when the task is executed.
 	env []string
 
+	// envID is used to retrieve the environment
+	// from a environment store. This is used to
+	// optimize garbage collection.
+	envID envutil.Hash
+
 	// hashIn stores the `In` has for reuse
 	hashIn *hash.In
 
@@ -71,6 +86,10 @@ type Task struct {
 
 	// remote store for artifacts
 	remote store.Store
+
+	// envStore is the global store  used to
+	// manage environments.
+	envStore envutil.Store
 
 	// buildInfoStore stores buildinfos.
 	buildInfoStore buildinfostore.Store
@@ -106,7 +125,6 @@ func Make(opts ...TaskOption) Task {
 		DependsOn:              []string{},
 		env:                    []string{},
 		rebuild:                RebuildOnChange,
-		dockerRegistryClient:   dockermobyutil.NewRegistryClient(),
 		dependencies:           []nix.Dependency{},
 	}
 
@@ -115,6 +133,10 @@ func Make(opts ...TaskOption) Task {
 			continue
 		}
 		opt(&t)
+	}
+
+	if t.dockerRegistryClient == nil {
+		t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
 	}
 
 	return t
@@ -193,11 +215,10 @@ func (t *Task) description() string {
 	sort.Strings(t.env)
 	for _, v := range t.env {
 		// ignore buildCommandPath and SHLVL due to non-reproducibility
-		v = strings.ToLower(v)
-		if strings.HasPrefix(v, "buildcommandpath=") {
+		if strings.Contains(v, "buildCommandPath=") {
 			continue
 		}
-		if strings.HasPrefix(v, "shlvl=") {
+		if strings.Contains(v, "shlvl=") {
 			continue
 		}
 		sb.WriteString(v)

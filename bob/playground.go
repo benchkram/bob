@@ -3,7 +3,6 @@ package bob
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -124,19 +123,19 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	errz.Fatal(err)
 
 	// first level
-	err = ioutil.WriteFile("go.mod", gomod, 0644)
+	err = os.WriteFile("go.mod", gomod, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("main1.go", maingo(1), 0644)
+	err = os.WriteFile("main1.go", maingo(1), 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("openapi.yaml", openapi, 0644)
+	err = os.WriteFile("openapi.yaml", openapi, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("docker-compose.yml", dockercompose, 0644)
+	err = os.WriteFile("docker-compose.yml", dockercompose, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("docker-compose.whoami.yml", dockercomposewhoami, 0644)
+	err = os.WriteFile("docker-compose.whoami.yml", dockercomposewhoami, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("Dockerfile", dockerfileAlpine, 0644)
+	err = os.WriteFile("Dockerfile", dockerfileAlpine, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("Dockerfile.plus", dockerfileAlpinePlus, 0644)
+	err = os.WriteFile("Dockerfile.plus", dockerfileAlpinePlus, 0644)
 	errz.Fatal(err)
 
 	err = createPlaygroundBobfile(".", true, opts.ProjectName)
@@ -151,7 +150,7 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	}
 
 	// Create Git repo
-	err = ioutil.WriteFile(filepath.Join(b.dir, ".gitignore"), []byte(
+	err = os.WriteFile(filepath.Join(b.dir, ".gitignore"), []byte(
 		""+
 			SecondLevelDir+"\n"+
 			SecondLevelOpenapiProviderDir+"\n",
@@ -167,9 +166,9 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	// second level
 	err = os.MkdirAll(SecondLevelDir, 0755)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(SecondLevelDir, "go.mod"), gomod, 0644)
+	err = os.WriteFile(filepath.Join(SecondLevelDir, "go.mod"), gomod, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(SecondLevelDir, "main2.go"), maingo(2), 0644)
+	err = os.WriteFile(filepath.Join(SecondLevelDir, "main2.go"), maingo(2), 0644)
 	errz.Fatal(err)
 
 	b = newBob()
@@ -184,11 +183,11 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	err = createPlaygroundBobfileSecondLevel(b.dir, true, opts.ProjectNameSecondLevel)
 	errz.Fatal(err)
 
-	err = ioutil.WriteFile(filepath.Join(SecondLevelDir, "openapi.yaml"), openapiSecondLevel, 0644)
+	err = os.WriteFile(filepath.Join(SecondLevelDir, "openapi.yaml"), openapiSecondLevel, 0644)
 	errz.Fatal(err)
 
 	// Create Git repo
-	err = ioutil.WriteFile(filepath.Join(b.dir, ".gitignore"), []byte(
+	err = os.WriteFile(filepath.Join(b.dir, ".gitignore"), []byte(
 		""+
 			ThirdLevelDir+"\n",
 	), 0644)
@@ -203,9 +202,9 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	// second level - openapi-provider
 	err = os.MkdirAll(SecondLevelOpenapiProviderDir, 0755)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(SecondLevelOpenapiProviderDir, "openapi.yaml"), openapi, 0644)
+	err = os.WriteFile(filepath.Join(SecondLevelOpenapiProviderDir, "openapi.yaml"), openapi, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(SecondLevelOpenapiProviderDir, "openapi2.yaml"), openapi, 0644)
+	err = os.WriteFile(filepath.Join(SecondLevelOpenapiProviderDir, "openapi2.yaml"), openapi, 0644)
 	errz.Fatal(err)
 
 	// Create Git repo
@@ -220,9 +219,9 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	thirdDir := filepath.Join(SecondLevelDir, ThirdLevelDir)
 	err = os.MkdirAll(thirdDir, 0755)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(thirdDir, "go.mod"), gomod, 0644)
+	err = os.WriteFile(filepath.Join(thirdDir, "go.mod"), gomod, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(thirdDir, "main3.go"), maingo(3), 0644)
+	err = os.WriteFile(filepath.Join(thirdDir, "main3.go"), maingo(3), 0644)
 	errz.Fatal(err)
 
 	b3 := newBob()
@@ -237,7 +236,7 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	err = createPlaygroundBobfileThirdLevel(b3.dir, true, opts.ProjectNameThirdLevel)
 	errz.Fatal(err)
 
-	err = ioutil.WriteFile(filepath.Join(thirdDir, "openapi.yaml"), openapiSecondLevel, 0644)
+	err = os.WriteFile(filepath.Join(thirdDir, "openapi.yaml"), openapiSecondLevel, 0644)
 	errz.Fatal(err)
 
 	// Create Git repo

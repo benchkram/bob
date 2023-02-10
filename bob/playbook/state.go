@@ -18,6 +18,8 @@ func (s *State) Summary() string {
 		return aurora.Red("failed").String() + "  "
 	case StateCanceled:
 		return aurora.Faint("canceled").String()
+	case StateQueued:
+		return aurora.Faint("queued").String()
 	default:
 		return ""
 	}
@@ -35,6 +37,8 @@ func (s *State) Short() string {
 		return "failed"
 	case StateCanceled:
 		return "canceled"
+	case StateQueued:
+		return "queued"
 	default:
 		return ""
 	}
@@ -47,4 +51,5 @@ const (
 	StateFailed            State = "FAILED"
 	StateRunning           State = "RUNNING"
 	StateCanceled          State = "CANCELED"
+	StateQueued            State = "QUEUED"
 )

@@ -1,7 +1,6 @@
 package bobgit
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -347,7 +346,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		dir, err := ioutil.TempDir("", test.name+"-*")
+		dir, err := os.MkdirTemp("", test.name+"-*")
 		assert.Nil(t, err)
 
 		// Don't cleanup in testdir mode

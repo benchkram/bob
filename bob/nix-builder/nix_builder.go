@@ -16,8 +16,13 @@ import (
 type NB struct {
 	// cache allows caching the dependency to store path
 	cache *nix.Cache
+
 	// shellCache allows caching of the nix-shell --command='env' output
 	shellCache *nix.ShellCache
+
+	// envStore is filled by NixBuilder with the environment
+	// used by tasks.
+	envStore envutil.Store
 }
 
 type NixOption func(n *NB)
@@ -34,9 +39,17 @@ func WithShellCache(cache *nix.ShellCache) NixOption {
 	}
 }
 
+func WithEnvironmentStore(store envutil.Store) NixOption {
+	return func(n *NB) {
+		n.envStore = store
+	}
+}
+
 // NewNB instantiates a new Nix builder instance
 func New(opts ...NixOption) *NB {
-	n := &NB{}
+	n := &NB{
+		envStore: envutil.NewStore(),
+	}
 
 	for _, opt := range opts {
 		if opt == nil {
@@ -46,6 +59,10 @@ func New(opts ...NixOption) *NB {
 	}
 
 	return n
+}
+
+func (n *NB) EnvStore() envutil.Store {
+	return n.envStore
 }
 
 // BuildNixDependenciesInPipeline collects and builds nix-dependencies for a pipeline starting at taskName.
@@ -71,9 +88,6 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
-	// maps nix dependencies to nixShellEnv
-	environmentCache := make(map[string][]string)
-
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
 	for _, name := range buildTasksInPipeline {
@@ -89,16 +103,20 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 		hash, err := nix.HashDependencies(deps)
 		errz.Fatal(err)
 
-		if _, ok := environmentCache[hash]; !ok {
+		if _, ok := n.envStore[envutil.Hash(hash)]; !ok {
 			nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
 			errz.Fatal(err)
-			environmentCache[hash] = nixShellEnv
+			n.envStore[envutil.Hash(hash)] = nixShellEnv
 		}
-		t.SetEnv(envutil.Merge(environmentCache[hash], t.Env()))
+		t.SetEnvID(envutil.Hash(hash))
 
 		ag.BTasks[name] = t
 	}
 
+	// FIXME: environment cache is a workaround...
+	// either use envSTore and adapt run tasks to use ist as well
+	// or remove run tasks entirely.
+	environmentCache := make(map[string][]string)
 	for _, name := range runTasksInPipeline {
 		t := ag.RTasks[name]
 
