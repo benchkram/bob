@@ -24,22 +24,25 @@ const (
 // target: folder/
 //
 // target: |-
+//
 //	folder/
 //	folder1/folder/file
 //
 // target:
-//   path: |-
-//		folder/
-//		folder1/folder/file
+//
+//	  path: |-
+//			folder/
+//			folder1/folder/file
 //
 // target:
+//
 //	image: docker-image-name
 //
 // target:
-//   image: |-
-//		docker-image-name
-//		docker-image2-name
 //
+//	  image: |-
+//			docker-image-name
+//			docker-image2-name
 func (t *Task) parseTargets() error {
 
 	var filesystemEntries []string
@@ -110,7 +113,6 @@ func parseTargetPath(p string) ([]string, error) {
 		return targets, nil
 	}
 
-	//targetStr := fmt.Sprintf("%v", p)
 	targetDirty := split(p)
 
 	return appendUnique([]string{}, targetDirty...), nil
@@ -121,7 +123,6 @@ func parseTargetImage(p string) []string {
 		return []string{}
 	}
 
-	//targetStr := fmt.Sprintf("%v", p)
 	targetDirty := split(p)
 
 	return appendUnique([]string{}, targetDirty...)
