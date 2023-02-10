@@ -26,9 +26,6 @@ type B struct {
 	// Repositories to track.
 	Repositories []Repo `yaml:"repositories"`
 
-	// debug enable debug putput
-	debug bool
-
 	// dir is bob's working directory.
 	dir string
 

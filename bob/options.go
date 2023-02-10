@@ -88,9 +88,3 @@ func WithMaxParallel(maxParallel int) Option {
 		b.maxParallel = maxParallel
 	}
 }
-
-func WithDebug(debug bool) Option {
-	return func(b *B) {
-		b.debug = debug
-	}
-}
