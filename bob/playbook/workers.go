@@ -42,14 +42,12 @@ func newWorkerManager() *workerManager {
 }
 
 func (wm *workerManager) stopWorkers() {
-	//boblog.Log.V(1).Info("stopping workers")
 	wm.shutdownMutext.Lock()
 	wm.shutdown = true
 	wm.shutdownMutext.Unlock()
 }
 
 func (wm *workerManager) closeWorkloadQueues() {
-	//boblog.Log.V(1).Info("closing workload queues")
 	for _, q := range wm.workloadQueues {
 		close(q)
 	}
@@ -63,7 +61,6 @@ func (wm *workerManager) canShutdown() bool {
 }
 
 func (wm *workerManager) addError(err error) {
-	//boblog.Log.V(1).Info("adding error to worker manager")
 	wm.errorsMutex.Lock()
 	wm.errors = append(wm.errors, err)
 	wm.errorsMutex.Unlock()

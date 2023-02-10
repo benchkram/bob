@@ -8,6 +8,8 @@ func (p *Playbook) Next() (_ *Status, err error) {
 	if p.done {
 		return nil, ErrDone
 	}
+
+	// translate dependen tasks name to id's and store them in the task.
 	p.oncePrepareOptimizedAccess.Do(func() {
 		_ = p.Tasks.walk(p.root, func(taskname string, task *Status, _ error) error {
 			for _, dependentTaskName := range task.DependsOn {
@@ -24,7 +26,6 @@ func (p *Playbook) Next() (_ *Status, err error) {
 	// Once it returns `nil` the playbook is done with it's work.
 	var taskQueued = fmt.Errorf("task queued")
 	var taskFailed = fmt.Errorf("task failed")
-	//var noTaskReadyToRun = fmt.Errorf("no task ready to run")
 
 	type result struct {
 		t     *Status
@@ -75,9 +76,6 @@ func (p *Playbook) Next() (_ *Status, err error) {
 			default:
 			}
 
-			//fmt.Printf("sending task %s to channel\n", task.Task.Name())
-			// setting the task start time before passing it to channel
-
 			// TODO: for async assure to handle send to a closed channel.
 			_ = p.setTaskState(task.TaskID, StateQueued, nil)
 			output <- result{t: task, state: "queued"}
@@ -88,33 +86,22 @@ func (p *Playbook) Next() (_ *Status, err error) {
 			output <- result{t: nil, state: "playbook-done"}
 		}
 		close(output)
-
-		// the goroutine can outlive the Next() run.
-		// avoiding concurrrent runs by only unlocking at the
-		// end of the walk.
-		//p.playMutex.Unlock()
-
 	}(c)
 
 	for r := range c {
 		switch r.state {
 		case "queued":
-			//fmt.Printf("received task %s and returning\n", r.t.Name())
 			return r.t, nil
 		case "failed":
-			//fmt.Println("failed")
 			fallthrough
 		case "canceled":
-			//fmt.Println("failed")
 			fallthrough
 		case "playbook-done":
-			//fmt.Println("playbook-done")
 			p.done = true
 			return nil, ErrDone
 		}
 	}
 
-	//fmt.Printf("returning without a task\n")
 	return nil, nil
 
 }

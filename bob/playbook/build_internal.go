@@ -16,7 +16,7 @@ import (
 func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed.Task, err error) {
 	defer errz.Recover(&err)
 
-	// keep this, if `pt`` is not set errz.Fatal()
+	// if `pt` is `nil` errz.Fatal()
 	// returns a nil task which could lead
 	// to memory leaks down the line.
 	pt = &processed.Task{Task: task}
@@ -49,10 +49,8 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed
 		}
 	}()
 
-	//start := time.Now()
 	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.TaskID, pt)
 	errz.Fatal(err)
-	//pt.NeddRebuildTook = time.Since(start)
 	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuildRequired, rebuildCause))
 
 	// task might need a rebuild due to an input change.
@@ -116,14 +114,12 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed
 	err = task.Clean()
 	errz.Fatal(err)
 
-	//start = time.Now()
 	err = task.Run(ctx, p.namePad)
 	if err != nil {
 		taskSuccessFul = false
 		taskErr = err
 	}
 	errz.Fatal(err)
-	//pt.BuildTook = time.Since(start)
 
 	// FIXME: Is this placed correctly?
 	// Could also be done after the task completion is
@@ -133,16 +129,13 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed
 	// flagged as failed in a defered function call.
 	taskSuccessFul = true
 
-	//start = time.Now()
 	err = p.TaskCompleted(task.TaskID)
 	if err != nil {
 		if errors.Is(err, ErrFailed) {
-			// pt.CompletionTook = time.Since(start)
 			return pt, err
 		}
 	}
 	errz.Fatal(err)
-	//pt.CompletionTook = time.Since(start)
 
 	taskStatus, err := p.TaskStatus(task.Name())
 	errz.Fatal(err)

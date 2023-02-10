@@ -43,7 +43,6 @@ func (ts *Status) SetState(s State, err error) {
 	ts.state = s
 	ts.Error = err
 	ts.stateMu.Unlock()
-	//boblog.Log.Info(fmt.Sprintf("Setting taskstate of [task_name: %s] to [state: %s]", ts.Name(), s))
 }
 
 func (ts *Status) ExecutionTime() time.Duration {

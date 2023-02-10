@@ -192,8 +192,6 @@ func (p *Playbook) TaskFailed(taskID int, taskErr error) (err error) {
 	err = p.setTaskState(taskID, StateFailed, taskErr)
 	errz.Fatal(err)
 
-	// p.errorChannel <- fmt.Errorf("Task %s failed", taskname)
-
 	return nil
 }
 
@@ -204,8 +202,6 @@ func (p *Playbook) TaskCanceled(taskID int) (err error) {
 
 	err = p.setTaskState(taskID, StateCanceled, nil)
 	errz.Fatal(err)
-
-	// p.errorChannel <- fmt.Errorf("Task %s cancelled", taskname)
 
 	return nil
 }
