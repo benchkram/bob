@@ -2,7 +2,6 @@ package playbook
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/benchkram/bob/bobtask/processed"
 	"github.com/benchkram/bob/pkg/boblog"
@@ -37,9 +36,4 @@ func (p *Playbook) summary(processedTasks []*processed.Task) {
 
 	}
 	boblog.Log.V(1).Info("")
-}
-
-func printBuildDetails(name string, pad int, duration time.Duration) {
-	d := fmt.Sprintf("\t(%s)", format.DisplayDuration(duration))
-	boblog.Log.V(1).Info(fmt.Sprintf("    %-*s %s", pad, name, d))
 }
