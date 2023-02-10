@@ -113,8 +113,9 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 		ag.BTasks[name] = t
 	}
 
-	// TODO: environment hash is just a workaround...
-	// maps nix dependencies to nixShellEnv
+	// FIXME: environment cache is a workaround...
+	// either use envSTore and adapt run tasks to use ist as well
+	// or remove run tasks entirely.
 	environmentCache := make(map[string][]string)
 	for _, name := range runTasksInPipeline {
 		t := ag.RTasks[name]
