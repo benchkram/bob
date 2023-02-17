@@ -5,20 +5,16 @@ import (
 	"fmt"
 
 	"github.com/benchkram/bob/bobtask"
-	"github.com/benchkram/bob/pkg/boberror"
+	"github.com/benchkram/bob/bobtask/processed"
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
 
 // TaskNeedsRebuild check if a tasks need a rebuild by looking at its hash value
 // and its child tasks.
-func (p *Playbook) TaskNeedsRebuild(taskname string) (rebuildRequired bool, cause RebuildCause, err error) {
-	ts, ok := p.Tasks[taskname]
-	if !ok {
-		return false, "", usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskname))
-	}
-	task := ts.Task
+func (p *Playbook) TaskNeedsRebuild(taskID int, pc *processed.Task) (rebuildRequired bool, cause RebuildCause, err error) {
+	task := p.TasksOptimized[taskID]
+
 	coloredName := task.ColoredName()
 
 	// Rebuild strategy set to `always`

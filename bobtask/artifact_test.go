@@ -1,7 +1,6 @@
 package bobtask
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,11 +13,11 @@ import (
 )
 
 func TestArtifactCreateAndExtract(t *testing.T) {
-	testdir, err := ioutil.TempDir("", "test-pack-and-unpack-artifact")
+	testdir, err := os.MkdirTemp("", "test-pack-and-unpack-artifact")
 	assert.Nil(t, err)
-	storage, err := ioutil.TempDir("", "test-pack-and-unpack-artifact-store")
+	storage, err := os.MkdirTemp("", "test-pack-and-unpack-artifact-store")
 	assert.Nil(t, err)
-	buildinfoStorage, err := ioutil.TempDir("", "test-pack-and-unpack-buildinfo-store")
+	buildinfoStorage, err := os.MkdirTemp("", "test-pack-and-unpack-buildinfo-store")
 	assert.Nil(t, err)
 	defer func() {
 		os.RemoveAll(testdir)

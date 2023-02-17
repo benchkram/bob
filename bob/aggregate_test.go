@@ -2,7 +2,6 @@ package bob
 
 import (
 	"fmt"
-	"io/ioutil"
 	_ "net/http/pprof"
 	"os"
 	"testing"
@@ -20,7 +19,7 @@ func BenchmarkAggregateOnPlayground(b *testing.B) {
 	b.StopTimer() // Stop during initialization
 
 	// Create playground
-	dir, err := ioutil.TempDir("", "bob-test-benchmark-playground-*")
+	dir, err := os.MkdirTemp("", "bob-test-benchmark-playground-*")
 	assert.Nil(b, err)
 
 	defer os.RemoveAll(dir)
@@ -65,7 +64,7 @@ func benchmarkAggregate(b *testing.B, ignoredMultiplier int) {
 	b.StopTimer() // Stop during initialization
 
 	// Create playground
-	dir, err := ioutil.TempDir("", "bob-test-benchmark-*")
+	dir, err := os.MkdirTemp("", "bob-test-benchmark-*")
 	assert.Nil(b, err)
 
 	defer os.RemoveAll(dir)
@@ -182,7 +181,7 @@ func createIgnoreFileSturcture(dir string, multiplier int) error {
 
 func TestEmptyProjectName(t *testing.T) {
 	// Create playground
-	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	dir, err := os.MkdirTemp("", "bob-test-aggregate-*")
 	assert.Nil(t, err)
 
 	defer os.RemoveAll(dir)
@@ -205,7 +204,7 @@ func TestEmptyProjectName(t *testing.T) {
 
 func TestProjectName(t *testing.T) {
 	// Create playground
-	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	dir, err := os.MkdirTemp("", "bob-test-aggregate-*")
 	assert.Nil(t, err)
 
 	defer os.RemoveAll(dir)
@@ -232,7 +231,7 @@ func TestProjectName(t *testing.T) {
 
 func TestInvalidProjectName(t *testing.T) {
 	// Create playground
-	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	dir, err := os.MkdirTemp("", "bob-test-aggregate-*")
 	assert.Nil(t, err)
 
 	defer os.RemoveAll(dir)
@@ -260,7 +259,7 @@ func TestInvalidProjectName(t *testing.T) {
 //
 // func TestDuplicateProjectNameSimple(t *testing.T) {
 // 	// Create playground
-// 	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+// 	dir, err :=os.MkdirTemp("", "bob-test-aggregate-*")
 // 	assert.Nil(t, err)
 
 // 	defer os.RemoveAll(dir)
@@ -294,7 +293,7 @@ func TestInvalidProjectName(t *testing.T) {
 //
 // func TestDuplicateProjectNameComplex(t *testing.T) {
 // 	// Create playground
-// 	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+// 	dir, err :=os.MkdirTemp("", "bob-test-aggregate-*")
 // 	assert.Nil(t, err)
 
 // 	defer os.RemoveAll(dir)
@@ -325,7 +324,7 @@ func TestInvalidProjectName(t *testing.T) {
 
 func TestMultiLevelBobfileSameProjectName(t *testing.T) {
 	// Create playground
-	dir, err := ioutil.TempDir("", "bob-test-aggregate-*")
+	dir, err := os.MkdirTemp("", "bob-test-aggregate-*")
 	assert.Nil(t, err)
 
 	defer os.RemoveAll(dir)

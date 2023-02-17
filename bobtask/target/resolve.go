@@ -9,22 +9,19 @@ import (
 	"github.com/benchkram/bob/pkg/boblog"
 )
 
-var calls int
-
 // Resolve filesystem entries based on filesystemEntriesRaw.
 // Becomes a noop after the first call.
 func (t *T) Resolve() error {
-	calls++
-	boblog.Log.V(2).Info(fmt.Sprintf("Calling Resolve the %d time", calls))
-
-	resolved := []string{}
 
 	if t.filesystemEntries != nil {
 		return nil
 	}
 
+	resolved := []string{}
 	for _, path := range t.FilesystemEntriesRaw() {
+
 		boblog.Log.V(2).Info(fmt.Sprintf("resolving %s", path))
+
 		fileInfo, err := os.Lstat(path)
 		if err != nil {
 			if os.IsNotExist(err) {

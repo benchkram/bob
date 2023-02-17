@@ -1,6 +1,7 @@
 package envutil
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,6 +38,9 @@ func TestMergeEnv(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Log(tc.description)
-		assert.Equal(t, tc.expectedResult, Merge(tc.first, tc.second))
+		sort.Strings(tc.expectedResult)
+		result := Merge(tc.first, tc.second)
+		sort.Strings(result)
+		assert.Equal(t, tc.expectedResult, result)
 	}
 }

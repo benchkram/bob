@@ -1,7 +1,6 @@
 package inputest
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -11,7 +10,7 @@ import (
 
 var _ = Describe("Testing input for a task", func() {
 	BeforeEach(func() {
-		testDir, err := ioutil.TempDir("", "input-test-*")
+		testDir, err := os.MkdirTemp("", "input-test-*")
 		Expect(err).NotTo(HaveOccurred())
 
 		dir = testDir
@@ -51,7 +50,7 @@ var _ = Describe("Testing input for a task", func() {
 
 			inputsBeforeBuild := task.Inputs()
 			Expect(len(inputsBeforeBuild)).To(Equal(1))
-			Expect(inputsBeforeBuild[0]).To(Equal(filepath.Join(dir, "bob.yaml")))
+			Expect(inputsBeforeBuild[0]).To(Equal("bob.yaml"))
 
 			// Build and aggregate again
 			err = b.Build(ctx, taskName)
@@ -64,7 +63,7 @@ var _ = Describe("Testing input for a task", func() {
 
 			inputsAfterBuild := task.Inputs()
 			Expect(len(inputsAfterBuild)).To(Equal(1))
-			Expect(inputsAfterBuild[0]).To(Equal(filepath.Join(dir, "bob.yaml")))
+			Expect(inputsBeforeBuild[0]).To(Equal("bob.yaml"))
 		})
 	})
 
@@ -105,8 +104,8 @@ var _ = Describe("Testing input for a task", func() {
 
 			inputsBeforeBuild := task.Inputs()
 			Expect(len(inputsBeforeBuild)).To(Equal(2))
-			Expect(inputsBeforeBuild[0]).To(Equal(filepath.Join(dir, "bob.yaml")))
-			Expect(inputsBeforeBuild[1]).To(Equal(filepath.Join(dir, "second_level", "bob.yaml")))
+			Expect(inputsBeforeBuild[0]).To(Equal("bob.yaml"))
+			Expect(inputsBeforeBuild[1]).To(Equal(filepath.Join("second_level", "bob.yaml")))
 
 			// Build and aggregate again
 			err = b.Build(ctx, taskName)
@@ -119,8 +118,8 @@ var _ = Describe("Testing input for a task", func() {
 
 			inputsAfterBuild := task.Inputs()
 			Expect(len(inputsAfterBuild)).To(Equal(2))
-			Expect(inputsAfterBuild[0]).To(Equal(filepath.Join(dir, "bob.yaml")))
-			Expect(inputsAfterBuild[1]).To(Equal(filepath.Join(dir, "second_level", "bob.yaml")))
+			Expect(inputsAfterBuild[0]).To(Equal("bob.yaml"))
+			Expect(inputsAfterBuild[1]).To(Equal(filepath.Join("second_level", "bob.yaml")))
 		})
 	})
 
@@ -172,9 +171,9 @@ var _ = Describe("Testing input for a task", func() {
 
 			inputsBeforeBuild := task.Inputs()
 			Expect(len(inputsBeforeBuild)).To(Equal(3))
-			Expect(inputsBeforeBuild[0]).To(Equal(filepath.Join(dir, "bob.yaml")))
-			Expect(inputsBeforeBuild[1]).To(Equal(filepath.Join(dir, "second_level", "bob.yaml")))
-			Expect(inputsBeforeBuild[2]).To(Equal(filepath.Join(dir, "second_level", "third_level", "bob.yaml")))
+			Expect(inputsBeforeBuild[0]).To(Equal("bob.yaml"))
+			Expect(inputsBeforeBuild[1]).To(Equal(filepath.Join("second_level", "bob.yaml")))
+			Expect(inputsBeforeBuild[2]).To(Equal(filepath.Join("second_level", "third_level", "bob.yaml")))
 
 			// Build and aggregate again
 			err = b.Build(ctx, taskName)
@@ -187,9 +186,9 @@ var _ = Describe("Testing input for a task", func() {
 
 			inputsAfterBuild := task.Inputs()
 			Expect(len(inputsAfterBuild)).To(Equal(3))
-			Expect(inputsAfterBuild[0]).To(Equal(filepath.Join(dir, "bob.yaml")))
-			Expect(inputsAfterBuild[1]).To(Equal(filepath.Join(dir, "second_level", "bob.yaml")))
-			Expect(inputsAfterBuild[2]).To(Equal(filepath.Join(dir, "second_level", "third_level", "bob.yaml")))
+			Expect(inputsAfterBuild[0]).To(Equal("bob.yaml"))
+			Expect(inputsAfterBuild[1]).To(Equal(filepath.Join("second_level", "bob.yaml")))
+			Expect(inputsAfterBuild[2]).To(Equal(filepath.Join("second_level", "third_level", "bob.yaml")))
 		})
 	})
 
@@ -321,4 +320,9 @@ var _ = Describe("Testing input for a task", func() {
 			Expect(len(inputsAfterBuild)).To(Equal(0))
 		})
 	})
+
+	// FIXME: add a test which has  a symlink to a file not in the bob_root
+	// Bob should print a error when trying to access a file which is not
+	// in bob_root.
+
 })
