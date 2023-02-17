@@ -12,3 +12,12 @@ func UniqueDeps(s []Dependency) []Dependency {
 	}
 	return res
 }
+
+func AppendUnique(a []Dependency, x Dependency) []Dependency {
+	for _, y := range a {
+		if x.Name+x.Nixpkgs == y.Name+y.Nixpkgs {
+			return a
+		}
+	}
+	return append(a, x)
+}

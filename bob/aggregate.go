@@ -156,6 +156,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// Assure tasks are correctly initialised.
 	for i, task := range aggregate.BTasks {
 		task.WithLocalstore(b.local)
+		task.WithEnvStore(b.nix.EnvStore())
 		task.WithBuildinfoStore(b.buildInfoStore)
 		task.WithDockerRegistryClient(b.dockerRegistryClient)
 
@@ -223,6 +224,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	err = aggregate.BTasks.IgnoreChildTargets()
 	errz.Fatal(err)
 
+	// Filter input must run before any work is done.
 	err = aggregate.BTasks.FilterInputs()
 	errz.Fatal(err)
 

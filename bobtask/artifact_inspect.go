@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"strings"
 
 	"github.com/benchkram/bob/bobtask/hash"
@@ -86,7 +85,7 @@ func artifactInspect(archiveReader archiver.Reader) (_ *artifactInfo, err error)
 		} else if strings.HasPrefix(header.Name, __targetsDocker) {
 			info.targetsDocker = append(info.targetsDocker, header.Name)
 		} else if strings.HasPrefix(header.Name, __metadata) {
-			bin, err := ioutil.ReadAll(archiveFile)
+			bin, err := io.ReadAll(archiveFile)
 			errz.Fatal(err)
 
 			metadata := NewArtifactMetadata()

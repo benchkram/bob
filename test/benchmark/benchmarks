@@ -1,0 +1,3 @@
+20.01.2022
+cpu: AMD Ryzen 7 PRO 4750U with Radeon Graphics
+BenchmarkBob-16                1        2997516692 ns/op        33718528 B/op      19600 allocs/op

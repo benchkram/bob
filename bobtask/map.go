@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/benchkram/errz"
 
@@ -47,14 +48,58 @@ func (tm Map) Walk(root string, parentLevel string, fn func(taskname string, _ T
 	return nil
 }
 
+// FilterInputs in parallel
 func (tm Map) FilterInputs() (err error) {
 	defer errz.Recover(&err)
 
-	for key, task := range tm {
-		inputs, err := task.filteredInputs()
-		errz.Fatal(err)
-		task.inputs = inputs
+	errors := []error{}
+	errorsM := sync.Mutex{}
+	mapM := sync.Mutex{}
 
+	wd, err := filepath.Abs(".")
+	errz.Fatal(err)
+
+	wg := sync.WaitGroup{}
+	mapM.Lock()
+	for key, task := range tm {
+		wg.Add(1)
+		go func(k string, t Task) {
+
+			errr := t.FilterInputs(wd)
+			if errr != nil {
+				errorsM.Lock()
+				errors = append(errors, errr)
+				errorsM.Unlock()
+			}
+
+			mapM.Lock()
+			tm[k] = t
+			mapM.Unlock()
+
+			wg.Done()
+		}(key, task)
+	}
+	mapM.Unlock()
+
+	wg.Wait()
+	if len(errors) > 0 {
+		errz.Fatal(errors[0])
+	}
+
+	return nil
+}
+
+// FilterInputsSequential is the sequential version of FilterInputs.
+// Can be handy for debugging input errors.
+func (tm Map) FilterInputsSequential() (err error) {
+	defer errz.Recover(&err)
+
+	wd, err := filepath.Abs(".")
+	errz.Fatal(err)
+
+	for key, task := range tm {
+		err = task.FilterInputs(wd)
+		errz.Fatal(err)
 		tm[key] = task
 	}
 

@@ -1,4 +1,4 @@
-package bob
+package nixbuilder
 
 import (
 	"fmt"
@@ -11,32 +11,45 @@ import (
 	"github.com/benchkram/bob/pkg/usererror"
 )
 
-// NixBuilder acts as a wrapper for github.com/benchkram/bob/pkg/nix package
+// NB acts as a wrapper for github.com/benchkram/bob/pkg/nix package
 // and is used for building tasks dependencies
-type NixBuilder struct {
+type NB struct {
 	// cache allows caching the dependency to store path
 	cache *nix.Cache
+
 	// shellCache allows caching of the nix-shell --command='env' output
 	shellCache *nix.ShellCache
+
+	// envStore is filled by NixBuilder with the environment
+	// used by tasks.
+	envStore envutil.Store
 }
 
-type NixOption func(n *NixBuilder)
+type NixOption func(n *NB)
 
 func WithCache(cache *nix.Cache) NixOption {
-	return func(n *NixBuilder) {
+	return func(n *NB) {
 		n.cache = cache
 	}
 }
 
 func WithShellCache(cache *nix.ShellCache) NixOption {
-	return func(n *NixBuilder) {
+	return func(n *NB) {
 		n.shellCache = cache
 	}
 }
 
-// NewNixBuilder instantiates a new Nix builder instance
-func NewNixBuilder(opts ...NixOption) *NixBuilder {
-	n := &NixBuilder{}
+func WithEnvironmentStore(store envutil.Store) NixOption {
+	return func(n *NB) {
+		n.envStore = store
+	}
+}
+
+// NewNB instantiates a new Nix builder instance
+func New(opts ...NixOption) *NB {
+	n := &NB{
+		envStore: envutil.NewStore(),
+	}
 
 	for _, opt := range opts {
 		if opt == nil {
@@ -48,8 +61,12 @@ func NewNixBuilder(opts ...NixOption) *NixBuilder {
 	return n
 }
 
+func (n *NB) EnvStore() envutil.Store {
+	return n.envStore
+}
+
 // BuildNixDependenciesInPipeline collects and builds nix-dependencies for a pipeline starting at taskName.
-func (n *NixBuilder) BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err error) {
+func (n *NB) BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskName string) (err error) {
 	defer errz.Recover(&err)
 
 	if !nix.IsInstalled() {
@@ -64,15 +81,12 @@ func (n *NixBuilder) BuildNixDependenciesInPipeline(ag *bobfile.Bobfile, taskNam
 
 // BuildNixDependencies builds nix dependencies and prepares the affected tasks
 // by setting the store paths on each task in the given aggregate.
-func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, runTasksInPipeline []string) (err error) {
+func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, runTasksInPipeline []string) (err error) {
 	defer errz.Recover(&err)
 
 	if !nix.IsInstalled() {
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
-
-	// maps nix dependencies to nixShellEnv
-	environmentCache := make(map[string][]string)
 
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
@@ -89,16 +103,20 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 		hash, err := nix.HashDependencies(deps)
 		errz.Fatal(err)
 
-		if _, ok := environmentCache[hash]; !ok {
+		if _, ok := n.envStore[envutil.Hash(hash)]; !ok {
 			nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs)
 			errz.Fatal(err)
-			environmentCache[hash] = nixShellEnv
+			n.envStore[envutil.Hash(hash)] = nixShellEnv
 		}
-		t.SetEnv(envutil.Merge(environmentCache[hash], t.Env()))
+		t.SetEnvID(envutil.Hash(hash))
 
 		ag.BTasks[name] = t
 	}
 
+	// FIXME: environment cache is a workaround...
+	// either use envSTore and adapt run tasks to use ist as well
+	// or remove run tasks entirely.
+	environmentCache := make(map[string][]string)
 	for _, name := range runTasksInPipeline {
 		t := ag.RTasks[name]
 
@@ -126,11 +144,11 @@ func (n *NixBuilder) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipel
 }
 
 // BuildDependencies builds the list of all nix deps
-func (n *NixBuilder) BuildDependencies(deps []nix.Dependency) error {
+func (n *NB) BuildDependencies(deps []nix.Dependency) error {
 	return nix.BuildDependencies(deps, n.cache)
 }
 
 // BuildEnvironment builds the environment with all nix deps
-func (n *NixBuilder) BuildEnvironment(deps []nix.Dependency, nixpkgs string) (_ []string, err error) {
+func (n *NB) BuildEnvironment(deps []nix.Dependency, nixpkgs string) (_ []string, err error) {
 	return nix.BuildEnvironment(deps, nixpkgs, n.cache, n.shellCache)
 }

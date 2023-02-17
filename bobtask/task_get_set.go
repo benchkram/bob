@@ -5,6 +5,7 @@ import (
 
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/pkg/store"
 	"github.com/logrusorgru/aurora"
@@ -49,6 +50,10 @@ func (t *Task) SetName(name string) {
 
 func (t *Task) SetEnv(env []string) {
 	t.env = env
+}
+
+func (t *Task) SetEnvID(envID envutil.Hash) {
+	t.envID = envID
 }
 
 func (t *Task) Dependencies() []nix.Dependency {
@@ -103,5 +108,10 @@ func (t *Task) WithBuildinfoStore(s buildinfostore.Store) *Task {
 
 func (t *Task) WithDockerRegistryClient(c dockermobyutil.RegistryClient) *Task {
 	t.dockerRegistryClient = c
+	return t
+}
+
+func (t *Task) WithEnvStore(s envutil.Store) *Task {
+	t.envStore = s
 	return t
 }

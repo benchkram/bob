@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -41,7 +42,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Eventually(func() string {
 				scanner.Scan()
 				return scanner.Text()
-			}, 5).Should(ContainSubstring("PHP 8.0.18"))
+			}, 5*time.Second).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -72,7 +73,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Eventually(func() string {
 				scanner.Scan()
 				return scanner.Text()
-			}, 5).Should(ContainSubstring("PHP 8.0.18"))
+			}, 5*time.Second).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -103,7 +104,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Eventually(func() string {
 				scanner.Scan()
 				return scanner.Text()
-			}, 5).Should(ContainSubstring("PHP 8.0.18"))
+			}, 5*time.Second).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -134,7 +135,7 @@ var _ = Describe("Testing new nix implementation", func() {
 			Eventually(func() string {
 				scanner.Scan()
 				return scanner.Text()
-			}, 5).Should(ContainSubstring("PHP 8.0.18"))
+			}, 5*time.Second).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -165,13 +166,15 @@ var _ = Describe("Testing new nix implementation", func() {
 						continue
 					}
 					buf := make([]byte, 30)
+
+					// FIXME: not able to read from stdout => test blocks
 					_, err := io.ReadFull(v.Stdout(), buf)
 					Expect(err).NotTo(HaveOccurred())
 
 					return string(buf)
 				}
 				return ""
-			}, 5).Should(ContainSubstring("PHP 8.0.18"))
+			}, "5s").Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -201,13 +204,15 @@ var _ = Describe("Testing new nix implementation", func() {
 						continue
 					}
 					buf := make([]byte, 30)
+
+					// FIXME: not able to read from stdout => test blocks
 					_, err := io.ReadFull(v.Stdout(), buf)
 					Expect(err).NotTo(HaveOccurred())
 
 					return string(buf)
 				}
 				return ""
-			}, 5).Should(ContainSubstring("PHP 8.0.18"))
+			}, 5*time.Second).Should(ContainSubstring("PHP 8.0.18"))
 
 			err = cmdr.Stop()
 			Expect(err).NotTo(HaveOccurred())

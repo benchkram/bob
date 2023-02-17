@@ -1,14 +1,12 @@
 package multilevelbuildtest
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/global"
-	"github.com/benchkram/bob/pkg/nix"
 	"github.com/benchkram/bob/test/setup"
 
 	. "github.com/onsi/ginkgo"
@@ -27,25 +25,18 @@ var (
 var _ = BeforeSuite(func() {
 	var err error
 	var storageDir string
-	dir, storageDir, cleanup, err = setup.TestDirs("target")
+	dir, storageDir, cleanup, err = setup.TestDirs("multilevel-build")
 	Expect(err).NotTo(HaveOccurred())
 	artifactDir = filepath.Join(storageDir, global.BobCacheArtifactsDir)
 
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	nixBuilder, err := NixBuilder()
-	Expect(err).NotTo(HaveOccurred())
-
-	b, err = bob.BobWithBaseStoreDir(storageDir, bob.WithDir(dir), bob.WithNixBuilder(nixBuilder))
+	b, err = bob.BobWithBaseStoreDir(storageDir, bob.WithDir(dir))
 	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {
-	for _, file := range tmpFiles {
-		err := os.Remove(file)
-		Expect(err).NotTo(HaveOccurred())
-	}
 	err := cleanup()
 	Expect(err).NotTo(HaveOccurred())
 })
@@ -68,26 +59,4 @@ func artifactsClean() error {
 		}
 	}
 	return nil
-}
-
-// tmpFiles tracks temporarily created files in these tests
-// to be cleaned up at the end.
-var tmpFiles []string
-
-func NixBuilder() (*bob.NixBuilder, error) {
-	file, err := ioutil.TempFile("", ".nix_cache*")
-	if err != nil {
-		return nil, err
-	}
-	name := file.Name()
-	file.Close()
-
-	tmpFiles = append(tmpFiles, name)
-
-	cache, err := nix.NewCacheStore(nix.WithPath(name))
-	if err != nil {
-		return nil, err
-	}
-
-	return bob.NewNixBuilder(bob.WithCache(cache)), nil
 }

@@ -2,7 +2,6 @@ package hermeticmodetest
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -52,7 +51,7 @@ var _ = BeforeSuite(func() {
 		nameToBobfile[strings.ReplaceAll(name, "/", "_")] = bf
 	}
 
-	testDir, err := ioutil.TempDir("", "bob-test-hermetic-mode-*")
+	testDir, err := os.MkdirTemp("", "bob-test-hermetic-mode-*")
 	Expect(err).NotTo(HaveOccurred())
 
 	projects := []project{
@@ -91,11 +90,6 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	err := os.RemoveAll(dir)
 	Expect(err).NotTo(HaveOccurred())
-
-	for _, file := range tmpFiles {
-		err = os.Remove(file)
-		Expect(err).NotTo(HaveOccurred())
-	}
 
 	bob.Version = version
 })

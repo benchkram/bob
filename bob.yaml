@@ -1,4 +1,5 @@
 project: bob.build/benchkram/bob
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/nixos-22.11.tar.gz
 
 variables:
   VERSION: v0.0.0
@@ -14,6 +15,7 @@ build:
     cmd: go mod tidy
 
   lint:
+    input: "*"
     cmd: CGO_ENABLED=0 golangci-lint run --timeout=10m0s
 
   test:
@@ -29,10 +31,9 @@ build:
 dependencies:
   - nix
   - git
-  - go_1_18
+  - go_1_19
   - golangci-lint
   - docker
   - gcc
   - protobuf
   - protoc-gen-go
-

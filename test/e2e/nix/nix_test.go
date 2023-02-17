@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/benchkram/bob/bob"
+	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/benchkram/bob/pkg/nix"
 )
@@ -30,13 +31,17 @@ var _ = Describe("Testing new nix implementation", func() {
 			nixCacheFilePath := dir + "customFile"
 			defer os.Remove(nixCacheFilePath)
 
-			fileCache, err := nix.NewCacheStore(nix.WithPath(nixCacheFilePath))
+			nixCache, err := nix.NewCacheStore(nix.WithPath(nixCacheFilePath))
 			Expect(err).NotTo(HaveOccurred())
 
-			nixBuilder := bob.NewNixBuilder(bob.WithCache(fileCache))
-			Expect(err).NotTo(HaveOccurred())
+			b, err := bob.Bob(
+				bob.WithDir(dir),
+				bob.WithCachingEnabled(false),
+				bob.WithNixBuilder(
+					nixbuilder.New(nixbuilder.WithCache(nixCache)),
+				),
+			)
 
-			b, err := bob.Bob(bob.WithDir(dir), bob.WithCachingEnabled(false), bob.WithNixBuilder(nixBuilder))
 			Expect(err).NotTo(HaveOccurred())
 
 			capture()
