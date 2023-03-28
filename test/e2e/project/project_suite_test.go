@@ -1,7 +1,6 @@
 package projectest
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,7 +38,7 @@ var _ = BeforeSuite(func() {
 		nameToBobfile[strings.ReplaceAll(name, "/", "_")] = bf
 	}
 
-	testDir, err := ioutil.TempDir("", "bob-test-project-*")
+	testDir, err := os.MkdirTemp("", "bob-test-project-*")
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
 	err = os.Mkdir(dir+"/second_level", 0700)

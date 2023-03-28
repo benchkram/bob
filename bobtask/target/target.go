@@ -56,24 +56,20 @@ type T struct {
 	// Used to verify that targets are created
 	// without verifying against expected buildinfo.
 	filesystemEntriesRaw []string
-
-	// exposed due to yaml marshalling
-	// PathsSerialize []string     `yaml:"Paths"`
-	// TypeSerialize  targettype.T `yaml:"Type"`
 }
 
 func New(opts ...Option) *T {
-	t := &T{
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		// PathsSerialize:       []string{},
-		// TypeSerialize:        DefaultType,
-	}
+	t := &T{}
 
 	for _, opt := range opts {
 		if opt == nil {
 			continue
 		}
 		opt(t)
+	}
+
+	if t.dockerRegistryClient == nil {
+		t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
 	}
 
 	return t
@@ -106,11 +102,11 @@ func (t *T) FilesystemEntriesRaw() []string {
 // FilesystemEntriesPlain does return the pure path
 // as given in the bobfile.
 func (t *T) FilesystemEntriesPlain() []string {
-	return *t.filesystemEntries
+	return append([]string{}, *t.filesystemEntries...)
 }
 
 func (t *T) FilesystemEntriesRawPlain() []string {
-	return t.filesystemEntriesRaw
+	return append([]string{}, t.filesystemEntriesRaw...)
 }
 
 func (t *T) WithExpected(expected *buildinfo.Targets) *T {
@@ -119,7 +115,7 @@ func (t *T) WithExpected(expected *buildinfo.Targets) *T {
 }
 
 func (t *T) DockerImages() []string {
-	return t.dockerImages
+	return append([]string{}, t.dockerImages...)
 }
 
 // AsInvalidFiles returns all FilesystemEntriesRaw as invalid with the specified reason

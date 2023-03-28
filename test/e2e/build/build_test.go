@@ -7,6 +7,7 @@ import (
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/errz"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -24,6 +25,7 @@ var _ = Describe("Test bob build", func() {
 
 			err := b.Build(ctx, "slow")
 			Expect(err).NotTo(BeNil())
+			errz.Log(err)
 			Expect(errors.Is(err, context.Canceled)).To(BeTrue())
 
 			Expect(file.Exists("slowdone")).To(BeFalse(), "slowdone file shouldn't exist")

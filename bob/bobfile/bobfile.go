@@ -3,11 +3,12 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/nix"
 	storeclient "github.com/benchkram/bob/pkg/store-client"
 
@@ -114,7 +115,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	if !file.Exists(bobfilePath) {
 		return nil, usererror.Wrap(ErrBobfileNotFound)
 	}
-	bin, err := ioutil.ReadFile(bobfilePath)
+	bin, err := os.ReadFile(bobfilePath)
 	errz.Fatal(err)
 
 	bobfile := &Bobfile{
@@ -138,6 +139,9 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		bobfile.RTasks = bobrun.RunMap{}
 	}
 
+	// a shared registry clients for all tasks.
+	dockerRegistryClient := dockermobyutil.NewRegistryClient()
+
 	// Assure tasks are initialized with their defaults
 	for key, task := range bobfile.BTasks {
 		task.SetDir(bobfile.dir)
@@ -149,6 +153,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		// This means switching to pointer types for most members.
 		task.SetEnv([]string{})
 		task.SetRebuildStrategy(bobtask.RebuildOnChange)
+		task.WithDockerRegistryClient(dockerRegistryClient)
 
 		// initialize docker registry for task
 		task.SetDependencies(initializeDependencies(dir, task.DependenciesDirty, bobfile))
@@ -341,7 +346,7 @@ func (b *Bobfile) BobfileSave(dir, name string) (err error) {
 	err = encoder.Encode(b)
 	errz.Fatal(err)
 
-	return ioutil.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0664)
+	return os.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0664)
 }
 
 func (b *Bobfile) Dir() string {

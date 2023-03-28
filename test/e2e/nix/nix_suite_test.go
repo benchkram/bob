@@ -2,7 +2,6 @@ package nixtest
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -48,7 +47,7 @@ var _ = BeforeSuite(func() {
 		nameToBobfile[strings.ReplaceAll(name, "/", "_")] = bf
 	}
 
-	testDir, err := ioutil.TempDir("", "bob-test-nix-*")
+	testDir, err := os.MkdirTemp("", "bob-test-nix-*")
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
 	err = os.Mkdir(dir+"/second_level", 0700)
@@ -67,11 +66,6 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	err := os.RemoveAll(dir)
 	Expect(err).NotTo(HaveOccurred())
-
-	for _, file := range tmpFiles {
-		err = os.Remove(file)
-		Expect(err).NotTo(HaveOccurred())
-	}
 
 	bob.Version = version
 })

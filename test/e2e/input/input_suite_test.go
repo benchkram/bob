@@ -9,6 +9,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/bobfile"
+	"github.com/benchkram/bob/pkg/boblog"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -23,6 +24,7 @@ var (
 )
 
 var _ = BeforeSuite(func() {
+	boblog.SetLogLevel(10)
 	ctx = context.Background()
 
 	version = bob.Version
@@ -51,11 +53,6 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	for _, file := range tmpFiles {
-		err := os.Remove(file)
-		Expect(err).NotTo(HaveOccurred())
-	}
-
 	bob.Version = version
 })
 

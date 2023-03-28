@@ -2,7 +2,7 @@ package buildinfostore
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -32,7 +32,7 @@ func (ps *ps) NewBuildInfo(id string, info *buildinfo.I) (err error) {
 	b, err := proto.Marshal(m)
 	errz.Fatal(err)
 
-	err = ioutil.WriteFile(filepath.Join(ps.dir, id), b, 0666)
+	err = os.WriteFile(filepath.Join(ps.dir, id), b, 0666)
 	errz.Fatal(err)
 
 	return nil
@@ -49,7 +49,7 @@ func (ps *ps) GetBuildInfo(id string) (info *buildinfo.I, err error) {
 	errz.Fatal(err)
 	defer f.Close()
 
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	errz.Fatal(err)
 
 	protoInfo := &protos.BuildInfo{}

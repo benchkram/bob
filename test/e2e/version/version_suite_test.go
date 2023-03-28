@@ -2,7 +2,6 @@ package version_test
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -28,7 +27,7 @@ var _ = BeforeSuite(func() {
 	version = bob.Version
 	bob.Version = "1.0.0"
 
-	testDir, err := ioutil.TempDir("", "bob-test-version-*")
+	testDir, err := os.MkdirTemp("", "bob-test-version-*")
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
 

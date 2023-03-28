@@ -57,7 +57,6 @@ func (t *Task) ArtifactCreate(artifactName hash.In) (err error) {
 		targets, err := t.saveDockerImageTargets([]string{dockerTarget})
 		errz.Fatal(err)
 		dockerTargets = append(dockerTargets, targets...)
-
 	}
 	// in case of docker images, clear newly created targets by
 	// images after archiving it in artifacts

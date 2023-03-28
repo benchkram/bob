@@ -7,20 +7,26 @@ import (
 	"io"
 
 	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask/processed"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
 )
 
 // build a single task and update the playbook state after completion.
-func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
+func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed.Task, err error) {
 	defer errz.Recover(&err)
+
+	// if `pt` is `nil` errz.Fatal()
+	// returns a nil task which could lead
+	// to memory leaks down the line.
+	pt = &processed.Task{Task: task}
 
 	// A task is flagged successful before
 	var taskSuccessFul bool
 	var taskErr error
 	defer func() {
 		if !taskSuccessFul {
-			errr := p.TaskFailed(task.Name(), taskErr)
+			errr := p.TaskFailed(task.TaskID, taskErr)
 			if errr != nil {
 				boblog.Log.Error(errr, "Setting the task state to failed, failed.")
 			}
@@ -38,7 +44,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		case <-ctx.Done():
 			if errors.Is(ctx.Err(), context.Canceled) {
 				boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, StateCanceled))
-				_ = p.TaskCanceled(task.Name())
+				_ = p.TaskCanceled(task.TaskID)
 			}
 		}
 	}()
@@ -102,13 +108,13 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 		status := StateNoRebuildRequired
 		boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, status.Short()))
 		taskSuccessFul = true
-		return p.TaskNoRebuildRequired(task.Name())
+		return pt, p.TaskNoRebuildRequired(task.TaskID)
 	}
 
 	err = task.Clean(rebuild.VerifyResult.InvalidFiles)
 	errz.Fatal(err)
 
-	err = task.Run(ctx, p.namePad, p.nixCache, p.nixShellCache)
+	err = task.Run(ctx, p.namePad)
 	if err != nil {
 		taskSuccessFul = false
 		taskErr = err
@@ -123,10 +129,10 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	// flagged as failed in a defered function call.
 	taskSuccessFul = true
 
-	err = p.TaskCompleted(task.Name())
+	err = p.TaskCompleted(task.TaskID)
 	if err != nil {
 		if errors.Is(err, ErrFailed) {
-			return err
+			return pt, err
 		}
 	}
 	errz.Fatal(err)
@@ -137,5 +143,5 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
 	state := taskStatus.State()
 	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, "..."+state.Short()))
 
-	return nil
+	return pt, nil
 }

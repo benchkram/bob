@@ -2,7 +2,6 @@ package bobutil
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -49,7 +48,7 @@ func FindBobRoot() (string, error) {
 
 // isBobRoot checks if a ".bob" folder is present in this directory
 func isBobRoot(dir string) (bool, error) {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return false, err
 	}

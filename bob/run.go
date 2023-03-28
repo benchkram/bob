@@ -7,6 +7,7 @@ import (
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
+	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/sliceutil"
@@ -140,7 +141,7 @@ func executeBuildTasksInPipeline(
 	ctx context.Context,
 	runTaskName string,
 	aggregate *bobfile.Bobfile,
-	nix *NixBuilder,
+	nix *nixbuilder.NB,
 ) (err error) {
 	defer errz.Recover(&err)
 
