@@ -139,6 +139,8 @@ func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 			boblog.Log.V(2).Info(fmt.Sprintf("failed to verify [%s], different sizes [current: %d != expected: %d]", path, fileInfo.Size(), expectedFileInfo.Size))
 		}
 
+		// Not comparing hashes of targets for now due to the performance penalty.
+		//
 		// // checks the contents hash of the file with the ones from build info
 		// hashOfFile, err := filehash.HashOfFile(path)
 		// if err != nil {
@@ -159,7 +161,7 @@ var IgnoredTargets = []string{"node_modules/.cache"}
 // when creating/extracting artifact or creating the buildinfo
 func ShouldIgnore(path string) bool {
 	for _, v := range IgnoredTargets {
-		if strings.HasPrefix(path, v) {
+		if strings.Contains(path, v) {
 			return true
 		}
 	}
