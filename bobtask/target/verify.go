@@ -8,7 +8,6 @@ import (
 
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/filehash"
-	"github.com/benchkram/bob/pkg/sliceutil"
 )
 
 // Hint: comparing the modification time is tricky as a artifact extraction
@@ -98,9 +97,17 @@ func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 		return true
 	}
 
+	// create map to optimise access when checking for
+	// missing files
+	m := make(map[string]bool)
+	for _, k := range *t.filesystemEntries {
+		m[k] = true
+	}
+
 	// check for deleted/never created files
 	for k := range t.expected.Filesystem.Files {
-		if !sliceutil.Contains(*t.filesystemEntries, k) {
+		_, ok := m[k]
+		if !ok {
 			v.AddInvalidReason(k, ReasonMissing)
 		}
 	}
@@ -132,15 +139,15 @@ func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 			boblog.Log.V(2).Info(fmt.Sprintf("failed to verify [%s], different sizes [current: %d != expected: %d]", path, fileInfo.Size(), expectedFileInfo.Size))
 		}
 
-		// checks the contents hash of the file with the ones from build info
-		hashOfFile, err := filehash.HashOfFile(path)
-		if err != nil {
-			return false
-		}
-		if hashOfFile != expectedFileInfo.Hash {
-			v.AddInvalidReason(path, ReasonHashChanged)
-			boblog.Log.V(2).Info(fmt.Sprintf("failed to verify [%s], different hashes [current: %s != expected: %s]", path, hashOfFile, expectedFileInfo.Hash))
-		}
+		// // checks the contents hash of the file with the ones from build info
+		// hashOfFile, err := filehash.HashOfFile(path)
+		// if err != nil {
+		// 	return false
+		// }
+		// if hashOfFile != expectedFileInfo.Hash {
+		// 	v.AddInvalidReason(path, ReasonHashChanged)
+		// 	boblog.Log.V(2).Info(fmt.Sprintf("failed to verify [%s], different hashes [current: %s != expected: %s]", path, hashOfFile, expectedFileInfo.Hash))
+		// }
 	}
 
 	return len(v.InvalidFiles) == 0
