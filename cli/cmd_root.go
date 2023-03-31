@@ -80,6 +80,7 @@ func init() {
 	// cleanCmd
 	cleanCmd.AddCommand(cleanTargetsCmd)
 	cleanCmd.AddCommand(cleanSystemCmd)
+	cleanCmd.AddCommand(cleanAllCmd)
 	rootCmd.AddCommand(cleanCmd)
 }
 
