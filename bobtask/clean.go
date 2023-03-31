@@ -21,6 +21,11 @@ func (t *Task) Clean(invalidFiles map[string][]target.Reason, verbose ...bool) e
 	if t.target != nil {
 		boblog.Log.V(5).Info(fmt.Sprintf("Cleaning targets for task %s", t.Name()))
 
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+
 		if vb {
 			fmt.Printf("Cleaning targets of task %s \n", t.name)
 		}
@@ -34,6 +39,10 @@ func (t *Task) Clean(invalidFiles map[string][]target.Reason, verbose ...bool) e
 				if reason == target.ReasonCreatedAfterBuild || reason == target.ReasonForcedByNoCache {
 					if vb {
 						fmt.Printf(" %s ", filename)
+					}
+
+					if filename == "/" || filename == homeDir {
+						return fmt.Errorf("Cleanup of %s is not allowed", filename)
 					}
 
 					err := os.RemoveAll(filename)
