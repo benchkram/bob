@@ -28,10 +28,9 @@ require (
 	github.com/schollz/progressbar/v3 v3.11.0
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.13.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.2
 	github.com/whilp/git-urls v1.0.0
 	github.com/xlab/treeprint v1.1.0
-	github.com/yargevad/filepathx v1.0.0
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -47,7 +46,6 @@ require (
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/buger/goterm v1.0.4 // indirect
 	github.com/bugsnag/bugsnag-go v2.1.2+incompatible // indirect
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
