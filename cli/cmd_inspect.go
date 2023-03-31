@@ -9,6 +9,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
@@ -161,7 +162,7 @@ func runInspectInputs(taskname string) {
 	b, err := bob.Bob()
 	boblog.Log.Error(err, "Unable to initialise bob")
 
-	bobfile, err := b.Aggregate()
+	bobfile, err := b.AggregateWithNixDeps(taskname)
 	boblog.Log.Error(err, "Unable to aggregate bob file")
 
 	task, ok := bobfile.BTasks[taskname]
@@ -175,10 +176,33 @@ func runInspectInputs(taskname string) {
 	inputs := task.Inputs()
 	sort.Strings(inputs)
 	for _, e := range inputs {
-		fmt.Println(e)
+		contentHash, err := filehash.HashOfFile(e)
+		if err != nil {
+			boblog.Log.Error(err, "unable to compute hash of file")
+			exit(1)
+		}
+
+		info, err := os.Stat(e)
+		if err != nil {
+			boblog.Log.Error(err, "unable to stat ffile hash of file")
+			exit(1)
+		}
+
+		fmt.Printf("\t%s %d %s\n", e, info.Size(), contentHash)
 	}
 
-	fmt.Printf("Task %s has %d inputs\n", taskname, len(inputs))
+	hash, err := task.HashIn()
+	if err != nil {
+		boblog.Log.Error(err, "unable to compute hash")
+		exit(1)
+	}
+
+	fmt.Println()
+	fmt.Println()
+	fmt.Printf("Summary:\n")
+	fmt.Printf("\ttask-name:           %s\n", taskname)
+	fmt.Printf("\t# of inputs:         %d\n", len(inputs))
+	fmt.Printf("\tinput hash:          %s\n", hash)
 }
 
 var inspectBuildInfoCmd = &cobra.Command{

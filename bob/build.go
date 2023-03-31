@@ -6,6 +6,7 @@ import (
 
 	"github.com/benchkram/errz"
 
+	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/playbook"
 )
 
@@ -44,4 +45,16 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	errz.Fatal(err)
 
 	return nil
+}
+
+func (b *B) AggregateWithNixDeps(taskName string) (aggregate *bobfile.Bobfile, err error) {
+	defer errz.Recover(&err)
+
+	ag, err := b.Aggregate()
+	errz.Fatal(err)
+
+	err = b.nix.BuildNixDependenciesInPipeline(ag, taskName)
+	errz.Fatal(err)
+
+	return ag, nil
 }

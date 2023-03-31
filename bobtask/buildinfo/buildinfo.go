@@ -29,7 +29,7 @@ func (i *I) Describe() string {
 	fmt.Fprintln(buf, "\ttask:", i.Meta.Task)
 	fmt.Fprintln(buf, "\tinput hash", i.Meta.InputHash)
 
-	fmt.Fprintln(buf, "Filesystem:")
+	fmt.Fprintln(buf, "Filesystem-Targets:")
 	fmt.Fprintln(buf, "\thash of all files", i.Target.Filesystem.Hash)
 	fmt.Fprintln(buf, "\t# of files", len(i.Target.Filesystem.Files))
 	fmt.Fprintln(buf, "\tfiles:")
@@ -42,7 +42,7 @@ func (i *I) Describe() string {
 
 	for _, filename := range sortedFiles {
 		v := i.Target.Filesystem.Files[filename]
-		fmt.Fprintln(buf, "\t", filename, v.Size)
+		fmt.Fprintln(buf, "\t", filename, v.Size, v.Hash)
 	}
 
 	return buf.String()

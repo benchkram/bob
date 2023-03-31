@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/pkg/file"
@@ -41,6 +42,11 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 	bi = *buildinfo.NewBuildInfoFiles()
 
 	h := filehash.New()
+
+	// Use a sorted path array to assure the hash of all files
+	// is computed in a consistent order.
+	sort.Strings(paths)
+
 	for _, path := range paths {
 		path = filepath.Join(t.dir, path)
 
