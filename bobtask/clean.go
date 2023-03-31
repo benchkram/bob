@@ -3,7 +3,6 @@ package bobtask
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/boblog"
@@ -29,14 +28,15 @@ func (t *Task) Clean(invalidFiles map[string][]target.Reason, verbose ...bool) e
 		if t.dir == "" {
 			return fmt.Errorf("task dir not set")
 		}
+
 		for filename, reasons := range invalidFiles {
 			for _, reason := range reasons {
 				if reason == target.ReasonCreatedAfterBuild || reason == target.ReasonForcedByNoCache {
-					p := filepath.Join(t.dir, filename)
 					if vb {
-						fmt.Printf("  %s ", p)
+						fmt.Printf(" %s ", filename)
 					}
-					err := os.RemoveAll(p)
+
+					err := os.RemoveAll(filename)
 					if err != nil {
 						if vb {
 							fmt.Printf("%s\n", aurora.Red("failed"))

@@ -24,9 +24,13 @@ func (t *T) VerifyShallow() VerifyResult {
 	return r
 }
 
-// VerifyResult is the result of a target verify call
-// it tells if the target is valid and if not InvalidFiles will contain the list of invalid files along with their reason
-// a file can be invalid for multiple reasons. ex. a changed file is invalid because of size and content hash
+// VerifyResult is the result of a target verify call.
+// It tells if the target is valid and if not InvalidFiles
+// will contain the list of invalid files along with their reason.
+// A file can be invalid for multiple reasons. ex. a changed file
+// is invalid because of size and content hash.
+// The map of invalid files can be used to extract only
+// invalidated files from an artifact.
 type VerifyResult struct {
 	// TargetIsValid shows if target is valid or not
 	TargetIsValid bool
@@ -71,7 +75,7 @@ func (t *T) preConditionsFilesystem() bool {
 		return true
 	}
 
-	// In case there was no previous local build
+	// In case there was NO previous local build
 	// verify returns false indicating that there can't
 	// exist a valid target from a previous build.
 	// Loading from the cache must be handled by the calling function.
@@ -88,7 +92,7 @@ func (t *T) preConditionsFilesystem() bool {
 	return true
 }
 
-// verifyFilesystemShallow
+// verifyFilesystemShallow verifies a filesystem target
 func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 	if t.filesystemEntries == nil {
 		return true
@@ -126,6 +130,7 @@ func (t *T) verifyFilesystemShallow(v *VerifyResult) bool {
 		expectedFileInfo, ok := t.expected.Filesystem.Files[path]
 		if !ok {
 			v.AddInvalidReason(path, ReasonCreatedAfterBuild)
+			continue
 		}
 
 		// directories are not checked for size/hash

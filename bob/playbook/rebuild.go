@@ -36,7 +36,7 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 	if task.Rebuild() == bobtask.RebuildAlways {
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(rebuild set to always)", p.namePad, coloredName))
 
-		// for forced rebuild all task targets are marked as invalid
+		// For a forced rebuild all task targets are marked as invalid
 		invalidFiles := make(map[string][]target.Reason)
 		if task.TargetExists() {
 			t, err := ts.Target()
@@ -44,14 +44,20 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 			invalidFiles = t.AsInvalidFiles(target.ReasonForcedByNoCache)
 		}
 
-		return RebuildInfo{IsRequired: true, Cause: TaskForcedRebuild, VerifyResult: target.VerifyResult{
-			TargetIsValid: len(invalidFiles) > 0,
-			InvalidFiles:  invalidFiles,
-		}}, nil
+		return RebuildInfo{
+			IsRequired: true,
+			Cause:      TaskForcedRebuild,
+			VerifyResult: target.VerifyResult{
+				TargetIsValid: len(invalidFiles) > 0,
+				InvalidFiles:  invalidFiles,
+			},
+		}, nil
 	}
 
 	// Did a child task change?
 	if p.didChildTaskChange(task.Name()) {
+		// Andrei Boar added this check.
+		// I'm unsure about the reason for it.
 		verifyResult := target.NewVerifyResult()
 		if task.TargetExists() {
 			tt, err := ts.Target()
@@ -61,6 +67,7 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 				return RebuildInfo{IsRequired: true, Cause: TargetInvalid, VerifyResult: verifyResult}, nil
 			}
 		}
+
 		boblog.Log.V(3).Info(fmt.Sprintf("%-*s\tNEEDS REBUILD\t(dependecy changed)", p.namePad, coloredName))
 		return RebuildInfo{IsRequired: true, Cause: DependencyChanged}, nil
 	}
