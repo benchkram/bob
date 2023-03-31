@@ -12,6 +12,7 @@ import (
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 	"github.com/logrusorgru/aurora"
+	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
 )
 
@@ -24,8 +25,11 @@ func init() {
 
 	inspectCmd.AddCommand(inputCmd)
 	inspectCmd.AddCommand(envCmd)
+	// artifact
 	inspectArtifactCmd.AddCommand(inspectArtifactListCmd)
 	inspectCmd.AddCommand(inspectArtifactCmd)
+	//diff
+	inspectBuildInfoCmd.AddCommand(inspectBuildInfoDiffCmd)
 	inspectCmd.AddCommand(inspectBuildInfoCmd)
 	rootCmd.AddCommand(inspectCmd)
 }
@@ -201,14 +205,39 @@ func inspectBuildInfo(hash string) {
 		panic(err)
 	}
 
-	fmt.Println("Meta:")
-	fmt.Println("\ttask:", bi.Meta.Task)
-	fmt.Println("\tinput hash", bi.Meta.InputHash)
+	fmt.Println(bi.Describe())
+}
 
-	fmt.Println("Filesystem:")
-	fmt.Println("\thash of all files", bi.Target.Filesystem.Hash)
-	fmt.Println("\tfiles:")
-	for k, v := range bi.Target.Filesystem.Files {
-		fmt.Println("\t", k, v.Size, v.Hash)
+var inspectBuildInfoDiffCmd = &cobra.Command{
+	Use:   "diff",
+	Short: "Diff build infos",
+	Args:  cobra.ExactArgs(2),
+	Long:  ``,
+	Run: func(cmd *cobra.Command, args []string) {
+		diffBuildInfo(args[0], args[1])
+	},
+}
+
+func diffBuildInfo(hashA, hashB string) {
+	var exitCode int
+	defer func() { os.Exit(exitCode) }()
+
+	bs, err := bob.DefaultBuildinfoStore()
+	if err != nil {
+		panic(err)
 	}
+
+	biA, err := bs.GetBuildInfo(hashA)
+	if err != nil {
+		panic(err)
+	}
+
+	biB, err := bs.GetBuildInfo(hashB)
+	if err != nil {
+		panic(err)
+	}
+
+	dmp := diffmatchpatch.New()
+	diffs := dmp.DiffMain(biA.Describe(), biB.Describe(), false)
+	fmt.Println(dmp.DiffPrettyText(diffs))
 }

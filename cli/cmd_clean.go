@@ -22,6 +22,16 @@ var cleanCmd = &cobra.Command{
 	},
 }
 
+var cleanAllCmd = &cobra.Command{
+	Use:   "all",
+	Short: "Execute bob clean system & bob clean target together",
+	Long:  `Execute bob clean system & bob clean target together`,
+	Run: func(cmd *cobra.Command, args []string) {
+		runCleanTargets()
+		runCleanSystem()
+	},
+}
+
 var cleanSystemCmd = &cobra.Command{
 	Use:   "system",
 	Short: "Remove buildinfo and local cache",

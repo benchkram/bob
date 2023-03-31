@@ -1,6 +1,10 @@
 package buildinfo
 
 import (
+	"bytes"
+	"fmt"
+	"sort"
+
 	"github.com/benchkram/bob/bobtask/buildinfo/protos"
 )
 
@@ -16,6 +20,32 @@ func New() *I {
 	return &I{
 		Target: MakeTargets(),
 	}
+}
+
+func (i *I) Describe() string {
+	buf := bytes.NewBufferString("")
+
+	fmt.Fprintln(buf, "Meta:")
+	fmt.Fprintln(buf, "\ttask:", i.Meta.Task)
+	fmt.Fprintln(buf, "\tinput hash", i.Meta.InputHash)
+
+	fmt.Fprintln(buf, "Filesystem:")
+	fmt.Fprintln(buf, "\thash of all files", i.Target.Filesystem.Hash)
+	fmt.Fprintln(buf, "\t# of files", len(i.Target.Filesystem.Files))
+	fmt.Fprintln(buf, "\tfiles:")
+
+	sortedFiles := []string{}
+	for filename := range i.Target.Filesystem.Files {
+		sortedFiles = append(sortedFiles, filename)
+	}
+	sort.Strings(sortedFiles)
+
+	for _, filename := range sortedFiles {
+		v := i.Target.Filesystem.Files[filename]
+		fmt.Fprintln(buf, "\t", filename, v.Size)
+	}
+
+	return buf.String()
 }
 
 type Targets struct {
