@@ -6,9 +6,7 @@ import (
 
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/bobtask/target"
-	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
 
@@ -24,12 +22,8 @@ type RebuildInfo struct {
 
 // TaskNeedsRebuild check if a tasks need a rebuild by looking at its hash value
 // and its child tasks.
-func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, err error) {
-	ts, ok := p.Tasks[taskName]
-	if !ok {
-		return RebuildInfo{}, usererror.Wrap(boberror.ErrTaskDoesNotExistF(taskName))
-	}
-	task := ts.Task
+func (p *Playbook) TaskNeedsRebuild(taskID int) (rebuildInfo RebuildInfo, err error) {
+	task := p.TasksOptimized[taskID]
 	coloredName := task.ColoredName()
 
 	// Rebuild strategy set to `always`
@@ -39,7 +33,7 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 		// For a forced rebuild all task targets are marked as invalid
 		invalidFiles := make(map[string][]target.Reason)
 		if task.TargetExists() {
-			t, err := ts.Target()
+			t, err := task.Target()
 			errz.Fatal(err)
 			invalidFiles = t.AsInvalidFiles(target.ReasonForcedByNoCache)
 		}
@@ -60,7 +54,7 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 		// I'm unsure about the reason for it.
 		verifyResult := target.NewVerifyResult()
 		if task.TargetExists() {
-			tt, err := ts.Target()
+			tt, err := task.Target()
 			errz.Fatal(err)
 			verifyResult = tt.VerifyShallow()
 			if !verifyResult.TargetIsValid {
@@ -81,7 +75,7 @@ func (p *Playbook) TaskNeedsRebuild(taskName string) (rebuildInfo RebuildInfo, e
 
 		invalidFiles := make(map[string][]target.Reason)
 		if task.TargetExists() {
-			t, err := ts.Target()
+			t, err := task.Target()
 			errz.Fatal(err)
 			invalidFiles = t.AsInvalidFiles(target.ReasonMissing)
 		}

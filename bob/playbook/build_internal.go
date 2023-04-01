@@ -49,7 +49,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed
 		}
 	}()
 
-	rebuild, err := p.TaskNeedsRebuild(task.Name())
+	rebuild, err := p.TaskNeedsRebuild(task.TaskID)
 	errz.Fatal(err)
 	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuild.IsRequired, rebuild.Cause))
 

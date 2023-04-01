@@ -47,8 +47,8 @@ func (b *B) Build(ctx context.Context, taskName string) (err error) {
 	return nil
 }
 
-// AggregateWithNixDeps does aggregation together with evaluation nix dependecies which
-// are altering a tasks input hash.
+// AggregateWithNixDeps does aggregation together with evaluating nix dependecies.
+// Nic dependencies are altering a tasks input hash.
 // Use this function for building `bob inspect` cmds.
 func (b *B) AggregateWithNixDeps(taskName string) (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)

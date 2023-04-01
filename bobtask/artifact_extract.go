@@ -22,6 +22,9 @@ import (
 func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]target.Reason) (success bool, err error) {
 	defer errz.Recover(&err)
 
+	homeDir, err := os.UserHomeDir()
+	errz.Fatal(err)
+
 	artifact, _, err := t.local.GetArtifact(context.TODO(), artifactName.String())
 	if err != nil {
 		_, ok := err.(*fs.PathError)
@@ -70,7 +73,11 @@ func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]t
 
 			// symlink
 			if archiveFile.FileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-				os.RemoveAll(dst)
+				if dst == "/" || dst == homeDir {
+					return false, fmt.Errorf("Cleanup of %s is not allowed", dst)
+				}
+				err = os.RemoveAll(dst)
+				errz.Fatal(err)
 				err = os.Symlink(header.Linkname, dst)
 				errz.Fatal(err)
 				continue

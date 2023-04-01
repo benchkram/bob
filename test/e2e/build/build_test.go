@@ -51,7 +51,7 @@ var _ = Describe("Test bob build", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			task := pb.Tasks[targetTask]
-			rebuild, err := pb.TaskNeedsRebuild(task.Name())
+			rebuild, err := pb.TaskNeedsRebuild(task.TaskID)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(rebuild.IsRequired).To(BeTrue())
