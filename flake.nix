@@ -55,7 +55,7 @@
             #       got:    sha256-BzlZiAXA8wQ7RU6N1knPYH/BDX1Ae+2+4pVJ41ecK7A=*/
             #
             # If on `nix build` you get above error, just replace the value vendorSha256 with value from `got`
-            vendorSha256 = "sha256-S1XUgjdSVTWXehOLCxXcvj0SH12cxqvYadVlCw/saF4=";
+            vendorSha256 = "sha256-N53XGEkKziuI5KcJOFNPx1H3+aSGpYN9XBCk99KHq44=";
 
             excludedPackages = [ "example/server-db" "test/e2e" "tui-example" ];
 
