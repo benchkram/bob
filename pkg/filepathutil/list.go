@@ -67,7 +67,7 @@ func ListRecursive(inp string, projectRoot string) (all []string, err error) {
 		for _, m := range matches {
 			s, err := os.Lstat(m)
 			if err == nil && !s.IsDir() {
-				isValid, err := isValidFile(s.Name(), s, projectRoot)
+				isValid, err := isValidFile(m, s, projectRoot)
 				if err != nil {
 					symlinkErrors = append(symlinkErrors, err)
 				}

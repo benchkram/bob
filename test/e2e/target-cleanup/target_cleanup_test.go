@@ -47,7 +47,7 @@ var _ = Describe("Testing correct removal of directory targets", func() {
 			Expect(dirContents).To(ContainElement("empty-file"))
 		})
 
-		It("should remove the target directory and expect the targets beeing loaded from the cache", func() {
+		It("should remove the target directory and expect the targets being loaded from the cache", func() {
 			err := b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -102,7 +102,7 @@ var _ = Describe("Testing correct removal of directory targets", func() {
 
 		})
 
-		It("should remove the target directory and expect the targets beeing recreating doing a full rebuild", func() {
+		It("should remove the target directory and expect the targets being recreating doing a full rebuild", func() {
 			err := b.Build(ctx, "build")
 			Expect(err).NotTo(HaveOccurred())
 

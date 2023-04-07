@@ -201,6 +201,7 @@ func (t *Task) IsValidDecoration() bool {
 func (t *Task) description() string {
 	var sb strings.Builder
 
+	sb.WriteString(inputHashVersion)
 	sb.WriteString(t.name)
 	sb.WriteString(t.project)
 

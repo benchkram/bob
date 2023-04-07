@@ -5,7 +5,6 @@ import (
 )
 
 type ArtifactMetadata struct {
-
 	// Project is the project in which the task is defined
 	Project string `yaml:"project,omitempty"`
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/playbook"
-	"github.com/benchkram/bob/bobtask/processed"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/errz"
 
@@ -52,11 +51,11 @@ var _ = Describe("Test bob build", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			task := pb.Tasks[targetTask]
-			rebuildRequired, rebuildCause, err := pb.TaskNeedsRebuild(task.TaskID, &processed.Task{})
+			rebuild, err := pb.TaskNeedsRebuild(task.TaskID)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(rebuildRequired).To(BeTrue())
-			Expect(rebuildCause).To(Equal(playbook.TaskForcedRebuild))
+			Expect(rebuild.IsRequired).To(BeTrue())
+			Expect(rebuild.Cause).To(Equal(playbook.TaskForcedRebuild))
 		})
 	})
 })
