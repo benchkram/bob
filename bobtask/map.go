@@ -189,7 +189,8 @@ func (tm Map) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependen
 
 // IgnoreChildTargets fills the `InputAdditionalIgnores` field of each task
 // with the targets of each tasks children.
-func (tm Map) IgnoreChildTargets() (err error) {
+// dir should be the root of the aggregate, and it is used to ignore resolved targets relative to this project
+func (tm Map) IgnoreChildTargets(dir string) (err error) {
 	defer errz.Recover(&err)
 	for name, umbrellaTask := range tm {
 
@@ -222,7 +223,7 @@ func (tm Map) IgnoreChildTargets() (err error) {
 						//
 						//     third-level    fouth-level           second-level/third-level/fourth-level/target
 
-						relP, err := filepath.Rel(umbrellaTask.Dir(), p)
+						relP, err := filepath.Rel(dir, p)
 						if err != nil {
 							return err
 						}
