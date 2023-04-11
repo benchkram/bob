@@ -12,14 +12,18 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/bobtask/hash"
+	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/errz"
 )
 
 // ArtifactExtract extract an artifact from the localstore if it exists.
 // Return true on a successful extract operation.
-func (t *Task) ArtifactExtract(artifactName hash.In) (success bool, err error) {
+func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]target.Reason) (success bool, err error) {
 	defer errz.Recover(&err)
+
+	homeDir, err := os.UserHomeDir()
+	errz.Fatal(err)
 
 	artifact, _, err := t.local.GetArtifact(context.TODO(), artifactName.String())
 	if err != nil {
@@ -32,7 +36,7 @@ func (t *Task) ArtifactExtract(artifactName hash.In) (success bool, err error) {
 	defer artifact.Close()
 
 	// Assure tasks is cleaned up before extracting
-	err = t.Clean()
+	err = t.Clean(invalidFiles)
 	errz.Fatal(err)
 
 	archiveReader := newArchiveReader()
@@ -56,7 +60,6 @@ func (t *Task) ArtifactExtract(artifactName hash.In) (success bool, err error) {
 
 		// targets filesystem
 		if strings.HasPrefix(header.Name, __targetsFilesystem) {
-
 			filename := strings.TrimPrefix(header.Name, __targetsFilesystem+"/")
 
 			// create directory structure
@@ -70,23 +73,31 @@ func (t *Task) ArtifactExtract(artifactName hash.In) (success bool, err error) {
 
 			// symlink
 			if archiveFile.FileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+				if dst == "/" || dst == homeDir {
+					return false, fmt.Errorf("Cleanup of %s is not allowed", dst)
+				}
+				err = os.RemoveAll(dst)
+				errz.Fatal(err)
 				err = os.Symlink(header.Linkname, dst)
 				errz.Fatal(err)
 				continue
 			}
 
-			// extract to destination
-			f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
-			errz.Fatal(err)
-			_, err = io.Copy(f, archiveFile)
-			// closing the file right away to reduce the number of open files
-			_ = f.Close()
-			errz.Fatal(err)
+			if shouldFetchFromCache(filename, invalidFiles) {
+				// extract to destination
+				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
+				errz.Fatal(err)
+
+				_, err = io.Copy(f, archiveFile)
+				errz.Fatal(err)
+
+				// closing the file right away to reduce the number of open files
+				_ = f.Close()
+			}
 		}
 
 		// targets docker
 		if strings.HasPrefix(header.Name, __targetsDocker) {
-
 			filename := strings.TrimPrefix(header.Name, __targetsDocker+"/")
 
 			// create directory structure
@@ -119,4 +130,18 @@ func (t *Task) ArtifactExtract(artifactName hash.In) (success bool, err error) {
 	}
 
 	return true, nil
+}
+
+// shouldFetchFromCache checks if a file should be brought back from cache inside the target
+// A file will be brought back from cache if it's missing or was changed
+func shouldFetchFromCache(filename string, invalidFiles map[string][]target.Reason) bool {
+	if _, ok := invalidFiles[filename]; !ok {
+		return false
+	}
+	for _, reason := range invalidFiles[filename] {
+		if reason == target.ReasonSizeChanged || reason == target.ReasonHashChanged || reason == target.ReasonMissing {
+			return true
+		}
+	}
+	return false
 }

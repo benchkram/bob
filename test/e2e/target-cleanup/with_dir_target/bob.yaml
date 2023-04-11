@@ -1,7 +1,7 @@
 build:
   build:
     cmd: |-
-      mkdir sub-dir
+      mkdir -p sub-dir
       touch ./sub-dir/non-empty-file
       echo "Hello World!" > ./sub-dir/non-empty-file
     target: sub-dir

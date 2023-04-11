@@ -35,14 +35,7 @@ func (t *T) Resolve() error {
 				if err != nil {
 					return err
 				}
-
-				// Skip dirs
-				if fi.IsDir() {
-					return nil
-				}
-
 				resolved = append(resolved, p)
-
 				return nil
 			}); err != nil {
 				return fmt.Errorf("failed to walk dir %q: %w", path, err)

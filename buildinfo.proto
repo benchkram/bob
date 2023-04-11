@@ -13,7 +13,7 @@ message Meta {
 }
 
 message Targets {
-  BuildInfoFiles Filesystem  = 1;
+  BuildInfoFiles Filesystem = 1;
   map<string, BuildInfoDocker> Docker = 2;
 }
 
@@ -25,6 +25,7 @@ message BuildInfoFiles {
 
 message BuildInfoFile {
   int64 Size = 1;
+  string Hash = 2;
 }
 
 message BuildInfoDocker {

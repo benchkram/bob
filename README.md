@@ -79,4 +79,5 @@ Multiline `sh` and `bash` commands are entirely possible, powered by [mvdan/sh](
 
 # Comparisons
 * [Dagger vs. bob](https://medium.com/benchkram/dagger-vs-bob-2e917cd185d3)
+* [Bazel vs. bob](https://bob.build/blog/vs-bazel)
 * [Mage vs. bob](https://medium.com/benchkram/build-system-comparison-mage-vs-bob-aaf4665e3d5c)

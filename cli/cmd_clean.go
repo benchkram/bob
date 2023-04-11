@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/benchkram/bob/bob"
+	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
@@ -18,6 +19,16 @@ var cleanCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		_ = cmd.Help()
+	},
+}
+
+var cleanAllCmd = &cobra.Command{
+	Use:   "all",
+	Short: "Execute bob clean system & bob clean target together",
+	Long:  `Execute bob clean system & bob clean target together`,
+	Run: func(cmd *cobra.Command, args []string) {
+		runCleanTargets()
+		runCleanSystem()
 	},
 }
 
@@ -67,7 +78,19 @@ func runCleanTargets() {
 	}
 
 	for _, t := range ag.BTasks {
-		err := t.Clean(true)
+		if !t.TargetExists() {
+			continue
+		}
+
+		taskTarget, err := t.Target()
+		errz.Fatal(err)
+
+		invalidFiles := make(map[string][]target.Reason)
+		for _, v := range taskTarget.FilesystemEntriesRawPlain() {
+			invalidFiles[v] = append(invalidFiles[v], target.ReasonCreatedAfterBuild)
+		}
+
+		err = t.Clean(invalidFiles, true)
 		if err != nil {
 			boblog.Log.Error(err, "Unable to clean target")
 		}
