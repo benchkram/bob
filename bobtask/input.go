@@ -112,7 +112,8 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 	}
 
 	// Ignore additional items found during aggregation.
-	// Usually the targets of child tasks which are already rooted.
+	// Usually the targets of child tasks which are already
+	// relative to the umbrella Bobfile.
 	for _, path := range t.InputAdditionalIgnores {
 		info, err := os.Lstat(path)
 		if err != nil {

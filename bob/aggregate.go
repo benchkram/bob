@@ -221,7 +221,7 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	err = aggregate.Verify()
 	errz.Fatal(err)
 
-	err = aggregate.BTasks.IgnoreChildTargets()
+	err = aggregate.BTasks.IgnoreChildTargets(aggregate.Dir())
 	errz.Fatal(err)
 
 	// Filter input must run before any work is done.
