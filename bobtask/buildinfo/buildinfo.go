@@ -1,6 +1,10 @@
 package buildinfo
 
 import (
+	"bytes"
+	"fmt"
+	"sort"
+
 	"github.com/benchkram/bob/bobtask/buildinfo/protos"
 )
 
@@ -16,6 +20,32 @@ func New() *I {
 	return &I{
 		Target: MakeTargets(),
 	}
+}
+
+func (i *I) Describe() string {
+	buf := bytes.NewBufferString("")
+
+	fmt.Fprintln(buf, "Meta:")
+	fmt.Fprintln(buf, "\ttask:", i.Meta.Task)
+	fmt.Fprintln(buf, "\tinput hash", i.Meta.InputHash)
+
+	fmt.Fprintln(buf, "Filesystem-Targets:")
+	fmt.Fprintln(buf, "\thash of all files", i.Target.Filesystem.Hash)
+	fmt.Fprintln(buf, "\t# of files", len(i.Target.Filesystem.Files))
+	fmt.Fprintln(buf, "\tfiles:")
+
+	sortedFiles := []string{}
+	for filename := range i.Target.Filesystem.Files {
+		sortedFiles = append(sortedFiles, filename)
+	}
+	sort.Strings(sortedFiles)
+
+	for _, filename := range sortedFiles {
+		v := i.Target.Filesystem.Files[filename]
+		fmt.Fprintln(buf, "\t", filename, v.Size, v.Hash)
+	}
+
+	return buf.String()
 }
 
 type Targets struct {
@@ -53,6 +83,8 @@ func MakeBuildInfoFiles() BuildInfoFiles {
 type BuildInfoFile struct {
 	// Size of a file
 	Size int64 `yaml:"size"`
+	// Hash of file contents
+	Hash string `yaml:"hash"`
 }
 
 type BuildInfoDocker struct {
@@ -69,13 +101,12 @@ type Meta struct {
 }
 
 func (i *I) ToProto(inputHash string) *protos.BuildInfo {
-
 	filesystem := &protos.BuildInfoFiles{
 		Targets: make(map[string]*protos.BuildInfoFile, len(i.Target.Filesystem.Files)),
 	}
 	filesystem.Hash = i.Target.Filesystem.Hash
 	for k, v := range i.Target.Filesystem.Files {
-		filesystem.Targets[k] = &protos.BuildInfoFile{Size: v.Size}
+		filesystem.Targets[k] = &protos.BuildInfoFile{Size: v.Size, Hash: v.Hash}
 	}
 
 	docker := make(map[string]*protos.BuildInfoDocker)
@@ -111,7 +142,7 @@ func FromProto(p *protos.BuildInfo) *I {
 		if p.Target.Filesystem != nil {
 			bi.Target.Filesystem.Hash = p.Target.Filesystem.Hash
 			for k, v := range p.Target.Filesystem.Targets {
-				bi.Target.Filesystem.Files[k] = BuildInfoFile{Size: v.Size}
+				bi.Target.Filesystem.Files[k] = BuildInfoFile{Size: v.Size, Hash: v.Hash}
 			}
 		}
 

@@ -10,22 +10,20 @@ import (
 type Target interface {
 	BuildInfo() (*buildinfo.Targets, error)
 
-	//Verify() bool
-	VerifyShallow() bool
+	Verify() bool
+	VerifyShallow() VerifyResult
 	Resolve() error
 
 	FilesystemEntries() []string
 	FilesystemEntriesPlain() []string
 	FilesystemEntriesRaw() []string
 	FilesystemEntriesRawPlain() []string
-	// Exists() bool
 
 	WithExpected(*buildinfo.Targets) *T
-
-	// Paths() []string
-	// PathsPlain() []string
-	// Type() targettype.T
 	DockerImages() []string
+
+	// AsInvalidFiles returns all FilesystemEntriesRaw as invalid with the specified reason
+	AsInvalidFiles(reason Reason) map[string][]Reason
 }
 
 type T struct {
@@ -45,7 +43,7 @@ type T struct {
 
 	// dockerImages an array of docker tags
 	dockerImages []string
-	// filesystemEntries is an array of files,
+	// filesystemEntries is an array of files/directories,
 	// read from the filesystem.
 	// resolve(filesystemEntriesRaw) = filesystemEntriesRaw.
 	//
@@ -118,4 +116,14 @@ func (t *T) WithExpected(expected *buildinfo.Targets) *T {
 
 func (t *T) DockerImages() []string {
 	return append([]string{}, t.dockerImages...)
+}
+
+// AsInvalidFiles returns all FilesystemEntriesRaw as invalid with the specified reason
+func (t *T) AsInvalidFiles(reason Reason) map[string][]Reason {
+	invalidFiles := make(map[string][]Reason)
+
+	for _, v := range t.FilesystemEntriesRaw() {
+		invalidFiles[v] = []Reason{reason}
+	}
+	return invalidFiles
 }

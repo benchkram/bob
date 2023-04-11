@@ -27,7 +27,7 @@ jobs:
       - name: Install bob
         run: make install-prod
 
-      - name: bob login 
+      - name: bob login
         run: bob auth init --token ${{ secrets.BOB_TOKEN }}
 
       - name: Install nix derivations

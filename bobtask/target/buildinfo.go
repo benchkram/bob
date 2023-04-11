@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/pkg/file"
@@ -38,10 +39,14 @@ func (t *T) BuildInfo() (bi *buildinfo.Targets, err error) {
 }
 
 func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error) {
-
 	bi = *buildinfo.NewBuildInfoFiles()
 
 	h := filehash.New()
+
+	// Use a sorted path array to assure the hash of all files
+	// is computed in a consistent order.
+	sort.Strings(paths)
+
 	for _, path := range paths {
 		path = filepath.Join(t.dir, path)
 
@@ -55,10 +60,15 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 
 		if targetInfo.IsDir() {
 			if err := filepath.WalkDir(path, func(p string, f fs.DirEntry, err error) error {
+				if ShouldIgnore(p) {
+					return nil
+				}
 				if err != nil {
 					return err
 				}
 				if f.IsDir() {
+					// we add directories to the list of files to later verify target, but no need for size and hash
+					bi.Files[p] = buildinfo.BuildInfoFile{Size: -1, Hash: ""}
 					return nil
 				}
 
@@ -71,7 +81,13 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 				if err != nil {
 					return fmt.Errorf("failed to get file info %q: %w", p, err)
 				}
-				bi.Files[p] = buildinfo.BuildInfoFile{Size: info.Size()}
+
+				contentHash, err := filehash.HashOfFile(p)
+				if err != nil {
+					return fmt.Errorf("failed to get file hash %q: %w", p, err)
+				}
+
+				bi.Files[p] = buildinfo.BuildInfoFile{Size: info.Size(), Hash: contentHash}
 
 				return nil
 			}); err != nil {
@@ -79,11 +95,18 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 			}
 			// TODO: what happens on a empty dir?
 		} else {
+			if ShouldIgnore(path) {
+				continue
+			}
 			err = h.AddFile(path)
 			if err != nil {
 				return buildinfo.BuildInfoFiles{}, fmt.Errorf("failed to hash target %q: %w", path, err)
 			}
-			bi.Files[path] = buildinfo.BuildInfoFile{Size: targetInfo.Size()}
+			contentHash, err := filehash.HashOfFile(path)
+			if err != nil {
+				return buildinfo.BuildInfoFiles{}, fmt.Errorf("failed to get file hash %q: %w", path, err)
+			}
+			bi.Files[path] = buildinfo.BuildInfoFile{Size: targetInfo.Size(), Hash: contentHash}
 		}
 	}
 
