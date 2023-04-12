@@ -19,7 +19,7 @@ type Target interface {
 	FilesystemEntriesRaw() []string
 	FilesystemEntriesRawPlain() []string
 
-	WithExpected(*buildinfo.Targets) *T
+	WithExpected(*buildinfo.Targets)
 	DockerImages() []string
 
 	// AsInvalidFiles returns all FilesystemEntriesRaw as invalid with the specified reason
@@ -68,10 +68,6 @@ func New(opts ...Option) *T {
 		opt(t)
 	}
 
-	if t.dockerRegistryClient == nil {
-		t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
-	}
-
 	return t
 }
 
@@ -109,9 +105,12 @@ func (t *T) FilesystemEntriesRawPlain() []string {
 	return append([]string{}, t.filesystemEntriesRaw...)
 }
 
-func (t *T) WithExpected(expected *buildinfo.Targets) *T {
+func (t *T) WithExpected(expected *buildinfo.Targets) {
 	t.expected = expected
-	return t
+}
+
+func (t *T) WithDockerRegistryClient(c dockermobyutil.RegistryClient) {
+	t.dockerRegistryClient = c
 }
 
 func (t *T) DockerImages() []string {

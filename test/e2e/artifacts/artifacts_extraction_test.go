@@ -77,7 +77,8 @@ var _ = Describe("Test artifact creation and extraction", func() {
 var _ = Describe("Test artifact creation and extraction from docker targets", func() {
 	Context("in a fresh playground", func() {
 
-		mobyClient := dockermobyutil.NewRegistryClient()
+		mobyClient, err := dockermobyutil.NewRegistryClient()
+		Expect(err).NotTo(HaveOccurred())
 
 		It("should initialize bob playground", func() {
 			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())

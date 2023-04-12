@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/dockermobyutil"
+
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/bob/global"
@@ -158,7 +160,6 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		task.WithLocalstore(b.local)
 		task.WithEnvStore(b.nix.EnvStore())
 		task.WithBuildinfoStore(b.buildInfoStore)
-		task.WithDockerRegistryClient(b.dockerRegistryClient)
 
 		// a task must always-rebuild when caching is disabled
 		if !b.enableCaching {
@@ -227,6 +228,30 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	// Filter input must run before any work is done.
 	err = aggregate.BTasks.FilterInputs()
 	errz.Fatal(err)
+
+	var dockerRegistryClientInitialized bool
+
+	// Assure tasks are correctly initialised.
+	for i, task := range aggregate.BTasks {
+		target, err := task.Target()
+		errz.Fatal(err)
+
+		if target != nil && len(target.DockerImages()) > 0 {
+			if !dockerRegistryClientInitialized {
+				b.dockerRegistryClient, err = dockermobyutil.NewRegistryClient()
+				if errors.Is(err, dockermobyutil.ErrConnectionFailed) {
+					errz.Fatal(usererror.Wrapm(err, fmt.Sprintf("task `%s` exports an image, but docker is not reachable", task.Name())))
+				}
+				errz.Fatal(err)
+
+				dockerRegistryClientInitialized = true
+			}
+
+			task.WithDockerRegistryClient(b.dockerRegistryClient)
+			// modify index on map since tasks are passed by value
+			aggregate.BTasks[i] = task
+		}
+	}
 
 	return aggregate, nil
 }

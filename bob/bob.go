@@ -81,8 +81,6 @@ func newBob(opts ...Option) *B {
 		enableCaching: true,
 		allowInsecure: false,
 		maxParallel:   runtime.NumCPU(),
-
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
 	}
 
 	for _, opt := range opts {
