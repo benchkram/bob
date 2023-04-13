@@ -135,10 +135,6 @@ func Make(opts ...TaskOption) Task {
 		opt(&t)
 	}
 
-	if t.dockerRegistryClient == nil {
-		t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
-	}
-
 	return t
 }
 

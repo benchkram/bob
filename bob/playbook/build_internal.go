@@ -130,11 +130,10 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed
 	taskSuccessFul = true
 
 	err = p.TaskCompleted(task.TaskID)
-	if err != nil {
-		if errors.Is(err, ErrFailed) {
-			return pt, err
-		}
+	if errors.Is(err, ErrFailed) {
+		return pt, err
 	}
+	errz.Log(err)
 	errz.Fatal(err)
 
 	taskStatus, err := p.TaskStatus(task.Name())

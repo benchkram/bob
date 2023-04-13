@@ -10,11 +10,14 @@ import (
 )
 
 // Target takes care of populating the targets members correctly.
-// It returns a nil in case of a non existing target and a nil error.
+// It returns a nil in case of a non-existing target and a nil error.
 func (t *Task) Target() (empty target.Target, _ error) {
 	if t.target == nil {
 		return empty, nil
 	}
+
+	// attach docker registry client (if set) to target itself
+	t.target.WithDockerRegistryClient(t.dockerRegistryClient)
 
 	// ReadBuildInfo is dependent on the inputHash of the task.
 	// For this reason we cannot read build info on target creation,
@@ -41,8 +44,10 @@ func (t *Task) Target() (empty target.Target, _ error) {
 		return t.target, t.target.Resolve()
 	}
 
-	tt := t.target.WithExpected(&buildInfo.Target)
-	return tt, tt.Resolve()
+	// attach expected buildinfo
+	t.target.WithExpected(&buildInfo.Target)
+
+	return t.target, t.target.Resolve()
 }
 
 func (t *Task) TargetExists() bool {
