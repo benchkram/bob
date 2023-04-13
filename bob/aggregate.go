@@ -219,19 +219,11 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
-	err = aggregate.Verify()
-	errz.Fatal(err)
-
-	err = aggregate.BTasks.IgnoreChildTargets(aggregate.Dir())
-	errz.Fatal(err)
-
-	// Filter input must run before any work is done.
-	err = aggregate.BTasks.FilterInputs()
-	errz.Fatal(err)
-
 	var dockerRegistryClientInitialized bool
 
-	// Assure tasks are correctly initialised.
+	// Assure tasks are correctly initialised with a docker registry client.
+	// Only one registry client must be created and shared between tasks,
+	// this reduces the pressure on garbage collection for big repos.
 	for i, task := range aggregate.BTasks {
 		target, err := task.Target()
 		errz.Fatal(err)
@@ -252,6 +244,16 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			aggregate.BTasks[i] = task
 		}
 	}
+
+	err = aggregate.Verify()
+	errz.Fatal(err)
+
+	err = aggregate.BTasks.IgnoreChildTargets(aggregate.Dir())
+	errz.Fatal(err)
+
+	// Filter input must run before any work is done.
+	err = aggregate.BTasks.FilterInputs()
+	errz.Fatal(err)
 
 	return aggregate, nil
 }
