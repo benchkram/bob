@@ -61,7 +61,9 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 		if targetInfo.IsDir() {
 			if err := filepath.WalkDir(path, func(p string, f fs.DirEntry, err error) error {
 				isSymlink, err := file.IsSymlink(p)
-				errz.Fatal(err)
+				if err != nil {
+					return fmt.Errorf("failed to check if symlink %q: %w", f, err)
+				}
 
 				if ShouldIgnore(p) || isSymlink {
 					return nil
