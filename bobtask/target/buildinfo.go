@@ -3,16 +3,15 @@ package target
 import (
 	"encoding/hex"
 	"fmt"
-	"io/fs"
-	"os"
-	"path/filepath"
-	"sort"
-
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"sort"
 )
 
 // BuildInfo reads file info and computes the target hash
@@ -60,12 +59,7 @@ func (t *T) buildinfoFiles(paths []string) (bi buildinfo.BuildInfoFiles, _ error
 
 		if targetInfo.IsDir() {
 			if err := filepath.WalkDir(path, func(p string, f fs.DirEntry, err error) error {
-				isSymlink, err := file.IsSymlink(p)
-				if err != nil {
-					return fmt.Errorf("failed to check if symlink %q: %w", f, err)
-				}
-
-				if ShouldIgnore(p) || isSymlink {
+				if ShouldIgnore(p) {
 					return nil
 				}
 				if err != nil {
