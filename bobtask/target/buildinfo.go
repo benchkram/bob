@@ -3,15 +3,16 @@ package target
 import (
 	"encoding/hex"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"sort"
+
 	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
-	"io/fs"
-	"os"
-	"path/filepath"
-	"sort"
 )
 
 // BuildInfo reads file info and computes the target hash
