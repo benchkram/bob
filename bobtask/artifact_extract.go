@@ -22,6 +22,9 @@ import (
 func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]target.Reason) (success bool, err error) {
 	defer errz.Recover(&err)
 
+	// TODO: remove
+	fmt.Println("=== Extracting artifact", artifactName, invalidFiles)
+
 	homeDir, err := os.UserHomeDir()
 	errz.Fatal(err)
 
@@ -83,6 +86,8 @@ func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]t
 				continue
 			}
 
+			// TODO: remove
+			fmt.Printf("=== shouldFetchFromCache(%s): %v\n", filename, shouldFetchFromCache(filename, invalidFiles))
 			if shouldFetchFromCache(filename, invalidFiles) {
 				// extract to destination
 				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
