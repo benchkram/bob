@@ -9,10 +9,10 @@ import (
 	"github.com/logrusorgru/aurora"
 )
 
-// Clean the targets defined by this task.
-// This assures that we can be sure a target was correctly created
+// CleanTargetsWithReason removes files assosiated to a target but considering
+// the reason for a deletion. This assures that we can be sure a target was correctly created
 // and has not been there before the task ran.
-func (t *Task) Clean(invalidFiles map[string][]target.Reason, verbose ...bool) error {
+func (t *Task) CleanTargetsWithReason(invalidFiles map[string][]target.Reason, verbose ...bool) error {
 	var vb bool
 	if len(verbose) > 0 {
 		vb = verbose[0]
@@ -56,6 +56,55 @@ func (t *Task) Clean(invalidFiles map[string][]target.Reason, verbose ...bool) e
 						fmt.Printf("%s\n", aurora.Green("done"))
 					}
 				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// Clean all filesystem targets as given in the Bobfile
+func (t *Task) Clean(verbose ...bool) error {
+	var vb bool
+	if len(verbose) > 0 {
+		vb = verbose[0]
+	}
+
+	if t.target != nil {
+		boblog.Log.V(5).Info(fmt.Sprintf("Cleaning targets for task %s", t.Name()))
+
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+
+		if vb {
+			fmt.Printf("Cleaning targets of task %s \n", t.name)
+		}
+
+		if t.dir == "" {
+			return fmt.Errorf("task dir not set")
+		}
+
+		files := t.target.FilesystemEntriesRaw()
+		for _, filename := range files {
+			if vb {
+				fmt.Printf(" %s ", filename)
+			}
+
+			if filename == "/" || filename == homeDir {
+				return fmt.Errorf("Cleanup of %s is not allowed", filename)
+			}
+
+			err := os.RemoveAll(filename)
+			if err != nil {
+				if vb {
+					fmt.Printf("%s\n", aurora.Red("failed"))
+				}
+				return err
+			}
+			if vb {
+				fmt.Printf("%s\n", aurora.Green("done"))
 			}
 		}
 	}

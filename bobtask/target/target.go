@@ -86,6 +86,8 @@ func (t *T) FilesystemEntries() []string {
 	return pathsWithDir
 }
 
+// FilesystemEntriesRaw returns the filesystem entries
+// relative to the umbrella bobfile.
 func (t *T) FilesystemEntriesRaw() []string {
 	var pathsWithDir []string
 	for _, v := range t.filesystemEntriesRaw {

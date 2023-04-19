@@ -38,8 +38,8 @@ func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]t
 	}
 	defer artifact.Close()
 
-	// Assure tasks is cleaned up before extracting
-	err = t.Clean(invalidFiles)
+	// Assure task is cleaned up before extracting
+	err = t.CleanTargetsWithReason(invalidFiles)
 	errz.Fatal(err)
 
 	archiveReader := newArchiveReader()
@@ -87,7 +87,7 @@ func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]t
 			}
 
 			// TODO: remove
-			fmt.Printf("=== shouldFetchFromCache(%s): %v\n", filename, shouldFetchFromCache(filename, invalidFiles))
+			//fmt.Printf("=== shouldFetchFromCache(%s): %v\n", filename, shouldFetchFromCache(filename, invalidFiles))
 			if shouldFetchFromCache(filename, invalidFiles) {
 				// extract to destination
 				f, err := os.OpenFile(dst, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
