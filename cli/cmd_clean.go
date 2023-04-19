@@ -81,6 +81,7 @@ func runCleanTargets() {
 			continue
 		}
 
-		t.Clean(true)
+		err = t.Clean(true)
+		errz.Fatal(err)
 	}
 }

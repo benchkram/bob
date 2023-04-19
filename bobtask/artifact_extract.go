@@ -142,16 +142,11 @@ func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]t
 // shouldFetchFromCache checks if a file should be brought back from cache inside the target
 // A file will be brought back from cache if it's missing or was changed
 func shouldFetchFromCache(filename string, invalidFiles map[string][]target.Reason) bool {
-	reasons := []target.Reason{}
-	for dir, r := range invalidFiles {
-		if strings.HasPrefix(filename, dir) {
-			reasons = r
-		}
+	// FIXME: accessing a hashmap twice is inefficent.
+	if _, ok := invalidFiles[filename]; !ok {
+		return true
 	}
-	if len(reasons) == 0 {
-		return false
-	}
-	for _, reason := range reasons {
+	for _, reason := range invalidFiles[filename] {
 		if reason == target.ReasonSizeChanged || reason == target.ReasonHashChanged || reason == target.ReasonMissing {
 			return true
 		}
