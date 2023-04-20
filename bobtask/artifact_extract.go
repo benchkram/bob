@@ -22,8 +22,6 @@ import (
 func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]target.Reason) (success bool, err error) {
 	defer errz.Recover(&err)
 
-	boblog.Log.V(5).Info(fmt.Sprintf("Extracting artifact [artifact: %s, invalidFIles: %s]", artifactName, invalidFiles))
-
 	homeDir, err := os.UserHomeDir()
 	errz.Fatal(err)
 
