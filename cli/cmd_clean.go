@@ -51,6 +51,7 @@ func runCleanSystem() {
 
 	fmt.Println("build info cleaned")
 	fmt.Println("artifacts cleaned")
+	fmt.Println(".nix_cache cleaned")
 }
 
 var cleanTargetsCmd = &cobra.Command{
