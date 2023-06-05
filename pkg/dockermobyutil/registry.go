@@ -18,7 +18,8 @@ import (
 )
 
 var (
-	ErrImageNotFound = fmt.Errorf("image not found")
+	ErrImageNotFound    = fmt.Errorf("image not found")
+	ErrConnectionFailed = errors.New("connection to docker daemon failed")
 )
 
 type RegistryClient interface {
@@ -45,7 +46,7 @@ type R struct {
 	mutex *sync.Mutex
 }
 
-func NewRegistryClient() RegistryClient {
+func NewRegistryClient() (RegistryClient, error) {
 	cli, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
@@ -59,14 +60,19 @@ func NewRegistryClient() RegistryClient {
 		archiveDir: os.TempDir(),
 	}
 
-	// Use a lock to supress parallel image reads on zfs.
+	// Use a lock to suppress parallel image reads on zfs.
 	info, err := r.client.Info(context.Background())
-	errz.Log(err)
+	if client.IsErrConnectionFailed(err) {
+		return nil, ErrConnectionFailed
+	} else if err != nil {
+		return nil, err
+	}
+
 	if info.Driver == "zfs" {
 		r.mutex = &sync.Mutex{}
 	}
 
-	return r
+	return r, nil
 }
 
 func (r *R) ImageExists(image string) (bool, error) {
@@ -107,16 +113,11 @@ func (r *R) ImageHash(image string) (string, error) {
 func (r *R) imageSaveToPath(image string, savedir string) (pathToArchive string, _ error) {
 	if r.mutex != nil {
 		r.mutex.Lock()
+		defer r.mutex.Unlock()
 	}
 	reader, err := r.client.ImageSave(context.Background(), []string{image})
 	if err != nil {
-		if r.mutex != nil {
-			r.mutex.Unlock()
-		}
 		return "", err
-	}
-	if r.mutex != nil {
-		r.mutex.Unlock()
 	}
 	defer reader.Close()
 

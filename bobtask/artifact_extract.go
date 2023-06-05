@@ -35,8 +35,8 @@ func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]t
 	}
 	defer artifact.Close()
 
-	// Assure tasks is cleaned up before extracting
-	err = t.Clean(invalidFiles)
+	// Assure task is cleaned up before extracting
+	err = t.CleanTargetsWithReason(invalidFiles)
 	errz.Fatal(err)
 
 	archiveReader := newArchiveReader()
@@ -135,8 +135,9 @@ func (t *Task) ArtifactExtract(artifactName hash.In, invalidFiles map[string][]t
 // shouldFetchFromCache checks if a file should be brought back from cache inside the target
 // A file will be brought back from cache if it's missing or was changed
 func shouldFetchFromCache(filename string, invalidFiles map[string][]target.Reason) bool {
+	// FIXME: accessing a hashmap twice is inefficent.
 	if _, ok := invalidFiles[filename]; !ok {
-		return false
+		return true
 	}
 	for _, reason := range invalidFiles[filename] {
 		if reason == target.ReasonSizeChanged || reason == target.ReasonHashChanged || reason == target.ReasonMissing {

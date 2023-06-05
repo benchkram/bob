@@ -15,11 +15,10 @@ type Target interface {
 	Resolve() error
 
 	FilesystemEntries() []string
-	FilesystemEntriesPlain() []string
 	FilesystemEntriesRaw() []string
 	FilesystemEntriesRawPlain() []string
 
-	WithExpected(*buildinfo.Targets) *T
+	WithExpected(*buildinfo.Targets)
 	DockerImages() []string
 
 	// AsInvalidFiles returns all FilesystemEntriesRaw as invalid with the specified reason
@@ -68,28 +67,19 @@ func New(opts ...Option) *T {
 		opt(t)
 	}
 
-	if t.dockerRegistryClient == nil {
-		t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
-	}
-
 	return t
 }
 
 // FilesystemEntries in relation to the umrella bobfile
 func (t *T) FilesystemEntries() []string {
-
 	if len(*t.filesystemEntries) == 0 {
 		return []string{}
 	}
-
-	var pathsWithDir []string
-	for _, v := range *t.filesystemEntries {
-		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))
-	}
-
-	return pathsWithDir
+	return *t.filesystemEntries
 }
 
+// FilesystemEntriesRaw returns the filesystem entries
+// relative to the umbrella bobfile.
 func (t *T) FilesystemEntriesRaw() []string {
 	var pathsWithDir []string
 	for _, v := range t.filesystemEntriesRaw {
@@ -99,19 +89,16 @@ func (t *T) FilesystemEntriesRaw() []string {
 	return pathsWithDir
 }
 
-// FilesystemEntriesPlain does return the pure path
-// as given in the bobfile.
-func (t *T) FilesystemEntriesPlain() []string {
-	return append([]string{}, *t.filesystemEntries...)
-}
-
 func (t *T) FilesystemEntriesRawPlain() []string {
 	return append([]string{}, t.filesystemEntriesRaw...)
 }
 
-func (t *T) WithExpected(expected *buildinfo.Targets) *T {
+func (t *T) WithExpected(expected *buildinfo.Targets) {
 	t.expected = expected
-	return t
+}
+
+func (t *T) WithDockerRegistryClient(c dockermobyutil.RegistryClient) {
+	t.dockerRegistryClient = c
 }
 
 func (t *T) DockerImages() []string {
@@ -122,7 +109,7 @@ func (t *T) DockerImages() []string {
 func (t *T) AsInvalidFiles(reason Reason) map[string][]Reason {
 	invalidFiles := make(map[string][]Reason)
 
-	for _, v := range t.FilesystemEntriesRaw() {
+	for _, v := range t.FilesystemEntries() {
 		invalidFiles[v] = []Reason{reason}
 	}
 	return invalidFiles

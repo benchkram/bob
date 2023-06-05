@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/nix"
 	storeclient "github.com/benchkram/bob/pkg/store-client"
 
@@ -139,9 +138,6 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		bobfile.RTasks = bobrun.RunMap{}
 	}
 
-	// a shared registry clients for all tasks.
-	dockerRegistryClient := dockermobyutil.NewRegistryClient()
-
 	// Assure tasks are initialized with their defaults
 	for key, task := range bobfile.BTasks {
 		task.SetDir(bobfile.dir)
@@ -153,7 +149,6 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		// This means switching to pointer types for most members.
 		task.SetEnv([]string{})
 		task.SetRebuildStrategy(bobtask.RebuildOnChange)
-		task.WithDockerRegistryClient(dockerRegistryClient)
 
 		// initialize docker registry for task
 		task.SetDependencies(initializeDependencies(dir, task.DependenciesDirty, bobfile))

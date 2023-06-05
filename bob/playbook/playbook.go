@@ -114,7 +114,7 @@ func (rc *RebuildCause) String() string {
 }
 
 const (
-	InputNotFoundInBuildInfo RebuildCause = "input-not-in-build-info"
+	InputNotFoundInBuildInfo RebuildCause = "input-not-in-build-info" // aka local cache miss
 	TaskForcedRebuild        RebuildCause = "forced"
 	DependencyChanged        RebuildCause = "dependency-changed"
 	TargetInvalid            RebuildCause = "target-invalid"

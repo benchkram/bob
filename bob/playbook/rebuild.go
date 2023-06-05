@@ -42,7 +42,7 @@ func (p *Playbook) TaskNeedsRebuild(taskID int) (rebuildInfo RebuildInfo, err er
 			IsRequired: true,
 			Cause:      TaskForcedRebuild,
 			VerifyResult: target.VerifyResult{
-				TargetIsValid: len(invalidFiles) > 0,
+				TargetIsValid: len(invalidFiles) == 0,
 				InvalidFiles:  invalidFiles,
 			},
 		}, nil
@@ -81,7 +81,7 @@ func (p *Playbook) TaskNeedsRebuild(taskID int) (rebuildInfo RebuildInfo, err er
 		}
 
 		return RebuildInfo{IsRequired: true, Cause: InputNotFoundInBuildInfo, VerifyResult: target.VerifyResult{
-			TargetIsValid: len(invalidFiles) > 0,
+			TargetIsValid: len(invalidFiles) == 0,
 			InvalidFiles:  invalidFiles,
 		}}, nil
 	}

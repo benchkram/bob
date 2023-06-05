@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/benchkram/bob/bob"
-	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
@@ -83,17 +82,7 @@ func runCleanTargets() {
 			continue
 		}
 
-		taskTarget, err := t.Target()
+		err = t.Clean(true)
 		errz.Fatal(err)
-
-		invalidFiles := make(map[string][]target.Reason)
-		for _, v := range taskTarget.FilesystemEntriesRawPlain() {
-			invalidFiles[v] = append(invalidFiles[v], target.ReasonCreatedAfterBuild)
-		}
-
-		err = t.Clean(invalidFiles, true)
-		if err != nil {
-			boblog.Log.Error(err, "Unable to clean target")
-		}
 	}
 }

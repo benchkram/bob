@@ -53,7 +53,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed
 	errz.Fatal(err)
 	boblog.Log.V(2).Info(fmt.Sprintf("TaskNeedsRebuild [rebuildRequired: %t] [cause:%s]", rebuild.IsRequired, rebuild.Cause))
 
-	// task might need a rebuild due to an input change.
+	// Task might need a rebuild due to an input change.
 	// Could still be possible to load the targets from the artifact store.
 	// If a task needs a rebuild due to a dependency change => rebuild.
 	if rebuild.IsRequired {
@@ -111,7 +111,7 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed
 		return pt, p.TaskNoRebuildRequired(task.TaskID)
 	}
 
-	err = task.Clean(rebuild.VerifyResult.InvalidFiles)
+	err = task.CleanTargetsWithReason(rebuild.VerifyResult.InvalidFiles)
 	errz.Fatal(err)
 
 	err = task.Run(ctx, p.namePad)
@@ -130,11 +130,10 @@ func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (pt *processed
 	taskSuccessFul = true
 
 	err = p.TaskCompleted(task.TaskID)
-	if err != nil {
-		if errors.Is(err, ErrFailed) {
-			return pt, err
-		}
+	if errors.Is(err, ErrFailed) {
+		return pt, err
 	}
+	errz.Log(err)
 	errz.Fatal(err)
 
 	taskStatus, err := p.TaskStatus(task.Name())
