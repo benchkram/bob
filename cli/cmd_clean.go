@@ -47,11 +47,12 @@ func runCleanSystem() {
 	boblog.Log.Error(err, "Unable to initialise bob")
 
 	err = b.Clean()
-	boblog.Log.Error(err, "Unable to clean buildinfo")
+	boblog.Log.Error(err, "Unable to clean [oneOf buildinfo, environement-cache, artifacts or .nix_cache ] ")
 
 	fmt.Println("build info cleaned")
 	fmt.Println("artifacts cleaned")
 	fmt.Println("env cache cleaned")
+	fmt.Println(".nix_cache cleaned")
 }
 
 var cleanTargetsCmd = &cobra.Command{

@@ -15,6 +15,8 @@ func (b B) Clean() (err error) {
 	errz.Fatal(err)
 	err = b.CleanNixShellCache()
 	errz.Fatal(err)
+	err = b.CleanNixCache()
+	errz.Fatal(err)
 
 	return nil
 }
@@ -28,8 +30,9 @@ func (b B) CleanLocalStore() error {
 }
 
 func (b B) CleanNixShellCache() error {
-	if b.Nix() != nil && b.Nix().shellCache != nil {
-		return b.Nix().shellCache.Clean()
-	}
-	return nil
+	return b.Nix().CleanNixShellCache()
+}
+
+func (b B) CleanNixCache() error {
+	return b.Nix().Clean()
 }

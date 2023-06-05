@@ -7,10 +7,20 @@ variables:
 build:
   build:
     cmd: go build -tags dev -ldflags="-X 'main.Version=${VERSION}'" -o ./run
+    input: |-
+      bob/
+      bobgit/
+      bobrun/
+      bobtask/
+      cli/
+      pkg/
+      tui/
+      main.go
+      go.mod
+      go.sum
     target: run
     dependson:
       - proto
-
   gomodtidy:
     cmd: go mod tidy
 

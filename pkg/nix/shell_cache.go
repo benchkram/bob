@@ -95,6 +95,10 @@ func (c *ShellCache) GenerateKey(deps []Dependency, nixShellCmd string) (_ strin
 func (c *ShellCache) Clean() (err error) {
 	defer errz.Recover(&err)
 
+	if !file.Exists(c.dir) {
+		return nil
+	}
+
 	entries, err := os.ReadDir(c.dir)
 	errz.Fatal(err)
 
