@@ -47,7 +47,7 @@ func runCleanSystem() {
 	boblog.Log.Error(err, "Unable to initialise bob")
 
 	err = b.Clean()
-	boblog.Log.Error(err, "Unable to clean buildinfo")
+	boblog.Log.Error(err, "Unable to clean [oneOf buildinfo, artifacts or .nix_cache ] ")
 
 	fmt.Println("build info cleaned")
 	fmt.Println("artifacts cleaned")
