@@ -152,3 +152,7 @@ func (n *NB) BuildDependencies(deps []nix.Dependency) error {
 func (n *NB) BuildEnvironment(deps []nix.Dependency, nixpkgs string) (_ []string, err error) {
 	return nix.BuildEnvironment(deps, nixpkgs, n.cache, n.shellCache)
 }
+
+func (n *NB) Clean() (err error) {
+	return n.cache.Clean()
+}

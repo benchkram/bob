@@ -96,6 +96,15 @@ func (c *Cache) Close() error {
 	return c.f.Close()
 }
 
+func (c *Cache) Clean() (err error) {
+	defer errz.Recover(&err)
+	err = c.f.Truncate(0)
+	errz.Fatal(err)
+
+	c.db = make(map[string]string)
+	return nil
+}
+
 // GenerateKey generates key for the cache for a Dependency
 //
 // if it's a .nix file it will hash the nixpkgs + file contents
