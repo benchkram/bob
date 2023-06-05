@@ -90,3 +90,21 @@ func (c *ShellCache) GenerateKey(deps []Dependency, nixShellCmd string) (_ strin
 
 	return hashIn.String(), nil
 }
+
+// Clean will clean entire shell env cache
+func (c *ShellCache) Clean() (err error) {
+	defer errz.Recover(&err)
+
+	if !file.Exists(c.dir) {
+		return nil
+	}
+
+	entries, err := os.ReadDir(c.dir)
+	errz.Fatal(err)
+
+	for _, entry := range entries {
+		err = os.Remove(filepath.Join(c.dir, entry.Name()))
+		errz.Fatal(err)
+	}
+	return nil
+}

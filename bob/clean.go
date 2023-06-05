@@ -13,6 +13,8 @@ func (b B) Clean() (err error) {
 	errz.Fatal(err)
 	err = b.CleanLocalStore()
 	errz.Fatal(err)
+	err = b.CleanNixShellCache()
+	errz.Fatal(err)
 	err = b.CleanNixCache()
 	errz.Fatal(err)
 
@@ -25,6 +27,10 @@ func (b B) CleanBuildInfoStore() error {
 
 func (b B) CleanLocalStore() error {
 	return b.local.Clean(context.TODO())
+}
+
+func (b B) CleanNixShellCache() error {
+	return b.Nix().CleanNixShellCache()
 }
 
 func (b B) CleanNixCache() error {

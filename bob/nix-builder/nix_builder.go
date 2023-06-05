@@ -153,6 +153,15 @@ func (n *NB) BuildEnvironment(deps []nix.Dependency, nixpkgs string) (_ []string
 	return nix.BuildEnvironment(deps, nixpkgs, n.cache, n.shellCache)
 }
 
+// Clean removes all cached nix dependencies
 func (n *NB) Clean() (err error) {
 	return n.cache.Clean()
+}
+
+// CleanNixShellCache removes all cached nix-shell --command='env' output
+func (n *NB) CleanNixShellCache() (err error) {
+	if n.shellCache == nil {
+		return nil
+	}
+	return n.shellCache.Clean()
 }
