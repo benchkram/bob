@@ -11,6 +11,7 @@ import (
 
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/filepathutil"
+	"github.com/benchkram/bob/pkg/inputDiscovery"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
@@ -61,13 +62,34 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 				continue
 			}
 			inputDirtyRooted[i] = filepath.Join(t.dir, input)
+			// TODO: ignore auto discovery keyword
+		}
+	}
+
+	// Auto input discovery
+	var inputDirtyRootedDiscovered []string
+	for _, input := range inputDirtyRooted {
+		// TODO: collect keywords for auto discovery some place
+		if strings.HasPrefix(input, "gomain:") {
+			mainFileRel := filepath.Clean(strings.TrimPrefix(input, "gomain:"))
+			mainFileAbs := filepath.Join(projectRoot, mainFileRel)
+			goInputDiscovery := inputDiscovery.NewGoInputDiscovery()
+
+			goInputs, err := goInputDiscovery.GetInputs(mainFileAbs)
+			errz.Fatal(err)
+			// TODO: remove debug statement
+			fmt.Printf("Using input discovery for Golang main file: %s; found inputs: %v\n", mainFileAbs, goInputs)
+
+			inputDirtyRootedDiscovered = append(inputDirtyRootedDiscovered, goInputs...)
+		} else {
+			inputDirtyRootedDiscovered = append(inputDirtyRootedDiscovered, input)
 		}
 	}
 
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
-	for _, input := range inputDirtyRooted {
+	for _, input := range inputDirtyRootedDiscovered {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
