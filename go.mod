@@ -26,11 +26,13 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sanity-io/litter v1.5.5
 	github.com/schollz/progressbar/v3 v3.11.0
+	github.com/sergi/go-diff v1.3.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.13.0
 	github.com/stretchr/testify v1.8.2
 	github.com/whilp/git-urls v1.0.0
 	github.com/xlab/treeprint v1.1.0
+	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -138,7 +140,6 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sanathkr/go-yaml v0.0.0-20170819195128-ed9d249f429b // indirect
-	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
@@ -172,6 +173,7 @@ require (
 	golang.org/x/term v0.0.0-20220919170432-7a66f970e087 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
+	golang.org/x/xerrors v0.0.0-20220517211312-f3a8303e98df // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	google.golang.org/grpc v1.46.2 // indirect
