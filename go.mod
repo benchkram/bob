@@ -1,6 +1,6 @@
 module github.com/benchkram/bob
 
-go 1.20
+go 1.17
 
 require (
 	github.com/benchkram/errz v0.0.0-20211210135050-f997ca868855
