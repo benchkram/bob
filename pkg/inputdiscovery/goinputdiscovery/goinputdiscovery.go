@@ -72,7 +72,7 @@ func (id *goInputDiscovery) GetInputs(packagePathAbs string) (_ []string, err er
 
 	var result []string
 	for _, p := range paths {
-		result = append(result, filepath.Join(packagePathAbs, p))
+		result = append(result, filepath.Join(id.projectDir, p))
 	}
 
 	// add go files in package
@@ -108,7 +108,7 @@ func localDependencies(imports map[string]*packages.Package, prefix string) []st
 			slug := strings.TrimPrefix(pkg.ID, prefix)
 			slugParts := strings.Split(slug, "/")
 			if len(slugParts) > 0 {
-				deps = append(deps, slugParts[0])
+				deps = append(deps, slugParts[0]+"/")
 			}
 		}
 
