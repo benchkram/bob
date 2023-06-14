@@ -10,8 +10,10 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/filepathutil"
-	"github.com/benchkram/bob/pkg/inputDiscovery"
+	"github.com/benchkram/bob/pkg/inputdiscovery"
+	"github.com/benchkram/bob/pkg/inputdiscovery/goinputdiscovery"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
@@ -41,7 +43,7 @@ func (t *Task) FilterInputs(wd string) (err error) {
 	return nil
 }
 
-// filteredInputs returns inputs filtered by ignores and file targets.
+// FilteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
 func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 
@@ -49,6 +51,7 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 	inputDirtyRooted := inputDirty
 	if t.dir != "." {
 		inputDirtyRooted = make([]string, len(inputDirty))
+	outerLoop:
 		for i, input := range inputDirty {
 
 			err = t.sanitizeInput(input)
@@ -62,7 +65,13 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 				continue
 			}
 			inputDirtyRooted[i] = filepath.Join(t.dir, input)
-			// TODO: ignore auto discovery keyword
+
+			for _, prefix := range []string{goinputdiscovery.Keyword} {
+				if strings.HasPrefix(input, prefix) {
+					inputDirtyRooted[i] = prefix + filepath.Join(t.dir, strings.TrimPrefix(input, prefix))
+					continue outerLoop
+				}
+			}
 		}
 	}
 
@@ -70,15 +79,17 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 	var inputDirtyRootedDiscovered []string
 	for _, input := range inputDirtyRooted {
 		// TODO: collect keywords for auto discovery some place
-		if strings.HasPrefix(input, "gomain:") {
-			mainFileRel := filepath.Clean(strings.TrimPrefix(input, "gomain:"))
-			mainFileAbs := filepath.Join(projectRoot, mainFileRel)
-			goInputDiscovery := inputDiscovery.NewGoInputDiscovery()
+		if strings.HasPrefix(input, goinputdiscovery.Keyword+inputdiscovery.KeywordSeparator) {
+			packagePathRel := filepath.Clean(strings.TrimPrefix(input, goinputdiscovery.Keyword+inputdiscovery.KeywordSeparator))
+			packagePathAbs := filepath.Join(projectRoot, packagePathRel)
+			goInputDiscovery := goinputdiscovery.NewGoInputDiscovery(goinputdiscovery.WithProjectDir(projectRoot))
 
-			goInputs, err := goInputDiscovery.GetInputs(mainFileAbs)
-			errz.Fatal(err)
-			// TODO: remove debug statement
-			fmt.Printf("Using input discovery for Golang main file: %s; found inputs: %v\n", mainFileAbs, goInputs)
+			goInputs, err := goInputDiscovery.GetInputs(packagePathAbs)
+			if err != nil {
+				return nil, fmt.Errorf("golang auto input discovery failed: %w", err)
+			}
+
+			boblog.Log.V(4).Info(fmt.Sprintf("Using input discovery for Golang package: %s; found inputs: %v", packagePathAbs, goInputs))
 
 			inputDirtyRootedDiscovered = append(inputDirtyRootedDiscovered, goInputs...)
 		} else {
