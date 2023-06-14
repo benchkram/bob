@@ -50,6 +50,16 @@ func (id *goInputDiscovery) GetInputs(packagePathAbs string) (_ []string, err er
 
 	pkg := pkgs[0]
 
+	if len(pkg.Errors) == 1 {
+		return nil, fmt.Errorf("load package failed: %w", pkg.Errors[0])
+	} else if len(pkg.Errors) > 1 {
+		var errs []string
+		for _, e := range pkg.Errors {
+			errs = append(errs, e.Error())
+		}
+		return nil, fmt.Errorf("load package failed with multiple errors: %s", strings.Join(errs, ";"))
+	}
+
 	if pkg.Module == nil {
 		return nil, fmt.Errorf("package has no go.mod file: expected it to be in the bob root dir")
 	}

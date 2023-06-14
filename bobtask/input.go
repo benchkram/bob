@@ -86,7 +86,7 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 
 			goInputs, err := goInputDiscovery.GetInputs(packagePathAbs)
 			if err != nil {
-				return nil, fmt.Errorf("golang auto input discovery failed: %w", err)
+				return nil, usererror.Wrap(fmt.Errorf("golang auto input discovery failed: %w", err))
 			}
 
 			boblog.Log.V(4).Info(fmt.Sprintf("Using input discovery for Golang package: %s; found inputs: %v", packagePathAbs, goInputs))
