@@ -68,7 +68,9 @@ func (id *goInputDiscovery) GetInputs(packagePathAbs string) (_ []string, err er
 
 	prefix := packageName + "/"
 
-	paths := unique(localDependencies(pkg.Imports, prefix))
+	dr := newDepResolver()
+
+	paths := unique(dr.localDependencies(pkg.Imports, prefix))
 
 	var result []string
 	for _, p := range paths {
@@ -98,26 +100,6 @@ func (id *goInputDiscovery) GetInputs(packagePathAbs string) (_ []string, err er
 	result = append(result, sumFilePath)
 
 	return result, nil
-}
-
-func localDependencies(imports map[string]*packages.Package, prefix string) []string {
-	var deps []string
-	for _, pkg := range imports {
-		// if the package is a local package add its whole dir
-		if strings.HasPrefix(pkg.ID, prefix) {
-			slug := strings.TrimPrefix(pkg.ID, prefix)
-			slugParts := strings.Split(slug, "/")
-			if len(slugParts) > 0 {
-				deps = append(deps, slugParts[0]+"/")
-			}
-		}
-
-		if len(pkg.Imports) > 0 {
-			newDeps := localDependencies(pkg.Imports, prefix)
-			deps = append(deps, newDeps...)
-		}
-	}
-	return deps
 }
 
 func unique(ss []string) []string {

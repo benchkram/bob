@@ -89,7 +89,7 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 				return nil, usererror.Wrap(fmt.Errorf("golang auto input discovery failed: %w", err))
 			}
 
-			boblog.Log.V(4).Info(fmt.Sprintf("Using input discovery for Golang package: %s; found inputs: %v", packagePathAbs, goInputs))
+			boblog.Log.V(4).Info(fmt.Sprintf("Auto input discovery for Golang package: %s; found inputs: %v", packagePathAbs, goInputs))
 
 			inputDirtyRootedDiscovered = append(inputDirtyRootedDiscovered, goInputs...)
 		} else {
