@@ -27,10 +27,10 @@ func NewGoInputDiscovery(options ...Option) inputdiscovery.InputDiscovery {
 	return id
 }
 
-// GetInputs lists all directories which are used as input for the main go file
-// The path of the given mainFile has to be absolute.
-// Returned paths are absolute.
-// The function expects that there is a 'go.mod' file next to the main file.
+// GetInputs lists all directories which are used as input for the go package
+// The path of the given package path has to be absolute.
+// Returned paths are relative to the project dir.
+// The function expects that there is a 'go.mod' and 'go.sum' file in the project dir.
 func (id *goInputDiscovery) GetInputs(packagePathAbs string) (_ []string, err error) {
 	defer errz.Recover(&err)
 
@@ -72,34 +72,42 @@ func (id *goInputDiscovery) GetInputs(packagePathAbs string) (_ []string, err er
 
 	paths := unique(dr.localDependencies(pkg.Imports, prefix))
 
-	var result []string
+	var resultAbs []string
 	for _, p := range paths {
-		result = append(result, filepath.Join(id.projectDir, p))
+		resultAbs = append(resultAbs, filepath.Join(id.projectDir, p))
 	}
 
 	// add go files in package
-	result = append(result, pkg.GoFiles...)
+	resultAbs = append(resultAbs, pkg.GoFiles...)
 
 	// add embedded files
-	result = append(result, pkg.EmbedFiles...)
+	resultAbs = append(resultAbs, pkg.EmbedFiles...)
 
 	// add all other files
-	result = append(result, pkg.OtherFiles...)
+	resultAbs = append(resultAbs, pkg.OtherFiles...)
 
 	// add the go mod and go sum file if they exist
 	_, err = os.Stat(modFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("can not find 'go.mod' file at %s", modFilePath)
 	}
-	result = append(result, modFilePath)
+	resultAbs = append(resultAbs, modFilePath)
 	sumFilePath := filepath.Join(id.projectDir, "go.sum")
 	_, err = os.Stat(sumFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("can not find 'go.sum' file at %s", sumFilePath)
 	}
-	result = append(result, sumFilePath)
+	resultAbs = append(resultAbs, sumFilePath)
 
-	return result, nil
+	// make paths relative to project dir
+	var resultRel []string
+	for _, p := range resultAbs {
+		rel, err := filepath.Rel(id.projectDir, p)
+		errz.Fatal(err)
+		resultRel = append(resultRel, rel)
+	}
+
+	return resultRel, nil
 }
 
 func unique(ss []string) []string {
