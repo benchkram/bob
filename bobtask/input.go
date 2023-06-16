@@ -52,7 +52,7 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 	inputDirtyRooted := inputDirty
 	if t.dir != "." {
 		inputDirtyRooted = make([]string, len(inputDirty))
-	outerLoop:
+
 		for i, input := range inputDirty {
 
 			err = t.sanitizeInput(input)
@@ -70,7 +70,7 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 			for _, prefix := range []string{goinputdiscovery.Keyword} {
 				if strings.HasPrefix(input, prefix) {
 					inputDirtyRooted[i] = prefix + filepath.Join(t.dir, strings.TrimPrefix(input, prefix))
-					continue outerLoop
+					break
 				}
 			}
 		}
