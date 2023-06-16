@@ -16,6 +16,9 @@ func newDepResolver() *depResolver {
 	return dr
 }
 
+// localDependencies is a recursive function that resolves the tree of imports provided by x/tools/packages
+// it returns only packages with an ID-prefix same as the provided prefix
+// it uses the closed variable to keep track of which packages were already handled to prevent an endless loop
 func (dr *depResolver) localDependencies(imports map[string]*packages.Package, prefix string) []string {
 	var deps []string
 	for _, pkg := range imports {
