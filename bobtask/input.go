@@ -14,6 +14,7 @@ import (
 	"github.com/benchkram/bob/pkg/filepathutil"
 	"github.com/benchkram/bob/pkg/inputdiscovery"
 	"github.com/benchkram/bob/pkg/inputdiscovery/goinputdiscovery"
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
@@ -82,9 +83,9 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 		if strings.HasPrefix(input, goinputdiscovery.Keyword+inputdiscovery.KeywordSeparator) {
 			packagePathRel := filepath.Clean(strings.TrimPrefix(input, goinputdiscovery.Keyword+inputdiscovery.KeywordSeparator))
 			packagePathAbs := filepath.Join(projectRoot, packagePathRel)
-			goInputDiscovery := goinputdiscovery.NewGoInputDiscovery(goinputdiscovery.WithProjectDir(projectRoot))
+			goInputDiscovery := goinputdiscovery.New(goinputdiscovery.WithProjectDir(projectRoot))
 
-			goInputs, err := goInputDiscovery.GetInputs(packagePathAbs)
+			goInputs, err := goInputDiscovery.DiscoverInputs(packagePathAbs)
 			if err != nil {
 				return nil, usererror.Wrap(fmt.Errorf("golang auto input discovery failed: %w", err))
 			}
@@ -167,8 +168,8 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 		ignores = append(ignores, path)
 	}
 
-	inputs = unique(inputs)
-	ignores = unique(ignores)
+	inputs = sliceutil.Unique(inputs)
+	ignores = sliceutil.Unique(ignores)
 
 	// Filter
 	filteredInputs := make([]string, 0, len(inputs))
@@ -206,20 +207,6 @@ func rooted(ss []string, prefix string) []string {
 		ss[i] = filepath.Join(prefix, s)
 	}
 	return ss
-}
-
-func unique(ss []string) []string {
-	unique := make([]string, 0, len(ss))
-
-	um := make(map[string]struct{})
-	for _, s := range ss {
-		if _, ok := um[s]; !ok {
-			um[s] = struct{}{}
-			unique = append(unique, s)
-		}
-	}
-
-	return unique
 }
 
 func appendUnique(a []string, xx ...string) []string {

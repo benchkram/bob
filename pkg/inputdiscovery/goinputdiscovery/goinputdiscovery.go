@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/inputdiscovery"
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/errz"
 	"golang.org/x/tools/go/packages"
 )
 
-var Keyword = "gopackage"
+var Keyword = "go"
 
 type goInputDiscovery struct {
 	projectDir string
@@ -19,7 +20,7 @@ type goInputDiscovery struct {
 
 type Option func(discovery *goInputDiscovery)
 
-func NewGoInputDiscovery(options ...Option) inputdiscovery.InputDiscovery {
+func New(options ...Option) inputdiscovery.InputDiscovery {
 	id := &goInputDiscovery{}
 	for _, opt := range options {
 		opt(id)
@@ -27,12 +28,16 @@ func NewGoInputDiscovery(options ...Option) inputdiscovery.InputDiscovery {
 	return id
 }
 
-// GetInputs lists all directories which are used as input for the go package
+// DiscoverInputs lists all directories which are used as input for the go package
 // The path of the given package path has to be absolute.
 // Returned paths are relative to the project dir.
 // The function expects that there is a 'go.mod' and 'go.sum' file in the project dir.
-func (id *goInputDiscovery) GetInputs(packagePathAbs string) (_ []string, err error) {
+func (id *goInputDiscovery) DiscoverInputs(packagePathAbs string) (_ []string, err error) {
 	defer errz.Recover(&err)
+
+	if !filepath.IsAbs(packagePathAbs) {
+		return nil, fmt.Errorf("package path %s is not absolute", packagePathAbs)
+	}
 
 	cfg := &packages.Config{
 		Dir:  id.projectDir,
@@ -70,7 +75,7 @@ func (id *goInputDiscovery) GetInputs(packagePathAbs string) (_ []string, err er
 
 	dr := newDepResolver()
 
-	paths := unique(dr.localDependencies(pkg.Imports, prefix))
+	paths := sliceutil.Unique(dr.localDependencies(pkg.Imports, prefix))
 
 	var resultAbs []string
 	for _, p := range paths {
@@ -108,18 +113,4 @@ func (id *goInputDiscovery) GetInputs(packagePathAbs string) (_ []string, err er
 	}
 
 	return resultRel, nil
-}
-
-func unique(ss []string) []string {
-	unique := make([]string, 0, len(ss))
-
-	um := make(map[string]struct{})
-	for _, s := range ss {
-		if _, ok := um[s]; !ok {
-			um[s] = struct{}{}
-			unique = append(unique, s)
-		}
-	}
-
-	return unique
 }
