@@ -81,7 +81,8 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 	for _, input := range inputDirtyRooted {
 		// TODO: collect keywords for auto discovery some place
 		if strings.HasPrefix(input, goinputdiscovery.Keyword+inputdiscovery.KeywordSeparator) {
-			packagePathRel := filepath.Clean(strings.TrimPrefix(input, goinputdiscovery.Keyword+inputdiscovery.KeywordSeparator))
+			packagePathRel := strings.TrimPrefix(input, goinputdiscovery.Keyword+inputdiscovery.KeywordSeparator)
+			// Join calls filepath.Clean after joining elements
 			packagePathAbs := filepath.Join(projectRoot, packagePathRel)
 			goInputDiscovery := goinputdiscovery.New(goinputdiscovery.WithProjectDir(projectRoot))
 
