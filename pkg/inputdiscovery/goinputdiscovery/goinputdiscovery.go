@@ -93,7 +93,7 @@ func (id *goInputDiscovery) DiscoverInputs(packagePathAbs string) (_ []string, e
 	// add all other files
 	resultAbs = append(resultAbs, pkg.OtherFiles...)
 
-	// add the go mod and go sum file if they exist
+	// add the go mod and go sum file (they have to exist)
 	_, err = os.Stat(modFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("can not find 'go.mod' file at %s", modFilePath)
@@ -105,6 +105,18 @@ func (id *goInputDiscovery) DiscoverInputs(packagePathAbs string) (_ []string, e
 		return nil, fmt.Errorf("can not find 'go.sum' file at %s", sumFilePath)
 	}
 	resultAbs = append(resultAbs, sumFilePath)
+
+	// add go.work and go.work.sum if any
+	goWorkPath := filepath.Join(id.projectDir, "go.work")
+	_, err = os.Stat(goWorkPath)
+	if err == nil {
+		resultAbs = append(resultAbs, goWorkPath)
+	}
+	goWorkSumPath := filepath.Join(id.projectDir, "go.work.sum")
+	_, err = os.Stat(goWorkSumPath)
+	if err == nil {
+		resultAbs = append(resultAbs, goWorkSumPath)
+	}
 
 	// make paths relative to project dir
 	var resultRel []string
