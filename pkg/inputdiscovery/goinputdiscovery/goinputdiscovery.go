@@ -43,6 +43,12 @@ func (id *goInputDiscovery) DiscoverInputs(packagePathAbs string) (_ []string, e
 		return nil, fmt.Errorf("package path %s is not absolute", packagePathAbs)
 	}
 
+	stat, err := os.Stat(packagePathAbs)
+	errz.Fatal(err)
+	if !stat.IsDir() {
+		return nil, fmt.Errorf("expected package path %s to be a directory", packagePathAbs)
+	}
+
 	cfg := &packages.Config{
 		Dir:  id.projectDir,
 		Mode: packages.NeedName | packages.NeedFiles | packages.NeedDeps | packages.NeedImports | packages.NeedModule | packages.NeedEmbedFiles,
