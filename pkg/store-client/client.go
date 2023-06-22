@@ -3,23 +3,22 @@ package storeclient
 import (
 	"context"
 	"fmt"
-	"github.com/benchkram/bob/pkg/store-client/generated"
-	"github.com/benchkram/errz"
-	"github.com/pkg/errors"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"os"
 	"path/filepath"
 	"strconv"
 	"syscall"
-	"os"
 	"time"
+
+	"github.com/benchkram/bob/pkg/store-client/generated"
+	"github.com/benchkram/errz"
+	"github.com/pkg/errors"
 
 	"github.com/benchkram/bob/bob/playbook"
 	progress2 "github.com/benchkram/bob/pkg/progress"
-	"github.com/benchkram/errz"
-	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
 
 	"github.com/benchkram/bob/pkg/usererror"
@@ -34,7 +33,7 @@ var (
 	ErrEmptyResponse       = errors.New("empty response")
 	ErrDownloadFailed      = errors.New("binary download failed")
 	ErrConnectionRefused   = errors.New("connection to server failed (connection refused)")
-	ErrNotAuthorized = errors.New("not authorized")
+	ErrNotAuthorized       = errors.New("not authorized")
 )
 
 func (c *c) UploadArtifact(

@@ -3,12 +3,12 @@ package bobfile
 import (
 	"bytes"
 	"fmt"
-	"github.com/benchkram/bob/pkg/versionedsync/remotesyncstore"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/benchkram/bob/pkg/versionedsync/remotesyncstore"
 
 	"github.com/benchkram/bob/bobsync"
 	"github.com/benchkram/bob/pkg/nix"
