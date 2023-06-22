@@ -1,0 +1,33 @@
+syntax = "proto3";
+package bob;
+option go_package = "bobtask/buildinfo/protos";
+
+message BuildInfo {
+  Targets Target = 1;
+  Meta Meta = 2;
+}
+
+message Meta {
+  string Task = 1;
+  string InputHash = 2;
+}
+
+message Targets {
+  BuildInfoFiles Filesystem = 1;
+  map<string, BuildInfoDocker> Docker = 2;
+}
+
+message BuildInfoFiles {
+  string Hash = 1;
+  map<string, BuildInfoFile> targets = 2;
+
+}
+
+message BuildInfoFile {
+  int64 Size = 1;
+  string Hash = 2;
+}
+
+message BuildInfoDocker {
+  string Hash = 1;
+}

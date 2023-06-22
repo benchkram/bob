@@ -2,6 +2,7 @@ package bob
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -29,10 +30,8 @@ func syncProjectName(a *bobfile.Bobfile, bobs []*bobfile.Bobfile) (*bobfile.Bobf
 	return a, bobs
 }
 
-func (b *B) addBuildTasksToAggregate(
-	a *bobfile.Bobfile,
-	bobs []*bobfile.Bobfile,
-) *bobfile.Bobfile {
+func (b *B) addBuildTasksToAggregate(a *bobfile.Bobfile, bobs []*bobfile.Bobfile, decorations map[string][]string) (*bobfile.Bobfile, error) {
+	allTasks := make(map[string]bool)
 
 	for _, bobfile := range bobs {
 		// Skip the aggregate
@@ -47,11 +46,15 @@ func (b *B) addBuildTasksToAggregate(
 			prefix := strings.TrimPrefix(dir, b.dir)
 			taskname := addTaskPrefix(prefix, taskname)
 
+			allTasks[taskname] = true
 			// Alter the taskname.
 			task.SetName(taskname)
 
 			// Rewrite dependent tasks to global scope.
-			dependsOn := []string{}
+			var dependsOn []string
+			if dependsFromDecoration, ok := decorations[taskname]; ok {
+				dependsOn = append(dependsOn, dependsFromDecoration...)
+			}
 			for _, dependentTask := range task.DependsOn {
 				dependsOn = append(dependsOn, addTaskPrefix(prefix, dependentTask))
 			}
@@ -61,7 +64,14 @@ func (b *B) addBuildTasksToAggregate(
 		}
 	}
 
-	return a
+	// validate if child task exists for decoration
+	for k := range decorations {
+		if _, ok := allTasks[k]; !ok {
+			return a, usererror.Wrap(fmt.Errorf("you are modifying an imported task `%s` that does not exist", k))
+		}
+	}
+
+	return a, nil
 }
 
 func (b *B) addRunTasksToAggregate(
@@ -105,7 +115,7 @@ func (b *B) addRunTasksToAggregate(
 // readModePlain allows to read bobfiles without
 // doing sanitization.
 //
-// If prefix is given it's appended to the search path to asuure
+// If prefix is given it's appended to the search path to assure
 // correctness of the search path in case of recursive calls.
 func readImports(
 	a *bobfile.Bobfile,
@@ -120,24 +130,24 @@ func readImports(
 	}
 
 	imports = []*bobfile.Bobfile{}
-	for _, imp := range a.Imports {
+	for _, importPath := range a.Imports {
 		// read bobfile
 		var boblet *bobfile.Bobfile
 		var err error
 		if readModePlain {
-			boblet, err = bobfile.BobfileReadPlain(filepath.Join(p, imp))
+			boblet, err = bobfile.BobfileReadPlain(filepath.Join(p, importPath))
 		} else {
-			boblet, err = bobfile.BobfileRead(filepath.Join(p, imp))
+			boblet, err = bobfile.BobfileRead(filepath.Join(p, importPath))
 		}
 		if err != nil {
 			if errors.Is(err, bobfile.ErrBobfileNotFound) {
-				return nil, usererror.Wrap(err)
+				return nil, usererror.Wrapm(err, fmt.Sprintf("import of %s from %s/bob.yaml failed", importPath, a.Dir()))
 			}
 			errz.Fatal(err)
 		}
 		imports = append(imports, boblet)
 
-		// read imports rescursively
+		// read imports recursively
 		childImports, err := readImports(boblet, readModePlain, boblet.Dir())
 		errz.Fatal(err)
 		imports = append(imports, childImports...)

@@ -1,51 +1,77 @@
 package bobtask
 
 import (
+	"errors"
 	"fmt"
-	"log"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/benchkram/bob/bobtask/target"
+	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/filepathutil"
+	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
 )
 
 func (t *Task) Inputs() []string {
 	return t.inputs
 }
 
+func (t *Task) SetInputs(inputs []string) {
+	t.inputs = inputs
+}
+
+var (
+	defaultIgnores = fmt.Sprintf("!%s\n!%s",
+		global.BobWorkspaceFile,
+		filepath.Join(global.BobCacheDir, "*"),
+	)
+)
+
+func (t *Task) FilterInputs(wd string) (err error) {
+	defer errz.Recover(&err)
+
+	inputs, err := t.FilteredInputs(wd)
+	errz.Fatal(err)
+	t.inputs = inputs
+
+	return nil
+}
+
 // filteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
-func (t *Task) filteredInputs() ([]string, error) {
+func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 
-	wd, err := filepath.Abs(t.dir)
-	if err != nil {
-		return nil, err
-	}
+	inputDirty := split(fmt.Sprintf("%s\n%s", t.InputDirty, defaultIgnores))
+	inputDirtyRooted := inputDirty
+	if t.dir != "." {
+		inputDirtyRooted = make([]string, len(inputDirty))
+		for i, input := range inputDirty {
 
-	owd, err := os.Getwd()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get current working directory: %w", err)
-	}
-	if err := os.Chdir(wd); err != nil {
-		return nil, fmt.Errorf("failed to change current working directory to %s: %w", t.dir, err)
-	}
-	defer func() {
-		if err := os.Chdir(owd); err != nil {
-			log.Printf("failed to change current working directory back to %s: %v\n", owd, err)
+			err = t.sanitizeInput(input)
+			if err != nil {
+				return nil, usererror.Wrap(err)
+			}
+
+			// keep ignored in inputDirty
+			if strings.HasPrefix(input, "!") {
+				inputDirtyRooted[i] = "!" + filepath.Join(t.dir, strings.TrimPrefix(input, "!"))
+				continue
+			}
+			inputDirtyRooted[i] = filepath.Join(t.dir, input)
 		}
-	}()
+	}
 
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
-	for _, input := range unique(split(t.InputDirty)) {
+	for _, input := range inputDirtyRooted {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
-			list, err := filepathutil.ListRecursive(input, false)
+			list, err := filepathutil.ListRecursive(input, projectRoot)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list input: %w", err)
 			}
@@ -54,7 +80,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 			continue
 		}
 
-		list, err := filepathutil.ListRecursive(input, false)
+		list, err := filepathutil.ListRecursive(input, projectRoot)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list input: %w", err)
 		}
@@ -62,11 +88,50 @@ func (t *Task) filteredInputs() ([]string, error) {
 		inputs = append(inputs, list...)
 	}
 
-	// also ignore file targets stored in the same directory
+	// Ignore file & dir targets stored in the same directory
 	if t.target != nil {
-		if t.target.Type == target.Path {
-			ignores = append(ignores, t.target.Paths...)
+		for _, path := range rooted(t.target.FilesystemEntriesRawPlain(), t.dir) {
+			info, err := os.Lstat(path)
+			if err != nil {
+				if errors.Is(err, fs.ErrNotExist) {
+					continue
+				}
+				return nil, fmt.Errorf("failed to stat %s: %w", path, err)
+			}
+
+			if info.IsDir() {
+				list, err := filepathutil.ListRecursive(path, projectRoot)
+				if err != nil {
+					return nil, fmt.Errorf("failed to list input: %w", err)
+				}
+				ignores = append(ignores, list...)
+				continue
+			}
+			ignores = append(ignores, t.target.FilesystemEntriesRawPlain()...)
 		}
+	}
+
+	// Ignore additional items found during aggregation.
+	// Usually the targets of child tasks which are already
+	// relative to the umbrella Bobfile.
+	for _, path := range t.InputAdditionalIgnores {
+		info, err := os.Lstat(path)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return nil, fmt.Errorf("failed to stat %s: %w", path, err)
+		}
+
+		if info.IsDir() {
+			list, err := filepathutil.ListRecursive(path, projectRoot)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list input: %w", err)
+			}
+			ignores = append(ignores, list...)
+			continue
+		}
+		ignores = append(ignores, path)
 	}
 
 	inputs = unique(inputs)
@@ -77,7 +142,7 @@ func (t *Task) filteredInputs() ([]string, error) {
 	for _, input := range inputs {
 		var isIgnored bool
 		for _, ignore := range ignores {
-			if input == ignore {
+			if strings.TrimPrefix(input, "./") == ignore {
 				isIgnored = true
 				break
 			}
@@ -88,24 +153,26 @@ func (t *Task) filteredInputs() ([]string, error) {
 		}
 	}
 
-	sanitizedInputs, err := t.sanitizeInputs(
-		filteredInputs,
-		optimisationOptions{wd: wd},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to sanitize inputs: %w", err)
-	}
+	sort.Strings(filteredInputs)
 
-	sortedInputs := sanitizedInputs
-	sort.Strings(sanitizedInputs)
-
+	// fmt.Println(t.name)
 	// fmt.Println("Inputs:", inputs)
 	// fmt.Println("Ignores:", ignores)
 	// fmt.Println("Filtered:", filteredInputs)
 	// fmt.Println("Sanitized:", sanitizedInputs)
 	// fmt.Println("Sorted:", sortedInputs)
 
-	return sortedInputs, nil
+	return filteredInputs, nil
+}
+
+func rooted(ss []string, prefix string) []string {
+	if prefix == "." {
+		return ss
+	}
+	for i, s := range ss {
+		ss[i] = filepath.Join(prefix, s)
+	}
+	return ss
 }
 
 func unique(ss []string) []string {
@@ -122,14 +189,32 @@ func unique(ss []string) []string {
 	return unique
 }
 
+func appendUnique(a []string, xx ...string) []string {
+	for _, x := range xx {
+		add := true
+		for _, y := range a {
+			if x == y {
+				add = false
+				break
+			}
+		}
+
+		if add {
+			a = append(a, x)
+		}
+	}
+	return a
+}
+
 // Split splits a single-line "input" to a slice of inputs.
 //
 // It currently supports the following syntaxes:
-//  Input: |-
-//    main1.go
-//    someotherfile
-//  Output:
-//    [ "./main1.go", "!someotherfile" ]
+//
+//	Input: |-
+//	  main1.go
+//	  someotherfile
+//	Output:
+//	  [ "./main1.go", "!someotherfile" ]
 func split(inputDirty string) []string {
 
 	// Replace leading and trailing spaces for clarity.

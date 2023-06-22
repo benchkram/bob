@@ -1,21 +1,18 @@
 package bobtask
 
 import (
-	"fmt"
-	"path/filepath"
+	"sort"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/nix"
-
 	"github.com/logrusorgru/aurora"
 
-	"github.com/benchkram/bob/bobtask/export"
 	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/store"
-	"github.com/benchkram/bob/pkg/usererror"
 )
 
 type RebuildType string
@@ -25,49 +22,46 @@ const (
 	RebuildOnChange RebuildType = "on-change"
 )
 
+// Hint: When adding a new *Dirty field assure to update IsValidDecoration().
 type Task struct {
-	// Inputs are directorys or files
+	// Inputs are directories or files
 	// the task monitors for a rebuild.
 
 	// InputDirty is the representation read from a bobfile.
-	InputDirty string `yaml:"input"`
+	InputDirty string `yaml:"input,omitempty"`
+	// InputAdditionalIgnores is a list of ignores
+	// usually the child targets.
+	InputAdditionalIgnores []string `yaml:"input_additional_ignores,omitempty"`
 	// inputs is filtered by ignored & sanitized
 	inputs []string
 
-	CmdDirty string `yaml:"cmd"`
+	CmdDirty string `yaml:"cmd,omitempty"`
 	// The cmds passed to os.Exec
 	cmds []string
 
 	// DependsOn are task which must succeed before this task
 	// can run.
-	DependsOn []string
+	DependsOn []string `yaml:"dependsOn,omitempty"`
 
-	// TODO: Shall we add a optional environment?
-	// Like a docker image which can be used to build a target.
-	// It's more effort but allows for more or less fixed build tool
-	// versions acros systems.
-	//
-	// Another options would be to provide versions for a
-	// task and build tool.. But each build tool needs manual
-	// handling to figure out it's version.
-	//
-	// !!Needs Decission!!
-	Environment string
+	// dependsOnIDs task id's used for optimization.
+	// Not exposed in a Bobfile.
+	DependsOnIDs []int `yaml:"-"`
 
 	// Target defines the output of a task.
 	TargetDirty TargetEntry `yaml:"target,omitempty"`
 	target      *target.T
-
-	// Exports other tasks can reuse.
-	Exports export.Map `yaml:"exports"`
 
 	// defines the rebuild strategy
 	RebuildDirty string `yaml:"rebuild,omitempty"`
 	rebuild      RebuildType
 
 	// name is the name of the task
-	// TODO: Make this public to allow yaml.Marshal to add this to the task hash?!?
 	name string
+
+	// taskID is a integer provided to
+	// avoid referencing tasks by name
+	// (string comparison, map access)
+	TaskID int
 
 	// project this tasks belongs to
 	project string
@@ -75,9 +69,14 @@ type Task struct {
 	// dir is the working directory for this task
 	dir string
 
-	// env holds key=value pairs passed to the environement
+	// env holds key=value pairs passed to the environment
 	// when the task is executed.
 	env []string
+
+	// envID is used to retrieve the environment
+	// from a environment store. This is used to
+	// optimize garbage collection.
+	envID envutil.Hash
 
 	// hashIn stores the `In` has for reuse
 	hashIn *hash.In
@@ -87,6 +86,10 @@ type Task struct {
 
 	// remote store for artifacts
 	remote store.Store
+
+	// envStore is the global store  used to
+	// manage environments.
+	envStore envutil.Store
 
 	// buildInfoStore stores buildinfos.
 	buildInfoStore buildinfostore.Store
@@ -101,33 +104,28 @@ type Task struct {
 	skippedInputs []string
 
 	// DependenciesDirty read from the bobfile
-	DependenciesDirty []string `yaml:"dependencies"`
+	DependenciesDirty []string `yaml:"dependencies,omitempty"`
 
 	// dependencies contain the actual dependencies merged
 	// with the global dependencies defined in the Bobfile
 	// in the order which they need to be added to PATH
 	dependencies []nix.Dependency
 
-	// storePaths contain /nix/store/* paths
-	// in the order which they need to be added to PATH
-	storePaths []string
-
-	// flag if its bobfile has Nix enabled
-	useNix bool
+	// URL of nixpkgs used. If empty, will use local <nixpkgs> channel
+	nixpkgs string
 }
 
 type TargetEntry interface{}
 
 func Make(opts ...TaskOption) Task {
 	t := Task{
-		inputs:               []string{},
-		cmds:                 []string{},
-		DependsOn:            []string{},
-		Exports:              make(export.Map),
-		env:                  []string{},
-		rebuild:              RebuildOnChange,
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		dependencies:         []nix.Dependency{},
+		inputs:                 []string{},
+		InputAdditionalIgnores: []string{},
+		cmds:                   []string{},
+		DependsOn:              []string{},
+		env:                    []string{},
+		rebuild:                RebuildOnChange,
+		dependencies:           []nix.Dependency{},
 	}
 
 	for _, opt := range opts {
@@ -138,119 +136,6 @@ func Make(opts ...TaskOption) Task {
 	}
 
 	return t
-}
-
-func (t *Task) Dir() string {
-	return t.dir
-}
-
-func (t *Task) Name() string {
-	return t.name
-}
-
-func (t *Task) ShortName() string {
-	_, name := filepath.Split(t.name)
-	return name
-}
-
-func (t *Task) SetColor(color aurora.Color) {
-	t.color = color
-}
-
-func (t *Task) ColoredName() string {
-	return aurora.Colorize(t.Name(), t.color).String()
-}
-
-func (t *Task) Env() []string {
-	return t.env
-}
-
-func (t *Task) Rebuild() RebuildType {
-	return t.rebuild
-}
-
-func (t *Task) GetExports() export.Map {
-	return t.Exports
-}
-
-func (t *Task) SetDir(dir string) {
-	t.dir = dir
-}
-
-func (t *Task) SetName(name string) {
-	t.name = name
-}
-
-func (t *Task) SetEnv(env []string) {
-	t.env = env
-}
-
-func (t *Task) Dependencies() []nix.Dependency {
-	return t.dependencies
-}
-func (t *Task) SetDependencies(dependencies []nix.Dependency) {
-	t.dependencies = dependencies
-}
-
-func (t *Task) SetStorePaths(storePaths []string) {
-	t.storePaths = storePaths
-}
-
-// Project returns the projectname. In case of a non existing projectname the
-// tasks local directory is returned.
-func (t *Task) Project() string {
-	if t.project == "" {
-		return t.dir
-	}
-	return t.project
-}
-
-func (t *Task) SetProject(proj string) {
-	t.project = proj
-}
-
-func (t *Task) SetDockerRegistryClient() {
-	t.dockerRegistryClient = dockermobyutil.NewRegistryClient()
-}
-
-// Set the rebuild strategy for the task
-// defaults to `on-change`.
-func (t *Task) SetRebuildStrategy(rebuild RebuildType) {
-	t.rebuild = rebuild
-}
-
-func (t *Task) WithLocalstore(s store.Store) *Task {
-	t.local = s
-	return t
-}
-
-func (t *Task) WithRemotestore(s store.Store) *Task {
-	t.remote = s
-	return t
-}
-
-func (t *Task) WithBuildinfoStore(s buildinfostore.Store) *Task {
-	t.buildInfoStore = s
-	return t
-}
-
-const EnvironSeparator = "="
-
-func (t *Task) AddEnvironment(key, value string) {
-	t.env = append(t.env, strings.Join([]string{key, value}, EnvironSeparator))
-}
-func (t *Task) AddExportPrefix(prefix string) {
-	for i, e := range t.Exports {
-		t.Exports[i] = export.E(filepath.Join(prefix, string(e)))
-	}
-}
-
-func (t *Task) SetUseNix(useNix bool) {
-	t.useNix = useNix
-}
-
-func (t *Task) UseNix() bool {
-	return t.useNix
 }
 
 // AddToSkippedInputs add filenames with permission issues to the task's
@@ -271,120 +156,79 @@ func (t *Task) LogSkippedInput() []string {
 	return t.skippedInputs
 }
 
-const (
-	pathSelector  string = "path"
-	imageSelector string = "image"
-)
+// IsDecoration check if the task is a decorated task
+func (t *Task) IsDecoration() bool {
+	return strings.ContainsRune(t.name, TaskPathSeparator)
+}
 
-// parseTargets parses target definitions from yaml.
+// IsValidDecoration checks if the task is a valid decoration.
+// tasks containing a `dependsOn` node only are considered as
+// valid decoration.
 //
-// Example yaml input:
-//
-// target: folder/
-//
-// target: |-
-//	folder/
-//	folder1/folder/file
-//
-// target:
-//   path: |-
-//		folder/
-//		folder1/folder/file
-//
-// target:
-//	image: docker-image-name
-//
-// target:
-//   image: |-
-//		docker-image-name
-//		docker-image2-name
-//
-func (t *Task) parseTargets() error {
-	targetType := target.DefaultType
+// Make sure to update IsValidDecoration() very time a new
+// *Dirty field is added to the task.
+func (t *Task) IsValidDecoration() bool {
+	if t.InputDirty != "" {
+		return false
+	}
+	if len(t.InputAdditionalIgnores) > 0 {
+		return false
+	}
+	if t.CmdDirty != "" {
+		return false
+	}
+	if t.RebuildDirty != "" {
+		return false
+	}
+	if len(t.DependenciesDirty) > 0 {
+		return false
+	}
+	if t.TargetDirty != nil {
+		return false
+	}
+	return true
+}
 
-	var targets []string
-	var err error
+// description of the Task used in hashing.
+// Influences the re-build policy of the task.
+//
+// inputs are intentionaly not cosidered here as the
+// content of those files is included in the hash.
+func (t *Task) description() string {
+	var sb strings.Builder
 
-	switch td := t.TargetDirty.(type) {
-	case string:
-		targets, err = parseTargetPath(td)
-	case map[string]interface{}:
-		targets, targetType, err = parseTargetMap(td)
-		if err != nil {
-			err = usererror.Wrapm(err, fmt.Sprintf("[task:%s]", t.name))
+	sb.WriteString(inputHashVersion)
+	sb.WriteString(t.name)
+	sb.WriteString(t.project)
+
+	for _, v := range t.cmds {
+		sb.WriteString(v)
+	}
+
+	sb.WriteString(t.project)
+	sb.WriteString(t.nixpkgs)
+
+	// env is influenced by t.dependencies, so no need to hash t.dependencies
+	sort.Strings(t.env)
+	for _, v := range t.env {
+		// ignore buildCommandPath and SHLVL due to non-reproducibility
+		if strings.Contains(v, "buildCommandPath=") {
+			continue
+		}
+		if strings.Contains(v, "shlvl=") {
+			continue
+		}
+		sb.WriteString(v)
+	}
+
+	if t.target != nil {
+		for _, v := range t.target.DockerImages() {
+			sb.WriteString(v)
+		}
+		for _, v := range t.target.FilesystemEntriesRaw() {
+			sb.WriteString(v)
 		}
 	}
 
-	if err != nil {
-		return err
-	}
-
-	if len(targets) > 0 {
-		t.target = target.New()
-		t.target.Paths = targets
-		t.target.Type = targetType
-	}
-
-	return nil
-}
-
-func parseTargetMap(tm map[string]interface{}) ([]string, target.TargetType, error) {
-
-	// check first if both directives are selected
-	if keyExists(tm, pathSelector) && keyExists(tm, imageSelector) {
-		return nil, target.DefaultType, ErrAmbigousTargetDefinition
-	}
-
-	paths, ok := tm[pathSelector]
-	if ok {
-		targets, err := parseTargetPath(paths.(string))
-		if err != nil {
-			return nil, target.DefaultType, err
-		}
-
-		return targets, target.Path, nil
-	}
-
-	images, ok := tm[imageSelector]
-	if !ok {
-		return nil, target.DefaultType, ErrInvalidTargetDefinition
-	}
-
-	return parseTargetImage(images.(string)), target.Docker, nil
-}
-
-func parseTargetPath(p string) ([]string, error) {
-	targets := []string{}
-	if p == "" {
-		return targets, nil
-	}
-
-	targetStr := fmt.Sprintf("%v", p)
-	targetDirty := split(targetStr)
-
-	for _, targetPath := range unique(targetDirty) {
-		if strings.Contains(targetPath, "../") {
-			return targets, fmt.Errorf("'../' not allowed in file path %q", targetPath)
-		}
-
-		targets = append(targets, targetPath)
-	}
-
-	return targets, nil
-}
-
-func parseTargetImage(p string) []string {
-	if p == "" {
-		return []string{}
-	}
-
-	targetStr := fmt.Sprintf("%v", p)
-	targetDirty := split(targetStr)
-
-	return unique(targetDirty)
-}
-
-func keyExists(m map[string]interface{}, key string) bool {
-	_, ok := m[key]
-	return ok
+	return sb.String()
 }

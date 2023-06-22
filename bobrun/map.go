@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/benchkram/bob/pkg/multilinecmd"
 	"github.com/benchkram/errz"
+
+	"github.com/benchkram/bob/pkg/multilinecmd"
+	"github.com/benchkram/bob/pkg/nix"
 )
 
 type RunMap map[string]*Run
@@ -42,4 +44,20 @@ func (rm RunMap) Sanitize() (err error) {
 	}
 
 	return nil
+}
+
+// CollectNixDependenciesForTasks will collect all nix dependencies for task taskName
+// in nixDependencies slice
+func (rm RunMap) CollectNixDependenciesForTasks(whitelist []string) ([]nix.Dependency, error) {
+	var nixDependencies []nix.Dependency
+	for _, taskFromMap := range rm {
+		// only add dependencies of whitelisted tasks.
+		for _, taskName := range whitelist {
+			if taskFromMap.Name() == taskName {
+				nixDependencies = append(nixDependencies, taskFromMap.Dependencies()...)
+			}
+		}
+	}
+
+	return nixDependencies, nil
 }

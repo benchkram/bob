@@ -3,33 +3,35 @@ package buildinfostore
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/benchkram/bob/bobtask/buildinfo"
+	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/errz"
 )
 
 // var ErrBuildInfoDoesNotExist = fmt.Errorf("build info does not exist")
 
 type s struct {
+	// dir is the base directory of the store
 	dir string
 }
 
 // New creates a filestore. The caller is responsible to pass a
 // existing directory.
-func New(dir string, opts ...Option) Store {
+func New(dir string) Store {
 	s := &s{
 		dir: dir,
 	}
 
-	for _, opt := range opts {
-		if opt == nil {
-			continue
-		}
-		opt(s)
-	}
+	// for _, opt := range opts {
+	// 	if opt == nil {
+	// 		continue
+	// 	}
+	// 	opt(s)
+	// }
 
 	return s
 }
@@ -41,7 +43,7 @@ func (s *s) NewBuildInfo(id string, info *buildinfo.I) (err error) {
 	b, err := json.Marshal(info)
 	errz.Fatal(err)
 
-	err = ioutil.WriteFile(filepath.Join(s.dir, id), b, 0666)
+	err = os.WriteFile(filepath.Join(s.dir, id), b, 0666)
 	errz.Fatal(err)
 
 	return nil
@@ -57,9 +59,9 @@ func (s *s) GetBuildInfo(id string) (info *buildinfo.I, err error) {
 	if err != nil {
 		return nil, ErrBuildInfoDoesNotExist
 	}
-	errz.Fatal(err)
 	defer f.Close()
-	b, err := ioutil.ReadAll(f)
+
+	b, err := io.ReadAll(f)
 	errz.Fatal(err)
 
 	err = json.Unmarshal(b, info)
@@ -114,4 +116,8 @@ func (s *s) Clean() (err error) {
 	}
 
 	return nil
+}
+
+func (s *s) BuildInfoExists(id string) bool {
+	return file.Exists(filepath.Join(s.dir, id))
 }

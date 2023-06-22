@@ -2,14 +2,18 @@ package nix
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
+	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/filehash"
+	"github.com/benchkram/bob/pkg/format"
+	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
 
@@ -20,9 +24,6 @@ type Dependency struct {
 	// ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
 	Nixpkgs string
 }
-
-type StorePath string
-type DependenciesToStorePathMap map[Dependency]StorePath
 
 // IsInstalled checks if nix is installed on the system
 func IsInstalled() bool {
@@ -35,105 +36,135 @@ func IsInstalled() bool {
 // dependencies can be either a package name ex. php or a path to .nix file
 // nixpkgs can be empty which means it will use local nixpkgs channel
 // or a link to desired revision ex. https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
-func BuildDependencies(deps []Dependency, cache *Cache) (_ DependenciesToStorePathMap, err error) {
+func BuildDependencies(deps []Dependency, cache *Cache) (err error) {
 	defer errz.Recover(&err)
 
-	pkgToStorePath := make(DependenciesToStorePathMap)
+	var unsatisfiedDeps []Dependency
 
 	for _, v := range deps {
-		var key string
-
 		if cache != nil {
-			key, err = GenerateKey(v)
+			key, err := GenerateKey(v)
 			errz.Fatal(err)
-			if storePath, ok := cache.Get(key); ok {
-				pkgToStorePath[v] = StorePath(storePath)
+
+			if _, ok := cache.Get(key); ok {
 				continue
 			}
+			unsatisfiedDeps = append(unsatisfiedDeps, v)
+		} else {
+			unsatisfiedDeps = append(unsatisfiedDeps, v)
 		}
+	}
+
+	if len(unsatisfiedDeps) > 0 {
+		fmt.Println("Building nix dependencies. This may take a while...")
+	}
+
+	var max int
+	for _, v := range unsatisfiedDeps {
+		if len(v.Name) > max {
+			max = len(v.Name)
+		}
+	}
+	max += 1
+
+	for _, v := range unsatisfiedDeps {
+		var br buildResult
+		padding := strings.Repeat(" ", max-len(v.Name))
 
 		if strings.HasSuffix(v.Name, ".nix") {
-			storePath, err := buildFile(v.Name, v.Nixpkgs)
+			br, err = buildFile(v.Name, v.Nixpkgs, padding)
 			if err != nil {
-				return DependenciesToStorePathMap{}, err
+				return err
 			}
-			pkgToStorePath[v] = StorePath(storePath)
 		} else {
-			storePath, err := buildPackage(v.Name, v.Nixpkgs)
+			br, err = buildPackage(v.Name, v.Nixpkgs, padding)
 			if err != nil {
-				return DependenciesToStorePathMap{}, err
+				return err
 			}
-			pkgToStorePath[v] = StorePath(storePath)
 		}
+
+		fmt.Println()
+		fmt.Printf("%s:%s%s took %s\n", v.Name, padding, br.storePath, format.DisplayDuration(br.duration))
 
 		if cache != nil {
-			err = cache.Save(key, string(pkgToStorePath[v]))
+			key, err := GenerateKey(v)
+			errz.Fatal(err)
+
+			err = cache.Save(key, br.storePath)
 			errz.Fatal(err)
 		}
-
 	}
-	return pkgToStorePath, nil
+	if len(unsatisfiedDeps) > 0 {
+		fmt.Println("Succeeded building nix dependencies")
+	}
+
+	return nil
+}
+
+type buildResult struct {
+	storePath string
+	duration  time.Duration
 }
 
 // buildPackage builds a nix package: nix-build --no-out-link -E 'with import <nixpkgs> { }; pkg' and returns the store path
-func buildPackage(pkgName string, nixpkgs string) (string, error) {
+func buildPackage(pkgName string, nixpkgs, padding string) (buildResult, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
+	progress := newBuildProgress(pkgName, padding)
+	progress.Start(5 * time.Second)
+
 	var stdoutBuf bytes.Buffer
-	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = &stdoutBuf
 
 	err := cmd.Run()
 	if err != nil {
-		return "", err
+		progress.Stop()
+		return buildResult{}, usererror.Wrap(errors.New("could not build package"))
 	}
 
 	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
 		if strings.HasPrefix(v, "/nix/store/") {
-			return v, nil
+			progress.Stop()
+			return buildResult{
+				storePath: v,
+				duration:  progress.Duration(),
+			}, nil
 		}
 	}
 
-	return "", nil
+	return buildResult{}, nil
 }
 
 // buildFile builds a .nix expression file
 // `nix-build --no-out-link -E 'with import <nixpkgs> { }; callPackage filepath.nix {}'`
-func buildFile(filePath string, nixpkgs string) (string, error) {
+func buildFile(filePath string, nixpkgs, padding string) (buildResult, error) {
 	nixExpression := fmt.Sprintf("with import %s { }; callPackage %s {}", source(nixpkgs), filePath)
 	cmd := exec.Command("nix-build", "--no-out-link", "-E", nixExpression)
 
+	progress := newBuildProgress(filePath, padding)
+	progress.Start(5 * time.Second)
+
 	var stdoutBuf bytes.Buffer
-	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = &stdoutBuf
 
 	err := cmd.Run()
 	if err != nil {
-		return "", err
+		progress.Stop()
+		return buildResult{}, usererror.Wrap(fmt.Errorf("could not build file `%s`", filePath))
 	}
 
 	for _, v := range strings.Split(stdoutBuf.String(), "\n") {
+		progress.Stop()
 		if strings.HasPrefix(v, "/nix/store/") {
-			return v, nil
+			return buildResult{
+				storePath: v,
+				duration:  progress.Duration(),
+			}, nil
 		}
 	}
 
-	return "", nil
-}
-
-// StorePathsBin adds the /bin dir to each of storePaths
-func StorePathsBin(storePaths []string) []string {
-	out := make([]string, len(storePaths))
-	for i, sp := range storePaths {
-		out[i] = storePathBin(sp)
-	}
-	return out
-}
-
-// storePathBin adds the /bin dir to storePath
-func storePathBin(storePath string) string {
-	return filepath.Join(storePath, "/bin")
+	return buildResult{}, nil
 }
 
 // DownloadURl give nix download URL based on OS
@@ -150,23 +181,6 @@ func DownloadURl() string {
 	}
 
 	return url
-}
-
-// DependenciesToStorePaths resolves a dependency array to their
-// associated nix storePath. The order of the output is guaranteed
-// to match the order of the input.
-func DependenciesToStorePaths(dependencies []Dependency, m DependenciesToStorePathMap) ([]string, error) {
-	storePaths := make([]string, len(dependencies))
-
-	for i, d := range dependencies {
-		storePath, ok := m[d]
-		if !ok {
-			return nil, fmt.Errorf("could not resolve store path for [%s]", d)
-		}
-		storePaths[i] = string(storePath)
-	}
-
-	return storePaths, nil
 }
 
 // AddDir add the dir path to .nix files specified in dependencies
@@ -186,4 +200,120 @@ func source(nixpkgs string) string {
 		return fmt.Sprintf("(fetchTarball \"%s\")", nixpkgs)
 	}
 	return "<nixpkgs>"
+}
+
+// BuildEnvironment is running nix-shell for a list of dependencies and fetch its whole environment
+//
+// nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' -E nixExpressionFromDeps
+//
+// nix shell can be started with empty list of packages so this method works with empty deps as well
+func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache, shellCache *ShellCache) (_ []string, err error) {
+	defer errz.Recover(&err)
+
+	// building dependencies with nix-build to display store paths to output
+	err = BuildDependencies(deps, cache)
+	errz.Fatal(err)
+
+	expression := nixExpression(deps, nixpkgs)
+
+	var arguments []string
+	for _, envKey := range global.EnvWhitelist {
+		if _, exists := os.LookupEnv(envKey); exists {
+			arguments = append(arguments, []string{"--keep", envKey}...)
+		}
+	}
+	arguments = append(arguments, []string{"--command", "env"}...)
+	arguments = append(arguments, []string{"-E", expression}...)
+
+	cmd := exec.Command("nix-shell", "--pure")
+	cmd.Args = append(cmd.Args, arguments...)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+
+	if shellCache != nil {
+		key, err := shellCache.GenerateKey(deps, cmd.String())
+		errz.Fatal(err)
+
+		if dat, ok := shellCache.Get(key); ok {
+			out.Write(dat)
+		} else {
+			err = cmd.Run()
+			errz.Fatal(err)
+
+			err = shellCache.Save(key, out.Bytes())
+			errz.Fatal(err)
+		}
+	} else {
+		err = cmd.Run()
+		errz.Fatal(err)
+	}
+
+	env := strings.Split(out.String(), "\n")
+
+	// if NIX_SSL_CERT_FILE && SSL_CERT_FILE are set to /no-cert-file.crt unset them
+	var clearedEnv []string
+	for _, e := range env {
+		pair := strings.SplitN(e, "=", 2)
+		if pair[0] == "NIX_SSL_CERT_FILE" && pair[1] == "/no-cert-file.crt" {
+			continue
+		}
+		if pair[0] == "SSL_CERT_FILE" && pair[1] == "/no-cert-file.crt" {
+			continue
+		}
+		clearedEnv = append(clearedEnv, e)
+	}
+
+	return clearedEnv, nil
+}
+
+// nixExpression computes the Nix expression which is passed to nix-shell via -E flag
+// Example of a Nix expression containing go_1_18 and a custom oapicodegen_v1.6.0.nix file:
+// { pkgs ? import <nixpkgs> {} }:
+//
+//	pkgs.mkShell {
+//	 buildInputs = [
+//	    pkgs.go_1_18
+//	    (pkgs.callPackage ./oapicodegen_v1.6.0.nix { } )
+//	 ];
+//	}
+func nixExpression(deps []Dependency, nixpkgs string) string {
+	var buildInputs []string
+	for _, v := range deps {
+		if strings.HasSuffix(v.Name, ".nix") {
+			buildInputs = append(buildInputs, fmt.Sprintf("(pkgs.callPackage %s{ } )", v.Name))
+		} else {
+			buildInputs = append(buildInputs, "pkgs."+v.Name)
+		}
+	}
+
+	exp := `
+{ pkgs ? import %s {} }:
+pkgs.mkShell {
+  buildInputs = [
+	 %s
+  ];
+}
+`
+	return fmt.Sprintf(exp, source(nixpkgs), strings.Join(buildInputs, "\n"))
+}
+
+func HashDependencies(deps []Dependency) (_ string, err error) {
+	defer errz.Recover(&err)
+
+	h := filehash.New()
+	for _, dependency := range deps {
+		if strings.HasSuffix(dependency.Name, ".nix") {
+			err = h.AddBytes(bytes.NewBufferString(dependency.Nixpkgs))
+			errz.Fatal(err)
+
+			err = h.AddFile(dependency.Name)
+			errz.Fatal(err)
+		} else {
+			toHash := fmt.Sprintf("%s:%s", dependency.Name, dependency.Nixpkgs)
+			err = h.AddBytes(bytes.NewBufferString(toHash))
+			errz.Fatal(err)
+		}
+	}
+	return string(h.Sum()), nil
 }

@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/benchkram/errz"
@@ -17,7 +18,8 @@ import (
 )
 
 var (
-	ErrImageNotFound = fmt.Errorf("image not found")
+	ErrImageNotFound    = fmt.Errorf("image not found")
+	ErrConnectionFailed = errors.New("connection to docker daemon failed")
 )
 
 type RegistryClient interface {
@@ -33,9 +35,18 @@ type RegistryClient interface {
 type R struct {
 	client     *client.Client
 	archiveDir string
+
+	// mutex assure to only sequentially access a local docker registry.
+	// Some storage driver might not allow for parallel image extraction,
+	// @rdnt realised this on his ubuntu22.04 using a zfsfilesystem.
+	// Some context https://github.com/moby/moby/issues/21814
+	//
+	// explicitly using a pointer here to beeing able to detect
+	// weather a mutex is required.
+	mutex *sync.Mutex
 }
 
-func NewRegistryClient() RegistryClient {
+func NewRegistryClient() (RegistryClient, error) {
 	cli, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
@@ -49,7 +60,19 @@ func NewRegistryClient() RegistryClient {
 		archiveDir: os.TempDir(),
 	}
 
-	return r
+	// Use a lock to suppress parallel image reads on zfs.
+	info, err := r.client.Info(context.Background())
+	if client.IsErrConnectionFailed(err) {
+		return nil, ErrConnectionFailed
+	} else if err != nil {
+		return nil, err
+	}
+
+	if info.Driver == "zfs" {
+		r.mutex = &sync.Mutex{}
+	}
+
+	return r, nil
 }
 
 func (r *R) ImageExists(image string) (bool, error) {
@@ -88,13 +111,17 @@ func (r *R) ImageHash(image string) (string, error) {
 }
 
 func (r *R) imageSaveToPath(image string, savedir string) (pathToArchive string, _ error) {
+	if r.mutex != nil {
+		r.mutex.Lock()
+		defer r.mutex.Unlock()
+	}
 	reader, err := r.client.ImageSave(context.Background(), []string{image})
 	if err != nil {
 		return "", err
 	}
 	defer reader.Close()
 
-	body, err := ioutil.ReadAll(reader)
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return "", err
 	}
@@ -106,7 +133,7 @@ func (r *R) imageSaveToPath(image string, savedir string) (pathToArchive string,
 	image = strings.ReplaceAll(image, "/", "-")
 
 	pathToArchive = filepath.Join(savedir, image+"-"+rndExtension+".tar")
-	err = ioutil.WriteFile(pathToArchive, body, 0644)
+	err = os.WriteFile(pathToArchive, body, 0644)
 	if err != nil {
 		return "", err
 	}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -126,12 +125,12 @@ var _ = Describe("Test bob multilevel build", func() {
 
 		It("changes a file of the second-level", func() {
 			f := filepath.Join(dir, bob.SecondLevelDir, "main2.go")
-			c, err := ioutil.ReadFile(f)
+			c, err := os.ReadFile(f)
 			Expect(err).NotTo(HaveOccurred())
 
 			c = append(c, []byte("// some random comment so the file content is changed")...)
 
-			err = ioutil.WriteFile(f, c, 0644)
+			err = os.WriteFile(f, c, 0644)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -181,12 +180,12 @@ var _ = Describe("Test bob multilevel build", func() {
 
 		It("changes a file of the third-level", func() {
 			f := filepath.Join(dir, bob.SecondLevelDir, bob.ThirdLevelDir, "main3.go")
-			c, err := ioutil.ReadFile(f)
+			c, err := os.ReadFile(f)
 			Expect(err).NotTo(HaveOccurred())
 
 			c = append(c, []byte("// some random comment so the file content is changed")...)
 
-			err = ioutil.WriteFile(f, c, 0644)
+			err = os.WriteFile(f, c, 0644)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -216,6 +215,10 @@ var _ = Describe("Test bob multilevel build", func() {
 func requiresRebuildMustMatchFixtures(b *bob.B, fixtures []requiresRebuildFixture) {
 	aggregate, err := b.Aggregate()
 	Expect(err).NotTo(HaveOccurred())
+
+	err = b.Nix().BuildNixDependenciesInPipeline(aggregate, bob.BuildAllTargetName)
+	Expect(err).NotTo(HaveOccurred())
+
 	pb, err := aggregate.Playbook(bob.BuildAllTargetName)
 	Expect(err).NotTo(HaveOccurred())
 

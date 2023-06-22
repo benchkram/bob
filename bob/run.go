@@ -3,11 +3,11 @@ package bob
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
+	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/ctl"
 	"github.com/benchkram/bob/pkg/sliceutil"
@@ -21,7 +21,7 @@ import (
 // 2: [Done] plain docker-compose run with dependcies to build-cmds
 //    containing instructions how to build the container image.
 //
-// 3: [Done] init script requiring a executable to run before
+// 3: [Done] init script requiring an executable to run before
 //    containing a health endpoint (REST?). So the init script can be
 //    sure about the service to be functional.
 //
@@ -50,7 +50,10 @@ func (b *B) Run(ctx context.Context, runTaskName string) (_ ctl.Commander, err e
 	interactiveTasks := []string{runTask.Name()}
 	interactiveTasks = append(interactiveTasks, childInteractiveTasks...)
 
-	// build dependencies & main runTask
+	for _, task := range interactiveTasks {
+		err = executeBuildTasksInPipeline(ctx, task, aggregate, b.nix)
+		errz.Fatal(err)
+	}
 
 	// generate run controls to steer the run cmd.
 	runCommands := []ctl.Command{}
@@ -63,7 +66,7 @@ func (b *B) Run(ctx context.Context, runTaskName string) (_ ctl.Commander, err e
 		runCommands = append(runCommands, command)
 	}
 
-	builder := NewBuilder(b, runTaskName, aggregate, executeBuildTasksInPipeline)
+	builder := NewBuilder(runTaskName, aggregate, executeBuildTasksInPipeline, b.nix)
 	commander := ctl.NewCommander(ctx, builder, runCommands...)
 
 	return commander, nil
@@ -138,7 +141,7 @@ func executeBuildTasksInPipeline(
 	ctx context.Context,
 	runTaskName string,
 	aggregate *bobfile.Bobfile,
-	nix *NixBuilder,
+	nix *nixbuilder.NB,
 ) (err error) {
 	defer errz.Recover(&err)
 
@@ -166,12 +169,8 @@ func executeBuildTasksInPipeline(
 	buildTasks = sliceutil.Unique(buildTasks)
 
 	// Build nix dependencies
-	if nix != nil {
-		fmt.Println("Building nix dependencies...")
-		err = nix.BuildNixDependencies(aggregate, buildTasks)
-		errz.Fatal(err)
-		fmt.Println("Succeeded building nix dependencies")
-	}
+	err = nix.BuildNixDependencies(aggregate, buildTasks, append(runTasksInPipeline, runTaskName))
+	errz.Fatal(err)
 
 	// Initiate each build
 	for _, buildTask := range buildTasks {

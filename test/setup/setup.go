@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"io/ioutil"
 	"os"
 )
 
@@ -10,12 +9,12 @@ import (
 func TestDirs(testname string) (testDir, storageDir string, cleanup func() error, _ error) {
 	plain := func() error { return nil }
 
-	testDir, err := ioutil.TempDir("", "bob-test-"+testname+"-*")
+	testDir, err := os.MkdirTemp("", "bob-test-"+testname+"-*")
 	if err != nil {
 		return testDir, storageDir, plain, err
 	}
 
-	storageDir, err = ioutil.TempDir("", "bob-test-"+testname+"-storage-*")
+	storageDir, err = os.MkdirTemp("", "bob-test-"+testname+"-storage-*")
 	if err != nil {
 		return testDir, storageDir, plain, err
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
+	giturls "github.com/whilp/git-urls"
 
 	"github.com/logrusorgru/aurora"
 )
@@ -29,15 +30,21 @@ type cloneURLItem struct {
 // Uses priority urls ssh >> https >> file.
 //
 // failFast will not prompt the user in case of an error.
+// preferedProtocol accepts https or ssh.
 //
 // TODO: it still happens that git prompts for user input
 // in case of a missing password on https.
-func (b *B) Clone(failFast bool) (err error) {
+func (b *B) Clone(failFast bool, preferedProtocol ...string) (err error) {
 	defer errz.Recover(&err)
+
+	var pp string
+	if len(preferedProtocol) > 0 {
+		pp = preferedProtocol[0]
+	}
 
 	for _, repo := range b.Repositories {
 
-		prioritylist, err := makeURLPriorityList(repo)
+		prioritylist, err := makeURLPriorityList(repo, pp)
 		errz.Fatal(err)
 
 		// Check if repository is already checked out.
@@ -56,6 +63,7 @@ func (b *B) Clone(failFast bool) (err error) {
 		// break for successfull cloning and fallback to next item in
 		// the map in case of failure
 		for i, item := range prioritylist {
+			fmt.Printf("Cloning from %s \n", item.url)
 			out, err = cmdutil.RunGitWithOutput(b.dir, "clone", item.url, "--progress")
 			if err == nil {
 				break
@@ -121,6 +129,10 @@ func (b *B) Clone(failFast bool) (err error) {
 func (b *B) CloneRepo(repoURL string, failFast bool) (_ string, err error) {
 	defer errz.Recover(&err)
 
+	u, err := giturls.Parse(repoURL)
+	errz.Fatal(err)
+
+	fmt.Printf("Cloning from %s \n", repoURL)
 	out, err := cmdutil.RunGitWithOutput(b.dir, "clone", repoURL, "--progress")
 	errz.Fatal(err)
 
@@ -149,7 +161,7 @@ func (b *B) CloneRepo(repoURL string, failFast bool) (_ string, err error) {
 	)
 	errz.Fatal(err)
 
-	if err := bob.Clone(failFast); err != nil {
+	if err := bob.Clone(failFast, u.Scheme); err != nil {
 		return "", err
 	}
 
@@ -163,7 +175,7 @@ func (b *B) CloneRepo(repoURL string, failFast bool) (_ string, err error) {
 //
 // It als checks if it is a valid git repo,
 // as someone might changed it on disk.
-func makeURLPriorityList(repo Repo) ([]cloneURLItem, error) {
+func makeURLPriorityList(repo Repo, preferedProtocol string) ([]cloneURLItem, error) {
 
 	var urls []cloneURLItem
 
@@ -196,7 +208,32 @@ func makeURLPriorityList(repo Repo) ([]cloneURLItem, error) {
 		})
 	}
 
+	switch preferedProtocol {
+	case "ssh":
+		urls = makeTopPriority(urls, "ssh")
+	case "https":
+		urls = makeTopPriority(urls, "https")
+	}
+
 	return urls, nil
+}
+
+// makeTopPriority makes the first item matching the protocol in the list the top priority.
+func makeTopPriority(urls []cloneURLItem, protocol string) []cloneURLItem {
+
+	for i, u := range urls {
+		if u.protocol == protocol {
+			// get expected top element
+			expectedTop := urls[i]
+			// remove from array
+			urls = append(urls[:i], urls[i+1:]...)
+			// insert at the top
+			urls = append([]cloneURLItem{expectedTop}, urls...)
+			break
+		}
+	}
+
+	return urls
 }
 
 // FprintCloneOutput returns formatted output buffer with repository title

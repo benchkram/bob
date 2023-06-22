@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -1601,7 +1600,7 @@ func (c *ClientWithResponses) CreateSyncCollectionWithResponse(ctx context.Conte
 
 // ParseGetHealthResponse parses an HTTP response from a GetHealthWithResponse call
 func ParseGetHealthResponse(rsp *http.Response) (*GetHealthResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1679,7 +1678,7 @@ func ParseProjectExistsResponse(rsp *http.Response) (*ProjectExistsResponse, err
 
 // ParseGetProjectArtifactResponse parses an HTTP response from a GetProjectArtifactWithResponse call
 func ParseGetProjectArtifactResponse(rsp *http.Response) (*GetProjectArtifactResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1705,7 +1704,7 @@ func ParseGetProjectArtifactResponse(rsp *http.Response) (*GetProjectArtifactRes
 
 // ParseProjectArtifactExistsResponse parses an HTTP response from a ProjectArtifactExistsWithResponse call
 func ParseProjectArtifactExistsResponse(rsp *http.Response) (*ProjectArtifactExistsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1724,7 +1723,7 @@ func ParseProjectArtifactExistsResponse(rsp *http.Response) (*ProjectArtifactExi
 
 // ParseGetProjectArtifactsResponse parses an HTTP response from a GetProjectArtifactsWithResponse call
 func ParseGetProjectArtifactsResponse(rsp *http.Response) (*GetProjectArtifactsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1750,7 +1749,7 @@ func ParseGetProjectArtifactsResponse(rsp *http.Response) (*GetProjectArtifactsR
 
 // ParseUploadArtifactResponse parses an HTTP response from a UploadArtifactWithResponse call
 func ParseUploadArtifactResponse(rsp *http.Response) (*UploadArtifactResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err

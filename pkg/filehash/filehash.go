@@ -1,6 +1,7 @@
 package filehash
 
 import (
+	"encoding/hex"
 	"fmt"
 	"hash"
 	"io"
@@ -24,9 +25,11 @@ func (h *H) AddFile(file string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open: %w", err)
 	}
-	defer f.Close()
 
-	return h.AddBytes(f)
+	err = h.AddBytes(f)
+	f.Close() // avoiding defer for performance
+
+	return err
 }
 
 func (h *H) AddBytes(r io.Reader) error {
@@ -38,4 +41,14 @@ func (h *H) AddBytes(r io.Reader) error {
 
 func (h *H) Sum() []byte {
 	return h.hash.Sum(nil)
+}
+
+// HashOfFile gives hash of a file content
+func HashOfFile(path string) (string, error) {
+	h := New()
+	err := h.AddFile(path)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum()), nil
 }

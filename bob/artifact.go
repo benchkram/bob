@@ -5,11 +5,23 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"strings"
+	"time"
 
 	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask/targettype"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
+
+type artifactMetadataAnnotated struct {
+	*bobtask.ArtifactMetadata
+	targettypes []targettype.T
+}
+
+func newArtifactMetadataAnnotated(m *bobtask.ArtifactMetadata, tts []targettype.T) *artifactMetadataAnnotated {
+	return &artifactMetadataAnnotated{m, tts}
+}
 
 // ArtifactList list artifacts belonging to each tasks.
 // Artifacts are matched by project & taskname as well as their input hash stored
@@ -23,10 +35,10 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 	items, err := b.Localstore().List(ctx)
 	errz.Fatal(err)
 
-	metadataAll := []*bobtask.ArtifactMetadata{}
+	metadataAll := []*artifactMetadataAnnotated{}
 	// prepare projectTasknameMap once from artifact store
 	for _, item := range items {
-		artifact, err := b.Localstore().GetArtifact(ctx, item)
+		artifact, _, err := b.Localstore().GetArtifact(ctx, item)
 		errz.Fatal(err)
 		defer artifact.Close()
 
@@ -37,7 +49,10 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 		if m == nil {
 			continue
 		}
-		metadataAll = append(metadataAll, m)
+		metadataAll = append(metadataAll,
+			newArtifactMetadataAnnotated(m, artifactInfo.Types()),
+		)
+
 	}
 
 	// List artifacts in relation to tasknames in alphabetical order
@@ -46,7 +61,9 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 	for _, key := range sortedKeys {
 		task := bobfile.BTasks[key]
 
-		fmt.Fprintln(buf, task.Name())
+		hi, err := task.HashIn()
+		errz.Fatal(err)
+		fmt.Fprintln(buf, task.Name(), " [hashIn: "+hi.String()+"]")
 
 		// additionaly check if there is a artifact match by inputHash
 		for _, m := range metadataAll {
@@ -66,7 +83,17 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 			}
 
 			if match {
-				fmt.Fprintln(buf, "  "+m.InputHash)
+				// convert targettypes to string
+				types := []string{}
+				for _, t := range m.targettypes {
+					types = append(types, string(t))
+				}
+
+				fmt.Fprintln(buf, "    "+m.InputHash+
+					" ("+
+					string(strings.Join(types, ","))+","+
+					m.CreatedAt.Format(time.Stamp)+
+					")")
 			}
 		}
 	}
@@ -75,7 +102,7 @@ func (b *B) ArtifactList(ctx context.Context) (description string, err error) {
 }
 
 func (b *B) ArtifactInspect(artifactID string) (ai bobtask.ArtifactInfo, err error) {
-	artifact, err := b.local.GetArtifact(context.TODO(), artifactID)
+	artifact, _, err := b.local.GetArtifact(context.TODO(), artifactID)
 	if err != nil {
 		_, ok := err.(*fs.PathError)
 		if ok {

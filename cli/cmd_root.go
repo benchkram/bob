@@ -13,6 +13,7 @@ import (
 )
 
 var zsh bool
+var flagEnvVars []string
 
 func init() {
 	configInit()
@@ -25,11 +26,13 @@ func init() {
 	rootCmd.Flags().Bool("version", false, "Show the CLI's version")
 
 	rootCmd.AddCommand(verifyCmd)
-	rootCmd.AddCommand(cleanCmd)
 	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(initCmd)
 
 	// clone
 	CmdClone.Flags().Bool("fail-fast", false, "Fail on first error without user prompt")
+	CmdClone.Flags().Bool("ssh", false, "Prefer ssh for cloning")
+	CmdClone.Flags().Bool("https", false, "Prefer https for cloning")
 	rootCmd.AddCommand(CmdClone)
 
 	// workspace
@@ -41,13 +44,19 @@ func init() {
 	// runCmd
 	runCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
 	runCmd.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing a remote artifact store")
+	runCmd.Flags().StringSliceVar(&flagEnvVars, "env", []string{}, "Set environment variables to run task")
 	runCmd.AddCommand(runListCmd)
 	rootCmd.AddCommand(runCmd)
 
 	// buildCmd
 	buildCmd.Flags().Bool("dummy", false, "Create a dummy bobfile")
 	buildCmd.Flags().Bool("no-cache", false, "Set to true to not use cache")
+	buildCmd.Flags().Bool("push", false, "Set to true to push artifacts to remote store")
+	buildCmd.Flags().Bool("no-pull", false, "Set to true to disable artifacts download from remote store")
 	buildCmd.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing a remote artifact store")
+	buildCmd.Flags().Bool("debug", false, "Enable debug output")
+	buildCmd.Flags().IntP("jobs", "j", runtime.NumCPU(), "Maximum number of parallel started jobs")
+	buildCmd.Flags().StringSliceVar(&flagEnvVars, "env", []string{}, "Set environment variables to build task")
 	buildCmd.AddCommand(buildListCmd)
 	rootCmd.AddCommand(buildCmd)
 
@@ -79,6 +88,12 @@ func init() {
 	AuthCmd.AddCommand(AuthContextSwitchCmd)
 	AuthCmd.AddCommand(AuthContextListCmd)
 	rootCmd.AddCommand(AuthCmd)
+
+	// cleanCmd
+	cleanCmd.AddCommand(cleanTargetsCmd)
+	cleanCmd.AddCommand(cleanSystemCmd)
+	cleanCmd.AddCommand(cleanAllCmd)
+	rootCmd.AddCommand(cleanCmd)
 }
 
 var rootCmd = &cobra.Command{
@@ -97,11 +112,11 @@ Commonly used cmds:
 		if cmd.Flag("version") != nil {
 			showVersion, err := strconv.ParseBool(cmd.Flag("version").Value.String())
 			if err == nil && showVersion {
-				//TODO for go 1.18: check what we can use from runtime/debug: https://github.com/golang/go/issues/49168
-				//bi, ok := debug.ReadBuildInfo()
-				//if ok {
+				// TODO for go 1.18: check what we can use from runtime/debug: https://github.com/golang/go/issues/49168
+				// bi, ok := debug.ReadBuildInfo()
+				// if ok {
 				//
-				//}
+				// }
 
 				boblog.Log.Info(fmt.Sprintf("bob version %s %s/%s\n", bob.Version, runtime.GOOS, runtime.GOARCH))
 				os.Exit(0)

@@ -42,9 +42,11 @@ var _ = Describe("Test artifact and target invalidation", func() {
 			err := artifactRemove(artifactID)
 			Expect(err).NotTo(HaveOccurred())
 
+			//time.Sleep(1 * time.Minute)
+
 			state, err := buildTask(b, "build")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCompleted))
 
 			exists, err := artifactExists(artifactID)
 			Expect(err).NotTo(HaveOccurred())
@@ -100,11 +102,12 @@ var _ = Describe("Test artifact and target invalidation", func() {
 	})
 })
 
-//  docker targets
+// docker targets
 var _ = Describe("Test artifact and docker-target invalidation", func() {
 	Context("in a fresh playground", func() {
 
-		mobyClient := dockermobyutil.NewRegistryClient()
+		mobyClient, err := dockermobyutil.NewRegistryClient()
+		Expect(err).NotTo(HaveOccurred())
 
 		It("should initialize bob playground", func() {
 			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
@@ -131,7 +134,7 @@ var _ = Describe("Test artifact and docker-target invalidation", func() {
 
 			state, err := buildTask(b, bob.BuildTargetDockerImageName)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCompleted))
 
 			exists, err := artifactExists(artifactID)
 			Expect(err).NotTo(HaveOccurred())
@@ -139,7 +142,7 @@ var _ = Describe("Test artifact and docker-target invalidation", func() {
 		})
 
 		// 6)
-		It("should not rebuild but unpack from local artifact", func() {
+		It("should not rebuild but extract from local artifact", func() {
 			state, err := buildTask(b, bob.BuildTargetDockerImageName)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))

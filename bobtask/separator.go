@@ -1,0 +1,5 @@
+package bobtask
+
+const (
+	TaskPathSeparator = '/'
+)

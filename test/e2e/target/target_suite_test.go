@@ -7,6 +7,7 @@ import (
 
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/buildinfostore"
 	"github.com/benchkram/bob/test/setup"
 
@@ -19,12 +20,14 @@ var (
 
 	cleanup func() error
 
-	buildinfoStore buildinfostore.Store
+	buildInfoStore buildinfostore.Store
 
 	b *bob.B
 )
 
 var _ = BeforeSuite(func() {
+	boblog.SetLogLevel(10)
+
 	var err error
 	var storageDir string
 	dir, storageDir, cleanup, err = setup.TestDirs("target")
@@ -33,10 +36,11 @@ var _ = BeforeSuite(func() {
 	err = os.Chdir(dir)
 	Expect(err).NotTo(HaveOccurred())
 
-	buildinfoStore = buildinfostore.New(filepath.Join(storageDir, global.BobCacheBuildinfoDir))
+	buildInfoStore = buildinfostore.NewProtoStore(filepath.Join(storageDir, global.BobCacheBuildinfoDir))
+
 	b, err = bob.BobWithBaseStoreDir(
 		storageDir,
-		bob.WithBuildinfoStore(buildinfoStore),
+		bob.WithBuildinfoStore(buildInfoStore),
 		bob.WithDir(dir),
 	)
 

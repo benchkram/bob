@@ -1,7 +1,6 @@
 package reposetup
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -80,7 +79,7 @@ func mkdir(path ...string) string {
 
 func mkfile(path ...string) string {
 	file := filepath.Join(path...)
-	if err := ioutil.WriteFile(file, []byte(fileData), fileMode); err != nil {
+	if err := os.WriteFile(file, []byte(fileData), fileMode); err != nil {
 		panic(err)
 	}
 

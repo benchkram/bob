@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/bob/pkg/nix"
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/logrusorgru/aurora"
 	"mvdan.cc/sh/expand"
@@ -21,18 +21,12 @@ import (
 func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 	defer errz.Recover(&err)
 
-	env := os.Environ()
-	// TODO: warn when overwriting envvar from the environment
-	env = append(env, t.env...)
-
-	if len(t.storePaths) > 0 && t.useNix {
-		for k, v := range env {
-			pair := strings.SplitN(v, "=", 2)
-			if pair[0] == "PATH" {
-				env[k] = "PATH=" + strings.Join(nix.StorePathsBin(t.storePaths), ":")
-			}
-		}
+	nixEnv, ok := t.envStore[t.envID]
+	if !ok {
+		return fmt.Errorf("missing nix environment in envStore")
 	}
+
+	env := envutil.Merge(nixEnv, t.env)
 
 	for _, run := range t.cmds {
 		p, err := syntax.NewParser().Parse(strings.NewReader(run), "")
@@ -66,7 +60,6 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 		r, err := interp.New(
 			interp.Params("-e"),
 			interp.Dir(t.dir),
-
 			interp.Env(expand.ListEnviron(env...)),
 			interp.StdIO(os.Stdin, pw, pw),
 		)
@@ -75,12 +68,15 @@ func (t *Task) Run(ctx context.Context, namePad int) (err error) {
 
 		err = r.Run(ctx, p)
 		if err != nil {
+			pw.Close()
+			<-done
 			return usererror.Wrapm(err, "shell command execute error")
 		}
 
 		// wait for the reader to finish after closing the write pipe
 		pw.Close()
 		<-done
+
 	}
 
 	return nil

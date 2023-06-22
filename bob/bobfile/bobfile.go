@@ -6,6 +6,7 @@ import (
 	"github.com/benchkram/bob/pkg/versionedsync/remotesyncstore"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -30,13 +31,6 @@ import (
 	"github.com/benchkram/bob/bobrun"
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/file"
-)
-
-var (
-	defaultIgnores = fmt.Sprintf("!%s\n!%s",
-		global.BobWorkspaceFile,
-		filepath.Join(global.BobCacheDir, "*"),
-	)
 )
 
 var (
@@ -68,6 +62,7 @@ type Bobfile struct {
 
 	Imports []string `yaml:"import,omitempty"`
 
+	// Variables is a map of variables that can be used in the tasks.
 	Variables VariableMap
 
 	// BTasks build tasks
@@ -77,9 +72,6 @@ type Bobfile struct {
 
 	Dependencies []string `yaml:"dependencies"`
 
-	// UseNix is a flag to indicate if nix is used
-	// by any task inside a bobfile
-	UseNix bool `yaml:"use-nix"`
 	// Nixpkgs specifies an optional nixpkgs source.
 	Nixpkgs string `yaml:"nixpkgs"`
 
@@ -140,7 +132,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	if !file.Exists(bobfilePath) {
 		return nil, usererror.Wrap(ErrBobfileNotFound)
 	}
-	bin, err := ioutil.ReadFile(bobfilePath)
+	bin, err := os.ReadFile(bobfilePath)
 	errz.Fatal(err)
 
 	bobfile := &Bobfile{
@@ -168,8 +160,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	for key, task := range bobfile.BTasks {
 		task.SetDir(bobfile.dir)
 		task.SetName(key)
-
-		task.InputDirty = fmt.Sprintf("%s\n%s", task.InputDirty, defaultIgnores)
+		task.InputAdditionalIgnores = []string{}
 
 		// Make sure a task is correctly initialised.
 		// TODO: All unitialised must be initialised or get default values.
@@ -178,9 +169,7 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 		task.SetRebuildStrategy(bobtask.RebuildOnChange)
 
 		// initialize docker registry for task
-		task.SetDockerRegistryClient()
-		task.SetDependencies(initializeDependencies(dir, task, bobfile))
-		task.SetUseNix(bobfile.UseNix)
+		task.SetDependencies(initializeDependencies(dir, task.DependenciesDirty, bobfile))
 
 		bobfile.BTasks[key] = task
 	}
@@ -189,12 +178,15 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	for key, run := range bobfile.RTasks {
 		run.SetDir(bobfile.dir)
 		run.SetName(key)
+		run.SetEnv([]string{})
+
+		run.SetDependencies(initializeDependencies(dir, run.DependenciesDirty, bobfile))
 
 		bobfile.RTasks[key] = run
 	}
 
-	//// Initialize remote store in case of a valid remote url /  projectname.
-	//if bobfile.Project != "" {
+	// // Initialize remote store in case of a valid remote url /  projectname.
+	// if bobfile.Project != "" {
 	//	projectname, err := project.Parse(bobfile.Project)
 	//	if err != nil {
 	//		return nil, err
@@ -214,16 +206,17 @@ func bobfileRead(dir string) (_ *Bobfile, err error) {
 	//
 	//		bobfile.remotestore = NewRemotestore(url)
 	//	}
-	//} else {
+	// } else {
 	//	bobfile.Project = bobfile.dir
-	//}
+	// }
+
 	return bobfile, nil
 }
 
 // initializeDependencies gathers all dependencies for a task(task level and bobfile level)
 // and initialize them with bobfile dir and corresponding nixpkgs used
-func initializeDependencies(dir string, task bobtask.Task, bobfile *Bobfile) []nix.Dependency {
-	dependencies := sliceutil.Unique(append(task.DependenciesDirty, bobfile.Dependencies...))
+func initializeDependencies(dir string, taskDependencies []string, bobfile *Bobfile) []nix.Dependency {
+	dependencies := sliceutil.Unique(append(taskDependencies, bobfile.Dependencies...))
 	dependencies = nix.AddDir(dir, dependencies)
 
 	taskDeps := make([]nix.Dependency, 0)
@@ -401,29 +394,19 @@ func (b *Bobfile) BobfileSave(dir, name string) (err error) {
 	err = encoder.Encode(b)
 	errz.Fatal(err)
 
-	return ioutil.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0664)
+	return os.WriteFile(filepath.Join(dir, name), buf.Bytes(), 0664)
 }
 
 func (b *Bobfile) Dir() string {
 	return b.dir
 }
 
-func CreateDummyBobfile(dir string, overwrite bool) (err error) {
-	// Prevent accidental bobfile override
-	if file.Exists(global.BobFileName) && !overwrite {
-		return ErrBobfileExists
+// Vars returns the bobfile variables in the form "key=value"
+// based on its Variables
+func (b *Bobfile) Vars() []string {
+	var env []string
+	for key, value := range b.Variables {
+		env = append(env, strings.Join([]string{key, value}, "="))
 	}
-
-	bobfile := NewBobfile()
-
-	bobfile.BTasks[global.DefaultBuildTask] = bobtask.Task{
-		InputDirty:  "./main.go",
-		CmdDirty:    "go build -o run",
-		TargetDirty: "run",
-	}
-	return bobfile.BobfileSave(dir, global.BobFileName)
-}
-
-func IsBobfile(file string) bool {
-	return strings.Contains(filepath.Base(file), global.BobFileName)
+	return env
 }

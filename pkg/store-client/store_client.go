@@ -9,9 +9,9 @@ import (
 )
 
 type I interface {
-	UploadArtifact(ctx context.Context, projectName string, artifactID string, src io.Reader) (err error)
+	UploadArtifact(ctx context.Context, projectName string, artifactID string, src io.Reader, size int64) (err error)
 	ListArtifacts(ctx context.Context, projectName string) (artifactIds []string, err error)
-	GetArtifact(ctx context.Context, projectName string, artifactId string) (rc io.ReadCloser, err error)
+	GetArtifact(ctx context.Context, projectName string, artifactId string) (rc io.ReadCloser, size int64, err error)
 
 	CollectionCreate(ctx context.Context, projectName, name, localPath string) (*generated.SyncCollection, error)
 	Collection(ctx context.Context, projectName, collectionId string) (*generated.SyncCollection, error)

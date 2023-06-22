@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/benchkram/errz"
 	"github.com/spf13/cobra"
 
 	"github.com/benchkram/bob/bob"
-	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -28,13 +27,23 @@ var buildCmd = &cobra.Command{
 		UnknownFlags: true,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		dummy, err := strconv.ParseBool(cmd.Flag("dummy").Value.String())
-		errz.Fatal(err)
-
 		noCache, err := cmd.Flags().GetBool("no-cache")
 		errz.Fatal(err)
 
 		allowInsecure, err := cmd.Flags().GetBool("insecure")
+		errz.Fatal(err)
+
+		maxParallel, err := cmd.Flags().GetInt("jobs")
+		errz.Fatal(err)
+		if maxParallel < 1 {
+			boblog.Log.Error(err, "jobs must be greater than 0")
+			os.Exit(1)
+		}
+
+		enablePush, err := cmd.Flags().GetBool("push")
+		errz.Fatal(err)
+
+		noPull, err := cmd.Flags().GetBool("no-pull")
 		errz.Fatal(err)
 
 		taskname := global.DefaultBuildTask
@@ -42,7 +51,7 @@ var buildCmd = &cobra.Command{
 			taskname = args[0]
 		}
 
-		runBuild(dummy, taskname, noCache, allowInsecure)
+		runBuild(taskname, noCache, allowInsecure, enablePush, noPull, flagEnvVars, maxParallel)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		tasks, err := getBuildTasks()
@@ -63,24 +72,20 @@ var buildListCmd = &cobra.Command{
 	},
 }
 
-func runBuild(dummy bool, taskname string, noCache, allowInsecure bool) {
+func runBuild(taskname string, noCache, allowInsecure, enablePush, noPull bool, flagEnvVars []string, maxParallel int) {
 	var exitCode int
 	defer func() {
 		exit(exitCode)
 	}()
 	defer errz.Recover()
 
-	if dummy {
-		wd, err := os.Getwd()
-		errz.Fatal(err)
-		err = bobfile.CreateDummyBobfile(wd, false)
-		errz.Fatal(err)
-		return
-	}
-
 	b, err := bob.Bob(
 		bob.WithCachingEnabled(!noCache),
 		bob.WithInsecure(allowInsecure),
+		bob.WithEnvVariables(parseEnvVarsFlag(flagEnvVars)),
+		bob.WithMaxParallel(maxParallel),
+		bob.WithPushEnabled(enablePush),
+		bob.WithPullEnabled(!noPull),
 	)
 	if err != nil {
 		exitCode = 1
@@ -127,4 +132,24 @@ func getBuildTasks() ([]string, error) {
 		return nil, err
 	}
 	return b.GetBuildTasks()
+}
+
+// parseEnvVarsFlag will parse flagEnvVars and return the environment variables
+// based on:
+//
+//	--env VAR_ONE         uses VAR_ONE from host environment variable
+//	--env VAR_ONE=value   overwrites value from host with given `value`
+func parseEnvVarsFlag(flagEnvVars []string) []string {
+	var result []string
+	for _, v := range flagEnvVars {
+		if strings.Contains(v, "=") {
+			result = append(result, v)
+		} else {
+			// get it from host
+			value := os.Getenv(v)
+			result = append(result, v+"="+value)
+		}
+	}
+
+	return result
 }

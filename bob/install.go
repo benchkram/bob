@@ -1,7 +1,6 @@
 package bob
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/benchkram/errz"
@@ -14,10 +13,6 @@ func (b B) Install() (err error) {
 
 	ag, err := b.Aggregate()
 	errz.Fatal(err)
-
-	if !ag.UseNix {
-		return errors.New("`use-nix: true` is missing in the root bob.yaml file")
-	}
 
 	if !nix.IsInstalled() {
 		return fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl())
@@ -40,8 +35,7 @@ func (b B) Install() (err error) {
 	fmt.Println()
 
 	if len(allDeps) > 0 {
-		fmt.Println("Building nix dependencies...")
-		_, err := b.nix.BuildDependencies(allDeps)
+		err = b.nix.BuildDependencies(allDeps)
 		if err != nil {
 			return err
 		}

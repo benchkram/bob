@@ -1,8 +1,13 @@
 version: 0
+dependencies: [
+  go_1_18,
+  oapicodegen_v1.6.0.nix,
+]
 build:
   generate-api:
     input: openapi.yaml
     cmd: |-
+      mkdir -p server/rest-api/generated
       oapi-codegen -package generated -generate types -o server/rest-api/generated/types.gen.go openapi.yaml
       oapi-codegen -package generated -generate server -o server/rest-api/generated/server.gen.go openapi.yaml
     target: |-
@@ -17,7 +22,7 @@ build:
     cmd: go build -o ./build/server main.go
     dependson:
       - generate-api
-    target: /build/server
+    target: ./build/server
 run:
   server:
     type: binary

@@ -1,7 +1,6 @@
 package clonetest
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -24,7 +23,7 @@ var (
 )
 
 var _ = BeforeSuite(func() {
-	testDir, err := ioutil.TempDir("", "bob-test-clone-*")
+	testDir, err := os.MkdirTemp("", "bob-test-clone-*")
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
 

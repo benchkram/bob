@@ -1,0 +1,15 @@
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz
+build:
+  build:
+    input: |-
+      ./server/main.go
+    cmd: go build -o app
+    target: app
+    dependencies:
+      - go
+run:
+  server:
+    type: binary
+    path: ./app
+    dependson:
+      - build

@@ -13,6 +13,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
+	"os"
+	"time"
+
+	"github.com/benchkram/bob/bob/playbook"
+	progress2 "github.com/benchkram/bob/pkg/progress"
+	"github.com/benchkram/errz"
+	"github.com/pkg/errors"
+	"github.com/schollz/progressbar/v3"
 
 	"github.com/benchkram/bob/pkg/usererror"
 )
@@ -26,6 +34,7 @@ var (
 	ErrEmptyResponse       = errors.New("empty response")
 	ErrDownloadFailed      = errors.New("binary download failed")
 	ErrConnectionRefused   = errors.New("connection to server failed (connection refused)")
+	ErrNotAuthorized = errors.New("not authorized")
 )
 
 func (c *c) UploadArtifact(
@@ -33,11 +42,15 @@ func (c *c) UploadArtifact(
 	projectName string,
 	artifactID string,
 	src io.Reader,
+	size int64,
 ) (err error) {
 	defer errz.Recover(&err)
 
 	r, w := io.Pipe()
 	mpw := multipart.NewWriter(w)
+
+	bar := progressBar(ctx, size)
+	rb := progressbar.NewReader(src, bar)
 
 	go func() {
 		err0 := attachMimeHeader(mpw, "id", artifactID)
@@ -52,8 +65,9 @@ func (c *c) UploadArtifact(
 			return
 		}
 
-		tr := io.TeeReader(src, pw)
+		tr := io.TeeReader(&rb, pw)
 		buf := make([]byte, 8192)
+
 		for {
 			_, err0 := tr.Read(buf)
 			if err0 == io.EOF {
@@ -105,6 +119,8 @@ func (c *c) ListArtifacts(ctx context.Context, project string) (ids []string, er
 
 	if res.StatusCode() == http.StatusNotFound {
 		errz.Fatal(usererror.Wrapm(ErrProjectNotFound, "upload to remote repository failed"))
+	} else if res.StatusCode() == http.StatusUnauthorized || res.StatusCode() == http.StatusForbidden {
+		errz.Fatal(usererror.Wrap(ErrNotAuthorized))
 	} else if res.StatusCode() != http.StatusOK {
 		err = errors.Errorf("request failed [status: %d, msg: %q]", res.StatusCode(), res.Body)
 		errz.Fatal(err)
@@ -117,7 +133,7 @@ func (c *c) ListArtifacts(ctx context.Context, project string) (ids []string, er
 	return *res.JSON200, nil
 }
 
-func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string) (rc io.ReadCloser, err error) {
+func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string) (rc io.ReadCloser, size int64, err error) {
 	defer errz.Recover(&err)
 
 	res, err := c.clientWithResponses.GetProjectArtifactWithResponse(
@@ -135,14 +151,66 @@ func (c *c) GetArtifact(ctx context.Context, projectId string, artifactId string
 		errz.Fatal(ErrEmptyResponse)
 	}
 
-	res2, err := http.Get(*res.JSON200.Location)
+	req, err := http.NewRequest("GET", *res.JSON200.Location, nil)
+	errz.Fatal(err)
+	req = req.WithContext(ctx)
+
+	client := http.DefaultClient
+	res2, err := client.Do(req)
 	errz.Fatal(err)
 
 	if res2.StatusCode != http.StatusOK {
 		errz.Fatal(fmt.Errorf("invalid response"))
 	}
 
-	return res2.Body, nil
+	bar := progress(ctx, res2.ContentLength)
+
+	rb := progress2.NewReader(res2.Body, bar)
+
+	return &rb, res2.ContentLength, nil
+}
+
+func progress(ctx context.Context, size int64) *progress2.Progress {
+	getDescription := func(ctx context.Context, k playbook.TaskKey) string {
+		if v := ctx.Value(k); v != nil {
+			return v.(string)
+		}
+		return ""
+	}
+	description := getDescription(ctx, "description")
+	return progress2.NewProgress(size, description, time.Second)
+}
+
+func progressBar(ctx context.Context, size int64) *progressbar.ProgressBar {
+	getDescription := func(ctx context.Context, k playbook.TaskKey) string {
+		if v := ctx.Value(k); v != nil {
+			return v.(string)
+		}
+		return ""
+	}
+	description := getDescription(ctx, "description")
+
+	bar := progressbar.NewOptions64(size,
+		progressbar.OptionSetWriter(os.Stdout),
+		progressbar.OptionSetPredictTime(false),
+		progressbar.OptionShowCount(),
+		progressbar.OptionThrottle(100*time.Millisecond),
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionSetDescription(description),
+		progressbar.OptionOnCompletion(func() {
+			fmt.Fprint(os.Stdout, "\n")
+		}),
+		progressbar.OptionSetRenderBlankState(false),
+		progressbar.OptionSetTheme(
+			progressbar.Theme{
+				Saucer:        "",
+				SaucerHead:    "",
+				SaucerPadding: "",
+				BarStart:      "",
+				BarEnd:        "",
+			},
+		))
+	return bar
 }
 
 func (c *c) CollectionCreate(ctx context.Context, projectName, name, localPath string) (collection *generated.SyncCollection, err error) {

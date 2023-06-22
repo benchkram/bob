@@ -12,31 +12,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install nix
         uses: cachix/install-nix-action@v15
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - uses: benchkram/bob-setup-action@v1
+      - name: Install Go
+        uses: actions/setup-go@v3
         with:
-          version: 0.4.0
-      
+          go-version: 1.19
+
+      - name: Install bob
+        run: make install-prod
+
+      - name: bob login
+        run: bob auth init --token ${{ secrets.BOB_TOKEN }}
+
       - name: Install nix derivations
         run: bob install
 
       - name: Check 'go mod tidy'
         run: bob build gomodtidy
-          
+
       - name: Lint code
         run: bob build lint
 
       - name: Build
-        run: bob build
+        run: bob build --push
 
       - name: Set Git author name and email address
         run: git config --global user.name "builder" && git config --global user.email "builder@bob.build"
 
       - name: Run tests
         run: bob build test
+
+      - name: Check flake
+        run: nix build

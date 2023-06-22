@@ -36,7 +36,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 		})
 
 		It("clean artifacts & buildinfo", func() {
-			err := b.CleanLocalStore()
+			err := b.Clean()
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -44,7 +44,7 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 		It("should rebuild, update the target and write the artifact", func() {
 			state, err := buildTask(b, "build")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCompleted))
 
 			exists, err := artifactExists(artifactID)
 			Expect(err).NotTo(HaveOccurred())
@@ -104,7 +104,8 @@ var _ = Describe("Test artifact and target lifecycle without existing buildinfo"
 var _ = Describe("Test artifact and target lifecycle for docker images without existing buildinfo", func() {
 	Context("in a fresh playground", func() {
 
-		mobyClient := dockermobyutil.NewRegistryClient()
+		mobyClient, err := dockermobyutil.NewRegistryClient()
+		Expect(err).NotTo(HaveOccurred())
 
 		It("should initialize bob playground", func() {
 			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
@@ -125,7 +126,7 @@ var _ = Describe("Test artifact and target lifecycle for docker images without e
 		})
 
 		It("clean artifacts & buildinfo", func() {
-			err := b.CleanLocalStore()
+			err := b.Clean()
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -133,7 +134,7 @@ var _ = Describe("Test artifact and target lifecycle for docker images without e
 		It("should rebuild, update the target and write the artifact", func() {
 			state, err := buildTask(b, bob.BuildTargetDockerImageName)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(state.State()).To(Equal(playbook.StateNoRebuildRequired))
+			Expect(state.State()).To(Equal(playbook.StateCompleted))
 
 			exists, err := artifactExists(artifactID)
 			Expect(err).NotTo(HaveOccurred())

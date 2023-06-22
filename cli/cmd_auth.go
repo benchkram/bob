@@ -46,11 +46,19 @@ Example:
 		}
 
 		if token == "" {
-			boblog.Log.UserError(fmt.Errorf("token missing "))
+			boblog.Log.UserError(fmt.Errorf("token missing"))
 			return
 		}
 
 		err = runAuthContextCreate(name, token)
+		if errors.As(err, &usererror.Err) {
+			boblog.Log.UserError(err)
+			return
+		} else {
+			errz.Fatal(err)
+		}
+
+		err = runAuthContextSwitch(name)
 		if errors.As(err, &usererror.Err) {
 			boblog.Log.UserError(err)
 		} else {
@@ -123,6 +131,14 @@ Example:
 			errz.Fatal(err)
 		}
 	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		contextNames, err := getAuthContextNames()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+
+		return contextNames, cobra.ShellCompDirectiveDefault
+	},
 }
 
 var AuthContextSwitchCmd = &cobra.Command{
@@ -153,6 +169,33 @@ Example:
 			errz.Fatal(err)
 		}
 	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		contextNames, err := getAuthContextNames()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+
+		return contextNames, cobra.ShellCompDirectiveDefault
+	},
+}
+
+func getAuthContextNames() ([]string, error) {
+	b, err := bob.Bob()
+	if err != nil {
+		return nil, err
+	}
+	authContexts, err := b.AuthContexts()
+	errz.Fatal(err)
+
+	if len(authContexts) == 0 {
+		return nil, nil
+	}
+
+	var names []string
+	for _, v := range authContexts {
+		names = append(names, v.Name)
+	}
+	return names, nil
 }
 
 var AuthContextListCmd = &cobra.Command{

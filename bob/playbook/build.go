@@ -4,257 +4,126 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"sort"
 	"time"
 
-	"github.com/benchkram/bob/bobtask"
+	"github.com/benchkram/bob/bobtask/hash"
 	"github.com/benchkram/bob/pkg/boblog"
-	"github.com/benchkram/errz"
-	"github.com/logrusorgru/aurora"
+	"github.com/benchkram/bob/pkg/usererror"
 )
-
-var colorPool = []aurora.Color{
-	1,
-	aurora.BlueFg,
-	aurora.GreenFg,
-	aurora.CyanFg,
-	aurora.MagentaFg,
-	aurora.YellowFg,
-	aurora.RedFg,
-}
-var round = 10 * time.Millisecond
 
 // Build the playbook starting at root.
 func (p *Playbook) Build(ctx context.Context) (err error) {
-	done := make(chan error)
 
-	{
-		tasks := []string{}
-		for _, t := range p.Tasks {
-			tasks = append(tasks, t.Name())
-		}
-		sort.Strings(tasks)
-
-		// Adjust padding of first column based on the taskname length.
-		// Also assign fixed color to the tasks.
-		p.namePad = 0
-		for i, name := range tasks {
-			if len(name) > p.namePad {
-				p.namePad = len(name)
-			}
-
-			color := colorPool[i%len(colorPool)]
-			p.Tasks[name].Task.SetColor(color)
-		}
-		p.namePad += 14
-
-		dependencies := len(tasks) - 1
-		rootName := p.Tasks[p.root].ColoredName()
-		boblog.Log.V(1).Info(fmt.Sprintf("Running task %s with %d dependencies", rootName, dependencies))
+	if p.start.IsZero() {
+		p.start = time.Now()
 	}
 
-	processedTasks := []*bobtask.Task{}
+	// Setup worker pool and queue.
+	workers := p.maxParallel
+	boblog.Log.Info(fmt.Sprintf("Using %d workers", workers))
 
+	p.pickTaskColors()
+
+	wm := p.startWorkers(ctx, workers)
+
+	// listen for idle workers
 	go func() {
-		// TODO: Run a worker pool so that multiple tasks can run in parallel.
+		// A buffer for workers which have
+		// no workload assigned.
+		workerBuffer := []int{}
 
-		c := p.TaskChannel()
-		for t := range c {
-			// copy for processing
-			task := t
-			processedTasks = append(processedTasks, &task)
+		for workerID := range wm.idleChan {
 
-			err := p.build(ctx, &task)
+			task, err := p.Next()
 			if err != nil {
-				done <- err
+
+				if errors.Is(err, ErrDone) {
+					wm.stopWorkers()
+					// exit
+					break
+				}
+
+				wm.addError(fmt.Errorf("worker-availability-queue: unexpected error comming from Next(): %w", err))
+				wm.stopWorkers()
 				break
 			}
+
+			// Push workload to the worker or store the worker for later.
+			if task != nil {
+				// Send workload to worker
+				wm.workloadQueues[workerID] <- task
+
+				// There might be more workload left.
+				// Reqeuing a worker from the buffer.
+				if len(workerBuffer) > 0 {
+					wID := workerBuffer[len(workerBuffer)-1]
+					workerBuffer = workerBuffer[:len(workerBuffer)-1]
+
+					// requeue a buffered worker
+					wm.idleChan <- wID
+				}
+			} else {
+
+				// No task yet ready to be worked on but the playbook is not done yet.
+				// Therfore the worker is stored in a buffer and is requeued on
+				// the next change to the playbook.
+				workerBuffer = append(workerBuffer, workerID)
+			}
 		}
 
-		close(done)
+		// to assure even idling workers will be shutdown.
+		wm.closeWorkloadQueues()
 	}()
 
-	err = p.Play()
-	errz.Fatal(err)
+	wm.workerWG.Wait()
 
-	err = <-done
-	if err != nil {
-		p.Done()
-	}
-	errz.Fatal(err)
-
-	// iterate through tasks and log
+	// iterate through tasks and logs
 	// skipped input files.
 	var skippedInputs int
-	for _, task := range processedTasks {
+	for _, t := range wm.processed {
 		skippedInputs = logSkippedInputs(
 			skippedInputs,
-			task.ColoredName(),
-			task.LogSkippedInput(),
+			t.ColoredName(),
+			t.LogSkippedInput(),
 		)
 	}
 
-	// summary
-	boblog.Log.V(1).Info("")
-	boblog.Log.V(1).Info(aurora.Bold("● ● ● ●").BrightGreen().String())
-	t := fmt.Sprintf("Ran %d tasks in %s ", len(processedTasks), p.ExecutionTime().Round(round))
-	boblog.Log.V(1).Info(aurora.Bold(t).BrightGreen().String())
-	for _, t := range processedTasks {
-		stat, err := p.TaskStatus(t.Name())
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+	p.summary(wm.processed)
 
-		execTime := ""
-		status := stat.State()
-		if status != StateNoRebuildRequired {
-			execTime = fmt.Sprintf("\t(%s)", stat.ExecutionTime().Round(round))
-		}
-
-		taskName := t.Name()
-		boblog.Log.V(1).Info(fmt.Sprintf("  %-*s\t%s%s", p.namePad, taskName, status.Summary(), execTime))
-	}
-	boblog.Log.V(1).Info("")
-
-	return err
-}
-
-// didWriteBuildOutput assures that a new line is added
-// before writing state or logs of a task to stdout.
-var didWriteBuildOutput bool
-
-// build a single task and update the playbook state after completion.
-func (p *Playbook) build(ctx context.Context, task *bobtask.Task) (err error) {
-	defer errz.Recover(&err)
-
-	var taskSuccessFul bool
-	var taskErr error
-	defer func() {
-		if !taskSuccessFul {
-			errr := p.TaskFailed(task.Name(), taskErr)
-			if errr != nil {
-				boblog.Log.Error(errr, "Setting the task state to failed, failed.")
-			}
-		}
-	}()
-
-	coloredName := task.ColoredName()
-
-	done := make(chan struct{})
-	defer close(done)
-
-	go func() {
-		select {
-		case <-done:
-		case <-ctx.Done():
-			if errors.Is(ctx.Err(), context.Canceled) {
-				boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, StateCanceled))
-				_ = p.TaskCanceled(task.Name())
-			}
-		}
-	}()
-
-	hashIn, err := task.HashIn()
-	if err != nil {
-		return err
+	if len(wm.errors) > 0 {
+		// Pass only the very first processing error.
+		return wm.errors[0]
 	}
 
-	rebuildRequired, rebuildCause, err := p.TaskNeedsRebuild(task.Name(), hashIn)
-	errz.Fatal(err)
-
-	// task might need a rebuild due to a input change.
-	// but could still be possible to load the targets from the artifact store.
-	// If a task needs a rebuild due to a dependency change => rebuild.
-	if rebuildRequired && rebuildCause != DependencyChanged && rebuildCause != TaskForcedRebuild {
-		success, err := task.ArtifactUnpack(hashIn)
-		errz.Fatal(err)
-		if success {
-			rebuildRequired = false
-		}
-	}
-
-	if !rebuildRequired {
-		status := StateNoRebuildRequired
-		boblog.Log.V(2).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, status.Short()))
-		taskSuccessFul = true
-		return p.TaskNoRebuildRequired(task.Name())
-	}
-
-	if !didWriteBuildOutput {
-		boblog.Log.V(1).Info("")
-		didWriteBuildOutput = true
-	}
-	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\trunning task...", p.namePad, coloredName))
-
-	err = task.Clean()
-	errz.Fatal(err)
-
-	err = task.Run(ctx, p.namePad)
-	if err != nil {
-		taskSuccessFul = false
-		taskErr = err
-	}
-	errz.Fatal(err)
-
-	taskSuccessFul = true
-
-	err = task.VerifyAfter()
-	errz.Fatal(err)
-
-	target, err := task.Target()
-	if err != nil {
-		errz.Fatal(err)
-	}
-
-	// Check targets are created correctly.
-	// On success the target hash is computed
-	// inside TaskCompleted().
-	if target != nil {
-		if !target.Exists() {
-			boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s\t(invalid targets)", p.namePad, coloredName, StateFailed))
-			err = p.TaskFailed(task.Name(), fmt.Errorf("targets not created"))
+	// sync any newly generated artifacts with the remote store
+	if p.enablePush {
+		for taskName, artifact := range p.inputHashes(true) {
+			err = p.pushArtifact(ctx, artifact, taskName)
 			if err != nil {
-				if errors.Is(err, ErrFailed) {
-					return err
-				}
+				return usererror.Wrap(err)
 			}
 		}
 	}
-
-	err = p.TaskCompleted(task.Name())
-	errz.Fatal(err)
-
-	taskStatus, err := p.TaskStatus(task.Name())
-	errz.Fatal(err)
-
-	state := taskStatus.State()
-	boblog.Log.V(1).Info(fmt.Sprintf("%-*s\t%s", p.namePad, coloredName, "..."+state.Short()))
 
 	return nil
 }
 
-const maxSkippedInputs = 5
+// inputHashes returns and array of input hashes of the playbook,
+// optionally filters tasks without targets.
+func (p *Playbook) inputHashes(filterTarget bool) map[string]hash.In {
+	artifactIds := make(map[string]hash.In)
 
-// logSkippedInputs until max is reached
-func logSkippedInputs(count int, taskname string, skippedInputs []string) int {
-	if len(skippedInputs) == 0 {
-		return count
-	}
-	if count >= maxSkippedInputs {
-		return maxSkippedInputs
-	}
-
-	for _, f := range skippedInputs {
-		count = count + 1
-		boblog.Log.V(1).Info(fmt.Sprintf("skipped %s '%s' %s", taskname, f, os.ErrPermission))
-
-		if count >= maxSkippedInputs {
-			boblog.Log.V(1).Info(fmt.Sprintf("skipped %s %s", taskname, "& more..."))
-			break
+	for _, t := range p.TasksOptimized {
+		if filterTarget && !t.TargetExists() {
+			continue
 		}
-	}
 
-	return count
+		h, err := t.HashIn()
+		if err != nil {
+			continue
+		}
+
+		artifactIds[t.Name()] = h
+	}
+	return artifactIds
 }

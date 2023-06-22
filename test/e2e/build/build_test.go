@@ -7,6 +7,7 @@ import (
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/errz"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -24,6 +25,7 @@ var _ = Describe("Test bob build", func() {
 
 			err := b.Build(ctx, "slow")
 			Expect(err).NotTo(BeNil())
+			errz.Log(err)
 			Expect(errors.Is(err, context.Canceled)).To(BeTrue())
 
 			Expect(file.Exists("slowdone")).To(BeFalse(), "slowdone file shouldn't exist")
@@ -49,15 +51,11 @@ var _ = Describe("Test bob build", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			task := pb.Tasks[targetTask]
-			hashIn, err := task.HashIn()
+			rebuild, err := pb.TaskNeedsRebuild(task.TaskID)
 			Expect(err).NotTo(HaveOccurred())
 
-			rebuildRequired, rebuildCause, err := pb.TaskNeedsRebuild(task.Name(), hashIn)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(rebuildRequired).To(BeTrue())
-			Expect(rebuildCause).To(Equal(playbook.TaskForcedRebuild))
-
+			Expect(rebuild.IsRequired).To(BeTrue())
+			Expect(rebuild.Cause).To(Equal(playbook.TaskForcedRebuild))
 		})
 	})
 })

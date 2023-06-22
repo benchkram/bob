@@ -7,19 +7,20 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/benchkram/errz"
-	"github.com/hashicorp/go-version"
-	"github.com/logrusorgru/aurora"
+	"github.com/benchkram/bob/pkg/dockermobyutil"
 
 	"github.com/benchkram/bob/bob/bobfile"
 	"github.com/benchkram/bob/bob/bobfile/project"
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobtask"
 	"github.com/benchkram/bob/pkg/auth"
-	"github.com/benchkram/bob/pkg/boberror"
 	"github.com/benchkram/bob/pkg/boblog"
+	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/bob/pkg/usererror"
+	"github.com/benchkram/errz"
+	"github.com/hashicorp/go-version"
+	"github.com/logrusorgru/aurora"
 )
 
 var (
@@ -58,8 +59,10 @@ func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, e
 		}
 	}
 
-	wd, _ := os.Getwd()
-	aggregate, err = bobfile.BobfileReadPlain(wd)
+	// Passing "." instead of the absPath so the
+	// tasks can be initialized with the relativve path.
+	// The absolut path is only stored in `aggregate.Project`.
+	aggregate, err = bobfile.BobfileReadPlain(".")
 	errz.Fatal(err)
 
 	if !file.Exists(global.BobFileName) {
@@ -73,13 +76,21 @@ func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, e
 	bobs, err := readImports(aggregate, true)
 	errz.Fatal(err)
 
+	if aggregate.Project == "" {
+		// TODO: maybe don't leak absolute path of environment
+
+		wd, _ := os.Getwd()
+		aggregate.Project = wd
+	}
+
 	// set project names for all bobfiles and build tasks
 	aggregate, bobs = syncProjectName(aggregate, bobs)
 
 	aggregate.SetBobfiles(bobs)
 
 	// Merge tasks into one Bobfile
-	aggregate = b.addBuildTasksToAggregate(aggregate, bobs)
+	aggregate, err = b.addBuildTasksToAggregate(aggregate, bobs, nil)
+	errz.Fatal(err)
 
 	if addRunTasks {
 		aggregate = b.addRunTasksToAggregate(aggregate, bobs)
@@ -93,8 +104,10 @@ func (b *B) AggregateSparse(omitRunTasks ...bool) (aggregate *bobfile.Bobfile, e
 func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	defer errz.Recover(&err)
 
-	wd, _ := os.Getwd()
-	aggregate, err = bobfile.BobfileRead(wd)
+	// Passing "." instead of the absPath so the
+	// tasks can be initialized with the relative path.
+	// The absolute path is only stored in `aggregate.Project`.
+	aggregate, err = bobfile.BobfileRead(".")
 	errz.Fatal(err)
 
 	if !file.Exists(global.BobFileName) {
@@ -105,45 +118,29 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		return nil, usererror.Wrap(ErrCouldNotFindTopLevelBobfile)
 	}
 
+	// FIXME: Implement more generaly to work on all levels.
+	decorations, err := collectDecorations(aggregate)
+	errz.Fatal(err)
+
 	bobs, err := readImports(aggregate, false)
 	errz.Fatal(err)
 
-	// FIXME: As we don't refer to a child task by projectname but by path
-	// it seems to be save to allow duplicate projectnames.
-	// projectNames := map[string]bool{}
-
 	for _, boblet := range append(bobs, aggregate) {
+		for key, task := range boblet.BTasks {
+			task.SetEnv(envutil.Merge(boblet.Vars(), b.env))
+			boblet.BTasks[key] = task
+		}
 
-		// FIXME: As we don't refer to a child task by projectname but by path
-		// it seems to be save to allow duplicate projectnames.
-		//
-		// Make sure project names are unique
-		// if boblet.Project != "" {
-		// 	if ok := projectNames[boblet.Project]; ok {
-		// 		return nil, usererror.Wrap(fmt.Errorf("%w found, [%s]", ErrDuplicateProjectName, boblet.Project))
-		// 	}
-		// 	projectNames[boblet.Project] = true
-		// }
-
-		// add env vars and build tasks
-		for variable, value := range boblet.Variables {
-			for key, task := range boblet.BTasks {
-				// TODO: Create and use envvar sanitizer
-
-				task.AddEnvironment(strings.ToUpper(variable), value)
-
-				boblet.BTasks[key] = task
-			}
+		for key, task := range boblet.RTasks {
+			task.SetEnv(envutil.Merge(boblet.Vars(), b.env))
+			boblet.RTasks[key] = task
 		}
 	}
 
-	// FIXME: As we don't refer to a child task by projectname but by path
-	// it seems to be save to allow duplicate projectnames.
-	// projectNames := map[string]bool{}
-
 	if aggregate.Project == "" {
 		// TODO: maybe don't leak absolute path of environment
-		aggregate.Project = aggregate.Dir()
+		wd, _ := os.Getwd()
+		aggregate.Project = wd
 	}
 
 	// set project names for all bobfiles and build tasks
@@ -152,59 +149,16 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 	aggregate.SetBobfiles(bobs)
 
 	// Merge tasks into one Bobfile
-	aggregate = b.addBuildTasksToAggregate(aggregate, bobs)
+	aggregate, err = b.addBuildTasksToAggregate(aggregate, bobs, decorations)
+	errz.Fatal(err)
 
 	// Merge runs into one Bobfile
 	aggregate = b.addRunTasksToAggregate(aggregate, bobs)
 
-	// TODO: Gather missing tasks from remote  & Unpack?
-
-	// Gather environment from dependent tasks.
-	//
-	// Each export is translated into environment variables named:
-	//   `second-level/openapi => SECOND_LEVEL_OPENAPI`
-	// hyphens`-` are translated to underscores`_`.
-	//
-	// The file is prefixed with all paths to make it relative to dir of the the top Bobfile:
-	//   `openapi.yaml => sencond-level/openapi.yaml`
-	//
-	// TODO: Exports should be part of a packed file and should be evaluated when running a playbook or at least after Unpack().
-	// Looks like this is the wrong place to presume that all child tasks are comming from child bobfiles
-	// must exist.
-	for i, task := range aggregate.BTasks {
-		for _, dependentTaskName := range task.DependsOn {
-
-			dependentTask, ok := aggregate.BTasks[dependentTaskName]
-			if !ok {
-				return nil, usererror.Wrap(boberror.ErrTaskDoesNotExistF(dependentTaskName))
-			}
-
-			for exportname, export := range dependentTask.Exports {
-				// fmt.Printf("Task %s exports %s\n", dependentTaskName, export)
-
-				envvar := taskNameToEnvironment(dependentTaskName, exportname)
-
-				value := filepath.Join(dependentTask.Dir(), string(export))
-
-				// Make the path relative to the aggregates dir.
-				dir := aggregate.Dir()
-				if !strings.HasSuffix(dir, "/") {
-					dir = dir + "/"
-				}
-				value = strings.TrimPrefix(value, dir)
-
-				// println(envvar, value)
-
-				task.AddEnvironment(envvar, value)
-
-				aggregate.BTasks[i] = task
-			}
-		}
-	}
-
 	// Assure tasks are correctly initialised.
 	for i, task := range aggregate.BTasks {
 		task.WithLocalstore(b.local)
+		task.WithEnvStore(b.nix.EnvStore())
 		task.WithBuildinfoStore(b.buildInfoStore)
 
 		// a task must always-rebuild when caching is disabled
@@ -266,34 +220,71 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 		aggregate.Project = aggregate.Dir()
 	}
 
+	var dockerRegistryClientInitialized bool
+
+	// Assure tasks are correctly initialised with a docker registry client.
+	// Only one registry client must be created and shared between tasks,
+	// this reduces the pressure on garbage collection for big repos.
+	for i, task := range aggregate.BTasks {
+		target, err := task.Target()
+		errz.Fatal(err)
+
+		if target != nil && len(target.DockerImages()) > 0 {
+			if !dockerRegistryClientInitialized {
+				b.dockerRegistryClient, err = dockermobyutil.NewRegistryClient()
+				if errors.Is(err, dockermobyutil.ErrConnectionFailed) {
+					errz.Fatal(usererror.Wrapm(err, fmt.Sprintf("task `%s` exports an image, but docker is not reachable", task.Name())))
+				}
+				errz.Fatal(err)
+
+				dockerRegistryClientInitialized = true
+			}
+
+			task.WithDockerRegistryClient(b.dockerRegistryClient)
+			// modify index on map since tasks are passed by value
+			aggregate.BTasks[i] = task
+		}
+	}
+
 	for _, sync := range aggregate.SyncCollections {
 		err = sync.Validate(aggregate.Dir())
 		errz.Fatal(err)
 	}
+
+	err = aggregate.Verify()
+	errz.Fatal(err)
+
+	err = aggregate.BTasks.IgnoreChildTargets(aggregate.Dir())
+	errz.Fatal(err)
+
+	// Filter input must run before any work is done.
+	err = aggregate.BTasks.FilterInputs()
+	errz.Fatal(err)
 
 	return aggregate, aggregate.Verify()
 }
 
 func addTaskPrefix(prefix, taskname string) string {
 	taskname = filepath.Join(prefix, taskname)
-	taskname = strings.TrimPrefix(taskname, "/")
+	taskname = strings.TrimPrefix(taskname, string(bobtask.TaskPathSeparator))
 	return taskname
 }
 
-// taskNameToEnvironment
-//
-// Each taskname is translated into environment variables like:
-//   `second-level/openapi_exportname => SECOND_LEVEL_OPENAPI_EXPORTNAME`
-// Hyphens`-` are translated to underscores`_`.
-func taskNameToEnvironment(taskname string, exportname string) string {
+// collectDecorations returns a mapping of taskname to child tasks
+// for valid decorations.
+// An err is returned if attempting to collect an invalid decoration
+func collectDecorations(ag *bobfile.Bobfile) (_ map[string][]string, err error) {
+	defer errz.Recover(&err)
 
-	splits := strings.Split(taskname, "/")
-	splits = append(splits, exportname)
-
-	envvar := strings.Join(splits, "_")
-	envvar = strings.ReplaceAll(envvar, "-", "_")
-	envvar = strings.ReplaceAll(envvar, ".", "_")
-	envvar = strings.ToUpper(envvar)
-
-	return envvar
+	decorations := make(map[string][]string)
+	for k, task := range ag.BTasks {
+		if !task.IsDecoration() {
+			continue
+		}
+		if !task.IsValidDecoration() {
+			errz.Fatal(usererror.Wrap(fmt.Errorf("task `%s` modifies an imported task. It can only contain a `dependsOn` property", k)))
+		}
+		decorations[k] = task.DependsOn
+	}
+	return decorations, nil
 }

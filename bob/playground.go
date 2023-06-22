@@ -3,7 +3,6 @@ package bob
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +13,6 @@ import (
 	"github.com/benchkram/bob/bob/global"
 	"github.com/benchkram/bob/bobrun"
 	"github.com/benchkram/bob/bobtask"
-	"github.com/benchkram/bob/bobtask/export"
 	"github.com/benchkram/bob/pkg/cmdutil"
 	"github.com/benchkram/bob/pkg/file"
 )
@@ -125,19 +123,19 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	errz.Fatal(err)
 
 	// first level
-	err = ioutil.WriteFile("go.mod", gomod, 0644)
+	err = os.WriteFile("go.mod", gomod, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("main1.go", maingo(1), 0644)
+	err = os.WriteFile("main1.go", maingo(1), 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("openapi.yaml", openapi, 0644)
+	err = os.WriteFile("openapi.yaml", openapi, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("docker-compose.yml", dockercompose, 0644)
+	err = os.WriteFile("docker-compose.yml", dockercompose, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("docker-compose.whoami.yml", dockercomposewhoami, 0644)
+	err = os.WriteFile("docker-compose.whoami.yml", dockercomposewhoami, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("Dockerfile", dockerfileAlpine, 0644)
+	err = os.WriteFile("Dockerfile", dockerfileAlpine, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile("Dockerfile.plus", dockerfileAlpinePlus, 0644)
+	err = os.WriteFile("Dockerfile.plus", dockerfileAlpinePlus, 0644)
 	errz.Fatal(err)
 
 	err = createPlaygroundBobfile(".", true, opts.ProjectName)
@@ -152,7 +150,7 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	}
 
 	// Create Git repo
-	err = ioutil.WriteFile(filepath.Join(b.dir, ".gitignore"), []byte(
+	err = os.WriteFile(filepath.Join(b.dir, ".gitignore"), []byte(
 		""+
 			SecondLevelDir+"\n"+
 			SecondLevelOpenapiProviderDir+"\n",
@@ -168,9 +166,9 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	// second level
 	err = os.MkdirAll(SecondLevelDir, 0755)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(SecondLevelDir, "go.mod"), gomod, 0644)
+	err = os.WriteFile(filepath.Join(SecondLevelDir, "go.mod"), gomod, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(SecondLevelDir, "main2.go"), maingo(2), 0644)
+	err = os.WriteFile(filepath.Join(SecondLevelDir, "main2.go"), maingo(2), 0644)
 	errz.Fatal(err)
 
 	b = newBob()
@@ -185,11 +183,11 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	err = createPlaygroundBobfileSecondLevel(b.dir, true, opts.ProjectNameSecondLevel)
 	errz.Fatal(err)
 
-	err = ioutil.WriteFile(filepath.Join(SecondLevelDir, "openapi.yaml"), openapiSecondLevel, 0644)
+	err = os.WriteFile(filepath.Join(SecondLevelDir, "openapi.yaml"), openapiSecondLevel, 0644)
 	errz.Fatal(err)
 
 	// Create Git repo
-	err = ioutil.WriteFile(filepath.Join(b.dir, ".gitignore"), []byte(
+	err = os.WriteFile(filepath.Join(b.dir, ".gitignore"), []byte(
 		""+
 			ThirdLevelDir+"\n",
 	), 0644)
@@ -204,11 +202,9 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	// second level - openapi-provider
 	err = os.MkdirAll(SecondLevelOpenapiProviderDir, 0755)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(SecondLevelOpenapiProviderDir, "openapi.yaml"), openapi, 0644)
+	err = os.WriteFile(filepath.Join(SecondLevelOpenapiProviderDir, "openapi.yaml"), openapi, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(SecondLevelOpenapiProviderDir, "openapi2.yaml"), openapi, 0644)
-	errz.Fatal(err)
-	err = createPlaygroundBobfileSecondLevelOpenapiProvider(SecondLevelOpenapiProviderDir, true)
+	err = os.WriteFile(filepath.Join(SecondLevelOpenapiProviderDir, "openapi2.yaml"), openapi, 0644)
 	errz.Fatal(err)
 
 	// Create Git repo
@@ -223,9 +219,9 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	thirdDir := filepath.Join(SecondLevelDir, ThirdLevelDir)
 	err = os.MkdirAll(thirdDir, 0755)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(thirdDir, "go.mod"), gomod, 0644)
+	err = os.WriteFile(filepath.Join(thirdDir, "go.mod"), gomod, 0644)
 	errz.Fatal(err)
-	err = ioutil.WriteFile(filepath.Join(thirdDir, "main3.go"), maingo(3), 0644)
+	err = os.WriteFile(filepath.Join(thirdDir, "main3.go"), maingo(3), 0644)
 	errz.Fatal(err)
 
 	b3 := newBob()
@@ -240,7 +236,7 @@ func CreatePlayground(opts PlaygroundOptions) error {
 	err = createPlaygroundBobfileThirdLevel(b3.dir, true, opts.ProjectNameThirdLevel)
 	errz.Fatal(err)
 
-	err = ioutil.WriteFile(filepath.Join(thirdDir, "openapi.yaml"), openapiSecondLevel, 0644)
+	err = os.WriteFile(filepath.Join(thirdDir, "openapi.yaml"), openapiSecondLevel, 0644)
 	errz.Fatal(err)
 
 	// Create Git repo
@@ -255,7 +251,7 @@ func CreatePlayground(opts PlaygroundOptions) error {
 }
 
 func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (err error) {
-	// Prevent accidential bobfile override
+	// Prevent accidental bobfile override
 	if file.Exists(global.BobFileName) && !overwrite {
 		return bobfile.ErrBobfileExists
 	}
@@ -265,16 +261,15 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 	bobfile.Project = projectName
 
 	bobfile.Imports = []string{
-		"second-level",
-		"openapi-provider-project",
+		SecondLevelDir,
 	}
 
 	bobfile.Variables["helloworld"] = "Hello World!"
 
 	bobfile.BTasks[global.DefaultBuildTask] = bobtask.Task{
 		InputDirty:   "./main1.go" + "\n" + "go.mod",
-		CmdDirty:     "go build -o run",
-		TargetDirty:  "run",
+		CmdDirty:     "go build -o run-build",
+		TargetDirty:  "run-build",
 		RebuildDirty: string(bobtask.RebuildOnChange),
 	}
 
@@ -291,27 +286,9 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 
 	bobfile.BTasks[BuildAlwaysTargetName] = bobtask.Task{
 		InputDirty:   "./main1.go" + "\n" + "go.mod",
-		CmdDirty:     "go build -o run",
-		TargetDirty:  "run",
+		CmdDirty:     "go build -o run-always",
+		TargetDirty:  "run-always",
 		RebuildDirty: string(bobtask.RebuildAlways),
-	}
-
-	bobfile.BTasks["generate"] = bobtask.Task{
-		InputDirty: "openapi.yaml",
-		CmdDirty: strings.Join([]string{
-			"mkdir -p rest-server/generated",
-			"oapi-codegen -package generated -generate server \\\n\t${OPENAPI_PROVIDER_PROJECT_OPENAPI_OPENAPI} \\\n\t\t> rest-server/generated/server.gen.go",
-			"oapi-codegen -package generated -generate types \\\n\t${OPENAPI_PROVIDER_PROJECT_OPENAPI_OPENAPI} \\\n\t\t> rest-server/generated/types.gen.go",
-			"oapi-codegen -package generated -generate client \\\n\t${OPENAPI_PROVIDER_PROJECT_OPENAPI_OPENAPI} \\\n\t\t> rest-server/generated/client.gen.go",
-		}, "\n"),
-		DependsOn: []string{
-			filepath.Join(SecondLevelOpenapiProviderDir, "openapi"),
-		},
-		TargetDirty: strings.Join([]string{
-			"rest-server/generated/server.gen.go",
-			"rest-server/generated/types.gen.go",
-			"rest-server/generated/client.gen.go",
-		}, "\n"),
 	}
 
 	bobfile.BTasks["slow"] = bobtask.Task{
@@ -394,6 +371,10 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 		TargetDirty: ".bbuild/dirone/",
 	}
 
+	bobfile.BTasks[SecondLevelDir+"/build2"] = bobtask.Task{
+		DependsOn: []string{"print"},
+	}
+
 	m := make(map[string]interface{})
 	m["image"] = BuildTargetBobTestImage
 	bobfile.BTasks[BuildTargetDockerImageName] = bobtask.Task{
@@ -412,23 +393,9 @@ func createPlaygroundBobfile(dir string, overwrite bool, projectName string) (er
 		TargetDirty: m,
 	}
 
-	return bobfile.BobfileSave(dir, global.BobFileName)
-}
+	bobfile.Dependencies = []string{"docker", "go_1_18", "git"}
+	bobfile.Nixpkgs = "https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz"
 
-func createPlaygroundBobfileSecondLevelOpenapiProvider(dir string, overwrite bool) (err error) {
-	// Prevent accidential bobfile override
-	if file.Exists(global.BobFileName) && !overwrite {
-		return bobfile.ErrBobfileExists
-	}
-
-	bobfile := bobfile.NewBobfile()
-
-	exports := make(export.Map)
-	exports["openapi"] = "openapi.yaml"
-	exports["openapi2"] = "openapi2.yaml"
-	bobfile.BTasks["openapi"] = bobtask.Task{
-		Exports: exports,
-	}
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
@@ -452,6 +419,10 @@ func createPlaygroundBobfileSecondLevel(dir string, overwrite bool, projectName 
 		CmdDirty:    "go build -o runsecondlevel",
 		TargetDirty: "runsecondlevel",
 	}
+
+	bobfile.Dependencies = []string{"docker", "go_1_18", "git"}
+	bobfile.Nixpkgs = "https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz"
+
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }
 
@@ -474,6 +445,9 @@ func createPlaygroundBobfileThirdLevel(dir string, overwrite bool, projectName s
 	bobfile.BTasks["print"] = bobtask.Task{
 		CmdDirty: "echo hello-third-level",
 	}
+
+	bobfile.Dependencies = []string{"docker", "go_1_18", "git"}
+	bobfile.Nixpkgs = "https://github.com/NixOS/nixpkgs/archive/eeefd01d4f630fcbab6588fe3e7fffe0690fbb20.tar.gz"
 
 	return bobfile.BobfileSave(dir, global.BobFileName)
 }

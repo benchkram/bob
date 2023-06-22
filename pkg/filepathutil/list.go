@@ -5,8 +5,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/yargevad/filepathx"
+	"github.com/benchkram/bob/pkg/filepathxx"
+	"github.com/logrusorgru/aurora"
 )
 
 // DefaultIgnores
@@ -23,7 +25,9 @@ func ClearListRecursiveCache() {
 	// listRecursiveCache = make(map[string][]string, 1024)
 }
 
-func ListRecursive(inp string, includeDirs bool) (all []string, err error) {
+// ListRecursive lists all files relative to input. It ignores symbolic links
+// which are not inside the projectRoot.
+func ListRecursive(inp string, projectRoot string) (all []string, err error) {
 	// if result, ok := listRecursiveCache[inp]; ok {
 	// 	return result, nil
 	// }
@@ -46,56 +50,69 @@ func ListRecursive(inp string, includeDirs bool) (all []string, err error) {
 	// Then check if the accessed file || dir can be skipped.
 	// Maybe it's even possible to call skipdir on a walk func.
 
+	// symLinkError are gathered here and printed at the end of
+	// the function to stdout.
+	symlinkErrors := []error{}
+
 	// FIXME: possibly ignore here too, before calling listDir
-	if s, err := os.Stat(inp); err != nil || !s.IsDir() {
+	if s, err := os.Lstat(inp); err != nil || !s.IsDir() {
 		// File
+
 		// Use glob for unknowns (wildcard-paths) and existing files (non-dirs)
-		matches, err := filepathx.Glob(inp)
+		matches, err := filepathxx.Glob(inp)
 		if err != nil {
 			return nil, fmt.Errorf("failed to glob %q: %w", inp, err)
 		}
 
 		for _, m := range matches {
-			s, err := os.Stat(m)
+			s, err := os.Lstat(m)
 			if err == nil && !s.IsDir() {
+				isValid, err := isValidFile(m, s, projectRoot)
+				if err != nil {
+					symlinkErrors = append(symlinkErrors, err)
+				}
+
+				if !isValid {
+					continue
+				}
 
 				// Existing file
 				all = append(all, m)
 			} else {
 				// Directory
-				files, err := listDir(m)
+				files, symErrors, err := listDir(m, projectRoot)
 				if err != nil {
 					return nil, fmt.Errorf("failed to list dir: %w", err)
 				}
-				if includeDirs {
-					all = append(all, m)
-				}
+				symlinkErrors = append(symlinkErrors, symErrors...)
 				all = append(all, files...)
 			}
 		}
 	} else {
 		// Directory
-		files, err := listDir(inp)
+		files, symErrors, err := listDir(inp, projectRoot)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list dir: %w", err)
 		}
-		if includeDirs {
-			all = append(all, inp)
-		}
+		symlinkErrors = append(symlinkErrors, symErrors...)
 		all = append(all, files...)
+	}
+
+	for i, sErr := range symlinkErrors {
+		fmt.Println(fmt.Sprintf("%s", aurora.Red("Warning: ")) + sErr.Error())
+		if i > 10 {
+			break
+		}
 	}
 
 	// listRecursiveMap[inp] = all
 	return all, nil
 }
 
-var WalkedDirs = map[string]int{}
+func listDir(path string, projectRoot string) (all []string, symlinkErrors []error, _ error) {
 
-func listDir(path string) ([]string, error) {
-	times := WalkedDirs[path]
-	WalkedDirs[path] = times + 1
-
-	var all []string
+	symlinkErrors = []error{}
+	all = []string{}
 	if err := filepath.WalkDir(path, func(p string, fi fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -106,17 +123,63 @@ func listDir(path string) ([]string, error) {
 			return fs.SkipDir
 		}
 
-		// Skip dirs
-		if !fi.IsDir() {
+		// Append file
+		if fi.IsDir() {
+			return nil
+
+		}
+
+		fileInfo, err := fi.Info()
+		if err != nil {
+			return err
+		}
+
+		isValid, err := isValidFile(p, fileInfo, projectRoot)
+		if err != nil {
+			symlinkErrors = append(symlinkErrors, err)
+		}
+
+		if isValid {
 			all = append(all, p)
 		}
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("failed to walk dir %q: %w", path, err)
+		return nil, nil, fmt.Errorf("failed to walk dir %q: %w", path, err)
 	}
 
-	return all, nil
+	return all, symlinkErrors, nil
+}
+
+// isValidFile returns true if a symlink resolves succesfully into a path relative to projectRoot.
+// It also returns true if the file is a regular file or directory.
+//
+// The returned error contains a "failed to follow symlink" hint and should
+// be presented to the user.
+//
+// filepathHint is used to get around the
+func isValidFile(path string, info fs.FileInfo, projectRoot string) (bool, error) {
+	if info.Mode()&os.ModeSymlink != 0 {
+
+		sym, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			return false, fmt.Errorf("failed to follow symlink %q: %w", path, err)
+		}
+
+		if strings.HasPrefix(sym, "/") {
+			return false, fmt.Errorf("symbolic link [%s] points to a location [%s] outside of the project [%s]", path, sym, projectRoot)
+		}
+
+		absSym, err := filepath.Abs(sym)
+		if err != nil {
+			return false, err
+		}
+		if !strings.HasPrefix(absSym, projectRoot) {
+			return false, fmt.Errorf("symbolic link [%s] points to a location [%s] outside of the project [%s]", path, sym, projectRoot)
+		}
+	}
+
+	return true, nil
 }
 
 func ignored(fileName string) bool {

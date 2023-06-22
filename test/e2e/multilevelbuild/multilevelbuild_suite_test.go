@@ -25,7 +25,7 @@ var (
 var _ = BeforeSuite(func() {
 	var err error
 	var storageDir string
-	dir, storageDir, cleanup, err = setup.TestDirs("target")
+	dir, storageDir, cleanup, err = setup.TestDirs("multilevel-build")
 	Expect(err).NotTo(HaveOccurred())
 	artifactDir = filepath.Join(storageDir, global.BobCacheArtifactsDir)
 

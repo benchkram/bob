@@ -35,6 +35,7 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	err := cleanup()
 	Expect(err).NotTo(HaveOccurred())
+
 })
 
 func TestStatus(t *testing.T) {

@@ -1,0 +1,7 @@
+import:
+  - second
+
+build:
+  build:
+    cmd: touch second/hello
+    target: second/hello

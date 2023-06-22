@@ -7,7 +7,6 @@ import (
 	"github.com/benchkram/bob/bob"
 	"github.com/benchkram/bob/bob/playbook"
 	"github.com/benchkram/bob/bobtask"
-	"github.com/benchkram/bob/bobtask/target"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -42,11 +41,10 @@ var _ = Describe("Test artifact creation and extraction", func() {
 		})
 
 		It("inspect artifact", func() {
-			artifact, err := artifactStore.GetArtifact(context.Background(), artifactID)
+			artifact, _, err := artifactStore.GetArtifact(context.Background(), artifactID)
 			Expect(err).NotTo(HaveOccurred())
 			description, err := bobtask.ArtifactInspectFromReader(artifact)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(description.Metadata().TargetType).To(Equal(target.Path))
 
 			println(description)
 		})
@@ -79,7 +77,8 @@ var _ = Describe("Test artifact creation and extraction", func() {
 var _ = Describe("Test artifact creation and extraction from docker targets", func() {
 	Context("in a fresh playground", func() {
 
-		mobyClient := dockermobyutil.NewRegistryClient()
+		mobyClient, err := dockermobyutil.NewRegistryClient()
+		Expect(err).NotTo(HaveOccurred())
 
 		It("should initialize bob playground", func() {
 			Expect(bob.CreatePlayground(bob.PlaygroundOptions{Dir: dir})).NotTo(HaveOccurred())
@@ -123,11 +122,10 @@ var _ = Describe("Test artifact creation and extraction from docker targets", fu
 		})
 
 		It("inspect artifact", func() {
-			artifact, err := artifactStore.GetArtifact(context.Background(), artifactID)
+			artifact, _, err := artifactStore.GetArtifact(context.Background(), artifactID)
 			Expect(err).NotTo(HaveOccurred())
-			description, err := bobtask.ArtifactInspectFromReader(artifact)
+			_, err = bobtask.ArtifactInspectFromReader(artifact)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(description.Metadata().TargetType).To(Equal(target.Docker))
 		})
 
 		It("should remove test image from docker registry", func() {

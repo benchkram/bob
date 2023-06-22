@@ -1,0 +1,7 @@
+build:
+  build:
+    cmd: mkdir hello
+    target: hello
+  another:
+    cmd: mkdir hello
+    target: hello

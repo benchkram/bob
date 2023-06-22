@@ -2,7 +2,6 @@ package nixtest
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,17 +31,12 @@ var _ = BeforeSuite(func() {
 
 	// Initialize mock bob files from local directory
 	bobFiles := []string{
-		"with_use_nix_false",
 		"with_bob_dependencies",
 		"with_task_dependencies",
 		"with_ambiguous_deps_in_root",
 		"with_ambiguous_deps_in_task",
 		"with_second_level",
 		"with_second_level/second_level",
-		"with_second_level_use_nix_false",
-		"with_second_level_use_nix_false/second_level",
-		"with_use_nix_false_in_parent_true_in_child",
-		"with_use_nix_false_in_parent_true_in_child/second_level",
 	}
 	nameToBobfile := make(map[string]*bobfile.Bobfile)
 	for _, name := range bobFiles {
@@ -53,7 +47,7 @@ var _ = BeforeSuite(func() {
 		nameToBobfile[strings.ReplaceAll(name, "/", "_")] = bf
 	}
 
-	testDir, err := ioutil.TempDir("", "bob-test-nix-*")
+	testDir, err := os.MkdirTemp("", "bob-test-nix-*")
 	Expect(err).NotTo(HaveOccurred())
 	dir = testDir
 	err = os.Mkdir(dir+"/second_level", 0700)
@@ -72,11 +66,6 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	err := os.RemoveAll(dir)
 	Expect(err).NotTo(HaveOccurred())
-
-	for _, file := range tmpFiles {
-		err = os.Remove(file)
-		Expect(err).NotTo(HaveOccurred())
-	}
 
 	bob.Version = version
 })

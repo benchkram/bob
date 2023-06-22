@@ -1,89 +1,116 @@
 package target
 
 import (
-	"fmt"
+	"path/filepath"
 
+	"github.com/benchkram/bob/bobtask/buildinfo"
 	"github.com/benchkram/bob/pkg/dockermobyutil"
 )
 
 type Target interface {
-	Hash() (string, error)
-	Verify() bool
-	Exists() bool
+	BuildInfo() (*buildinfo.Targets, error)
 
-	WithHash(string) Target
-	WithDir(string) Target
+	Verify() bool
+	VerifyShallow() VerifyResult
+	Resolve() error
+
+	FilesystemEntries() []string
+	FilesystemEntriesRaw() []string
+	FilesystemEntriesRawPlain() []string
+
+	WithExpected(*buildinfo.Targets)
+	DockerImages() []string
+
+	// AsInvalidFiles returns all FilesystemEntriesRaw as invalid with the specified reason
+	AsInvalidFiles(reason Reason) map[string][]Reason
 }
 
 type T struct {
 	// working dir of target
 	dir string
 
-	// last computed hash of target
-	hash string
+	// expected is the last valid buildinfo of the target used to verify the targets integrity.
+	// Loaded from the system and created on a previous run. Can be nil.
+	expected *buildinfo.Targets
+
+	// current is the currenlty created buildInfo during the run.
+	// current avoids recomputations.
+	// current *buildinfo.Targets
 
 	// dockerRegistryClient utility functions to handle requests with local docker registry
 	dockerRegistryClient dockermobyutil.RegistryClient
 
-	Paths []string   `yaml:"Paths"`
-	Type  TargetType `yaml:"Type"`
+	// dockerImages an array of docker tags
+	dockerImages []string
+	// filesystemEntries is an array of files/directories,
+	// read from the filesystem.
+	// resolve(filesystemEntriesRaw) = filesystemEntriesRaw.
+	//
+	// Usually the first required when IgnoreChildtargets() is called
+	// on aggregate level.
+	filesystemEntries *[]string
+	// filesystemEntriesRaw is an array of files or directories,
+	// as defined by the user.
+	//
+	// Used to verify that targets are created
+	// without verifying against expected buildinfo.
+	filesystemEntriesRaw []string
 }
 
-func Make() T {
-	return T{
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		Paths:                []string{},
-		Type:                 Path,
+func New(opts ...Option) *T {
+	t := &T{}
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+		opt(t)
 	}
+
+	return t
 }
 
-func New() *T {
-	return new()
-}
-
-func new() *T {
-	return &T{
-		dockerRegistryClient: dockermobyutil.NewRegistryClient(),
-		Paths:                []string{},
-		Type:                 Path,
+// FilesystemEntries in relation to the umrella bobfile
+func (t *T) FilesystemEntries() []string {
+	if len(*t.filesystemEntries) == 0 {
+		return []string{}
 	}
+	return *t.filesystemEntries
 }
 
-type TargetType string
-
-const (
-	Path   TargetType = "path"
-	Docker TargetType = "docker"
-)
-
-const DefaultType = Path
-
-func (t *T) clone() *T {
-	target := new()
-	target.dir = t.dir
-	target.Paths = t.Paths
-	target.Type = t.Type
-	return target
-}
-
-func (t *T) WithDir(dir string) Target {
-	target := t.clone()
-	target.dir = dir
-	return target
-}
-func (t *T) WithHash(hash string) Target {
-	target := t.clone()
-	target.hash = hash
-	return target
-}
-
-func ParseType(str string) (TargetType, error) {
-	switch {
-	case str == string(Path):
-		return Path, nil
-	case str == string(Docker):
-		return Docker, nil
-	default:
-		return DefaultType, fmt.Errorf("Invalid Target type. Only supports 'path' and 'docker-image' as type.")
+// FilesystemEntriesRaw returns the filesystem entries
+// relative to the umbrella bobfile.
+func (t *T) FilesystemEntriesRaw() []string {
+	var pathsWithDir []string
+	for _, v := range t.filesystemEntriesRaw {
+		pathsWithDir = append(pathsWithDir, filepath.Join(t.dir, v))
 	}
+
+	return pathsWithDir
+}
+
+func (t *T) FilesystemEntriesRawPlain() []string {
+	return append([]string{}, t.filesystemEntriesRaw...)
+}
+
+func (t *T) WithExpected(expected *buildinfo.Targets) {
+	t.expected = expected
+}
+
+func (t *T) WithDockerRegistryClient(c dockermobyutil.RegistryClient) {
+	t.dockerRegistryClient = c
+}
+
+func (t *T) DockerImages() []string {
+	return append([]string{}, t.dockerImages...)
+}
+
+// AsInvalidFiles returns all FilesystemEntriesRaw as invalid with the specified reason
+func (t *T) AsInvalidFiles(reason Reason) map[string][]Reason {
+	invalidFiles := make(map[string][]Reason)
+
+	for _, v := range t.FilesystemEntries() {
+		invalidFiles[v] = []Reason{reason}
+	}
+	return invalidFiles
 }

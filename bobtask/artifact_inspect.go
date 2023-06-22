@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"strings"
 
 	"github.com/benchkram/bob/bobtask/hash"
@@ -29,7 +28,7 @@ func (t *Task) ArtifactInspect(artifactNames ...hash.In) (ai ArtifactInfo, err e
 		errz.Fatal(err)
 	}
 
-	artifact, err := t.local.GetArtifact(context.TODO(), artifactName.String())
+	artifact, _, err := t.local.GetArtifact(context.TODO(), artifactName.String())
 	if err != nil {
 		_, ok := err.(*fs.PathError)
 		if ok {
@@ -81,10 +80,12 @@ func artifactInspect(archiveReader archiver.Reader) (_ *artifactInfo, err error)
 			return nil, ErrInvalidTarHeaderType
 		}
 
-		if strings.HasPrefix(header.Name, __targets) {
-			info.targets = append(info.targets, header.Name)
+		if strings.HasPrefix(header.Name, __targetsFilesystem) {
+			info.targetsFilesystem = append(info.targetsFilesystem, header.Name)
+		} else if strings.HasPrefix(header.Name, __targetsDocker) {
+			info.targetsDocker = append(info.targetsDocker, header.Name)
 		} else if strings.HasPrefix(header.Name, __metadata) {
-			bin, err := ioutil.ReadAll(archiveFile)
+			bin, err := io.ReadAll(archiveFile)
 			errz.Fatal(err)
 
 			metadata := NewArtifactMetadata()

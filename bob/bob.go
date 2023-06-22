@@ -1,10 +1,12 @@
 package bob
 
 import (
-	"io/ioutil"
 	"os"
+	"runtime"
 
+	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/auth"
+	"github.com/benchkram/bob/pkg/dockermobyutil"
 	"github.com/benchkram/bob/pkg/usererror"
 
 	"github.com/hashicorp/go-version"
@@ -48,11 +50,26 @@ type B struct {
 	// allowInsecure uses http protocol for accessing the remote artifact store, if any
 	allowInsecure bool
 
+	// enablePush enables upload artifacts to remote store
+	enablePush bool
+
+	// enablePull enables the artifacts download from remote store
+	enablePull bool
+
 	// nix builds dependencies for tasks
-	nix *NixBuilder
+	nix *nixbuilder.NB
 
 	// authStore is used to store authentication credentials for remote store
 	authStore *auth.Store
+
+	// env is a list of strings representing the environment in the form "key=value"
+	env []string
+
+	// maxParallel is the maximum number of parallel executed tasks
+	maxParallel int
+
+	// dockerRegistryClient is used to access the local docker registry
+	dockerRegistryClient dockermobyutil.RegistryClient
 }
 
 func newBob(opts ...Option) *B {
@@ -63,6 +80,7 @@ func newBob(opts ...Option) *B {
 		dir:           wd,
 		enableCaching: true,
 		allowInsecure: false,
+		maxParallel:   runtime.NumCPU(),
 	}
 
 	for _, opt := range opts {
@@ -101,6 +119,12 @@ func BobWithBaseStoreDir(baseStoreDir string, opts ...Option) (*B, error) {
 		return nil, err
 	}
 	bob.authStore = authStore
+
+	nixBuilder, err := NixBuilder(baseStoreDir)
+	if err != nil {
+		return nil, err
+	}
+	bob.nix = nixBuilder
 
 	for _, opt := range opts {
 		if opt == nil {
@@ -144,7 +168,7 @@ func Bob(opts ...Option) (*B, error) {
 	}
 
 	if bob.nix == nil {
-		nix, err := DefaultNix()
+		nix, err := DefaultNixBuilder()
 		if err != nil {
 			return nil, err
 		}
@@ -166,6 +190,10 @@ func (b *B) Dir() string {
 	return b.dir
 }
 
+func (b *B) Nix() *nixbuilder.NB {
+	return b.nix
+}
+
 func (b *B) write() (err error) {
 	defer errz.Recover(&err)
 
@@ -173,7 +201,7 @@ func (b *B) write() (err error) {
 	errz.Fatal(err)
 
 	const mode = 0644
-	return ioutil.WriteFile(b.WorkspaceFilePath(), bin, mode)
+	return os.WriteFile(b.WorkspaceFilePath(), bin, mode)
 }
 
 func (b *B) read() (err error) {
@@ -185,7 +213,7 @@ func (b *B) read() (err error) {
 		errz.Fatal(err)
 	}
 
-	bin, err := ioutil.ReadFile(b.WorkspaceFilePath())
+	bin, err := os.ReadFile(b.WorkspaceFilePath())
 	errz.Fatal(err)
 
 	err = yaml.Unmarshal(bin, b)
