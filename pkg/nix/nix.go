@@ -112,7 +112,6 @@ func buildPackage(pkgName string, nixpkgs, padding string) (buildResult, error) 
 	nixExpression := fmt.Sprintf("with import %s { }; [%s]", source(nixpkgs), pkgName)
 	args := []string{"--no-out-link", "-E"}
 	args = append(args, nixExpression)
-
 	cmd := exec.Command("nix-build", args...)
 	boblog.Log.V(5).Info(fmt.Sprintf("Executing command:\n  %s", cmd.String()))
 
@@ -233,7 +232,7 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache, shellCach
 		}
 	}
 	arguments = append(arguments, []string{"--command", "env"}...)
-	arguments = append(arguments, []string{"-E", expression}...)
+	arguments = append(arguments, []string{"--expr", expression}...)
 
 	cmd := exec.Command("nix-shell", "--pure")
 	cmd.Args = append(cmd.Args, arguments...)
@@ -260,7 +259,9 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache, shellCach
 		}
 	} else {
 		err = cmd.Run()
-		return nil, prepareRunError(err, cmd.String(), errBuf)
+		if err != nil {
+			return nil, prepareRunError(err, cmd.String(), errBuf)
+		}
 	}
 
 	env := strings.Split(out.String(), "\n")
