@@ -2,8 +2,11 @@ package nixbuilder
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/envutil"
+	"github.com/benchkram/bob/pkg/file"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
@@ -88,6 +91,28 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 		return usererror.Wrap(fmt.Errorf("nix is not installed on your system. Get it from %s", nix.DownloadURl()))
 	}
 
+	if ag.Shell != "" {
+		boblog.Log.Info(fmt.Sprintf("using shell file %s, ignoring dependencies", ag.Shell))
+		// hash shell file
+		if !file.Exists(ag.Shell) {
+			return usererror.Wrap(fmt.Errorf("shell file %s does not exist", ag.Shell))
+		}
+
+		nixShellEnv, err := nix.NixShell(ag.Shell)
+		errz.Fatal(err)
+
+		f, err := os.ReadFile(ag.Shell)
+		errz.Fatal(err)
+		hash := envutil.Hash(string(f))
+		n.envStore[envutil.Hash(hash)] = nixShellEnv
+		for _, name := range buildTasksInPipeline {
+			t := ag.BTasks[name]
+			t.SetEnvID(envutil.Hash(hash))
+			ag.BTasks[name] = t
+		}
+		return nil
+	}
+
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
 	for _, name := range buildTasksInPipeline {
@@ -153,7 +178,6 @@ func (n *NB) BuildEnvironment(deps []nix.Dependency, nixpkgs string) (_ []string
 	return nix.BuildEnvironment(deps, nixpkgs, n.cache, n.shellCache)
 }
 
-// Clean removes all cached nix dependencies
 func (n *NB) Clean() (err error) {
 	return n.cache.Clean()
 }

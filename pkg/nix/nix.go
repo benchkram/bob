@@ -336,3 +336,43 @@ func HashDependencies(deps []Dependency) (_ string, err error) {
 	}
 	return string(h.Sum()), nil
 }
+
+// NixShell returns the environment of a nix-shell command
+func NixShell(path string) ([]string, error) {
+
+	args := []string{}
+	for _, envKey := range global.EnvWhitelist {
+		if _, exists := os.LookupEnv(envKey); exists {
+			args = append(args, []string{"--keep", envKey}...)
+		}
+	}
+	args = append(args, []string{"--pure", "--command", "env"}...)
+	args = append(args, path)
+	cmd := exec.Command("nix-shell", args...)
+
+	var out bytes.Buffer
+	var errBuf bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &errBuf
+
+	env := strings.Split(out.String(), "\n")
+	err := cmd.Run()
+	if err != nil {
+		return nil, prepareRunError(err, cmd.String(), errBuf)
+	}
+
+	// if NIX_SSL_CERT_FILE && SSL_CERT_FILE are set to /no-cert-file.crt unset them
+	var clearedEnv []string
+	for _, e := range env {
+		pair := strings.SplitN(e, "=", 2)
+		if pair[0] == "NIX_SSL_CERT_FILE" && pair[1] == "/no-cert-file.crt" {
+			continue
+		}
+		if pair[0] == "SSL_CERT_FILE" && pair[1] == "/no-cert-file.crt" {
+			continue
+		}
+		clearedEnv = append(clearedEnv, e)
+	}
+
+	return clearedEnv, nil
+}
