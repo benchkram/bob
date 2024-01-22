@@ -2,11 +2,11 @@ package nixbuilder
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/envutil"
 	"github.com/benchkram/bob/pkg/file"
+	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
@@ -101,9 +101,9 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 		nixShellEnv, err := nix.NixShell(ag.Shell)
 		errz.Fatal(err)
 
-		f, err := os.ReadFile(ag.Shell)
+		hash, err := filehash.Hash(ag.Shell)
 		errz.Fatal(err)
-		hash := envutil.Hash(string(f))
+
 		n.envStore[envutil.Hash(hash)] = nixShellEnv
 		for _, name := range buildTasksInPipeline {
 			t := ag.BTasks[name]

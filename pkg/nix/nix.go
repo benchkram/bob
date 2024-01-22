@@ -349,13 +349,13 @@ func NixShell(path string) ([]string, error) {
 	args = append(args, []string{"--pure", "--command", "env"}...)
 	args = append(args, path)
 	cmd := exec.Command("nix-shell", args...)
+	boblog.Log.V(5).Info(fmt.Sprintf("Executing command:\n  %s", cmd.String()))
 
 	var out bytes.Buffer
 	var errBuf bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &errBuf
 
-	env := strings.Split(out.String(), "\n")
 	err := cmd.Run()
 	if err != nil {
 		return nil, prepareRunError(err, cmd.String(), errBuf)
@@ -363,7 +363,7 @@ func NixShell(path string) ([]string, error) {
 
 	// if NIX_SSL_CERT_FILE && SSL_CERT_FILE are set to /no-cert-file.crt unset them
 	var clearedEnv []string
-	for _, e := range env {
+	for _, e := range strings.Split(out.String(), "\n") {
 		pair := strings.SplitN(e, "=", 2)
 		if pair[0] == "NIX_SSL_CERT_FILE" && pair[1] == "/no-cert-file.crt" {
 			continue
