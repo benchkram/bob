@@ -175,7 +175,7 @@ func isValidFile(path string, info fs.FileInfo, projectRoot string) (bool, error
 		}
 
 		// the symlink itself should not appear in the input list
-		// onlly the resolved path should be added.
+		// only the resolved path should be added.
 		return false, nil
 	}
 
