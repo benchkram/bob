@@ -126,7 +126,6 @@ func listDir(path string, projectRoot string) (all []string, symlinkErrors []err
 		// Append file
 		if fi.IsDir() {
 			return nil
-
 		}
 
 		fileInfo, err := fi.Info()
@@ -156,11 +155,8 @@ func listDir(path string, projectRoot string) (all []string, symlinkErrors []err
 //
 // The returned error contains a "failed to follow symlink" hint and should
 // be presented to the user.
-//
-// filepathHint is used to get around the
 func isValidFile(path string, info fs.FileInfo, projectRoot string) (bool, error) {
 	if info.Mode()&os.ModeSymlink != 0 {
-
 		sym, err := filepath.EvalSymlinks(path)
 		if err != nil {
 			return false, fmt.Errorf("failed to follow symlink %q: %w", path, err)
@@ -177,6 +173,10 @@ func isValidFile(path string, info fs.FileInfo, projectRoot string) (bool, error
 		if !strings.HasPrefix(absSym, projectRoot) {
 			return false, fmt.Errorf("symbolic link [%s] points to a location [%s] outside of the project [%s]", path, sym, projectRoot)
 		}
+
+		// the symlink itself should not appear in the input list
+		// onlly the resolved path should be added.
+		return false, nil
 	}
 
 	return true, nil
