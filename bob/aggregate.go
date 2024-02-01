@@ -193,12 +193,12 @@ func (b *B) Aggregate() (aggregate *bobfile.Bobfile, err error) {
 			return nil, err
 		}
 
-		switch projectName.Type() {
+		switch projectName.Type(b.allowInsecure) {
 		case project.Local:
 			// Do nothing
 		case project.Remote:
 			// Initialize remote store
-			url, err := projectName.Remote()
+			url, err := projectName.Remote(b.allowInsecure)
 			if err != nil {
 				return nil, err
 			}
