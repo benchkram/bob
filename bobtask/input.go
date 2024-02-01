@@ -10,7 +10,11 @@ import (
 	"strings"
 
 	"github.com/benchkram/bob/bob/global"
+	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/filepathutil"
+	"github.com/benchkram/bob/pkg/inputdiscovery"
+	"github.com/benchkram/bob/pkg/inputdiscovery/goinputdiscovery"
+	"github.com/benchkram/bob/pkg/sliceutil"
 	"github.com/benchkram/bob/pkg/usererror"
 	"github.com/benchkram/errz"
 )
@@ -40,7 +44,7 @@ func (t *Task) FilterInputs(wd string) (err error) {
 	return nil
 }
 
-// filteredInputs returns inputs filtered by ignores and file targets.
+// FilteredInputs returns inputs filtered by ignores and file targets.
 // Calls sanitize on the result.
 func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 
@@ -48,6 +52,7 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 	inputDirtyRooted := inputDirty
 	if t.dir != "." {
 		inputDirtyRooted = make([]string, len(inputDirty))
+
 		for i, input := range inputDirty {
 
 			err = t.sanitizeInput(input)
@@ -61,13 +66,43 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 				continue
 			}
 			inputDirtyRooted[i] = filepath.Join(t.dir, input)
+
+			for _, prefix := range []string{goinputdiscovery.Keyword} {
+				if strings.HasPrefix(input, prefix) {
+					inputDirtyRooted[i] = prefix + filepath.Join(t.dir, strings.TrimPrefix(input, prefix))
+					break
+				}
+			}
+		}
+	}
+
+	// Auto input discovery
+	var inputDirtyRootedDiscovered []string
+	for _, input := range inputDirtyRooted {
+		// TODO: collect keywords for auto discovery some place
+		if strings.HasPrefix(input, goinputdiscovery.Keyword+inputdiscovery.KeywordSeparator) {
+			packagePathRel := strings.TrimPrefix(input, goinputdiscovery.Keyword+inputdiscovery.KeywordSeparator)
+			// Join calls filepath.Clean after joining elements
+			packagePathAbs := filepath.Join(projectRoot, packagePathRel)
+			goInputDiscovery := goinputdiscovery.New(goinputdiscovery.WithProjectDir(projectRoot))
+
+			goInputs, err := goInputDiscovery.DiscoverInputs(packagePathAbs)
+			if err != nil {
+				return nil, usererror.Wrap(fmt.Errorf("golang auto input discovery failed: %w", err))
+			}
+
+			boblog.Log.V(4).Info(fmt.Sprintf("Auto input discovery for Golang package: %s; found inputs: %v", packagePathAbs, goInputs))
+
+			inputDirtyRootedDiscovered = append(inputDirtyRootedDiscovered, goInputs...)
+		} else {
+			inputDirtyRootedDiscovered = append(inputDirtyRootedDiscovered, input)
 		}
 	}
 
 	// Determine inputs and files to be ignored
 	var inputs []string
 	var ignores []string
-	for _, input := range inputDirtyRooted {
+	for _, input := range inputDirtyRootedDiscovered {
 		// Ignore starts with !
 		if strings.HasPrefix(input, "!") {
 			input = strings.TrimPrefix(input, "!")
@@ -134,8 +169,8 @@ func (t *Task) FilteredInputs(projectRoot string) (_ []string, err error) {
 		ignores = append(ignores, path)
 	}
 
-	inputs = unique(inputs)
-	ignores = unique(ignores)
+	inputs = sliceutil.Unique(inputs)
+	ignores = sliceutil.Unique(ignores)
 
 	// Filter
 	filteredInputs := make([]string, 0, len(inputs))
@@ -173,20 +208,6 @@ func rooted(ss []string, prefix string) []string {
 		ss[i] = filepath.Join(prefix, s)
 	}
 	return ss
-}
-
-func unique(ss []string) []string {
-	unique := make([]string, 0, len(ss))
-
-	um := make(map[string]struct{})
-	for _, s := range ss {
-		if _, ok := um[s]; !ok {
-			um[s] = struct{}{}
-			unique = append(unique, s)
-		}
-	}
-
-	return unique
 }
 
 func appendUnique(a []string, xx ...string) []string {
