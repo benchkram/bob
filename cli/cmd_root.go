@@ -67,6 +67,18 @@ func init() {
 	CmdGit.AddCommand(CmdGitStatus)
 	rootCmd.AddCommand(CmdGit)
 
+	// syncCmd
+	cmdSync.PersistentFlags().Bool("insecure", false, "Set to true to use http instead of https when accessing bob-server")
+	cmdSync.Flags().BoolP("force", "f", false, "Set to true to not prompt if files are deleted or overwritten")
+	//cmdSyncListRemote.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing bob-server")
+	//cmdSyncCreate.Flags().Bool("insecure", false, "Set to true to use http instead of https when accessing bob-server")
+	cmdSyncCreate.Flags().Bool("dry", false, "Set to true to show which files would be added to the new collection")
+	cmdSyncCreate.Flags().String("set-version", "v1", "Set the version tag")
+	cmdSync.AddCommand(cmdSyncCreate)
+	cmdSync.AddCommand(cmdSyncList)
+	cmdSync.AddCommand(cmdSyncListRemote)
+	rootCmd.AddCommand(cmdSync)
+
 	// authCmd
 	AuthCmd.AddCommand(AuthContextCreateCmd)
 	AuthContextCreateCmd.Flags().StringP("token", "t", "", "The token used for authentication")

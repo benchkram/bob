@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/benchkram/bob/pkg/versionedsync/remotesyncstore"
+
+	"github.com/benchkram/bob/bobsync"
 	"github.com/benchkram/bob/pkg/nix"
 	storeclient "github.com/benchkram/bob/pkg/store-client"
 
@@ -42,6 +45,8 @@ var (
 
 	ErrInvalidRunType = fmt.Errorf("Invalid run type")
 
+	ErrDuplicateSyncPath = fmt.Errorf("found duplicate sync path in bob.yaml")
+
 	ProjectNameFormatHint = "project name should be in the form 'project' or 'registry.com/user/project'"
 )
 
@@ -70,6 +75,9 @@ type Bobfile struct {
 	// Nixpkgs specifies an optional nixpkgs source.
 	Nixpkgs string `yaml:"nixpkgs"`
 
+	// SyncCollections are folder synchronisations through bob-server
+	SyncCollections bobsync.SyncList `yaml:"syncCollections"`
+
 	// Parent directory of the Bobfile.
 	// Populated through BobfileRead().
 	dir string
@@ -78,6 +86,8 @@ type Bobfile struct {
 
 	RemoteStoreHost string
 	remotestore     store.Store
+
+	versionedSyncStore *remotesyncstore.S
 }
 
 func NewBobfile() *Bobfile {
@@ -103,6 +113,14 @@ func (b *Bobfile) SetRemotestore(remote store.Store) {
 
 func (b *Bobfile) Remotestore() store.Store {
 	return b.remotestore
+}
+
+func (b *Bobfile) SetVersionedSyncStore(syncStore *remotesyncstore.S) {
+	b.versionedSyncStore = syncStore
+}
+
+func (b *Bobfile) VersionedSyncStore() *remotesyncstore.S {
+	return b.versionedSyncStore
 }
 
 // bobfileRead reads a bobfile and initializes private fields.
@@ -236,6 +254,30 @@ func NewRemotestore(endpoint *url.URL, allowInsecure bool, token string) (s stor
 	return s
 }
 
+func NewVersionedSyncStore(endpoint *url.URL, allowInsecure bool, token string) (s *remotesyncstore.S) {
+	const sep = "/"
+
+	parts := strings.Split(strings.TrimLeft(endpoint.Path, sep), sep)
+
+	username := parts[0]
+	proj := strings.Join(parts[1:], sep)
+
+	protocol := "https://"
+	if allowInsecure {
+		protocol = "http://"
+	}
+
+	s = remotesyncstore.New(
+		username,
+		proj,
+
+		remotesyncstore.WithClient(
+			storeclient.New(protocol+endpoint.Host, token),
+		),
+	)
+	return s
+}
+
 // BobfileRead read from a bobfile.
 // Calls sanitize on the result.
 func BobfileRead(dir string) (_ *Bobfile, err error) {
@@ -323,6 +365,17 @@ func (b *Bobfile) Validate() (err error) {
 			if name == dep {
 				return errors.WithMessage(ErrSelfReference, name)
 			}
+		}
+	}
+
+	// no duplicate paths allowed
+	existingPaths := make(map[string]int)
+	for _, sync := range b.SyncCollections {
+		err = sync.Validate(b.Dir())
+		errz.Fatal(err)
+		existingPaths[sync.Path]++
+		if existingPaths[sync.Path] > 1 {
+			return usererror.Wrapm(ErrDuplicateSyncPath, fmt.Sprintf("invalid collection path %s", sync.Path))
 		}
 	}
 

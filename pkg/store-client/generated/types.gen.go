@@ -19,7 +19,88 @@ type Error struct {
 	Id string `json:"id"`
 }
 
+// Project defines model for Project.
+type Project struct {
+	Description     string                `json:"description"`
+	Hashes          *[]Artifact           `json:"hashes,omitempty"`
+	Id              string                `json:"id"`
+	Name            string                `json:"name"`
+	SyncCollections *[]SyncCollectionStub `json:"syncCollections,omitempty"`
+}
+
 // Success defines model for Success.
 type Success struct {
 	Message string `json:"message"`
 }
+
+// It represents (one of possibly many) sync root folders in a bob.yaml
+type SyncCollection struct {
+
+	// a list of syncFiles in this collection
+	Files *[]SyncFileStub `json:"files,omitempty"`
+	Id    string          `json:"id"`
+
+	// relative path to the bob.yaml on the client to the collection folder, DO NOT TRUST this on the client, always check if it is not malicious
+	LocalPath string `json:"local_path"`
+	Name      string `json:"name"`
+}
+
+// SyncCollectionCreate defines model for SyncCollectionCreate.
+type SyncCollectionCreate struct {
+	LocalPath string `json:"local_path"`
+	Name      string `json:"name"`
+}
+
+// It represents (one of possibly many) sync root folders in a bob.yaml
+type SyncCollectionStub struct {
+	Id string `json:"id"`
+
+	// relative path to the bob.yaml on the client to the collection folder, DO NOT TRUST this on the client, always check if it is not malicious
+	LocalPath string `json:"local_path"`
+	Name      string `json:"name"`
+}
+
+// SyncFile defines model for SyncFile.
+type SyncFile struct {
+	EncryptedHash *string `json:"encrypted_hash,omitempty"`
+	Id            string  `json:"id"`
+	IsDirectory   bool    `json:"is_directory"`
+	LocalPath     string  `json:"local_path"`
+
+	// location to download the file using a GET request.
+	Location *string `json:"location,omitempty"`
+}
+
+// SyncFileCreate defines model for SyncFileCreate.
+type SyncFileCreate struct {
+	File        string `json:"file"`
+	IsDirectory bool   `json:"is_directory"`
+	LocalPath   string `json:"local_path"`
+}
+
+// SyncFileStub defines model for SyncFileStub.
+type SyncFileStub struct {
+	EncryptedHash *string `json:"encrypted_hash,omitempty"`
+	Id            string  `json:"id"`
+	IsDirectory   bool    `json:"is_directory"`
+	LocalPath     string  `json:"local_path"`
+}
+
+// Updated version of the file, properties which are omitted will not be changed. At least one property has be included.
+type SyncFileUpdate struct {
+	File        *string `json:"file,omitempty"`
+	Id          string  `json:"id"`
+	IsDirectory bool    `json:"is_directory"`
+	LocalPath   *string `json:"local_path,omitempty"`
+}
+
+// GetSyncFilesParams defines parameters for GetSyncFiles.
+type GetSyncFilesParams struct {
+	WithLocation *bool `json:"withLocation,omitempty"`
+}
+
+// CreateSyncCollectionJSONBody defines parameters for CreateSyncCollection.
+type CreateSyncCollectionJSONBody SyncCollectionCreate
+
+// CreateSyncCollectionJSONRequestBody defines body for CreateSyncCollection for application/json ContentType.
+type CreateSyncCollectionJSONRequestBody CreateSyncCollectionJSONBody

@@ -2,6 +2,7 @@ package file
 
 import (
 	"os"
+	"time"
 )
 
 // Exists return true when a file exists, false otherwise.
@@ -24,6 +25,14 @@ func Copy(src, dst string) error {
 	}
 
 	return nil
+}
+
+func LastModTime(filePath string) (time.Time, error) {
+	file, err := os.Stat(filePath)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return file.ModTime(), nil
 }
 
 // IsSymlink checks if the file is symbolic link
