@@ -110,6 +110,7 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 			t.SetEnvID(envutil.Hash(hash))
 			ag.BTasks[name] = t
 		}
+		// TODO: run tasks
 		return nil
 	}
 
@@ -139,7 +140,7 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 	}
 
 	// FIXME: environment cache is a workaround...
-	// either use envSTore and adapt run tasks to use ist as well
+	// either use envSTore and adapt run tasks to use it as well
 	// or remove run tasks entirely.
 	environmentCache := make(map[string][]string)
 	for _, name := range runTasksInPipeline {
@@ -175,9 +176,15 @@ func (n *NB) BuildDependencies(deps []nix.Dependency) error {
 
 // BuildEnvironment builds the environment with all nix deps
 func (n *NB) BuildEnvironment(deps []nix.Dependency, nixpkgs string) (_ []string, err error) {
-	return nix.BuildEnvironment(deps, nixpkgs, n.cache, n.shellCache)
+	return nix.BuildEnvironment(deps, nixpkgs,
+		nix.BuildEnvironmentArgs{
+			Cache:      n.cache,
+			ShellCache: n.shellCache,
+		},
+	)
 }
 
+// Clean removes all cached nix dependencies
 func (n *NB) Clean() (err error) {
 	return n.cache.Clean()
 }

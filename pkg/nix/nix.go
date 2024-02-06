@@ -211,13 +211,42 @@ func source(nixpkgs string) string {
 	return "<nixpkgs>"
 }
 
+type BuildEnvironmentArgs struct {
+
+	// Cache is used to store the store path of the nix dependencies
+	Cache *Cache
+	// ShellCache is used to store the environment of a nix-shell command
+	ShellCache *ShellCache
+
+	// Path to a shell.nix file.
+	ShellDotNix *string
+	// List of dependencies imported from the
+	// shell.nix file. Bob doesn't parse the imports
+	// therefore it's required to pass all dependencies.
+	NixShellImports []string
+}
+
 // BuildEnvironment is running nix-shell for a list of dependencies and fetch its whole environment
 //
 // nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' -E nixExpressionFromDeps
 //
 // nix shell can be started with empty list of packages so this method works with empty deps as well
-func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache, shellCache *ShellCache) (_ []string, err error) {
+func BuildEnvironment(deps []Dependency, nixpkgs string, args BuildEnvironmentArgs) (_ []string, err error) {
 	defer errz.Recover(&err)
+
+	var cache *Cache
+	var shellCache *ShellCache
+	var shellDotNix *string
+
+	if args.Cache != nil {
+		cache = args.Cache
+	}
+	if args.ShellCache != nil {
+		shellCache = args.ShellCache
+	}
+	if args.ShellDotNix != nil {
+		shellDotNix = args.ShellDotNix
+	}
 
 	// building dependencies with nix-build to display store paths to output
 	err = BuildDependencies(deps, cache)
@@ -233,6 +262,9 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache, shellCach
 	}
 	arguments = append(arguments, []string{"--command", "env"}...)
 	arguments = append(arguments, []string{"--expr", expression}...)
+	if shellDotNix != nil {
+		arguments = append(arguments, *shellDotNix)
+	}
 
 	cmd := exec.Command("nix-shell", "--pure")
 	cmd.Args = append(cmd.Args, arguments...)
