@@ -71,7 +71,7 @@ type Bobfile struct {
 
 	// Shell specifies a shell.nix file as usually used by nix-shell.
 	// This is mutualy exclusive with Dependencies.
-	Shell string `yaml:"shell"`
+	ShellDotNix string `yaml:"shell"`
 
 	// Nixpkgs specifies an optional nixpkgs source.
 	Nixpkgs string `yaml:"nixpkgs"`

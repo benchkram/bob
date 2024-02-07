@@ -223,12 +223,19 @@ type BuildEnvironmentArgs struct {
 	// List of dependencies imported from the
 	// shell.nix file. Bob doesn't parse the imports
 	// therefore it's required to pass all dependencies.
+	//
+	// TODO: let the hases be computes from the outside
+	// as BuilEnvironment is called for each task.
+	// TODO:
+	// TODO:
+	// TODO:
 	NixShellImports []string
 }
 
 // BuildEnvironment is running nix-shell for a list of dependencies and fetch its whole environment
 //
-// nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' -E nixExpressionFromDeps
+// nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' --expr 'with import <nixpkgs> { }; [pkg1, pkg2]'
+// nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' shell.nix
 //
 // nix shell can be started with empty list of packages so this method works with empty deps as well
 func BuildEnvironment(deps []Dependency, nixpkgs string, args BuildEnvironmentArgs) (_ []string, err error) {
@@ -252,8 +259,6 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, args BuildEnvironmentAr
 	err = BuildDependencies(deps, cache)
 	errz.Fatal(err)
 
-	expression := nixExpression(deps, nixpkgs)
-
 	var arguments []string
 	for _, envKey := range global.EnvWhitelist {
 		if _, exists := os.LookupEnv(envKey); exists {
@@ -261,9 +266,13 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, args BuildEnvironmentAr
 		}
 	}
 	arguments = append(arguments, []string{"--command", "env"}...)
-	arguments = append(arguments, []string{"--expr", expression}...)
+
+	// if shellDotNix is set, use it as the shell.nix file (must be at cmd's end)
+	// otherwise use the expression containing the packages.
 	if shellDotNix != nil {
 		arguments = append(arguments, *shellDotNix)
+	} else {
+		arguments = append(arguments, []string{"--expr", nixExpression(deps, nixpkgs)}...)
 	}
 
 	cmd := exec.Command("nix-shell", "--pure")
