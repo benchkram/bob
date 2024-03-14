@@ -52,3 +52,16 @@ func HashOfFile(path string) (string, error) {
 	}
 	return hex.EncodeToString(h.Sum()), nil
 }
+
+// HashOfFiles gives hash of multiple files content
+func HashOfFiles(paths ...string) (string, error) {
+	h := New()
+
+	for _, path := range paths {
+		err := h.AddFile(path)
+		if err != nil {
+			return "", err
+		}
+	}
+	return hex.EncodeToString(h.Sum()), nil
+}

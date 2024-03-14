@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/benchkram/bob/bob"
+	nixbuilder "github.com/benchkram/bob/bob/nix-builder"
 	"github.com/benchkram/bob/pkg/boblog"
 	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/bob/pkg/usererror"
@@ -77,7 +78,13 @@ func runEnv(taskname string) {
 	}
 	task = bobfile.BTasks[taskname]
 
-	taskEnv, err := b.Nix().BuildEnvironment(task.Dependencies(), task.Nixpkgs())
+	var shellDotNix *string
+	if bobfile.ShellDotNix != "" {
+		shellDotNix = &bobfile.ShellDotNix
+	}
+	taskEnv, err := b.Nix().BuildEnvironment(task.Dependencies(), task.Nixpkgs(),
+		nixbuilder.BuildEnvironmentArgs{ShellDotNix: shellDotNix},
+	)
 	errz.Fatal(err)
 
 	for _, e := range taskEnv {

@@ -65,7 +65,17 @@ type Bobfile struct {
 	// RTasks run tasks
 	RTasks bobrun.RunMap `yaml:"run"`
 
+	// Dependencies are nix packages used on a global scope.
+	// Mutually exclusive with Shell. ??Overwrites task based dependencies.??
 	Dependencies []string `yaml:"dependencies"`
+
+	// Shell specifies a shell.nix file as usually used by nix-shell.
+	// This is mutualy exclusive with Dependencies.
+	ShellDotNix string `yaml:"shell"`
+	// ShellImports specifies imports for the shell.nix file.
+	// This is necessary as Bob does not parse the shell.nix file.
+	// Therfore it can't infere the imports.
+	ShellDotNixImports []string `yaml:"shellImports"`
 
 	// Nixpkgs specifies an optional nixpkgs source.
 	Nixpkgs string `yaml:"nixpkgs"`

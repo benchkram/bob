@@ -211,19 +211,51 @@ func source(nixpkgs string) string {
 	return "<nixpkgs>"
 }
 
+type BuildEnvironmentArgs struct {
+
+	// Cache is used to store the store path of the nix dependencies
+	Cache *Cache
+	// ShellCache is used to store the environment of a nix-shell command
+	ShellCache *ShellCache
+
+	// Path to a shell.nix file.
+	ShellDotNix *string
+
+	// ShellDotNixHash is the hash of the shell.nix file
+	// and all it's imports as given by the Bobfile.
+	ShellDotNixHash *string
+}
+
 // BuildEnvironment is running nix-shell for a list of dependencies and fetch its whole environment
 //
-// nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' -E nixExpressionFromDeps
+// nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' --expr 'with import <nixpkgs> { }; [pkg1, pkg2]'
+// nix-shell --pure --keep NIX_SSL_CERT_FILE --keep SSL_CERT_FILE -p --command 'env' shell.nix
 //
 // nix shell can be started with empty list of packages so this method works with empty deps as well
-func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache, shellCache *ShellCache) (_ []string, err error) {
+func BuildEnvironment(deps []Dependency, nixpkgs string, args BuildEnvironmentArgs) (_ []string, err error) {
 	defer errz.Recover(&err)
+
+	var cache *Cache
+	var shellCache *ShellCache
+	var shellDotNix *string
+	var shellDotNixHash *string
+
+	if args.Cache != nil {
+		cache = args.Cache
+	}
+	if args.ShellCache != nil {
+		shellCache = args.ShellCache
+	}
+	if args.ShellDotNix != nil {
+		shellDotNix = args.ShellDotNix
+		if args.ShellDotNixHash != nil {
+			shellDotNixHash = args.ShellDotNixHash
+		}
+	}
 
 	// building dependencies with nix-build to display store paths to output
 	err = BuildDependencies(deps, cache)
 	errz.Fatal(err)
-
-	expression := nixExpression(deps, nixpkgs)
 
 	var arguments []string
 	for _, envKey := range global.EnvWhitelist {
@@ -232,7 +264,14 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache, shellCach
 		}
 	}
 	arguments = append(arguments, []string{"--command", "env"}...)
-	arguments = append(arguments, []string{"--expr", expression}...)
+
+	// if shellDotNix is set, use it as the shell.nix file (must be at cmd's end)
+	// otherwise use the expression containing the packages.
+	if shellDotNix != nil {
+		arguments = append(arguments, *shellDotNix)
+	} else {
+		arguments = append(arguments, []string{"--expr", nixExpression(deps, nixpkgs)}...)
+	}
 
 	cmd := exec.Command("nix-shell", "--pure")
 	cmd.Args = append(cmd.Args, arguments...)
@@ -243,7 +282,17 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, cache *Cache, shellCach
 	cmd.Stderr = &errBuf
 
 	if shellCache != nil {
-		key, err := shellCache.GenerateKey(deps, cmd.String())
+
+		// generate a key for the shell environment
+		// In case of a shell.nix file an additional hash is
+		// added to the key to ensure that the environment is
+		// re-generated if the shell.nix file or its imports change.
+		cmdStr := cmd.String()
+		if shellDotNixHash != nil {
+			cmdStr += *shellDotNixHash
+		}
+
+		key, err := shellCache.GenerateKey(deps, cmdStr)
 		errz.Fatal(err)
 
 		if dat, ok := shellCache.Get(key); ok {
@@ -335,4 +384,44 @@ func HashDependencies(deps []Dependency) (_ string, err error) {
 		}
 	}
 	return string(h.Sum()), nil
+}
+
+// NixShell returns the environment of a nix-shell command
+func NixShell(path string) ([]string, error) {
+
+	args := []string{}
+	for _, envKey := range global.EnvWhitelist {
+		if _, exists := os.LookupEnv(envKey); exists {
+			args = append(args, []string{"--keep", envKey}...)
+		}
+	}
+	args = append(args, []string{"--pure", "--command", "env"}...)
+	args = append(args, path)
+	cmd := exec.Command("nix-shell", args...)
+	boblog.Log.V(5).Info(fmt.Sprintf("Executing command:\n  %s", cmd.String()))
+
+	var out bytes.Buffer
+	var errBuf bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &errBuf
+
+	err := cmd.Run()
+	if err != nil {
+		return nil, prepareRunError(err, cmd.String(), errBuf)
+	}
+
+	// if NIX_SSL_CERT_FILE && SSL_CERT_FILE are set to /no-cert-file.crt unset them
+	var clearedEnv []string
+	for _, e := range strings.Split(out.String(), "\n") {
+		pair := strings.SplitN(e, "=", 2)
+		if pair[0] == "NIX_SSL_CERT_FILE" && pair[1] == "/no-cert-file.crt" {
+			continue
+		}
+		if pair[0] == "SSL_CERT_FILE" && pair[1] == "/no-cert-file.crt" {
+			continue
+		}
+		clearedEnv = append(clearedEnv, e)
+	}
+
+	return clearedEnv, nil
 }
