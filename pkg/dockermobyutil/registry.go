@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/benchkram/errz"
 	"github.com/docker/docker/api/types"
@@ -186,7 +185,7 @@ func (r *R) ImageTag(src string, target string) error {
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz")
 
 func randStringRunes(n int) string {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
+	//rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
