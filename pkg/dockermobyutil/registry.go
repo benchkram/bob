@@ -186,8 +186,7 @@ func (r *R) ImageTag(src string, target string) error {
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz")
 
 func randStringRunes(n int) string {
-	rand.Seed(time.Now().UnixNano())
-
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
