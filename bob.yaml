@@ -1,5 +1,5 @@
 project: bob.build/benchkram/bob
-nixpkgs: https://github.com/NixOS/nixpkgs/archive/nixos-22.11.tar.gz
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/nixos-23.11.tar.gz
 
 variables:
   VERSION: v0.0.0
@@ -41,7 +41,7 @@ build:
 dependencies:
   - nix
   - git
-  - go_1_19
+  - go
   - golangci-lint
   - docker
   - gcc
