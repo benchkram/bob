@@ -220,16 +220,10 @@ type BuildEnvironmentArgs struct {
 
 	// Path to a shell.nix file.
 	ShellDotNix *string
-	// List of dependencies imported from the
-	// shell.nix file. Bob doesn't parse the imports
-	// therefore it's required to pass all dependencies.
-	//
-	// TODO: let the hases be computes from the outside
-	// as BuilEnvironment is called for each task.
-	// TODO:
-	// TODO:
-	// TODO:
-	NixShellImports []string
+
+	// ShellDotNixHash is the hash of the shell.nix file
+	// and all it's imports as given by the Bobfile.
+	ShellDotNixHash *string
 }
 
 // BuildEnvironment is running nix-shell for a list of dependencies and fetch its whole environment
@@ -244,6 +238,7 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, args BuildEnvironmentAr
 	var cache *Cache
 	var shellCache *ShellCache
 	var shellDotNix *string
+	var shellDotNixHash *string
 
 	if args.Cache != nil {
 		cache = args.Cache
@@ -253,6 +248,9 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, args BuildEnvironmentAr
 	}
 	if args.ShellDotNix != nil {
 		shellDotNix = args.ShellDotNix
+		if args.ShellDotNixHash != nil {
+			shellDotNixHash = args.ShellDotNixHash
+		}
 	}
 
 	// building dependencies with nix-build to display store paths to output
@@ -284,7 +282,17 @@ func BuildEnvironment(deps []Dependency, nixpkgs string, args BuildEnvironmentAr
 	cmd.Stderr = &errBuf
 
 	if shellCache != nil {
-		key, err := shellCache.GenerateKey(deps, cmd.String())
+
+		// generate a key for the shell environment
+		// In case of a shell.nix file an additional hash is
+		// added to the key to ensure that the environment is
+		// re-generated if the shell.nix file or its imports change.
+		cmdStr := cmd.String()
+		if shellDotNixHash != nil {
+			cmdStr += *shellDotNixHash
+		}
+
+		key, err := shellCache.GenerateKey(deps, cmdStr)
 		errz.Fatal(err)
 
 		if dat, ok := shellCache.Get(key); ok {

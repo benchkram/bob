@@ -2,8 +2,10 @@ package nixbuilder
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/benchkram/bob/pkg/envutil"
+	"github.com/benchkram/bob/pkg/filehash"
 	"github.com/benchkram/errz"
 
 	"github.com/benchkram/bob/bob/bobfile"
@@ -89,31 +91,24 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 	}
 
 	var shellDotNix *string
+	var shellDotNixHash *string
 	if ag.ShellDotNix != "" {
 		shellDotNix = &ag.ShellDotNix
+
+		// When a folder is given instead of the direct path to shell.nix
+		// bob assumes that the folder contains a shell.nix file.
+		// TODO: Implement me.
+
+		// Concat and sort files to ensure consistent hash
+		shellDotNixFiles := []string{ag.ShellDotNix}
+		shellDotNixFiles = append(shellDotNixFiles, ag.ShellDotNixImports...)
+		slices.Sort(shellDotNixFiles)
+		// Copute hash of shell.nix and its imports
+		hash, err := filehash.HashOfFiles(shellDotNixFiles...)
+		errz.Fatal(err)
+
+		shellDotNixHash = &hash
 	}
-	// if ag.Shell != "" {
-	// 	boblog.Log.Info(fmt.Sprintf("using shell file %s, ignoring dependencies", ag.Shell))
-	// 	// hash shell file
-	// 	if !file.Exists(ag.Shell) {
-	// 		return usererror.Wrap(fmt.Errorf("shell file %s does not exist", ag.Shell))
-	// 	}
-
-	// 	nixShellEnv, err := nix.NixShell(ag.Shell)
-	// 	errz.Fatal(err)
-
-	// 	hash, err := filehash.Hash(ag.Shell)
-	// 	errz.Fatal(err)
-
-	// 	n.envStore[envutil.Hash(hash)] = nixShellEnv
-	// 	for _, name := range buildTasksInPipeline {
-	// 		t := ag.BTasks[name]
-	// 		t.SetEnvID(envutil.Hash(hash))
-	// 		ag.BTasks[name] = t
-	// 	}
-	// 	// TODO: run tasks
-	// 	return nil
-	// }
 
 	// Resolve nix storePaths from dependencies
 	// and rewrite the affected tasks.
@@ -132,7 +127,10 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 
 		if _, ok := n.envStore[envutil.Hash(hash)]; !ok {
 			nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs,
-				BuildEnvironmentArgs{ShellDotNix: shellDotNix},
+				BuildEnvironmentArgs{
+					ShellDotNix:     shellDotNix,
+					ShellDotNixHash: shellDotNixHash,
+				},
 			)
 			errz.Fatal(err)
 			n.envStore[envutil.Hash(hash)] = nixShellEnv
@@ -161,7 +159,10 @@ func (n *NB) BuildNixDependencies(ag *bobfile.Bobfile, buildTasksInPipeline, run
 
 		if _, ok := environmentCache[hash]; !ok {
 			nixShellEnv, err := n.BuildEnvironment(deps, ag.Nixpkgs,
-				BuildEnvironmentArgs{ShellDotNix: shellDotNix},
+				BuildEnvironmentArgs{
+					ShellDotNix:     shellDotNix,
+					ShellDotNixHash: shellDotNixHash,
+				},
 			)
 			errz.Fatal(err)
 			environmentCache[hash] = nixShellEnv
@@ -180,16 +181,18 @@ func (n *NB) BuildDependencies(deps []nix.Dependency) error {
 }
 
 type BuildEnvironmentArgs struct {
-	ShellDotNix *string
+	ShellDotNix     *string
+	ShellDotNixHash *string
 }
 
 // BuildEnvironment builds the environment with all nix deps
 func (n *NB) BuildEnvironment(deps []nix.Dependency, nixpkgs string, args BuildEnvironmentArgs) (_ []string, err error) {
 	return nix.BuildEnvironment(deps, nixpkgs,
 		nix.BuildEnvironmentArgs{
-			Cache:       n.cache,
-			ShellCache:  n.shellCache,
-			ShellDotNix: args.ShellDotNix,
+			Cache:           n.cache,
+			ShellCache:      n.shellCache,
+			ShellDotNix:     args.ShellDotNix,
+			ShellDotNixHash: args.ShellDotNixHash,
 		},
 	)
 }
