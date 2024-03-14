@@ -62,12 +62,13 @@ The basic components of a build task are:
 Example of a `bob.yaml` file:
 
 ```yaml
+nixpkgs: https://github.com/NixOS/nixpkgs/archive/nixos-23.11.tar.gz
 build:
   build:
     input: "*"
     cmd: go build -o ./app
     target: ./app
-    dependencies: [git, go_1_18]
+    dependencies: [go]
 ```
 
 Multiline `sh` and `bash` commands are entirely possible, powered by [mvdan/sh](https://github.com/mvdan/sh).
